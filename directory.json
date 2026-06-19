@@ -1,0 +1,144 @@
+{
+  "name": "igmarin/elixir-phoenix-skills",
+  "version": "2.0.0",
+  "license": "MIT",
+  "summary": "Curated library of 32 atomic skills, 7 personas, and 1 orchestrator for Elixir and Phoenix development. Organized by category: fundamentals, phoenix, database, testing, auth, infrastructure, quality, security, integrations, tooling, frameworks, personas, and orchestration. Covers core Elixir patterns, Phoenix LiveView, Ecto, OTP, Oban, testing, security, deployment, real-time, and modern tooling (Req, Swoosh, Cachex, Broadway, Ash).",
+  "skills": {
+    "elixir-essentials": {
+      "path": "skills/fundamentals/elixir-essentials/SKILL.md"
+    },
+    "otp-essentials": {
+      "path": "skills/fundamentals/otp-essentials/SKILL.md"
+    },
+    "typespec-dialyzer": {
+      "path": "skills/fundamentals/typespec-dialyzer/SKILL.md"
+    },
+    "phoenix-liveview-essentials": {
+      "path": "skills/phoenix/phoenix-liveview-essentials/SKILL.md"
+    },
+    "phoenix-scopes": {
+      "path": "skills/phoenix/phoenix-scopes/SKILL.md"
+    },
+    "liveview-streams": {
+      "path": "skills/phoenix/liveview-streams/SKILL.md"
+    },
+    "phoenix-channels-essentials": {
+      "path": "skills/phoenix/phoenix-channels-essentials/SKILL.md"
+    },
+    "phoenix-json-api": {
+      "path": "skills/phoenix/phoenix-json-api/SKILL.md"
+    },
+    "phoenix-pubsub-patterns": {
+      "path": "skills/phoenix/phoenix-pubsub-patterns/SKILL.md"
+    },
+    "phoenix-uploads": {
+      "path": "skills/phoenix/phoenix-uploads/SKILL.md"
+    },
+    "ecto-essentials": {
+      "path": "skills/database/ecto-essentials/SKILL.md"
+    },
+    "ecto-changeset-patterns": {
+      "path": "skills/database/ecto-changeset-patterns/SKILL.md"
+    },
+    "ecto-nested-associations": {
+      "path": "skills/database/ecto-nested-associations/SKILL.md"
+    },
+    "testing-essentials": {
+      "path": "skills/testing/testing-essentials/SKILL.md"
+    },
+    "property-based-testing": {
+      "path": "skills/testing/property-based-testing/SKILL.md"
+    },
+    "benchee-profiling": {
+      "path": "skills/testing/benchee-profiling/SKILL.md"
+    },
+    "phoenix-liveview-auth": {
+      "path": "skills/auth/phoenix-liveview-auth/SKILL.md"
+    },
+    "phoenix-auth-customization": {
+      "path": "skills/auth/phoenix-auth-customization/SKILL.md"
+    },
+    "phoenix-authorization-patterns": {
+      "path": "skills/auth/phoenix-authorization-patterns/SKILL.md"
+    },
+    "oban-essentials": {
+      "path": "skills/infrastructure/oban-essentials/SKILL.md"
+    },
+    "broadway-data-pipelines": {
+      "path": "skills/infrastructure/broadway-data-pipelines/SKILL.md"
+    },
+    "deployment-gotchas": {
+      "path": "skills/infrastructure/deployment-gotchas/SKILL.md"
+    },
+    "telemetry-essentials": {
+      "path": "skills/infrastructure/telemetry-essentials/SKILL.md"
+    },
+    "cachex-caching": {
+      "path": "skills/infrastructure/cachex-caching/SKILL.md"
+    },
+    "code-quality": {
+      "path": "skills/quality/code-quality/SKILL.md"
+    },
+    "credo-config": {
+      "path": "skills/quality/credo-config/SKILL.md"
+    },
+    "security-essentials": {
+      "path": "skills/security/security-essentials/SKILL.md"
+    },
+    "req-http-client": {
+      "path": "skills/integrations/req-http-client/SKILL.md"
+    },
+    "swoosh-emails": {
+      "path": "skills/integrations/swoosh-emails/SKILL.md"
+    },
+    "gettext-i18n": {
+      "path": "skills/integrations/gettext-i18n/SKILL.md"
+    },
+    "mix-tasks-generators": {
+      "path": "skills/tooling/mix-tasks-generators/SKILL.md"
+    },
+    "ash-framework": {
+      "path": "skills/frameworks/ash-framework/SKILL.md"
+    },
+    "elixir-skill-router": {
+      "path": "skills/orchestration/elixir-skill-router/SKILL.md"
+    },
+    "tdd": {
+      "path": "skills/personas/tdd/SKILL.md"
+    },
+    "quality": {
+      "path": "skills/personas/quality/SKILL.md"
+    },
+    "setup": {
+      "path": "skills/personas/setup/SKILL.md"
+    },
+    "bug-fix": {
+      "path": "skills/personas/bug-fix/SKILL.md"
+    },
+    "background-job": {
+      "path": "skills/personas/background-job/SKILL.md"
+    },
+    "liveview": {
+      "path": "skills/personas/liveview/SKILL.md"
+    },
+    "ecto-migration": {
+      "path": "skills/personas/ecto-migration/SKILL.md"
+    }
+  },
+  "categories": {
+    "fundamentals": "skills/fundamentals/",
+    "phoenix": "skills/phoenix/",
+    "database": "skills/database/",
+    "testing": "skills/testing/",
+    "auth": "skills/auth/",
+    "infrastructure": "skills/infrastructure/",
+    "quality": "skills/quality/",
+    "security": "skills/security/",
+    "integrations": "skills/integrations/",
+    "tooling": "skills/tooling/",
+    "frameworks": "skills/frameworks/",
+    "personas": "skills/personas/",
+    "orchestration": "skills/orchestration/"
+  },
+  "deprecated_skills": {}
+}

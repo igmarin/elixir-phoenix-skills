@@ -2,7 +2,7 @@
 
 ![Elixir Phoenix Skills](https://github.com/user-attachments/assets/ac5da537-5062-4a67-a8a3-114129bc101a)
 
-A curated library of **public Elixir/Phoenix agent skills** that teach AI tools how to write idiomatic Elixir code, test Phoenix applications, and follow production-minded conventions. This repository acts as a **Domain Knowledge Registry** of specialized Elixir & Phoenix AI Skills, consumable by external MCP or CLI runtimes.
+A curated library of **public Elixir/Phoenix agent skills** — 32 atomic skills, 7 personas, and 1 entry-point orchestrator that teach AI tools how to write idiomatic Elixir code, test Phoenix applications, and follow production-minded conventions.
 
 The project is built around core Elixir principles:
 
@@ -20,7 +20,7 @@ This repo is one of 6 in a composable AI skill ecosystem:
 |------|------|
 | [`ruby-core-skills`](https://github.com/igmarin/ruby-core-skills) | 15 shared Ruby skills + process discipline |
 | [`rails-agent-skills`](https://github.com/igmarin/rails-agent-skills) | 28 atomic skills + 9 personas |
-| [**`elixir-phoenix-skills`**](https://github.com/igmarin/elixir-phoenix-skills) | 32 Elixir/Phoenix skills |
+| [**`elixir-phoenix-skills`**](https://github.com/igmarin/elixir-phoenix-skills) | 32 atomic skills + 7 personas + 1 orchestrator |
 | [`hanakai-yaku`](https://github.com/igmarin/hanakai-yaku) | 35 Hanami/dry-rb skills + 10 personas |
 | [`agnostic-planning-skills`](https://github.com/igmarin/agnostic-planning-skills) | 10 planning skills + 4 personas |
 | [`agent-mcp-runtime`](https://github.com/igmarin/agent-mcp-runtime) | Rust CLI runtime (pack resolution, MCP) |
@@ -42,13 +42,10 @@ See the [Ecosystem Overview](https://github.com/igmarin/agent-mcp-runtime/blob/m
 > [![GitHub tag](https://img.shields.io/github/v/tag/igmarin/elixir-phoenix-skills?label=release)](https://github.com/igmarin/elixir-phoenix-skills/tags)
 > [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 > [![skills.sh](https://skills.sh/b/igmarin/elixir-phoenix-skills)](https://skills.sh/igmarin/elixir-phoenix-skills)
-> [![Smithery](https://img.shields.io/badge/Smithery-orange)](https://smithery.ai/skills/ismael-marin/elixir-phoenix-skills)
 
 ## What are Agent Skills?
 
-Agent Skills are a lightweight, open format for extending AI agent capabilities with specialized knowledge and workflows. At its core, a skill is a folder containing a `SKILL.md` file. This file includes metadata (`name` and `description`, at minimum) and instructions that tell an agent how to perform a specific task.
-
-This repository follows the Agent Skills standard, meaning you can install the entire catalog of Elixir/Phoenix skills atomically into any compatible agent (e.g., Cursor, Claude Code, Goose, OpenCode, Gemini CLI) using:
+Agent Skills are a lightweight, open format for extending AI agent capabilities with specialized knowledge and workflows. At its core, a skill is a folder containing a `SKILL.md` file with metadata, instructions, and optionally `assets/`. This repository follows the Agent Skills standard:
 
 ```bash
 npx skills add igmarin/elixir-phoenix-skills
@@ -59,46 +56,100 @@ npx skills add igmarin/elixir-phoenix-skills
 | Reader | What you get |
 |--------|--------------|
 | Elixir developers | Agent instructions for common Elixir/Phoenix work: LiveView, Ecto, OTP, testing, security, and deployment. |
-| Team leads | A repeatable workflow that makes AI-assisted Elixir work easier to review because tests, docs, and self-review are part of the process. |
+| Team leads | A repeatable workflow that makes AI-assisted Elixir work easier to review — tests, docs, and self-review are part of the process. |
 | Junior developers | Step-by-step Elixir workflow guidance that explains what to do next instead of dumping generic code. |
 | Senior developers | Opinionated guardrails for TDD, architecture, review, OTP patterns, performance, and production-safe changes. |
 
 ## Skill Catalog
 
-The library contains **32 Elixir/Phoenix skills** organized by development concern.
+The library contains **40 skills total** — 32 atomic skills, 7 personas, and 1 orchestrator — organized by category.
 
-| Category | Skills |
-|----------|--------|
-| **Core Elixir** | `elixir-essentials`, `otp-essentials`, `typespec-dialyzer` |
-| **Phoenix LiveView** | `phoenix-liveview-essentials`, `liveview-streams`, `phoenix-scopes`, `phoenix-liveview-auth` |
-| **Database (Ecto)** | `ecto-essentials`, `ecto-changeset-patterns`, `ecto-nested-associations` |
-| **Testing** | `testing-essentials`, `property-based-testing`, `benchee-profiling` |
-| **Authentication & Authorization** | `phoenix-auth-customization`, `phoenix-authorization-patterns` |
-| **Background Jobs** | `oban-essentials`, `broadway-data-pipelines` |
-| **Code Quality** | `code-quality`, `credo-config` |
-| **Security** | `security-essentials` |
-| **Real-time** | `phoenix-pubsub-patterns`, `phoenix-channels-essentials` |
-| **APIs** | `phoenix-json-api`, `req-http-client` |
-| **Infrastructure** | `deployment-gotchas`, `telemetry-essentials`, `cachex-caching` |
-| **Utilities** | `phoenix-uploads`, `swoosh-emails`, `gettext-i18n`, `mix-tasks-generators` |
-| **Frameworks** | `ash-framework` |
+### Atomic Skills
+
+| Category | Skills | Path |
+|----------|--------|------|
+| **Fundamentals** | `elixir-essentials`, `otp-essentials`, `typespec-dialyzer` | `skills/fundamentals/` |
+| **Phoenix** | `phoenix-liveview-essentials`, `liveview-streams`, `phoenix-scopes`, `phoenix-channels-essentials`, `phoenix-json-api`, `phoenix-pubsub-patterns`, `phoenix-uploads` | `skills/phoenix/` |
+| **Database** | `ecto-essentials`, `ecto-changeset-patterns`, `ecto-nested-associations` | `skills/database/` |
+| **Testing** | `testing-essentials`, `property-based-testing`, `benchee-profiling` | `skills/testing/` |
+| **Auth** | `phoenix-liveview-auth`, `phoenix-auth-customization`, `phoenix-authorization-patterns` | `skills/auth/` |
+| **Infrastructure** | `oban-essentials`, `broadway-data-pipelines`, `deployment-gotchas`, `telemetry-essentials`, `cachex-caching` | `skills/infrastructure/` |
+| **Quality** | `code-quality`, `credo-config` | `skills/quality/` |
+| **Security** | `security-essentials` | `skills/security/` |
+| **Integrations** | `req-http-client`, `swoosh-emails`, `gettext-i18n` | `skills/integrations/` |
+| **Tooling** | `mix-tasks-generators` | `skills/tooling/` |
+| **Frameworks** | `ash-framework` | `skills/frameworks/` |
+
+### Personas (Workflow Orchestration)
+
+Personas orchestrate multiple atomic skills into end-to-end workflows with hard gates, phases, and output formats:
+
+| Persona | Phases | Purpose |
+|---------|--------|---------|
+| **elixir-skill-router** | Triage → Delegate | Entry-point orchestrator that routes requests to the correct skill or persona |
+| **tdd** | Context → Test → RED → GREEN → REFACTOR → Quality Gate | Full TDD cycle with test-first discipline |
+| **quality** | Format → Credo → Dialyzer → Refactoring → Docs | Code quality loop before PR |
+| **setup** | Elixir/Erlang → Deps → DB → CI/CD → Validate | Project setup and CI/CD configuration |
+| **bug-fix** | Triage → Reproduce → Fix → Verify | Bug fixing with reproduction tests |
+| **background-job** | Design → TDD → Retry/Discard → Failure Testing → Monitoring | Robust Oban job implementation |
+| **liveview** | Contract → Test → Implementation → Quality | Full LiveView feature development |
+| **ecto-migration** | Plan → Implement → Verify → Deploy | Safe migrations with expand-contract |
+
+### Assets
+
+Key skills include `assets/` with templates, checklists, and code snippets:
+
+| Skill | Assets |
+|-------|--------|
+| `testing-essentials` | `spec_templates.md`, `tdd_checklist.md` |
+| `code-quality` | `refactoring_checklist.md` |
+| `security-essentials` | `security_checklist.md` |
+| `phoenix-liveview-essentials` | `liveview_test_template.md`, `component_test_template.md` |
+| `phoenix-liveview-auth` | `on_mount_template.ex` |
+| `ecto-essentials` | `migration_checklist.md`, `changeset_snippets.ex` |
+| `elixir-skill-router` | `skill-map.json` |
+
+## How Skills Chain Together
+
+Skills are designed to compose. A typical workflow chains from entry to quality gate:
+
+```
+elixir-skill-router → tdd → quality → PR
+```
+
+### Common Chains
+
+| Workflow | Skill chain |
+|----------|-------------|
+| **New feature** | `elixir-skill-router` → `tdd` → `quality` |
+| **Bug fix** | `elixir-skill-router` → `bug-fix` → `quality` |
+| **New LiveView page** | `liveview` → `tdd` → `quality` |
+| **Background job** | `background-job` → `quality` |
+| **Database change** | `ecto-migration` → `setup` |
+| **Before PR** | `quality` (standalone) |
+| **Project bootstrap** | `setup` → `tdd` |
+
+### Per-skill Chaining
+
+Every skill includes an Integration table showing predecessor and successor skills:
+
+```markdown
+| Predecessor | This Skill | Successor |
+|-------------|------------|----------|
+| elixir-essentials | testing-essentials | code-quality |
+```
 
 ## Installation
 
-Install skills via skills.sh:
-
 ```bash
+# Install all skills
 npx skills add igmarin/elixir-phoenix-skills
-```
 
-Or via GitHub CLI (v2.90.0+):
-
-```bash
-# Install all skills interactively
+# Or via GitHub CLI (v2.90.0+)
 gh skill install igmarin/elixir-phoenix-skills
 
-# Install a specific skill
-gh skill install igmarin/elixir-phoenix-skills elixir-essentials --scope project
+# Install a specific persona
+gh skill install igmarin/elixir-phoenix-skills tdd --scope project
 ```
 
 ## Acknowledgements
@@ -110,9 +161,10 @@ This repository adapts content from [elixir-phoenix-guide](https://github.com/j-
 When contributing skills:
 
 - Keep generated artifacts in English unless a user explicitly asks for another language.
-- Follow the established skill format with RULES sections and Integration tables.
+- Follow the established skill format with RULES sections and 3-column Integration tables.
 - Include good/bad code examples for all major patterns.
-- Reference TDD workflow where applicable.
+- Add `assets/` with templates, checklists, or snippets when the skill benefits from reusable artifacts.
+- Personas must include phases, hard gates, error recovery, and an output style section.
 
 ## License
 

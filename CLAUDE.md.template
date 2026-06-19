@@ -1,0 +1,317 @@
+# Project Configuration for Elixir Phoenix Skills
+
+This template helps you configure your Elixir/Phoenix project to work with the skills in this repository.
+
+## Installation
+
+Add the skills to your project:
+
+```bash
+# Install all skills
+npx skills add igmarin/elixir-phoenix-skills
+
+# Or install specific skills
+npx skills add igmarin/elixir-phoenix-skills/skills/elixir-essentials
+npx skills add igmarin/elixir-phoenix-skills/skills/phoenix-liveview-essentials
+npx skills add igmarin/elixir-phoenix-skills/skills/ecto-essentials
+```
+
+## Project Setup
+
+### 1. Configure your mix.exs
+
+Ensure your project has the necessary dependencies:
+
+```elixir
+defp deps do
+  [
+    # Core Phoenix
+    {:phoenix, "~> 1.7"},
+    {:phoenix_live_view, "~> 0.20"},
+    {:ecto_sql, "~> 3.11"},
+    
+    # Code quality
+    {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+    {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+    
+    # Testing
+    {:stream_data, "~> 1.0", only: :test},
+    
+    # Background jobs (if using Oban)
+    {:oban, "~> 2.17"},
+    
+    # HTTP client
+    {:req, "~> 0.5"},
+    
+    # Email
+    {:swoosh, "~> 1.14"},
+    
+    # Caching
+    {:cachex, "~> 3.6"},
+    
+    # Internationalization
+    {:gettext, "~> 0.26"}
+  ]
+end
+```
+
+### 2. Configure .formatter.exs
+
+```elixir
+[
+  import_deps: [:ecto, :ecto_sql, :phoenix],
+  subdirectories: ["priv/*/migrations"],
+  plugins: [Phoenix.LiveView.HTMLFormatter],
+  inputs: ["*.{heex,ex,exs}", "{config,lib,test}/**/*.{heex,ex,exs}", "priv/*/seeds.exs"]
+]
+```
+
+### 3. Configure .credo.exs
+
+Use the `credo-config` skill to set up Credo for your project.
+
+### 4. Configure .dialyzer_ignore.exs
+
+Use the `typespec-dialyzer` skill to set up Dialyzer for your project.
+
+## Skill Usage Guide
+
+### Core Skills (Always Apply)
+
+These skills should be applied to all Elixir code:
+
+1. **elixir-essentials** - Core Elixir patterns and best practices
+2. **testing-essentials** - Testing patterns and TDD workflow
+3. **phoenix-liveview-essentials** - LiveView lifecycle and patterns
+4. **ecto-essentials** - Database operations and patterns
+
+### Feature-Specific Skills
+
+Apply these skills based on what you're building:
+
+- **phoenix-scopes** - Phoenix 1.8+ authentication with Scope structs
+- **liveview-streams** - Efficient rendering of large collections
+- **phoenix-pubsub-patterns** - Real-time updates with PubSub
+- **oban-essentials** - Background job processing
+- **otp-essentials** - GenServer and supervision trees
+- **phoenix-channels-essentials** - WebSocket channels
+
+### Quality & Security Skills
+
+Apply these skills for code quality and security:
+
+- **code-quality** - Code quality checks and refactoring
+- **security-essentials** - Security best practices
+- **typespec-dialyzer** - Type specifications and Dialyzer
+- **credo-config** - Credo configuration
+- **property-based-testing** - Property-based testing with StreamData
+
+### Integration Skills
+
+Apply these skills for external integrations:
+
+- **req-http-client** - HTTP client for external APIs
+- **swoosh-emails** - Email sending with Swoosh
+- **gettext-i18n** - Internationalization
+- **cachex-caching** - Caching with Cachex
+- **broadway-data-pipelines** - Data processing pipelines
+
+### Framework Skills
+
+Apply these skills for specific frameworks:
+
+- **ash-framework** - Ash Framework for resource-oriented design
+
+### Performance Skills
+
+Apply these skills for performance optimization:
+
+- **benchee-profiling** - Benchmarking with Benchee
+
+### Utility Skills
+
+Apply these skills for utility tasks:
+
+- **mix-tasks-generators** - Custom Mix tasks and generators
+
+## Development Workflow
+
+### 1. Start with Context
+
+Before writing code, use the appropriate skill:
+
+```
+# For new LiveView
+Use phoenix-liveview-essentials skill
+
+# For new database operation
+Use ecto-essentials skill
+
+# For new background job
+Use oban-essentials skill
+```
+
+### 2. Write Tests First
+
+Always use the testing-essentials skill:
+
+```
+# TDD workflow
+1. Write failing test
+2. Implement to make it pass
+3. Refactor
+4. Repeat
+```
+
+### 3. Apply Quality Checks
+
+Before committing:
+
+```bash
+# Format code
+mix format
+
+# Run Credo
+mix credo
+
+# Run Dialyzer
+mix dialyzer
+
+# Run tests
+mix test
+```
+
+### 4. Review with Security in Mind
+
+Use the security-essentials skill to review:
+
+- Input validation
+- SQL injection prevention
+- XSS prevention
+- CSRF protection
+- Secure password handling
+
+## Project Structure
+
+Follow the standard Phoenix project structure:
+
+```
+my_app/
+├── lib/
+│   ├── my_app/              # Business logic
+│   │   ├── accounts/        # Context modules
+│   │   ├── blog/
+│   │   └── repo.ex
+│   └── my_app_web/          # Web layer
+│       ├── live/            # LiveView modules
+│       ├── controllers/     # Controllers
+│       ├── components/      # Function components
+│       └── router.ex
+├── test/                    # Tests
+├── priv/
+│   ├── repo/migrations/     # Database migrations
+│   └── gettext/             # Translations
+└── config/                  # Configuration
+```
+
+## Common Patterns
+
+### Context Module Pattern
+
+```elixir
+defmodule MyApp.Blog do
+  @moduledoc """
+  The Blog context.
+  """
+
+  import Ecto.Query, warn: false
+  alias MyApp.Repo
+
+  alias MyApp.Blog.Post
+
+  @doc """
+  Returns the list of posts.
+  """
+  def list_posts do
+    Repo.all(Post)
+  end
+
+  @doc """
+  Gets a single post.
+  """
+  def get_post!(id), do: Repo.get!(Post, id)
+
+  @doc """
+  Creates a post.
+  """
+  def create_post(attrs \\ %{}) do
+    %Post{}
+    |> Post.changeset(attrs)
+    |> Repo.insert()
+  end
+end
+```
+
+### LiveView Pattern
+
+```elixir
+defmodule MyAppWeb.PostLive.Index do
+  use MyAppWeb, :live_view
+
+  alias MyApp.Blog
+
+  @impl true
+  def mount(_params, _session, socket) do
+    {:ok, stream(socket, :posts, Blog.list_posts())}
+  end
+
+  @impl true
+  def handle_event("delete", %{"id" => id}, socket) do
+    post = Blog.get_post!(id)
+    {:ok, _} = Blog.delete_post(post)
+
+    {:noreply, stream_delete(socket, :posts, post)}
+  end
+end
+```
+
+### Testing Pattern
+
+```elixir
+defmodule MyApp.BlogTest do
+  use MyApp.DataCase, async: true
+
+  alias MyApp.Blog
+
+  describe "posts" do
+    test "list_posts/0 returns all posts" do
+      post = post_fixture()
+      assert Blog.list_posts() == [post]
+    end
+
+    test "create_post/1 with valid data creates a post" do
+      attrs = %{title: "Test Post", body: "Test body"}
+      assert {:ok, %Post{} = post} = Blog.create_post(attrs)
+      assert post.title == "Test Post"
+    end
+  end
+end
+```
+
+## Next Steps
+
+1. Review the skills in the `skills/` directory
+2. Apply relevant skills to your project
+3. Follow the development workflow
+4. Use the agents in the `agents/` directory for reference
+
+## Support
+
+For issues or questions:
+- Check the skill documentation in each `SKILL.md`
+- Review the agent guides in the `agents/` directory
+- Open an issue on GitHub
+
+## License
+
+MIT License - See LICENSE file for details
