@@ -62,11 +62,10 @@ defmodule MyApp.Blog.Comment do
   schema "comments" do
     field :body, :string
     belongs_to :post, MyApp.Blog.Post
-
     timestamps()
   end
 
-  # Do NOT require :post_id — cast_assoc sets it automatically
+  # Do NOT validate :post_id — cast_assoc sets it automatically
   def changeset(comment, attrs) do
     comment
     |> cast(attrs, [:body])
@@ -86,7 +85,7 @@ Blog.create_post(%{
 
 ### Handling cast_assoc Failures
 
-When `Repo.insert/1` or `Repo.update/1` fails, nested changeset errors are embedded inside the parent changeset. Traverse them explicitly:
+Nested changeset errors are embedded inside the parent changeset. Pattern-match on both outcomes:
 
 ```elixir
 case Repo.insert(Post.changeset(%Post{}, attrs)) do
@@ -94,14 +93,8 @@ case Repo.insert(Post.changeset(%Post{}, attrs)) do
     {:ok, post}
 
   {:error, changeset} ->
-    IO.inspect(changeset.errors, label: "post errors")
-
-    changeset.changes
-    |> Map.get(:comments, [])
-    |> Enum.each(fn comment_changeset ->
-      IO.inspect(comment_changeset.errors, label: "comment errors")
-    end)
-
+    # Top-level errors on changeset.errors
+    # Nested errors on changeset.changes[:comments] (list of changesets)
     {:error, changeset}
 end
 ```
@@ -188,25 +181,9 @@ defmodule MyApp.Repo.Migrations.CreateComments do
 end
 ```
 
-### on_delete Options
-
-| Option | Behavior | Use When |
-|--------|----------|----------|
-| `:nothing` | No action (FK constraint may prevent delete) | References to independent entities |
-| `:delete_all` | Delete all children | Owned children (comments, items) |
-| `:nilify_all` | Set FK to nil | Optional relationships |
-| `:restrict` | Prevent parent deletion | Critical relationships |
-
 ### Verifying FK Indexes After Migration
 
-After running migrations, confirm FK indexes exist:
-
-```bash
-# In psql
-\d comments
-```
-
-Expect an index entry for each FK column (e.g. `comments_post_id_index`). If missing, add it in a new migration:
+Confirm FK indexes exist in psql with `\d comments`. Expect an entry such as `comments_post_id_index`. If missing, add it in a new migration:
 
 ```elixir
 def change do

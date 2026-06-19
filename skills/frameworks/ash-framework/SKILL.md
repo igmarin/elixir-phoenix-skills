@@ -36,8 +36,6 @@ Run `mix deps.get`.
 
 ### Step 2 — Configure AshPostgres
 
-Use `AshPostgres.Repo` in your Repo module and add the repo to `config/config.exs`:
-
 ```elixir
 defmodule MyApp.Repo do
   use AshPostgres.Repo, otp_app: :my_app
@@ -181,8 +179,6 @@ post
 
 ### Policies (Authorization)
 
-> Full policy reference: see `POLICIES.md`.
-
 ```elixir
 policies do
   policy action_type(:read) do
@@ -215,50 +211,59 @@ config :ash, :policies, log_policy_breakdowns: :error
 
 ### AshPhoenix LiveView Integration
 
-> Full LiveView reference: see `LIVEVIEW.md`.
+Add `{:ash_phoenix, "~> 2.0"}` to deps. `AshPhoenix.Form` bridges Ash changesets to Phoenix form components.
 
-Pattern: (1) load resource and build changeset in `mount/3`, (2) rebuild changeset on `"validate"` events, (3) call domain function on `"save"` and handle `{:ok, _}` / `{:error, _}`.
+Key pattern — build an `AshPhoenix.Form`, convert with `to_form/1`, and handle submit:
 
 ```elixir
-defmodule MyAppWeb.PostLive.Edit do
-  use MyAppWeb, :live_view
+# mount
+form =
+  post
+  |> Ash.Changeset.for_update(:update, %{})
+  |> AshPhoenix.Form.for_update()
+  |> to_form()
 
-  alias MyApp.Blog
-  alias MyApp.Blog.Post
+# handle_event "save"
+case Blog.update(Ash.Changeset.for_update(post, :update, params)) do
+  {:ok, post} -> {:noreply, put_flash(socket, :info, "Saved.") |> assign(post: post)}
+  {:error, cs} -> {:noreply, assign(socket, form: cs |> AshPhoenix.Form.for_update() |> to_form())}
+end
+```
 
-  @impl true
-  def mount(%{"id" => id}, _session, socket) do
-    post = Blog.get!(Post, id)
-    form =
-      post
-      |> Ash.Changeset.for_update(:update, %{})
-      |> AshPhoenix.Form.for_update()
-      |> to_form()
-    {:ok, assign(socket, form: form, post: post)}
-  end
+See the [AshPhoenix docs](https://hexdocs.pm/ash_phoenix) for full LiveView and form component examples.
 
-  @impl true
-  def handle_event("validate", %{"form" => params}, socket) do
-    form =
-      socket.assigns.post
-      |> Ash.Changeset.for_update(:update, params)
-      |> AshPhoenix.Form.for_update()
-      |> to_form()
-    {:noreply, assign(socket, form: form)}
-  end
+---
 
-  @impl true
-  def handle_event("save", %{"form" => params}, socket) do
-    case socket.assigns.post
-         |> Ash.Changeset.for_update(:update, params)
-         |> Blog.update() do
-      {:ok, post} ->
-        {:noreply, socket |> put_flash(:info, "Post updated.") |> assign(post: post)}
+### AshJsonApi Integration
 
-      {:error, changeset} ->
-        form = changeset |> AshPhoenix.Form.for_update() |> to_form()
-        {:noreply, assign(socket, form: form)}
-    end
+Add `{:ash_json_api, "~> 1.0"}` to deps. Expose resources as a JSON:API endpoint by adding the extension and router plug:
+
+```elixir
+# In your resource
+use Ash.Resource,
+  domain: MyApp.Blog,
+  data_layer: AshPostgres.DataLayer,
+  extensions: [AshJsonApi.Resource]
+
+json_api do
+  type "post"
+
+  routes do
+    base "/posts"
+    get :read
+    index :published
+    post :create
+    patch :publish
   end
 end
 ```
+
+```elixir
+# router.ex
+scope "/api/json" do
+  pipe_through :api
+  forward "/", AshJsonApi.Router, domains: [MyApp.Blog]
+end
+```
+
+See the [AshJsonApi docs](https://hexdocs.pm/ash_json_api) for pagination, includes, and error serialization.

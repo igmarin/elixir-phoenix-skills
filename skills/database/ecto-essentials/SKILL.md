@@ -111,7 +111,7 @@ end
 ❌ **Bad — N+1 queries:**
 ```elixir
 images = Repo.all(Image)
-Enum.each(images, fn image -> image.folder.name end)  # Query per image!
+Enum.each(images, fn image -> image.folder.name end)
 ```
 
 ✅ **Good — single query with preload:**
@@ -125,8 +125,6 @@ Enum.each(images, fn image -> image.folder.name end)
 ```
 
 ## Transactions
-
-Use `Repo.transaction` for operations that must succeed together.
 
 ```elixir
 def transfer_images(image_ids, from_folder_id, to_folder_id) do
@@ -143,15 +141,6 @@ def transfer_images(image_ids, from_folder_id, to_folder_id) do
 end
 ```
 
-**Transaction validation — always pattern-match the result:**
-```elixir
-case transfer_images(ids, from_id, to_id) do
-  {:ok, {:ok, count}} -> IO.puts("Transferred #{count} images")
-  {:ok, _}            -> IO.puts("Completed with unexpected shape")
-  {:error, reason}    -> IO.puts("Rolled back: #{inspect(reason)}")
-end
-```
-
 ### Ecto.Multi for Complex Operations
 
 ```elixir
@@ -165,17 +154,7 @@ def create_user_with_profile(user_attrs, profile_attrs) do
 end
 ```
 
-**Multi result validation — inspect named steps on failure:**
-```elixir
-case create_user_with_profile(u_attrs, p_attrs) do
-  {:ok, %{user: user, profile: profile}} ->
-    IO.puts("Created user #{user.id} and profile #{profile.id}")
-  {:error, :user, changeset, _changes} ->
-    IO.inspect(changeset.errors, label: "User step failed")
-  {:error, :profile, changeset, _changes} ->
-    IO.inspect(changeset.errors, label: "Profile step failed")
-end
-```
+On failure, the error tuple identifies the named step: `{:error, :user, changeset, _changes}` or `{:error, :profile, changeset, _changes}`.
 
 ## Building Associations
 
@@ -201,58 +180,19 @@ def create_or_update_folder(attrs) do
 end
 ```
 
-**Upsert validation — check whether a row was inserted or updated:**
-```elixir
-case create_or_update_folder(%{name: "Photos"}) do
-  {:ok, folder} ->
-    # folder.id is populated regardless of insert vs. update path
-    IO.puts("Upserted folder #{folder.id}")
-  {:error, changeset} ->
-    IO.inspect(changeset.errors, label: "Upsert failed")
-end
-```
-
 ## Dynamic Queries
+
+Build queries incrementally using `Enum.reduce` over a filters map:
 
 ```elixir
 def list_images(filters) do
-  Image
-  |> apply_filters(filters)
-  |> Repo.all()
-end
-
-defp apply_filters(query, filters) do
-  Enum.reduce(filters, query, fn
-    {:folder_id, folder_id}, query ->
-      where(query, [i], i.folder_id == ^folder_id)
-
-    {:search, term}, query ->
-      where(query, [i], ilike(i.title, ^"#{term}"))
-
-    {:min_size, size}, query ->
-      where(query, [i], i.file_size >= ^size)
-
-    _, query ->
-      query
+  Enum.reduce(filters, Image, fn
+    {:folder_id, id}, q -> where(q, [i], i.folder_id == ^id)
+    {:search, term}, q -> where(q, [i], ilike(i.title, ^"%#{term}%"))
+    {:min_size, size}, q -> where(q, [i], i.file_size >= ^size)
+    _, q -> q
   end)
-end
-```
-
-## Aggregations
-
-```elixir
-def count_images_by_folder do
-  Image
-  |> group_by([i], i.folder_id)
-  |> select([i], {i.folder_id, count(i.id)})
   |> Repo.all()
-  |> Map.new()
-end
-
-def total_storage_used do
-  Image
-  |> select([i], sum(i.file_size))
-  |> Repo.one()
 end
 ```
 
@@ -299,7 +239,7 @@ create unique_index(:folders, [:name])
 
 ## Context Pattern
 
-Organize all database operations in context modules — **never call Repo from the web layer** (LiveViews, controllers).
+**Never call Repo from the web layer** (LiveViews, controllers) — all database operations belong in context modules.
 
 ```elixir
 defmodule MyApp.Media do
@@ -311,16 +251,10 @@ defmodule MyApp.Media do
     |> Image.changeset(attrs)
     |> Repo.insert()
   end
-
-  def update_image(%Image{} = image, attrs) do
-    image
-    |> Image.changeset(attrs)
-    |> Repo.update()
-  end
 end
 ```
 
-All standard CRUD functions (`list_*`, `get_*!`, `delete_*`) follow the same pattern. Controllers and LiveViews call context functions only — never `Repo` directly.
+All standard CRUD functions (`list_*`, `get_*!`, `update_*`, `delete_*`) follow the same pattern.
 
 ---
 
