@@ -5,7 +5,8 @@ tags: [atomic]
 license: MIT
 description: >
   Use when implementing caching in Elixir applications. Invoke before adding caching layers.
-  Covers Cachex setup, cache patterns, TTL, warmers, and distributed caching.
+  Configures Cachex instances, implements cache-aside and get-or-set patterns, sets TTL policies,
+  builds cache warmers, monitors cache statistics, and sets up distributed caching across nodes.
   Trigger words: Cachex, caching, cache, TTL, ETS, distributed cache, cache warmer.
 metadata:
   user-invocable: "true"
@@ -21,10 +22,20 @@ Cachex is a powerful caching library for Elixir with support for TTL, distribute
 1. **Use Cachex for application-level caching** — built on ETS with a rich feature set
 2. **Set appropriate TTL for cached data** — don't cache indefinitely unless data is immutable
 3. **Use cache warmers for expensive data** — pre-populate cache on startup
-4. **Handle cache misses gracefully** — always have a fallback to fetch fresh data
-5. **Monitor cache hit rates** — use telemetry to track cache effectiveness
-6. **Don't cache user-specific data without care** — consider cache key design
-7. **Use `Cachex.fetch/3` for get-or-set patterns** — atomic cache operations
+4. **Monitor cache hit rates** — use telemetry to track cache effectiveness
+5. **Use `Cachex.fetch/3` for get-or-set patterns** — atomic cache operations
+
+---
+
+## End-to-End Workflow
+
+Follow this sequence when adding caching to a feature:
+
+1. **Add dependency** — add `{:cachex, "~> 3.6"}` to `mix.exs` and run `mix deps.get`
+2. **Configure cache** — start a named Cachex instance in your application supervisor with appropriate limits and TTL
+3. **Implement get-or-set** — wrap data-fetching calls with `Cachex.fetch/3` to atomically cache results
+4. **Add invalidation** — call `Cachex.del/2` after mutating data; fall back to TTL expiry if deletion fails
+5. **Verify with stats** — enable `stats: true`, call `Cachex.stats/1` after exercising the code, and confirm `hit_rate` is non-zero
 
 ---
 
@@ -148,33 +159,21 @@ children = [
 
 ---
 
-## Distributed Caching
-
-```elixir
-# For distributed caching across nodes
-children = [
-  {Cachex,
-   name: :distributed_cache,
-   # Use a distributed backend
-   remote: MyApp.DistributedCache,
-   # Or use Cachex's built-in distribution
-   transactions: true}
-]
-
-# Cachex will automatically sync across nodes
-Cachex.put(:distributed_cache, "key", "value")
-```
-
----
-
 ## Cache Invalidation
 
 ```elixir
 defmodule MyApp.Accounts do
   def update_user(user, attrs) do
     with {:ok, updated_user} <- Repo.update(User.changeset(user, attrs)) do
-      # Invalidate cache
-      Cachex.del(:my_cache, "user:#{user.id}")
+      # Invalidate cache — if deletion fails, log and continue;
+      # stale data will expire via TTL rather than blocking the update
+      case Cachex.del(:my_cache, "user:#{user.id}") do
+        {:ok, _} ->
+          :ok
+
+        {:error, reason} ->
+          Logger.warning("Cache invalidation failed for user:#{user.id}: #{inspect(reason)}")
+      end
 
       {:ok, updated_user}
     end
@@ -198,7 +197,7 @@ end
 # Enable stats in cache configuration
 {Cachex, name: :my_cache, stats: true}
 
-# Get cache statistics
+# Get cache statistics — run this after exercising the cache to verify hit_rate > 0
 {:ok, stats} = Cachex.stats(:my_cache)
 
 IO.inspect(stats)
@@ -226,7 +225,6 @@ defmodule MyApp.CacheTelemetry do
   end
 
   def handle_event([:cachex, :command, :stop], measurements, metadata, _config) do
-    # Log cache operations
     Logger.info("Cache operation",
       command: metadata.command,
       key: metadata.key,
@@ -235,23 +233,6 @@ defmodule MyApp.CacheTelemetry do
     )
   end
 end
-```
-
----
-
-## Cache Key Design
-
-```elixir
-# Good cache keys
-"user:#{user.id}"                    # User by ID
-"user:#{user.id}:profile"           # User profile
-"posts:page:#{page}:per:#{per_page}" # Paginated posts
-"search:#{query_hash}"              # Search results (hash query)
-
-# Bad cache keys
-user                                # Entire struct (changes frequently)
-"posts"                             # Too broad (all posts)
-"#{query}"                          # Unhashed query (too long)
 ```
 
 ---
@@ -301,27 +282,3 @@ defmodule MyApp.AccountsTest do
   end
 end
 ```
-
----
-
-## Common Pitfalls
-
-❌ **Don't** cache indefinitely without TTL
-❌ **Don't** forget to invalidate cache on updates
-❌ **Don't** cache user-specific data without proper keys
-❌ **Don't** ignore cache hit rates — monitor effectiveness
-❌ **Don't** use ETS directly — use Cachex for features
-
-✅ **Do** use Cachex for application-level caching
-✅ **Do** set appropriate TTL for cached data
-✅ **Do** use cache warmers for expensive data
-✅ **Do** handle cache misses gracefully
-✅ **Do** monitor cache statistics
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **telemetry-essentials** | For cache monitoring |
-| **otp-essentials** | For understanding ETS and process-based caching |
-| **benchee-profiling** | For measuring cache effectiveness |
