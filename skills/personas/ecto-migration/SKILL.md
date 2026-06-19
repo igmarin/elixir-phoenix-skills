@@ -25,7 +25,7 @@ Orchestrates safe Ecto migrations with idempotent cycles, rollback planning, and
 ### Phase 1: Migration Planning
 
 **Steps:**
-1. **Define the change** — What schema modification is needed?
+1. **Define the change** — Identify the exact schema modification required.
 2. **Assess lock behavior** — Does the change acquire an ACCESS EXCLUSIVE lock? If so, how long will it hold on the target table size?
 3. **Plan rollback** — Define the exact inverse operation for `down/0`.
 4. **Classify the change:**
@@ -244,41 +244,27 @@ When completing a migration, output MUST include:
 ## Error Recovery
 
 **Migration fails in production:**
-1. If the migration is idempotent and reversible, run `mix ecto.rollback`.
-2. Check error message — common causes: constraint violations, data type mismatches, lock timeouts.
-3. Fix the migration, test locally, redeploy.
+1. Run `mix ecto.rollback` if the migration is reversible.
+2. Diagnose from the error message: common causes are constraint violations, data type mismatches, and lock timeouts.
+3. Fix locally, rerun the idempotent cycle, then redeploy.
 
 **Rollback fails:**
-1. Check that `down/0` reverses every operation in `up/0`.
-2. For `change/0` migrations, Ecto auto-generates the reverse; manual `up`/`down` must keep them in sync.
-3. If rollback is truly irreversible, document it and plan a forward-only fix.
+1. Verify `down/0` reverses every operation in `up/0` in the correct order.
+2. For `change/0` migrations, Ecto auto-generates the reverse; manual `up`/`down` must stay in sync.
+3. If rollback is truly irreversible, document it and plan a forward-only fix migration.
 
 **Lock timeout on large table:**
-1. For `ALTER TABLE ... ADD COLUMN NOT NULL DEFAULT ...`, consider adding the column as nullable first, then backfill, then enforce NOT NULL.
-2. For index creation, always use `concurrently: true` and `@disable_ddl_transaction true` on large tables.
+1. Add the column as nullable first, backfill, then enforce NOT NULL (expand-contract).
+2. Always use `concurrently: true` and `@disable_ddl_transaction true` for index creation on large tables.
 3. Schedule during low-traffic windows.
 
 ---
 
 ## Anti-Patterns to Avoid
 
-- **Schema change + data backfill in same migration** — separates concerns, simplifies rollback
-- **Dropping columns without removing code references first** — causes runtime errors
-- **Adding NOT NULL without default** — causes migration failure on existing rows
-- **Creating index without `concurrently` on large tables** — blocks writes
-- **No `down/0` defined** — always define a rollback path, even for forward-only fixes
-- **Skipping idempotent cycle test** — always test migrate→rollback→migrate
-
----
-
-## Integration
-
-| Predecessor | This Persona | Successor |
-|-------------|--------------|----------|
-| ecto-essentials | ecto-migration | quality |
-| feature request | ecto-migration | deployment-gotchas |
-| None (standalone) | ecto-migration | PR submission |
-
-**Use `ecto-essentials` alone** for basic migration patterns and conventions.
-
-**Use `ecto-migration` persona** for production-safe multi-step migration planning.
+- **Schema change + data backfill in same migration**
+- **Dropping columns without removing code references first**
+- **Adding NOT NULL without default**
+- **Creating index without `concurrently` on large tables**
+- **No `down/0` defined**
+- **Skipping idempotent cycle test**

@@ -37,10 +37,9 @@ Orchestrates robust background job implementation with TDD discipline, proper re
 
 **HARD GATE — Job Design Complete:**
 - [ ] Purpose, trigger, input/output defined
-- [ ] Idempotency strategy specified
+- [ ] Idempotency strategy specified (unique key / status check / conditional guard)
 - [ ] All errors classified as transient/permanent
 - [ ] Queue and timeout values chosen
-- [ ] Unique job key or deduplication strategy
 
 **If gate fails:** Clarify requirements before implementation.
 
@@ -61,7 +60,7 @@ Orchestrates robust background job implementation with TDD discipline, proper re
 **HARD GATE — Tests Pass:**
 - [ ] Tests exist and run
 - [ ] Tests failed before implementation
-- [ ] All tests pass after implementation
+- [ ] All tests pass after implementation (including idempotency scenario)
 - [ ] Full suite green
 
 **Example job test skeleton** (for `SendWelcomeEmail` worker):
@@ -106,7 +105,7 @@ end
 3. Set execution timeout at the job level.
 4. Wire telemetry events for monitoring (see **infrastructure/telemetry-essentials**).
 
-**Complete job implementation:**
+**Key implementation pattern:**
 ```elixir
 defmodule MyApp.Workers.SendWelcomeEmail do
   use Oban.Worker,
@@ -114,68 +113,26 @@ defmodule MyApp.Workers.SendWelcomeEmail do
     max_attempts: 5,
     unique: [period: 300]
 
-  alias MyApp.Accounts
-  alias MyApp.Emails
-
-  require Logger
-
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"user_id" => user_id}}) do
     user = Accounts.get_user!(user_id)
 
     # Idempotency guard
-    if user.welcome_email_sent_at do
-      Logger.info("Welcome email already sent to user #{user_id}")
-      return :ok
-    end
+    if user.welcome_email_sent_at, do: return(:ok)
 
     case Emails.send_welcome(user) do
-      :ok ->
-        Accounts.mark_welcome_sent(user)
-        Logger.info("Welcome email sent to user #{user_id}")
-        :ok
-
-      {:error, :rate_limited} ->
-        Logger.warning("Rate limited sending welcome email to user #{user_id}")
-        {:error, "Rate limited — will retry"}
-
-      {:error, :invalid_email} ->
-        Logger.error("Invalid email for user #{user_id} — discarding")
-        Accounts.mark_welcome_failed(user, :invalid_email)
-        :discard
-
-      {:error, reason} ->
-        Logger.error("Failed to send welcome email to user #{user_id}: #{inspect(reason)}")
-        {:error, reason}
+      :ok              -> Accounts.mark_welcome_sent(user); :ok
+      {:error, :rate_limited}  -> {:error, "Rate limited — will retry"}
+      {:error, :invalid_email} -> Accounts.mark_welcome_failed(user, :invalid_email); :discard
+      {:error, reason}         -> {:error, reason}
     end
   end
 end
 ```
 
-**Telemetry hook:**
-```elixir
-# In your Application module or a telemetry supervisor
-:telemetry.attach(
-  "oban-job-handler",
-  [:oban, :job, :stop],
-  fn _event, _measurements, metadata, _config ->
-    duration = metadata.duration
-    job_type = metadata.worker
-    state = metadata.state
-
-    # Emit to your metrics backend
-    :telemetry.execute([:my_app, :oban, :job], %{duration: duration}, %{
-      worker: job_type,
-      state: state
-    })
-  end,
-  nil
-)
-```
-
 **HARD GATE — Retry Strategy Configured:**
 - [ ] `max_attempts` set with appropriate backoff
-- [ ] Permanent errors return `:discard` or `{:error, reason}` for retry
+- [ ] Permanent errors return `:discard`; transient errors return `{:error, reason}`
 - [ ] Timeout configured at job level
 - [ ] Telemetry/observability wired
 
@@ -190,14 +147,12 @@ end
 **Steps:**
 1. Test that transient errors return `{:error, ...}` (Oban will retry).
 2. Test that permanent errors return `:discard` (Oban will not retry).
-3. Test idempotency: running the job twice produces no duplicate side effects.
-4. Verify telemetry events fire on success and failure paths.
-5. Confirm monitoring dashboard or alert is configured for queue depth.
+3. Verify telemetry events fire on success and failure paths.
+4. Confirm monitoring dashboard or alert is configured for queue depth.
 
 **HARD GATE — Failure Scenarios Tested:**
 - [ ] Transient error → returns `{:error, ...}` (Oban retries)
 - [ ] Permanent error → returns `:discard` (not re-enqueued)
-- [ ] Idempotency → no duplicate side effects
 - [ ] Error logging assertions pass
 - [ ] Performance acceptable under expected load
 
@@ -207,12 +162,8 @@ end
 
 ## HARD GATE: Production Readiness
 
-**Never deploy a background job without:**
-- Idempotency guard implemented and tested
-- All transient errors return `{:error, reason}`
-- All permanent errors return `:discard`
-- `max_attempts` configured
-- Failure scenario tests passing
+**Never deploy until all four phase gates above are green.** Quick cross-check:
+- Idempotency guard implemented and tested (Phase 1 strategy → Phase 2 TDD)
 - Telemetry and error-logging wired
 - Queue timeout configured
 
@@ -220,14 +171,12 @@ end
 
 **Job fails repeatedly in production:**
 1. Check Oban dashboard for retry counts and error reasons.
-2. Review logs for error class and stack trace.
-3. Classify error (transient vs. permanent) and adjust handling.
-4. Fix root cause; redeploy.
+2. Classify error (transient vs. permanent) and adjust handling.
+3. Fix root cause; redeploy.
 
 **Queue backs up:**
-1. Scale Oban queue concurrency.
-2. Promote critical jobs to a higher-priority queue.
-3. Optimise job execution time or batch size.
+1. Scale Oban queue concurrency or promote jobs to a higher-priority queue.
+2. Optimise job execution time or batch size.
 
 ## Output Style
 
@@ -238,19 +187,15 @@ When completing a background job implementation, output MUST include:
 
 ## Design
 - Worker module: <path>
-- Purpose: <one-line description>
 - Idempotency strategy: <unique constraint / status check / conditional guard>
 - Error classification: transient (<list>) / permanent (<list>)
 
 ## TDD
-- Test: <test file path>
 - RED: <failure message confirming job behavior missing>
 - GREEN: <test passes after implementation>
 
 ## Retry Configuration
-- max_attempts: <n>
-- Queue: <queue name>
-- Uniqueness: <period / fields>
+- max_attempts: <n>, Queue: <name>, Uniqueness: <period/fields>
 - Discard conditions: <list>
 
 ## Failure Scenarios Tested
@@ -260,7 +205,6 @@ When completing a background job implementation, output MUST include:
 
 ## Monitoring
 - Telemetry events: <list>
-- Error logging: Logger.error configured
 - Queue depth alerts: <configured threshold>
 ```
 

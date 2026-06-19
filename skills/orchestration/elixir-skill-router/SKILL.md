@@ -30,16 +30,16 @@ metadata:
 
 ```text
 Non-negotiable: no implementation code until a test exists, runs, and fails for the right reason (feature missing, not config/syntax).
-ALWAYS identify the matching skill and name it explicitly as the next skill to use before responding further (see Output Style for the required format).
+For all routing format requirements, see Output Style below.
 ```
 
 ## Core Process
 
-Triages and decomposes any Elixir/Phoenix request into ordered sub-tasks, then delegates to the correct specialized skill.
-
-When a task arrives, identify the matching skill from the table below and route to it using the format defined in **Output Style** before responding further.
+Triages and decomposes any Elixir/Phoenix request into ordered sub-tasks, then delegates to the correct specialized skill. Identify the matching skill from the catalog below and route to it using the format defined in **Output Style**.
 
 ### Core Skills Catalog
+
+The eight most-used skills are listed here. For the full catalog of all available skills, see `SKILLS_CATALOG.md`.
 
 | Skill | Use when... | Notes |
 | ----- | ----------- | ----- |
@@ -51,30 +51,6 @@ When a task arrives, identify the matching skill from the table below and route 
 | **oban-essentials** | Background job processing, job queues | Async work |
 | **code-quality** | Refactoring, duplication detection, complexity | Quality gate before PR |
 | **security-essentials** | Security review, input validation, XSS/CSRF | Security audit |
-| **phoenix-scopes** | Phoenix 1.8+ Scope-based auth | New project auth |
-| **phoenix-liveview-auth** | Phoenix 1.7 current_user auth, on_mount hooks | Legacy auth |
-| **liveview-streams** | Large collections in LiveView | Performance |
-| **typespec-dialyzer** | @spec, @type, dialyzer configuration | Type safety |
-| **property-based-testing** | StreamData, invariants across random inputs | Advanced testing |
-| **credo-config** | Credo configuration, custom rules | Linting setup |
-| **phoenix-channels-essentials** | WebSocket channels | Real-time |
-| **phoenix-pubsub-patterns** | Broadcast/subscribe, real-time updates | PubSub |
-| **phoenix-json-api** | JSON REST endpoints | API design |
-| **phoenix-uploads** | File uploads, attachment handling | Uploads |
-| **phoenix-auth-customization** | Custom auth flows, OAuth | Auth extensions |
-| **phoenix-authorization-patterns** | Role-based access, policy checks | Authorization |
-| **ecto-changeset-patterns** | Complex validations, custom changesets | Advanced Ecto |
-| **ecto-nested-associations** | cast_assoc, Ecto.Multi, nested forms | Relationships |
-| **deployment-gotchas** | Releases, production config | Deploy |
-| **telemetry-essentials** | Metrics, instrumentation | Observability |
-| **req-http-client** | External API calls | HTTP |
-| **swoosh-emails** | Email sending | Emails |
-| **gettext-i18n** | Translations, locale | I18n |
-| **broadway-data-pipelines** | Stream processing, ETL | Data pipelines |
-| **ash-framework** | Ash resource definitions, domains | Framework choice |
-| **benchee-profiling** | Benchmarking, comparison | Performance |
-| **cachex-caching** | Caching strategies | Caching |
-| **mix-tasks-generators** | Custom Mix tasks | Tooling |
 
 ### Skill Priority
 
@@ -85,6 +61,46 @@ Priority: TDD → Planning → Implementation → Quality → Review.
 ```
 
 **Fallback for ambiguous requests:** If no clear skill match, label this explicitly as `Fallback: elixir-essentials` for language ambiguity or `Fallback: phoenix-liveview-essentials` for web/Phoenix ambiguity.
+
+### Decomposition Examples
+
+The following examples show how a complex user request is broken into ordered sub-tasks with explicit skill assignments.
+
+**Example 1 — "I need to add user notifications to my Phoenix app. Users should receive an email when a job completes, and I want a live counter on the dashboard."**
+
+Decomposition:
+1. **Scope check** — request touches background jobs (Oban), email delivery, LiveView UI, and the data layer.
+2. **Sub-tasks in priority order**:
+   - `skills/testing/testing-essentials` — write failing tests for job completion callback and email dispatch first (TDD gate).
+   - `skills/infrastructure/oban-essentials` — implement the job and its on-completion hook.
+   - `skills/fundamentals/elixir-essentials` — implement the mailer module.
+   - `skills/database/ecto-essentials` — add the `notifications` schema and migration.
+   - `skills/phoenix/phoenix-liveview-essentials` — wire the live counter into the dashboard LiveView.
+   - `skills/quality/code-quality` — quality gate before PR.
+3. **Routing statement**:
+```text
+Next skill: skills/testing/testing-essentials
+Priority: TDD → oban-essentials → elixir-essentials → ecto-essentials → phoenix-liveview-essentials → code-quality.
+
+This request spans jobs, email, data, and LiveView. Starting with failing tests for the job completion callback.
+```
+
+**Example 2 — "I'm not sure where to start — I need to refactor this GenServer so it doesn't crash under load, and also review the authentication logic for security issues."**
+
+Decomposition:
+1. **Scope check** — request touches OTP concurrency, security review, and general refactoring.
+2. **Sub-tasks in priority order**:
+   - `skills/security/security-essentials` — audit authentication logic first (security always precedes refactoring).
+   - `skills/testing/testing-essentials` — write a failing test that reproduces the crash scenario (TDD gate for the bug fix).
+   - `skills/fundamentals/otp-essentials` — refactor the GenServer with the reproduction test in place.
+   - `skills/quality/code-quality` — final quality pass.
+3. **Routing statement**:
+```text
+Next skill: skills/security/security-essentials
+Priority: security-essentials > testing-essentials > otp-essentials > code-quality.
+
+Authentication touches security boundaries, so we audit that first before addressing the GenServer crash.
+```
 
 ### Typical Workflows
 
@@ -105,43 +121,30 @@ skills/phoenix/phoenix-liveview-essentials → skills/database/ecto-essentials �
 **Background job:**
 skills/infrastructure/oban-essentials → skills/testing/testing-essentials → skills/quality/code-quality
 
-## Extended Resources
-
-- [assets/skill-map.json](assets/skill-map.json) — Schema of all skill triggers and disambiguation rules.
-- Skills organized by category in `skills/fundamentals/`, `skills/phoenix/`, `skills/database/`, etc.
-
 ## Output Style
 
-1. **Routing statement**: Make the routing statement the first substantive line of every response. For a single skill:
+**Routing statement (required on every response):** The routing statement MUST be the first substantive line of every response, before any analysis or implementation.
 
-   ```text
-   Next skill: skills/testing/testing-essentials
+For a single skill:
 
-   This is a feature request. I will start by writing a failing test.
-   ```
+```text
+Next skill: skills/testing/testing-essentials
 
-   When multiple skills apply, immediately follow the routing line with one concise priority/chain statement before any analysis or implementation:
+This is a feature request. I will start by writing a failing test.
+```
 
-   ```text
-   Next skill: skills/security/security-essentials
-   Priority: security-essentials > code-quality; Chain: security-essentials then code-quality.
+When multiple skills apply, immediately follow the routing line with one concise priority/chain statement:
 
-   This pull request contains custom input validation, so we will perform a security review first followed by code quality review.
-   ```
+```text
+Next skill: skills/security/security-essentials
+Priority: security-essentials > code-quality; Chain: security-essentials then code-quality.
 
-2. **Language**: Generated artifacts and output MUST be in English unless explicitly requested otherwise.
+This pull request contains custom input validation, so we will perform a security review first followed by code quality review.
+```
+
+**Language**: Generated artifacts and output MUST be in English unless explicitly requested otherwise.
 
 ---
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| None (entry point) | elixir-skill-router | testing-essentials |
-| None (entry point) | elixir-skill-router | phoenix-liveview-essentials |
-| None (entry point) | elixir-skill-router | ecto-essentials |
-| user request | elixir-skill-router | tdd (persona) |
-| user request | elixir-skill-router | quality (persona) |
 
 **Use `elixir-essentials` alone** if you only need Elixir language guidance without orchestration.
 

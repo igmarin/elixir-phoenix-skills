@@ -20,6 +20,8 @@ metadata:
 
 Orchestrates systematic code quality checks, safe refactoring, and documentation updates across three phases. Use this instead of individual refactoring or documentation skills when full production-readiness is required end-to-end.
 
+> **External dependencies:** This skill references sub-skills (`quality/code-quality`, `quality/credo-config`, `testing/testing-essentials`, `fundamentals/typespec-dialyzer`) as external bundle files. Ensure these are available in your skill library before invoking.
+
 ## Complexity Thresholds
 
 | Metric | Threshold | Action |
@@ -114,28 +116,10 @@ Plus: `@doc` and `@spec` annotations on all public APIs.
 
 ## Output Format
 
-```markdown
-# Quality Report — [Date]
-
-## Conventions Check
-### Critical Violations (Must Fix)
-- [CRITICAL] lib/my_app/orders.ex:42 — Function `process_payment` has 35 lines (> 20 threshold)
-- [CRITICAL] lib/my_app_web/live/user_live.ex:28 — Module has 520 lines (> 400 threshold)
-
-### Warning Violations (Should Fix)
-- [WARNING] lib/my_app/services.ex:17 — Function `calculate_discount` has 6 parameters (> 4 threshold)
-
-### Suggestion Violations (Nice to Have)
-- [SUGGESTION] test/my_app/order_test.exs:12 — Duplicate setup block, extract to private function
-
-## Refactoring
-- [x] / [ ] Required (threshold exceeded)
-- Characterization tests added, functions extracted, all tests passing
-
-## Documentation
-- @doc coverage: 87% (improved from 65%)
-- @spec coverage: 92% (improved from 70%)
-```
+Produce a `# Quality Report — [Date]` with three sections:
+- **Conventions Check**: list CRITICAL / WARNING / SUGGESTION violations with file path, line, and description.
+- **Refactoring**: checked/unchecked required flag, summary of characterization tests added and functions extracted.
+- **Documentation**: @doc and @spec coverage percentages before and after.
 
 ---
 
@@ -144,35 +128,14 @@ Plus: `@doc` and `@spec` annotations on all public APIs.
 **Credo violations after refactoring:**
 1. Run `mix format` for auto-fixable formatting issues.
 2. Run `mix credo --strict` to see all violations.
-3. Fix violations manually — refactoring may have introduced new issues.
+3. Fix violations manually.
 
 **Characterization test fails after refactoring:**
-1. The refactoring changed behavior — this is a regression, not a test problem.
-2. Revert the refactoring change.
-3. Re-examine the extraction — ensure the new function/module preserves the exact contract.
-4. Try a smaller, more focused refactoring step.
+1. Revert the refactoring change.
+2. Re-examine the extraction — ensure the new function/module preserves the exact contract.
+3. Try a smaller, more focused refactoring step.
 
 **Dialyzer errors after refactoring:**
 1. Recompile with `mix compile --force`.
 2. Run `mix dialyzer` to identify type inconsistencies.
 3. Update `@spec` annotations to match the refactored code.
-
----
-
-## Anti-Patterns to Avoid
-
-- **Refactoring without tests:** NEVER refactor without characterization tests passing first.
-- **Fixing tests to match refactoring:** If a test fails after refactoring, the refactoring broke behavior — fix the code, not the test.
-- **Scope creep during quality pass:** Don't add features during a quality review — only fix conventions, refactor, and document.
-- **Ignoring Credo warnings:** Every Credo violation MUST be assessed — false positives should be annotated, not silently ignored.
-- **Skipping dialyzer:** Type errors caught by dialyzer are real bugs.
-
----
-
-## Integration
-
-| Predecessor | This Persona | Successor |
-|-------------|--------------|----------|
-| tdd | quality | PR submission |
-| code-quality | quality | review |
-| None (standalone) | quality | PR submission |

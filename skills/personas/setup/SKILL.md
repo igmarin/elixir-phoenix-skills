@@ -59,7 +59,7 @@ cp .env.example .env 2>/dev/null || true
 
 **Proceed only after environment check passes.**
 
-**Canonical shared job preamble** (`SHARED_PREAMBLE` — paste verbatim at the start of every job's `steps`; both ci.yml and cd.yml use this block):
+**Canonical shared job preamble** (`SHARED_PREAMBLE` — prepend verbatim to every job's `steps` in both ci.yml and cd.yml, adjusting `elixir-version` to match `.tool-versions`):
 ```yaml
 steps:
   - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
@@ -71,7 +71,7 @@ steps:
 
 1. **Configure CI pipeline** — write to `.github/workflows/ci.yml`.
 
-   Start each job with `SHARED_PREAMBLE`, adjusting `elixir-version` to `.tool-versions`, then add:
+   Start the job with `SHARED_PREAMBLE`, then add:
 ```yaml
       - run: mix deps.get
       - run: mix compile --warnings-as-errors
@@ -83,14 +83,14 @@ steps:
 
 2. **Configure CD pipeline** — write to `.github/workflows/cd.yml`.
 
-   Fill in `DEPLOY_CLI` (e.g., `flyctl`, `gigalixir`, custom Docker) and the appropriate secret names before writing the file. Each job begins with `SHARED_PREAMBLE`:
+   Fill in `DEPLOY_CLI` (e.g., `flyctl`, `gigalixir`, custom Docker) and the appropriate secret names before writing the file. Each job begins with `SHARED_PREAMBLE` as defined above:
 ```yaml
 jobs:
   deploy-staging:
     runs-on: ubuntu-latest
     environment: staging
     steps:
-      # --- Insert SHARED_PREAMBLE here ---
+      # SHARED_PREAMBLE — prepend as defined above
       - run: mix deps.get
       - run: mix ecto.migrate
         env:
@@ -103,7 +103,7 @@ jobs:
     environment: production
     needs: deploy-staging
     steps:
-      # --- Insert SHARED_PREAMBLE here ---
+      # SHARED_PREAMBLE — prepend as defined above
       - run: mix deps.get
       - run: mix ecto.migrate
         env:
@@ -118,7 +118,7 @@ jobs:
 
 **Verify everything works end-to-end:**
 
-Confirm the Phase 1 HARD GATE checklist is still fully passing, then additionally verify:
+Confirm every item in the Phase 1 HARD GATE checklist is still fully passing, then additionally verify:
 
 ```bash
 # Start Phoenix server
@@ -128,7 +128,7 @@ mix phx.server
 act push
 ```
 
-**Write `SETUP_CHECKLIST.md`** with the final state of all HARD GATE items (see Phase 1) plus:
+**Write `SETUP_CHECKLIST.md`** recording the final state of all Phase 1 HARD GATE items plus:
 - [ ] CI configured
 - [ ] Secrets configured
 - [ ] Phoenix server starts and serves pages
