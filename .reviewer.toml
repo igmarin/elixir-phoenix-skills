@@ -9,9 +9,8 @@ max_tokens = 4096
 # Custom review prompt is at .github/review-prompt.md
 # Loaded automatically via --prompt-file (set in CI workflow and pre-commit hook)
 
-[chunking]
-head_lines = 400
-tail_lines = 400
+chunk_head_lines = 400
+chunk_tail_lines = 400
 
 [circuit_breaker]
 failure_threshold = 5

@@ -16,15 +16,20 @@ metadata:
 
 Broadway is a framework for building data ingestion and processing pipelines in Elixir.
 
-## RULES — Follow these with no exceptions
+---
 
-1. **Use Broadway for data pipelines** — not raw GenStage, unless you need custom topology
-2. **Define producers, processors, and batchers** — separate concerns clearly
-3. **Handle failures gracefully** — use `:on_success` and `:on_failure` callbacks
-4. **Configure concurrency carefully** — match processor count to CPU cores
-5. **Use batchers for database writes** — batch inserts are much faster than individual inserts
-6. **Test with `Broadway.Test`** — use the built-in test helpers
-7. **Monitor pipeline health** — use telemetry events for observability
+## End-to-End Setup Workflow
+
+Follow these steps in order when building a new Broadway pipeline:
+
+1. **Add dependencies** — add `broadway` (and any producer library) to `mix.exs`, then run `mix deps.get`
+2. **Define the pipeline module** — implement `handle_message/3` and `handle_batch/4` callbacks
+3. **Add to supervision tree** — include the pipeline module in `application.ex`
+4. **Verify producer connectivity** — start the app and confirm the producer connects (check logs for errors)
+5. **Test with a single message** — use `Broadway.Test` helpers before scaling concurrency
+6. **Scale concurrency** — tune processor and batcher concurrency based on CPU cores and throughput targets
+7. **Validate error handling** — intentionally send a bad message and confirm `handle_failed/2` fires correctly
+8. **Enable observability** — wire up telemetry events and optionally add `broadway_dashboard`
 
 ---
 
@@ -76,14 +81,12 @@ defmodule MyApp.MessagePipeline do
 
   @impl true
   def handle_batch(:default, messages, _, _) do
-    # Batch insert into database
     data = Enum.map(messages, & &1.data)
     MyApp.Repo.insert_all(MyApp.Record, data)
     messages
   end
 
   def handle_batch(:s3, messages, _, _) do
-    # Upload to S3
     Enum.each(messages, fn message ->
       S3.upload(message.data)
     end)
@@ -91,9 +94,7 @@ defmodule MyApp.MessagePipeline do
   end
 
   defp process_data(data) do
-    # Transform data
-    data
-    |> Map.put(:processed_at, DateTime.utc_now())
+    Map.put(data, :processed_at, DateTime.utc_now())
   end
 end
 ```
@@ -111,40 +112,6 @@ def start(_type, _args) do
   ]
 
   Supervisor.start_link(children, strategy: :one_for_one)
-end
-```
-
----
-
-## Custom Producers
-
-```elixir
-defmodule MyApp.CustomProducer do
-  use GenStage
-
-  def start_link(opts) do
-    GenStage.start_link(__MODULE__, opts)
-  end
-
-  @impl true
-  def init(_opts) do
-    {:producer, %{queue: :queue.new()}}
-  end
-
-  @impl true
-  def handle_demand(demand, state) when demand > 0 do
-    # Fetch messages from your source
-    messages = fetch_messages(demand)
-
-    {:noreply, messages, state}
-  end
-
-  defp fetch_messages(count) do
-    # Fetch from database, API, file, etc.
-    Enum.map(1..count, fn i ->
-      %{id: i, data: "message_#{i}"}
-    end)
-  end
 end
 ```
 
@@ -169,20 +136,15 @@ defmodule MyApp.MessagePipeline do
 
   @impl true
   def handle_failed(messages, _context) do
-    # Handle failed messages
     Enum.each(messages, fn message ->
       Logger.error("Message failed: #{inspect(message.data)}")
-
-      # Send to dead letter queue
       DeadLetterQueue.send(message.data, message.status.reason)
     end)
-
     messages
   end
 
   @impl true
-  def handle_batch(:default, messages, batch_info, context) do
-    # Handle batch errors
+  def handle_batch(:default, messages, _batch_info, _context) do
     case batch_insert(messages) do
       :ok ->
         messages
@@ -197,56 +159,70 @@ end
 
 ---
 
-## Rate Limiting
+## Custom Producers
+
+Use a raw `GenStage` producer when Broadway's built-in producer modules don't fit your source (database polling, custom APIs, files).
 
 ```elixir
-defmodule MyApp.RateLimitedPipeline do
-  use Broadway
+defmodule MyApp.CustomProducer do
+  use GenStage
 
-  def start_link(_opts) do
-    Broadway.start_link(__MODULE__,
-      name: __MODULE__,
-      producer: [
-        module: {MyApp.Producer, []},
-        rate_limiting: [
-          allowed_messages: 100,
-          interval: 1000  # 100 messages per second
-        ]
-      ],
-      processors: [default: [concurrency: 10]],
-      batchers: [default: [batch_size: 50]]
-    )
+  def start_link(opts), do: GenStage.start_link(__MODULE__, opts)
+
+  @impl true
+  def init(_opts), do: {:producer, %{queue: :queue.new()}}
+
+  @impl true
+  def handle_demand(demand, state) when demand > 0 do
+    messages = fetch_messages(demand)
+    {:noreply, messages, state}
+  end
+
+  defp fetch_messages(count) do
+    Enum.map(1..count, fn i -> %{id: i, data: "message_#{i}"} end)
   end
 end
 ```
 
 ---
 
+## Rate Limiting
+
+```elixir
+Broadway.start_link(__MODULE__,
+  name: __MODULE__,
+  producer: [
+    module: {MyApp.Producer, []},
+    rate_limiting: [
+      allowed_messages: 100,
+      interval: 1000  # 100 messages per second
+    ]
+  ],
+  processors: [default: [concurrency: 10]],
+  batchers: [default: [batch_size: 50]]
+)
+```
+
+---
+
 ## Testing
+
+Use `Broadway.Test` helpers to exercise message and batch handling without a live producer.
 
 ```elixir
 defmodule MyApp.MessagePipelineTest do
   use ExUnit.Case
-
   import Broadway.Test
 
   test "processes messages successfully" do
     message = %Broadway.Message{data: %{id: 1, value: "test"}}
-
-    [processed_message] =
-      handle_message(MyApp.MessagePipeline, message)
-
+    [processed_message] = handle_message(MyApp.MessagePipeline, message)
     assert processed_message.data.processed_at
   end
 
   test "handles batch processing" do
-    messages = [
-      %Broadway.Message{data: %{id: 1}},
-      %Broadway.Message{data: %{id: 2}}
-    ]
-
+    messages = [%Broadway.Message{data: %{id: 1}}, %Broadway.Message{data: %{id: 2}}]
     processed = handle_batch(MyApp.MessagePipeline, :default, messages)
-
     assert length(processed) == 2
   end
 end
@@ -258,38 +234,8 @@ end
 
 ```elixir
 # router.ex
-import BroadwayDashboard
-
-scope "/" do
-  pipe_through :browser
-
-  live_dashboard "/dashboard",
-    additional_pages: [
-      broadway: {BroadwayDashboard, pipelines: [MyApp.MessagePipeline]}
-    ]
-end
+live_dashboard "/dashboard",
+  additional_pages: [
+    broadway: {BroadwayDashboard, pipelines: [MyApp.MessagePipeline]}
+  ]
 ```
-
----
-
-## Common Pitfalls
-
-❌ **Don't** use raw GenStage unless you need custom topology
-❌ **Don't** set processor concurrency too high — match CPU cores
-❌ **Don't** skip error handling — messages will be lost
-❌ **Don't** do database writes in processors — use batchers
-❌ **Don't** forget to add pipeline to supervision tree
-
-✅ **Do** use Broadway for data pipelines
-✅ **Do** separate processors and batchers
-✅ **Do** handle failures with `handle_failed`
-✅ **Do** use batchers for database writes
-✅ **Do** monitor with telemetry and LiveDashboard
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **oban-essentials** | When choosing between Oban and Broadway |
-| **otp-essentials** | For understanding GenStage/OTP patterns |
-| **telemetry-essentials** | For pipeline observability |

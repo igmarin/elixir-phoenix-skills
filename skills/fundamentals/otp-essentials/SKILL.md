@@ -32,6 +32,7 @@ Use this skill before writing ANY GenServer, Supervisor, Task, or Agent module.
 7. **Supervisors own process lifecycle** — never start unsupervised long-running processes
 8. **Handle `:DOWN` messages** from monitored processes — don't let them go unhandled
 9. **Use `Task.Supervisor`** for fire-and-forget supervised work
+10. **Prefer ETS over a bottleneck GenServer** for shared read-heavy state — one GenServer serializes all access
 
 ---
 
@@ -125,7 +126,7 @@ def handle_call(:get_count, _from, state) do
   {:reply, state.count, state}
 end
 
-# cast — asynchronous, fire-and-forget (use for writes, side effects)
+# cast — asynchronous (use for writes, side effects)
 def increment(server \\ __MODULE__) do
   GenServer.cast(server, :increment)
 end
@@ -136,9 +137,7 @@ def handle_cast(:increment, state) do
 end
 ```
 
-### handle_info for External Messages
-
-Use `handle_info` for messages not sent via `call`/`cast` — timers, monitors, PubSub, etc.
+### handle_info
 
 ```elixir
 @impl true
@@ -198,8 +197,6 @@ end
 
 ### DynamicSupervisor for Runtime Children
 
-Use when you need to start processes on demand, not at boot.
-
 ```elixir
 defmodule MyApp.RoomSupervisor do
   use DynamicSupervisor
@@ -224,6 +221,27 @@ defmodule MyApp.RoomSupervisor do
 end
 ```
 
+### Supervision Tree Setup Workflow
+
+When wiring up a new supervision tree, follow this sequence:
+
+1. **Define children** — list in dependency order (dependencies first)
+2. **Choose strategy** — `one_for_one` unless children are interdependent
+3. **Add to `Application.start/2`** — or to a parent supervisor's child list
+4. **Verify startup** — run `mix run --no-halt` or `iex -S mix` and confirm no crashes
+5. **Inspect with Observer** — `:observer.start()` in IEx to view the live supervision tree
+6. **Check child counts** — `Supervisor.count_children(MyApp.Supervisor)` confirms expected active/specs counts
+7. **Test restart behavior** — `Process.exit(pid, :kill)` and confirm the supervisor restarts the child
+
+```elixir
+# Quick verification in IEx
+iex> Supervisor.which_children(MyApp.Supervisor)
+# [{MyApp.Cache, #PID<0.200.0>, :worker, [MyApp.Cache]}, ...]
+
+iex> Supervisor.count_children(MyApp.Supervisor)
+# %{active: 3, specs: 3, supervisors: 0, workers: 3}
+```
+
 ---
 
 ## Tasks
@@ -242,13 +260,12 @@ posts = Task.await(task2, 5_000)
 ### async_stream for Batch Processing
 
 ```elixir
-# Process items concurrently with bounded concurrency
 user_ids
 |> Task.async_stream(&fetch_user/1, max_concurrency: 4, timeout: 10_000)
 |> Enum.map(fn {:ok, result} -> result end)
 ```
 
-### Supervised Tasks (fire-and-forget)
+### Supervised Tasks
 
 ```elixir
 # Add to your supervision tree
@@ -263,8 +280,6 @@ end)
 ---
 
 ## Agent
-
-Use Agent for simple state when GenServer is overkill.
 
 ```elixir
 defmodule MyApp.Counter do
@@ -312,25 +327,73 @@ end
 
 ---
 
-## Common Anti-Patterns
+## ETS for Shared Read-Heavy State
 
-❌ **Don't** create bottleneck GenServer (all requests through one process) — use ETS or partition work
-❌ **Don't** create god processes (one GenServer doing everything) — split into focused processes
-❌ **Don't** use unmonitored `Task.async` without await — caller loses track of work
-❌ **Don't** block the caller unnecessarily with `call` when `cast` would suffice
-❌ **Don't** start unsupervised long-running processes
-❌ **Don't** use atoms for dynamic process names — use Registry
+A GenServer owns the ETS table (ensuring cleanup on crash) while reads bypass it entirely.
 
-✅ **Do** wrap GenServer calls behind a public API
-✅ **Do** keep `init/1` fast — use `handle_continue`
-✅ **Do** use `Task.Supervisor` for fire-and-forget work
-✅ **Do** name processes via Registry
-✅ **Do** handle `:DOWN` messages from monitored processes
+```elixir
+defmodule MyApp.EtsCache do
+  use GenServer
+
+  @table :my_app_cache
+
+  # --- Public API ---
+
+  def start_link(opts) do
+    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
+  end
+
+  # Reads go directly to ETS — no GenServer roundtrip
+  def get(key) do
+    case :ets.lookup(@table, key) do
+      [{^key, value}] -> {:ok, value}
+      [] -> {:error, :not_found}
+    end
+  end
+
+  # Writes go through the GenServer to serialize mutations
+  def put(key, value) do
+    GenServer.call(__MODULE__, {:put, key, value})
+  end
+
+  def delete(key) do
+    GenServer.call(__MODULE__, {:delete, key})
+  end
+
+  # --- Callbacks ---
+
+  @impl true
+  def init(_opts) do
+    table = :ets.new(@table, [:named_table, :set, :public, read_concurrency: true])
+    {:ok, %{table: table}}
+  end
+
+  @impl true
+  def handle_call({:put, key, value}, _from, state) do
+    :ets.insert(@table, {key, value})
+    {:reply, :ok, state}
+  end
+
+  @impl true
+  def handle_call({:delete, key}, _from, state) do
+    :ets.delete(@table, key)
+    {:reply, :ok, state}
+  end
+end
+```
+
+**Key ETS options:**
+- `:set` — unique keys (default); `:bag` — duplicate keys allowed
+- `:public` — any process can read/write; `:protected` — owner writes, all read
+- `read_concurrency: true` — optimise for concurrent reads
+- `write_concurrency: true` — optimise for concurrent writes (trades some read performance)
+
+---
 
 ## Integration
 
 | Predecessor | This Skill | Successor |
-|-------------|------------|----------|
+|-------------|------------|-----------|
 | **elixir-essentials** | Before writing any `.ex` file |
 | **testing-essentials** | Before writing OTP tests |
 | **telemetry-essentials** | When adding observability to OTP processes |
