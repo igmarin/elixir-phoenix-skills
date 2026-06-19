@@ -59,38 +59,34 @@ cp .env.example .env 2>/dev/null || true
 
 **Proceed only after environment check passes.**
 
-**Canonical shared job preamble** (`SHARED_PREAMBLE` — prepend verbatim to every job's `steps` in both ci.yml and cd.yml, adjusting `elixir-version` to match `.tool-versions`):
+1. **Configure CI pipeline** — write to `.github/workflows/ci.yml`.
+
 ```yaml
 steps:
   - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
   - uses: erlef/setup-beam@5304e04ea2b355f03681464e683d92e3b2f18451
     with:
-      elixir-version: "1.17.x"
+      elixir-version: "1.17.x"   # adjust to match .tool-versions
       otp-version: "27.x"
-```
-
-1. **Configure CI pipeline** — write to `.github/workflows/ci.yml`.
-
-   Start the job with `SHARED_PREAMBLE`, then add:
-```yaml
-      - run: mix deps.get
-      - run: mix compile --warnings-as-errors
-      - run: mix format --check-formatted
-      - run: mix credo --strict
-      - run: mix test --cover
-      - run: mix dialyzer
+  - run: mix deps.get
+  - run: mix compile --warnings-as-errors
+  - run: mix format --check-formatted
+  - run: mix credo --strict
+  - run: mix test --cover
+  - run: mix dialyzer
 ```
 
 2. **Configure CD pipeline** — write to `.github/workflows/cd.yml`.
 
-   Fill in `DEPLOY_CLI` (e.g., `flyctl`, `gigalixir`, custom Docker) and the appropriate secret names before writing the file. Each job begins with `SHARED_PREAMBLE` as defined above:
+   Fill in `DEPLOY_CLI` (e.g., `flyctl`, `gigalixir`, custom Docker) and the appropriate secret names. Begin each job's `steps:` with the same `checkout` + `setup-beam` actions (same SHAs and versions) used in the CI job above:
+
 ```yaml
 jobs:
   deploy-staging:
     runs-on: ubuntu-latest
     environment: staging
     steps:
-      # SHARED_PREAMBLE — prepend as defined above
+      # same checkout + setup-beam steps as CI (same SHAs/versions)
       - run: mix deps.get
       - run: mix ecto.migrate
         env:
@@ -103,7 +99,7 @@ jobs:
     environment: production
     needs: deploy-staging
     steps:
-      # SHARED_PREAMBLE — prepend as defined above
+      # same checkout + setup-beam steps as CI (same SHAs/versions)
       - run: mix deps.get
       - run: mix ecto.migrate
         env:

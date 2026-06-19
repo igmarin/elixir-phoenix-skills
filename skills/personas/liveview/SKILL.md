@@ -18,20 +18,18 @@ metadata:
 ---
 # LiveView Persona
 
-Orchestrates full LiveView feature development from contract definition through testing and quality gates.
-
 ## Agent Phases
 
 ### Phase 1: Context & Contract
 
 1. Define the LiveView's purpose and URL (via `live "/path"` in router).
-2. Define the `mount/3` contract: which params it receives, what session data it needs, what assigns it sets.
-3. Define the assigns shape — what data the template will reference.
-4. List all events (`handle_event`, `handle_info`, `handle_params`) the LiveView must handle.
+2. Define the project-specific `mount/3` contract: which params and session keys this feature uses, what assigns it sets.
+3. List the assigns shape — every key the template will reference, including streams for collections.
+4. List all events (`handle_event`, `handle_info`, `handle_params`) this LiveView must handle.
 
 **HARD GATE — Contract Defined:**
-- [ ] LiveView name, module path, and route pattern defined
-- [ ] `mount/3` params, session, and assigns shape documented (including streams if using collections)
+- [ ] Module name, file path, and route pattern decided
+- [ ] Assigns shape documented (keys, types, streams if applicable)
 - [ ] All events listed
 
 **If gate fails:** Clarify the LiveView's purpose and data needs before coding.
@@ -49,7 +47,7 @@ Orchestrates full LiveView feature development from contract definition through 
 
 **HARD GATE — Test Fails:**
 - [ ] Test file exists and is written
-- [ ] `mix test` FAILS for the correct reason (module not defined)
+- [ ] `mix test` fails with "module not defined"
 
 ```elixir
 # test/my_app_web/live/post_live_test.exs
@@ -133,40 +131,32 @@ end
 - [ ] No computed assigns in `render` (compute in `mount`/`handle_event`, assign result)
 - [ ] Collections >10 items use `stream/3`, not for-comprehension assigns
 - [ ] `phx-update="stream"` on stream containers; `id={dom_id}` on each item
-- [ ] Bracket access for nullable assigns in templates
-- [ ] Events use `phx-value-*` for data passing (not embedded JS)
-- [ ] No `handle_info` interfering with streams
+- [ ] Bracket access (`assigns[:key]`) for nullable assigns in templates
+- [ ] Events use `phx-value-*` for data passing
 - [ ] `@impl true` on all callbacks
 
 ---
 
 ## Output Style
 
-When completing a LiveView feature, produce a report covering: module path and route, test file path and approach (live/live_isolated/unit) with RED→GREEN status, implementation details (template path, events, streams, auth method), and quality gate results (test count, streams compliance, bracket access, `@impl true` coverage).
+When completing a LiveView feature, report:
+- Module path and route
+- Test file path, approach (live/live_isolated/unit), and RED→GREEN status
+- Implementation details (template path, events handled, streams used, auth method)
+- Quality gate results (test count, streams compliance, bracket access, `@impl true` coverage)
 
 ---
 
 ## Error Recovery
 
-**LiveView fails to mount (LiveView test timeout):**
-1. Check the route — does the LiveView mount?
-2. Verify `mount/3` returns `{:ok, socket}` (not a halt or redirect if unintended).
-3. Check assigns access in template — missing assigns cause crash.
+**LiveView fails to mount (test timeout):**
+1. Verify the route exists and `mount/3` returns `{:ok, socket}`.
+2. Check template for missing assigns — unset assigns crash on render.
 
-**Stream rendering shows blank:**
-1. Verify `phx-update="stream"` is on the container element.
-2. Verify `id={dom_id}` is on each stream item.
-3. Check that the stream name matches between `stream/3` and `@streams.name`.
+**Stream renders blank:**
+1. Confirm `phx-update="stream"` is on the container and `id={dom_id}` on each item.
+2. Confirm the stream name matches between `stream/3` and `@streams.name`.
 
 **Event not triggering:**
-1. Verify `phx-click="event_name"` matches `handle_event("event_name", ...)` exactly.
-2. Check `phx-value-*` bindings are strings (they're always sent as strings).
-3. Verify the element is inside the LiveView's DOM (not in a nested layout).
-
----
-
-## Integration
-
-| Predecessor | This Persona | Successor |
-|-------------|---------------|-----------|
-| phoenix-liveview-essentials | liveview | None (standalone) |
+1. Confirm `phx-click="event_name"` matches `handle_event("event_name", ...)` exactly.
+2. Confirm `phx-value-*` bindings are strings and the element is inside the LiveView's DOM.

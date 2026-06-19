@@ -30,17 +30,6 @@ Use this skill before writing ANY PubSub or real-time broadcast code.
 
 ---
 
-## Key Constraints
-
-- Guard subscriptions with `if connected?(socket)` — prevents duplicates on static render
-- Broadcast from contexts, not LiveViews — keeps real-time logic in the business layer
-- Use consistent topic naming: `"resource:id"` for specific resources, `"resource:action"` for collection-wide events
-- Handle PubSub messages in `handle_info/2`, never in `handle_event/3`
-- Update assigns immutably with `update/3` — never replace the full list
-- Test the full cycle by calling context functions and asserting LiveView updates
-
----
-
 ## Subscription Pattern
 
 ```elixir
@@ -86,7 +75,7 @@ end
 
 ## Broadcasting from Contexts
 
-Topic naming conventions:
+Broadcast from contexts, not LiveViews — keeps real-time logic in the business layer. Topic naming conventions:
 - `"posts"` — collection-wide; events: `{:post_created, post}`, `{:post_updated, post}`, `{:post_deleted, post}`
 - `"posts:#{post.id}"` — specific resource; events: `{:post_updated, post}`, `{:comment_added, comment}`
 - `"users:#{user.id}"` — user-scoped; events: `{:notification, notification}`, `{:message_received, message}`

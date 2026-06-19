@@ -3,11 +3,11 @@ name: phoenix-channels-essentials
 type: atomic
 tags: [atomic]
 license: MIT
-description: >
-  MANDATORY for ALL Phoenix Channels work. Invoke before writing socket, channel, or Presence modules.
-  Covers socket authentication, topic authorization, handle_in patterns, Presence tracking,
-  and testing. For non-LiveView real-time features: mobile clients, SPAs, external APIs.
-  Trigger words: Channels, socket, channel, Presence, handle_in, topic, real-time, WebSocket.
+description: >-
+  Handles all Phoenix Channels work. Use when building socket authentication, topic authorization,
+  handle_in patterns, Presence tracking, or channel testing. Covers non-LiveView real-time features
+  for mobile clients, SPAs, and external APIs. Trigger words: Channels, socket, channel, Presence,
+  handle_in, topic, real-time, WebSocket.
 metadata:
   user-invocable: "true"
   version: 1.0.0
@@ -32,17 +32,15 @@ Use this skill before writing ANY Phoenix Channels code. For non-LiveView real-t
 
 ---
 
-## Setup Workflow
+## Setup Checklist
 
-Follow these steps in order when setting up Phoenix Channels from scratch:
-
-1. **Mount the socket in `endpoint.ex`** — verify `socket "/socket", MyAppWeb.UserSocket, ...` is present
-2. **Generate a token server-side** — sign with `Phoenix.Token.sign/3` after user authentication
-3. **Verify the token in `connect/3`** — reject connections with `:error` on invalid tokens. If auth fails, confirm salt matches between `sign` and `verify` and `max_age` hasn't expired; test in IEx with `Phoenix.Token.verify(endpoint, salt, token, max_age: 1_209_600)`
-4. **Authorize topics in `join/3`** — check user membership/permissions before returning `{:ok, socket}`
-5. **Implement `handle_in` clauses** — route client messages to context functions; broadcast or reply as needed
-6. **Add Presence tracking** — call `Presence.track/3` in `handle_info(:after_join, ...)` if user lists are required
-7. **Test the connection** — confirm `"Transport connected"` in the browser console, or run `wscat -c 'ws://localhost:4000/socket/websocket?token=TOKEN&vsn=2.0.0'`. If connection fails: verify socket is mounted in `endpoint.ex`, token is valid, and the client is passing the correct params key.
+1. Mount the socket in `endpoint.ex` → see [Socket Authentication](#socket-authentication)
+2. Generate a token server-side after user authentication → see [Step 2](#step-2--generate-tokens-server-side)
+3. Verify the token in `connect/3`; if auth fails, confirm salt matches between `sign` and `verify` and `max_age` hasn't expired → see [Step 3](#step-3--verify-tokens-in-the-socket)
+4. Authorize topics in `join/3` → see [Topic Authorization](#topic-authorization-handle_in-and-presence-tracking)
+5. Implement `handle_in` clauses routing client messages to context functions
+6. Add Presence tracking via `Presence.track/3` in `handle_info(:after_join, ...)`
+7. Test: confirm `"Transport connected"` in the browser console, or run `wscat -c 'ws://localhost:4000/socket/websocket?token=TOKEN&vsn=2.0.0'`. If connection fails: verify socket is mounted in `endpoint.ex`, token is valid, and the client is passing the correct params key.
 
 ---
 
@@ -170,16 +168,10 @@ end
 
 ---
 
-## Related Skills
+## Advanced Topics (Not Covered Here)
 
-- **phoenix-pubsub-patterns** — underlying PubSub primitives used by Channels and Presence
-- **phoenix-liveview-essentials** — use instead of Channels for server-rendered real-time UI
-- **testing-essentials** — patterns for testing channel joins, handle_in, and Presence
+The following areas are candidates for dedicated skill files:
 
----
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| phoenix-liveview-essentials | phoenix-channels-essentials | testing-essentials |
+- **Testing** — `ChannelCase`, `subscribe_and_join/3`, asserting pushes and broadcasts
+- **Error handling** — graceful `handle_in` fallbacks, client-facing error shapes
+- **Scaling** — multi-node PubSub configuration, Presence CRDT considerations

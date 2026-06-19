@@ -26,7 +26,7 @@ Orchestrates safe Ecto migrations with idempotent cycles, rollback planning, and
 
 **Steps:**
 1. **Define the change** — Identify the exact schema modification required.
-2. **Assess lock behavior** — Does the change acquire an ACCESS EXCLUSIVE lock? If so, how long will it hold on the target table size?
+2. **Assess lock behavior** — Does the change acquire an ACCESS EXCLUSIVE lock? Estimate hold time relative to table size.
 3. **Plan rollback** — Define the exact inverse operation for `down/0`.
 4. **Classify the change:**
    - **Safe** (instant metadata-only): adding nullable column, creating table, creating index concurrently
@@ -55,21 +55,14 @@ Orchestrates safe Ecto migrations with idempotent cycles, rollback planning, and
 1. Generate migration: `mix ecto.gen.migration <descriptive_name>`.
 2. Implement `up/0` (or `change/0` for reversible migrations).
 3. Implement `down/0` for explicit rollback.
-4. Apply **database/ecto-essentials** for migration conventions.
-5. Apply **database/ecto-changeset-patterns** if migrations involve data transformations.
+4. Apply Ecto migration conventions (see ecto-essentials skill if available).
+5. For data transformations in migrations, follow changeset patterns (see ecto-changeset-patterns skill if available).
 
 **Idempotent cycle test:**
 ```bash
-# Roll back
 mix ecto.rollback
-
-# Migrate up
 mix ecto.migrate
-
-# Roll back again
 mix ecto.rollback
-
-# Migrate up again
 mix ecto.migrate
 ```
 
@@ -105,18 +98,16 @@ defmodule MyApp.Repo.Migrations.AddPublishedAtToPosts do
 end
 ```
 
-**Add NOT NULL column with expand-contract** (risky):
+**Add NOT NULL column with expand-contract** (risky — three separate migrations):
 ```elixir
-# Step 1: Add nullable column
+# Step 1: Add nullable column with default
 defmodule MyApp.Repo.Migrations.AddStatusToPosts do
   use Ecto.Migration
-
   def up do
     alter table(:posts) do
       add :status, :string, default: "draft"
     end
   end
-
   def down do
     alter table(:posts) do
       remove :status
@@ -124,29 +115,25 @@ defmodule MyApp.Repo.Migrations.AddStatusToPosts do
   end
 end
 
-# Step 2: Backfill (separate migration or mix task)
+# Step 2: Backfill existing rows (separate migration)
 defmodule MyApp.Repo.Migrations.BackfillPostStatus do
   use Ecto.Migration
-
   def up do
     execute("UPDATE posts SET status = 'draft' WHERE status IS NULL")
   end
-
   def down do
-    # No-op — backfilling is irreversible
+    # No-op — backfill is irreversible
   end
 end
 
-# Step 3: Enforce NOT NULL
+# Step 3: Enforce NOT NULL constraint
 defmodule MyApp.Repo.Migrations.EnforcePostStatusNotNull do
   use Ecto.Migration
-
   def up do
     alter table(:posts) do
       modify :status, :string, null: false, default: "draft"
     end
   end
-
   def down do
     alter table(:posts) do
       modify :status, :string, null: true, default: "draft"
@@ -179,8 +166,8 @@ end
 **Steps:**
 1. Run the full test suite: `mix test`.
 2. Verify migrations run in test environment: `MIX_ENV=test mix ecto.migrate`.
-3. Review the migration with **quality/code-quality** and **security/security-essentials** if it handles sensitive data.
-4. Use EXPLAIN ANALYZE for any data transformation queries to assess performance.
+3. Review for code quality and security concerns if the migration handles sensitive data.
+4. Use EXPLAIN ANALYZE for any data transformation queries.
 
 **HARD GATE — Test Suite Passes:**
 ```bash
@@ -195,11 +182,9 @@ MIX_ENV=test mix ecto.migrate
 ### Phase 4: Deployment
 
 **Steps:**
-1. **Deploy code first** (if using expand-contract, deploy code that handles both old and new schema).
-2. **Run migration** — deploy the schema change.
-3. **Run backfill** — if needed, run data transformation.
-4. **Deploy cleanup code** — remove old column references, old table accesses.
-5. **Run cleanup migration** — drop old columns/tables (optional, later deployment).
+1. Deploy code that handles both old and new schema (expand-contract).
+2. Run the migration, then backfill if needed.
+3. Deploy cleanup code (remove old column references), then drop old columns in a later migration.
 
 **HARD GATE — Rollback Ready:**
 - [ ] Exact rollback command documented
@@ -244,9 +229,8 @@ When completing a migration, output MUST include:
 ## Error Recovery
 
 **Migration fails in production:**
-1. Run `mix ecto.rollback` if the migration is reversible.
-2. Diagnose from the error message: common causes are constraint violations, data type mismatches, and lock timeouts.
-3. Fix locally, rerun the idempotent cycle, then redeploy.
+1. Run `mix ecto.rollback` if reversible; otherwise plan a forward-only fix migration.
+2. Diagnose the error, fix locally, rerun the idempotent cycle, then redeploy.
 
 **Rollback fails:**
 1. Verify `down/0` reverses every operation in `up/0` in the correct order.
@@ -254,8 +238,8 @@ When completing a migration, output MUST include:
 3. If rollback is truly irreversible, document it and plan a forward-only fix migration.
 
 **Lock timeout on large table:**
-1. Add the column as nullable first, backfill, then enforce NOT NULL (expand-contract).
-2. Always use `concurrently: true` and `@disable_ddl_transaction true` for index creation on large tables.
+1. Switch to expand-contract: add nullable, backfill separately, enforce NOT NULL.
+2. Use `concurrently: true` and `@disable_ddl_transaction true` for index creation.
 3. Schedule during low-traffic windows.
 
 ---

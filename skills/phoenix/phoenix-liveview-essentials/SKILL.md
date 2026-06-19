@@ -24,8 +24,8 @@ Use this skill before writing ANY LiveView module or `.heex` template.
 ## RULES — Follow these with no exceptions
 
 1. **Always add `@impl true`** before every callback (mount, handle_event, handle_info, render)
-2. **Initialize assigns before they're accessed in render/1** — use mount/3 for static defaults, handle_params/3 for URL-dependent assigns (pagination, filters, sorting)
-3. **Check `connected?(socket)`** before PubSub subscriptions, timers, or side effects
+2. **Initialize assigns before they're accessed in render/1** — use mount/3 for static defaults, handle_params/3 for URL-dependent assigns (see Two-Phase Rendering and Mount sections below)
+3. **Check `connected?(socket)`** before PubSub subscriptions, timers, or side effects (see Mount section below)
 4. **Use `Map.get(assigns, :key, default)`** for optional assigns in helper functions
 5. **Return proper tuples** — `{:ok, socket}` from mount, `{:noreply, socket}` from handle_event
 6. **Use `with` for error handling** in event handlers — assign errors to socket, don't crash
@@ -36,6 +36,18 @@ Use this skill before writing ANY LiveView module or `.heex` template.
 
 ---
 
+## Recommended Build Order
+
+When building a LiveView from scratch, follow this sequence:
+
+1. **Define `mount/3`** — initialize all assigns with static defaults
+2. **Add `handle_params/3`** — set URL-dependent assigns, subscribe to PubSub
+3. **Write `render/1`** — reference only assigns initialized in steps 1–2
+4. **Add `handle_event/3`** — implement user interactions with proper error handling
+5. **Verify static render** — confirm no `KeyError` before WebSocket connects
+
+---
+
 ## Critical Concept: Two-Phase Rendering
 
 **LiveView renders happen in TWO phases:**
@@ -43,26 +55,7 @@ Use this skill before writing ANY LiveView module or `.heex` template.
 1. **Static/Disconnected Render** — Initial HTTP request; `connected?(socket)` is `false`; side effects won't work.
 2. **Connected Render** — WebSocket established; `connected?(socket)` is `true`; events and live updates work.
 
-**Common Bug:** Accessing uninitialized assigns during static render crashes with `KeyError`.
-
-**Solution:** Initialize assigns before render — use mount/3 for static defaults, handle_params/3 for URL-dependent state.
-
----
-
-## Lifecycle Flow
-
-```mermaid
-flowchart TD
-    A[HTTP Request arrives] --> B["mount/3 (connected? = false)"]
-    B --> C["handle_params/3 (connected? = false)"]
-    C --> D["render/1 (STATIC HTML)"]
-    D --> E[HTML sent to browser]
-    E --> F[Browser connects WebSocket]
-    F --> G["mount/3 (connected? = true)"]
-    G --> H["handle_params/3 (connected? = true)"]
-    H --> I["render/1 (sent over WebSocket)"]
-    I --> J[LiveView active and reactive]
-```
+Phase 1: HTTP → `mount(connected?=false)` → `handle_params` → render static HTML → sent to browser. Phase 2: WebSocket connects → `mount(connected?=true)` → `handle_params` → render reactive LiveView active.
 
 ---
 
@@ -103,33 +96,23 @@ def mount(_params, _session, socket) do
 end
 ```
 
+**✅ Validation checkpoint:** After implementing mount, verify all assigns used in render/1 are initialized by checking that the static render (before WebSocket connects) displays without a `KeyError`.
+
 ---
 
 ## Handle Event
 
 ```elixir
 @impl true
-def handle_event("save", %{"post" => post_params}, socket) do
-  case Posts.create_post(post_params) do
-    {:ok, post} ->
-      socket =
-        socket
-        |> put_flash(:info, "Created!")
-        |> assign(:post, post)
-
-      {:noreply, socket}
-
-    {:error, changeset} ->
-      {:noreply, assign(socket, :changeset, changeset)}
-  end
-end
-
-@impl true
 def handle_event("delete", %{"id" => id}, socket) do
   Posts.delete_post(id)
   {:noreply, assign(socket, :posts, Posts.list_posts())}
 end
 ```
+
+For events that create or update records, use the Error Handling pattern below — assign changeset errors to the socket rather than raising.
+
+**✅ Validation checkpoint:** After implementing handle_event, confirm each handler returns `{:noreply, socket}` and that error paths assign errors to the socket rather than raising.
 
 ---
 
@@ -281,13 +264,13 @@ end
 
 ```elixir
 @impl true
-def handle_event("save", params, socket) do
-  case save_record(params) do
-    {:ok, record} ->
+def handle_event("save", %{"post" => post_params}, socket) do
+  case Posts.create_post(post_params) do
+    {:ok, post} ->
       socket =
         socket
-        |> put_flash(:info, "Saved successfully")
-        |> assign(:record, record)
+        |> put_flash(:info, "Created!")
+        |> assign(:post, post)
 
       {:noreply, socket}
 
@@ -300,23 +283,11 @@ def handle_event("save", params, socket) do
       {:noreply, socket}
 
     {:error, reason} ->
-      socket = put_flash(socket, :error, "An error occurred: #{reason}")
-      {:noreply, socket}
+      {:noreply, put_flash(socket, :error, "An error occurred: #{reason}")}
   end
 end
 ```
 
 ---
 
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| elixir-essentials | phoenix-liveview-essentials | testing-essentials |
-| None (standalone) | phoenix-liveview-essentials | liveview-streams |
-| None (standalone) | phoenix-liveview-essentials | phoenix-scopes |
-| None (standalone) | phoenix-liveview-essentials | phoenix-pubsub-patterns |
-| None (standalone) | phoenix-liveview-essentials | phoenix-liveview-auth |
-| ecto-essentials | phoenix-liveview-essentials | testing-essentials |
-
-See `agents/liveview-checklist.md` for a step-by-step LiveView development checklist.
+See `agents/liveview-checklist.md` for a step-by-step LiveView development checklist. Related skills: `liveview-streams`, `phoenix-pubsub-patterns`, `phoenix-liveview-auth`, `phoenix-scopes`, `testing-essentials`.

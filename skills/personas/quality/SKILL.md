@@ -18,9 +18,7 @@ metadata:
 ---
 # Quality Persona
 
-Orchestrates systematic code quality checks, safe refactoring, and documentation updates across three phases. Use this instead of individual refactoring or documentation skills when full production-readiness is required end-to-end.
-
-> **External dependencies:** This skill references sub-skills (`quality/code-quality`, `quality/credo-config`, `testing/testing-essentials`, `fundamentals/typespec-dialyzer`) as external bundle files. Ensure these are available in your skill library before invoking.
+Orchestrates code quality checks, safe refactoring, and documentation updates across three phases.
 
 ## Complexity Thresholds
 
@@ -37,9 +35,7 @@ Orchestrates systematic code quality checks, safe refactoring, and documentation
 
 ### Phase 1: Conventions Review
 
-Check code against Elixir standards via **quality/code-quality** (DRY, immutability, pattern matching, pipe discipline) and **quality/credo-config** (Credo rules compliance, code consistency, naming conventions).
-
-**Key file patterns to review:** `lib/`, `test/`, `priv/`.
+Run the following tools and address all violations:
 
 **Tool Integration:**
 ```bash
@@ -52,7 +48,7 @@ mix credo --strict
 # Type checking
 mix dialyzer
 
-# Security check (no Elixir equivalent of brakeman yet — manual review)
+# Dependency audit
 mix hex.audit
 ```
 
@@ -67,7 +63,7 @@ mix hex.audit
 ### TDD Enforcement for Refactoring
 
 **Before any code change:**
-1. **testing/testing-essentials** — Write characterization test that documents current behavior.
+1. Write characterization test that documents current behavior.
 2. **Verify test PASSES** — `mix test test/path/to/file_test.exs`.
 3. **Refactoring Checkpoint** — Propose specific refactoring (e.g., "Extract `calculate_discount` to private function and add @doc").
 4. **User Approval** — Wait for explicit confirmation.
@@ -81,8 +77,6 @@ mix hex.audit
 - Full test suite PASSES (no regressions)
 - If test fails: Fix the refactoring, not the test
 
-Follow **quality/code-quality** for specific extraction patterns and safety guidelines.
-
 ```bash
 mix test   # All tests must pass before proceeding to Phase 3
 ```
@@ -94,7 +88,7 @@ mix test   # All tests must pass before proceeding to Phase 3
 Document public APIs:
 1. **Add `@moduledoc`** to every public module.
 2. **Add `@doc`** to every public function with description and examples.
-3. **Add `@spec`** to every public function via **fundamentals/typespec-dialyzer**.
+3. **Add `@spec`** to every public function.
 
 **Output:** Updated @moduledoc and @doc comments, refreshed README sections.
 
@@ -125,25 +119,8 @@ Produce a `# Quality Report — [Date]` with three sections:
 
 ## Error Recovery
 
-**Credo violations after refactoring:**
-1. Run `mix format` for auto-fixable formatting issues.
-2. Run `mix credo --strict` to see all violations.
-3. Fix violations manually.
+**Credo violations after refactoring:** Run `mix format` for auto-fixable issues, then `mix credo --strict` and fix remaining violations manually.
 
-**Characterization test fails after refactoring:**
-1. Revert the refactoring change.
-2. Re-examine the extraction — ensure the new function/module preserves the exact contract.
-3. Try a smaller, more focused refactoring step.
+**Characterization test fails after refactoring:** Revert the change, re-examine the extraction to ensure the new function preserves the exact contract, then attempt a smaller, more focused refactoring step.
 
-**Dialyzer errors after refactoring:**
-1. Recompile with `mix compile --force`.
-2. Run `mix dialyzer` to identify type inconsistencies.
-3. Update `@spec` annotations to match the refactored code.
-
----
-
-## Integration
-
-| Predecessor | This Persona | Successor |
-|-------------|---------------|-----------|
-| code-quality | quality | None (standalone) |
+**Dialyzer errors after refactoring:** Recompile with `mix compile --force`, then update `@spec` annotations to match the refactored code.
