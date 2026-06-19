@@ -5,4 +5,4 @@
 # If the release format ever changes to .tar.gz/.zip, update rs-guard-install.sh accordingly.
 RS_GUARD_VERSION="v1.2.0"
 RS_GUARD_ASSET="rs-guard-x86_64-unknown-linux-gnu"
-RS_GUARD_SHA256="38c964bed9c550174a82f24acc536a2096801e455a45af7acd4919f9833219c5"
+RS_GUARD_SHA256="af200ebca61c67306e3f6aea72d59d942ff6f12c6fa08398542ba450e2f120cc"

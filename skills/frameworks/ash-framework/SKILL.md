@@ -4,9 +4,10 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  Use when considering Ash Framework for Elixir applications. Invoke before starting a new project
-  or major refactor. Covers when to use Ash, core concepts (resources, actions, policies), and
-  comparison with Phoenix contexts.
+  Use when considering, adopting, or working with Ash Framework for Elixir applications. Invoke
+  before starting a new project or major refactor. Guides defining Ash resources with attributes
+  and relationships, configuring actions and policies, using Ash extensions (AshPostgres,
+  AshPhoenix, AshJsonApi), and migrating from Phoenix contexts to Ash DSL patterns.
   Trigger words: Ash Framework, Ash resource, Ash action, resource-oriented, DSL, alternative to contexts.
 metadata:
   user-invocable: "true"
@@ -17,32 +18,95 @@ metadata:
 
 Ash Framework is a declarative data management framework for Elixir, providing a resource-oriented approach to building applications.
 
-## RULES — Follow these with no exceptions
-
-1. **Understand when to use Ash vs Phoenix contexts** — Ash excels at complex domains with many relationships and business rules
-2. **Define resources declaratively** — use Ash DSL for attributes, actions, and relationships
-3. **Use actions for all data operations** — create, read, update, destroy through actions
-4. **Implement policies for authorization** — built-in policy system for fine-grained access control
-5. **Leverage Ash extensions** — AshPostgres, AshPhoenix, AshJsonApi for integrations
-6. **Don't use Ash for simple CRUD** — Phoenix contexts are simpler for basic apps
-7. **Learn the Ash way** — don't try to write Phoenix contexts in Ash syntax
-
 ---
 
-## When to Use Ash
+## Decision Guide — When to Use Ash
 
 ✅ **Good candidates for Ash:**
-- Complex domains with many relationships
-- Applications with intricate business rules
+- Complex domains with many relationships and intricate business rules
 - Projects needing fine-grained authorization
 - Apps requiring multiple API formats (JSON, GraphQL)
 - Teams comfortable with DSLs and abstractions
 
 ❌ **Not ideal for Ash:**
-- Simple CRUD applications
-- Small projects with straightforward data models
-- Teams new to Elixir/Phoenix
-- Projects with tight deadlines (learning curve)
+- Simple CRUD applications or small projects with straightforward data models
+- Teams new to Elixir/Phoenix or projects with tight deadlines (learning curve is significant)
+- Contexts where Phoenix's manual flexibility is more appropriate
+
+**Key principles:**
+- Learn the Ash way — don't try to write Phoenix contexts in Ash syntax
+- Leverage extensions (AshPostgres, AshPhoenix, AshJsonApi) rather than reimplementing integrations
+- Budget time for learning; the DSL and resource model differ significantly from plain Ecto/Phoenix
+
+---
+
+## Setup Workflow
+
+Follow this sequence when starting a new Ash project:
+
+### Step 1 — Add Dependencies
+
+```elixir
+# mix.exs
+defp deps do
+  [
+    {:ash, "~> 3.0"},
+    {:ash_postgres, "~> 2.0"}
+  ]
+end
+```
+
+Run `mix deps.get`.
+
+### Step 2 — Configure AshPostgres
+
+Add your repo to `config/config.exs` and ensure `AshPostgres.Repo` is used in your Repo module:
+
+```elixir
+defmodule MyApp.Repo do
+  use AshPostgres.Repo, otp_app: :my_app
+end
+```
+
+### Step 3 — Define a Domain Module
+
+```elixir
+defmodule MyApp.Blog do
+  use Ash.Domain
+
+  resources do
+    resource MyApp.Blog.Post
+    resource MyApp.Blog.Comment
+  end
+end
+```
+
+### Step 4 — Define Your First Resource
+
+Start with attributes, then add relationships and actions incrementally. See the [Resource Definition](#resource-definition) section below for a full example.
+
+### Step 5 — Generate and Run Migrations
+
+```bash
+mix ash_postgres.generate_migrations
+mix ash_postgres.migrate
+```
+
+**Validation checkpoint:** Compile the project and confirm all resources load cleanly:
+
+```bash
+mix compile --force 2>&1 | grep -E '(error|warning)'
+```
+
+Expected output: no lines printed. If you see compilation errors, check that every resource listed in the domain module exists and that the `data_layer` option is set correctly.
+
+**Common migration failure — conflict on existing table:** If `ash_postgres.generate_migrations` errors with a conflict, inspect the generated migration file in `priv/repo/migrations/` and remove or rename the conflicting `create table` statement before re-running.
+
+**Common compilation error — unknown DSL option:** Ash surfaces these as `** (Spark.Error.DslError)`. Read the path printed in the error (e.g., `MyApp.Blog.Post > attributes > attribute > :constraints`) to locate the offending block.
+
+### Step 6 — Call Actions from Your Application
+
+Use `Ash.Changeset` and domain functions (e.g., `MyApp.Blog.create!`) to interact with resources. See [Using Actions](#using-actions) below.
 
 ---
 
@@ -111,21 +175,6 @@ end
 
 ---
 
-### Domain Module
-
-```elixir
-defmodule MyApp.Blog do
-  use Ash.Domain
-
-  resources do
-    resource MyApp.Blog.Post
-    resource MyApp.Blog.Comment
-  end
-end
-```
-
----
-
 ### Using Actions
 
 ```elixir
@@ -181,96 +230,71 @@ defmodule MyApp.Blog.Post do
 end
 ```
 
----
-
-## Ash Extensions
-
-### AshPostgres
+**Policy authorization failure:** If a call raises `Ash.Error.Forbidden`, the actor did not satisfy any `authorize_if` clause. Enable policy debugging to inspect which clause failed:
 
 ```elixir
-# mix.exs
-defp deps do
-  [
-    {:ash, "~> 3.0"},
-    {:ash_postgres, "~> 2.0"}
-  ]
-end
+# In config/dev.exs
+config :ash, :policies, log_policy_breakdowns: :error
 ```
 
-### AshPhoenix (LiveView integration)
+This logs a breakdown of each evaluated clause so you can identify which condition needs adjustment.
+
+---
+
+### AshPhoenix LiveView Integration
+
+The pattern for integrating AshPhoenix with LiveView forms follows three steps:
+
+1. Load the resource and build a changeset in `mount/3`
+2. Re-build the changeset on `"validate"` events using `to_form/1`
+3. Call the domain update/create function on `"save"` and handle `{:ok, _}` / `{:error, _}`
 
 ```elixir
-defmodule MyAppWeb.PostLive.Form do
+defmodule MyAppWeb.PostLive.Edit do
   use MyAppWeb, :live_view
 
+  alias MyApp.Blog
+  alias MyApp.Blog.Post
+
+  @impl true
   def mount(%{"id" => id}, _session, socket) do
-    post = MyApp.Blog.Post |> Ash.Query.filter(id == ^id) |> MyApp.Blog.read_one!()
+    post = Blog.get!(Post, id)
 
     form =
       post
-      |> Ash.Changeset.for_update(:update)
+      |> Ash.Changeset.for_update(:update, %{})
+      |> AshPhoenix.Form.for_update()
       |> to_form()
 
     {:ok, assign(socket, form: form, post: post)}
   end
 
-  def handle_event("validate", %{"post" => params}, socket) do
+  @impl true
+  def handle_event("validate", %{"form" => params}, socket) do
     form =
       socket.assigns.post
       |> Ash.Changeset.for_update(:update, params)
+      |> AshPhoenix.Form.for_update()
       |> to_form()
 
     {:noreply, assign(socket, form: form)}
   end
 
-  def handle_event("save", %{"post" => params}, socket) do
+  @impl true
+  def handle_event("save", %{"form" => params}, socket) do
     case socket.assigns.post
          |> Ash.Changeset.for_update(:update, params)
-         |> MyApp.Blog.update() do
+         |> Blog.update() do
       {:ok, post} ->
-        {:noreply, push_navigate(socket, to: ~p"/posts/#{post}")}
+        {:noreply,
+         socket
+         |> put_flash(:info, "Post updated.")
+         |> assign(post: post)}
 
       {:error, changeset} ->
-        {:noreply, assign(socket, form: to_form(changeset))}
+        form = changeset |> AshPhoenix.Form.for_update() |> to_form()
+        {:noreply, assign(socket, form: form)}
     end
   end
 end
 ```
-
----
-
-## Ash vs Phoenix Contexts
-
-| Feature | Phoenix Contexts | Ash Framework |
-|---------|------------------|---------------|
-| Learning curve | Low | High |
-| Boilerplate | Manual | Generated by DSL |
-| Authorization | Manual (policy modules) | Built-in policies |
-| Relationships | Manual preloading | Automatic loading |
-| API generation | Manual | AshJsonApi, AshGraphql |
-| Best for | Simple to medium complexity | Complex domains |
-| Flexibility | High | Constrained by DSL |
-
----
-
-## Common Pitfalls
-
-❌ **Don't** use Ash for simple CRUD apps
-❌ **Don't** try to write Phoenix contexts in Ash syntax
-❌ **Don't** skip learning the Ash way — it's different
-❌ **Don't** ignore the learning curve — budget time for it
-❌ **Don't** use Ash without understanding resources and actions
-
-✅ **Do** use Ash for complex domains
-✅ **Do** learn the DSL and core concepts
-✅ **Do** leverage built-in authorization
-✅ **Do** use Ash extensions for integrations
-✅ **Do** compare with Phoenix contexts before choosing
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **ecto-essentials** | Ash uses Ecto under the hood |
-| **phoenix-liveview-essentials** | For AshPhoenix integration |
-| **phoenix-authorization-patterns** | Compare with Ash policies |

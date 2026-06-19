@@ -1,0 +1,110 @@
+diff --git a/lib/my_app_web/live/product_live/index.ex b/lib/my_app_web/live/product_live/index.ex
+index 12a3456..9b7c890 100644
+--- a/lib/my_app_web/live/product_live/index.ex
++++ b/lib/my_app_web/live/product_live/index.ex
+@@ -1,23 +1,44 @@
+ defmodule MyAppWeb.ProductLive.Index do
+   use MyAppWeb, :live_view
+
++  alias MyApp.Catalog
+   alias MyApp.Accounts.User
+
++  @impl true
+   def mount(_params, _session, socket) do
+-    {:ok, socket}
++    products = Catalog.list_products()
++
++    {:ok,
++     socket
++     |> assign(:products, products)
++     |> assign(:search_term, "")}
+   end
+
++  @impl true
+   def handle_params(params, _url, socket) do
+-    {:noreply, socket}
++    {:noreply, apply_action(socket, socket.assigns.live_action, params)}
+   end
+
+-  def handle_event("save", params, socket) do
++  @impl true
++  def handle_event("search", %{"term" => term}, socket) do
++    products =
++      if term == "" do
++        Catalog.list_products()
++      else
++        Catalog.search_products(term)
++      end
++
++    {:noreply, assign(socket, :products, products)}
++  end
++
++  @impl true
++  def handle_event("save", %{"product" => product_params}, socket) do
+     case User.create_product(product_params) do
+       {:ok, product} ->
+-        {:noreply, socket}
++        {:noreply, push_patch(socket, to: ~p"/products/#{product}")}
+
+       {:error, %Ecto.Changeset{} = changeset} ->
+-        {:noreply, socket}
++        {:noreply, assign(socket, :changeset, changeset)}
+     end
+   end
+ end
+diff --git a/lib/my_app_web/live/product_live/index.html.heex b/lib/my_app_web/live/product_live/index.html.heex
+new file mode 100644
+index 0000000..f4a7d12
+--- /dev/null
++++ b/lib/my_app_web/live/product_live/index.html.heex
+@@ -0,0 +1,29 @@
++<div class="product-index">
++  <h1>Products</h1>
++
++  <.search_form />
++
++  <div id="products" phx-update="stream">
++    <div :for={{id, product} <- @streams.products} id={id}>
++      <div class="product-card">
++        <h2><%= product.name %></h2>
++        <p><%= product.description %></p>
++        <span class="price"><%= product.price %></span>
++      </div>
++    </div>
++  </div>
++</div>
++
++<.search_form :let={f}>
++  <.form for={f} phx-change="search" phx-debounce="300">
++    <.input
++      field={f[:term]}
++      type="text"
++      placeholder="Search products..."
++      autocomplete="off"
++    />
++  </.form>
++</.search_form>
+diff --git a/lib/my_app/catalog.ex b/lib/my_app/catalog.ex
+index b12e456..c9d8901 100644
+--- a/lib/my_app/catalog.ex
++++ b/lib/my_app/catalog.ex
+@@ -5,6 +5,21 @@ defmodule MyApp.Catalog do
+     Repo.all(Product)
+   end
+
++  @doc """
++  Returns a list of products matching the search term.
++  """
++  def search_products(term) do
++    search_term = "%#{term}%"
++
++    from(p in Product,
++      where: ilike(p.name, ^search_term) or ilike(p.description, ^search_term),
++      order_by: [asc: p.name]
++    )
++    |> Repo.all()
++  end
++
+   def get_product!(id), do: Repo.get!(Product, id)
+
+   def create_product(attrs \\ %{}) do

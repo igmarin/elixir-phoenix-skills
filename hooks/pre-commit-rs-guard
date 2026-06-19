@@ -20,7 +20,7 @@
 #   1. rs-guard in PATH
 #   2. ~/.cargo/bin/rs-guard     (installed via `cargo install rs-guard`)
 #
-# Install locally with: cargo install rs-guard --version 1.0.2 --locked
+# Install locally with: cargo install rs-guard --version 1.2.0 --locked
 #
 # Usage: This script is invoked automatically by git via hooks/hooks.json.
 # To install manually: cp hooks/pre-commit-rs-guard .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit

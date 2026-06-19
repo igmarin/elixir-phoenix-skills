@@ -1,9 +1,10 @@
-# rs-guard pre-built binaries
+# rs-guard bundled binaries (v1.0.0)
 #
-# Version: 1.0.0
+# CI downloads v1.2.0 via scripts/rs-guard-install.sh (pinned in bin/rs-guard.manifest).
+# These binaries are bundled for local development only.
 # Source:  https://github.com/nebulaideas/rs-guard/releases/tag/v1.0.0
 #
-# rs-guard-linux-x64    — downloaded from GitHub release v1.0.0 (rs-guard asset)
+# rs-guard-linux-x64    — downloaded from GitHub release v1.0.0
 # rs-guard-macos-arm64  — built from source at tag v1.0.0 (aarch64-apple-darwin, release profile)
 #
 # To verify:

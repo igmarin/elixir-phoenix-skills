@@ -27,19 +27,41 @@ Use this skill before modifying ANY schema, query, or migration.
 2. **Preload associations** before accessing them — avoid N+1 queries
 3. **Use transactions** for multi-step operations that must succeed together
 4. **Add database constraints** (unique_index, foreign_key, check_constraint) AND changeset validations
-5. **Use contexts** for database access — never call Repo directly from web layer
-6. **Add indexes** on foreign keys and frequently queried fields
+5. **Use contexts** for database access — never call Repo directly from web layer (LiveViews, controllers)
+6. **Add indexes** on foreign keys and frequently queried fields — never forget indexes on foreign keys
 7. **Use `timestamps()`** in every schema — track when records were created/updated
 8. **Use `Ecto.Multi`** for complex multi-step operations instead of nested `Repo.transaction`
-9. **Parameterize all user input in queries** — never interpolate values into SQL fragments
+9. **Parameterize all user input in queries** — never interpolate values into SQL fragments, always use `^`
+10. **Never combine schema changes and data backfill** in the same migration
 
 ---
 
 ## Schema Definition
 
-Define schemas with proper types and associations.
+Define schemas with proper types and associations. All subsequent examples reference these schemas.
 
 ```elixir
+# Parent schema
+defmodule MyApp.Media.Folder do
+  use Ecto.Schema
+  import Ecto.Changeset
+
+  schema "folders" do
+    field :name, :string
+    has_many :images, MyApp.Media.Image
+
+    timestamps()
+  end
+
+  def changeset(folder, attrs) do
+    folder
+    |> cast(attrs, [:name])
+    |> validate_required([:name])
+    |> unique_constraint(:name)
+  end
+end
+
+# Child schema
 defmodule MyApp.Media.Image do
   use Ecto.Schema
   import Ecto.Changeset
@@ -56,22 +78,16 @@ defmodule MyApp.Media.Image do
 
     timestamps()
   end
-end
-```
 
-## Changesets
-
-Always use changesets for data validation and casting.
-
-```elixir
-def changeset(image, attrs) do
-  image
-  |> cast(attrs, [:title, :description, :filename, :file_path, :content_type, :file_size, :folder_id])
-  |> validate_required([:title, :filename, :file_path, :content_type, :file_size])
-  |> validate_length(:title, min: 1, max: 255)
-  |> validate_inclusion(:content_type, ["image/jpeg", "image/png", "image/gif"])
-  |> validate_number(:file_size, greater_than: 0, less_than: 10_000_000)
-  |> foreign_key_constraint(:folder_id)
+  def changeset(image, attrs) do
+    image
+    |> cast(attrs, [:title, :description, :filename, :file_path, :content_type, :file_size, :folder_id])
+    |> validate_required([:title, :filename, :file_path, :content_type, :file_size])
+    |> validate_length(:title, min: 1, max: 255)
+    |> validate_inclusion(:content_type, ["image/jpeg", "image/png", "image/gif"])
+    |> validate_number(:file_size, greater_than: 0, less_than: 10_000_000)
+    |> foreign_key_constraint(:folder_id)
+  end
 end
 ```
 
@@ -99,8 +115,6 @@ end
 ```
 
 ## Preloading Associations
-
-Use `preload` to avoid N+1 queries.
 
 ❌ **Bad — N+1 queries:**
 ```elixir
@@ -137,6 +151,15 @@ def transfer_images(image_ids, from_folder_id, to_folder_id) do
 end
 ```
 
+**Transaction validation — always pattern-match the result:**
+```elixir
+case transfer_images(ids, from_id, to_id) do
+  {:ok, {:ok, count}} -> IO.puts("Transferred #{count} images")
+  {:ok, _}            -> IO.puts("Completed with unexpected shape")
+  {:error, reason}    -> IO.puts("Rolled back: #{inspect(reason)}")
+end
+```
+
 ### Ecto.Multi for Complex Operations
 
 ```elixir
@@ -150,19 +173,26 @@ def create_user_with_profile(user_attrs, profile_attrs) do
 end
 ```
 
-## Insert and Update
+**Multi result validation — inspect named steps on failure:**
+```elixir
+case create_user_with_profile(u_attrs, p_attrs) do
+  {:ok, %{user: user, profile: profile}} ->
+    IO.puts("Created user #{user.id} and profile #{profile.id}")
+  {:error, :user, changeset, _changes} ->
+    IO.inspect(changeset.errors, label: "User step failed")
+  {:error, :profile, changeset, _changes} ->
+    IO.inspect(changeset.errors, label: "Profile step failed")
+end
+```
+
+## Building Associations
 
 ```elixir
-def create_image(attrs) do
-  %Image{}
-  |> Image.changeset(attrs)
+def add_image_to_folder(folder, image_attrs) do
+  folder
+  |> Ecto.build_assoc(:images)
+  |> Image.changeset(image_attrs)
   |> Repo.insert()
-end
-
-def update_image(%Image{} = image, attrs) do
-  image
-  |> Image.changeset(attrs)
-  |> Repo.update()
 end
 ```
 
@@ -179,42 +209,14 @@ def create_or_update_folder(attrs) do
 end
 ```
 
-## Associations
-
+**Upsert validation — check whether a row was inserted or updated:**
 ```elixir
-# Parent schema
-defmodule MyApp.Media.Folder do
-  use Ecto.Schema
-
-  schema "folders" do
-    field :name, :string
-    has_many :images, MyApp.Media.Image
-
-    timestamps()
-  end
-end
-
-# Child schema
-defmodule MyApp.Media.Image do
-  use Ecto.Schema
-
-  schema "images" do
-    field :title, :string
-    belongs_to :folder, MyApp.Media.Folder
-
-    timestamps()
-  end
-end
-```
-
-## Building Associations
-
-```elixir
-def add_image_to_folder(folder, image_attrs) do
-  folder
-  |> Ecto.build_assoc(:images)
-  |> Image.changeset(image_attrs)
-  |> Repo.insert()
+case create_or_update_folder(%{name: "Photos"}) do
+  {:ok, folder} ->
+    # folder.id is populated regardless of insert vs. update path
+    IO.puts("Upserted folder #{folder.id}")
+  {:error, changeset} ->
+    IO.inspect(changeset.errors, label: "Upsert failed")
 end
 ```
 
@@ -266,7 +268,7 @@ end
 
 ## Migrations
 
-Write clear, reversible migrations.
+Write clear, reversible migrations. After writing a migration, always validate it with the steps below.
 
 ```elixir
 defmodule MyApp.Repo.Migrations.CreateImages do
@@ -291,26 +293,23 @@ defmodule MyApp.Repo.Migrations.CreateImages do
 end
 ```
 
-## Unique Constraints
+**Migration validation workflow:**
+1. Run `mix ecto.migrate` — confirm it applies without errors
+2. Run `mix ecto.rollback` — confirm it reverses cleanly
+3. Run `mix ecto.migrate` again — confirm re-applying succeeds
 
-Add unique constraints in schema AND migration.
+### Unique Constraints
+
+Add unique constraints in migration AND schema changeset (already shown in the Folder schema above).
 
 ```elixir
 # Migration
 create unique_index(:folders, [:name])
-
-# Schema changeset
-def changeset(folder, attrs) do
-  folder
-  |> cast(attrs, [:name])
-  |> validate_required([:name])
-  |> unique_constraint(:name)
-end
 ```
 
 ## Context Pattern
 
-Organize database operations in contexts.
+Organize all database operations in context modules — never call Repo from the web layer.
 
 ```elixir
 defmodule MyApp.Media do
@@ -338,33 +337,3 @@ defmodule MyApp.Media do
   end
 end
 ```
-
----
-
-## Common Pitfalls
-
-❌ **Don't** pass raw maps to `Repo.insert/1` — always use changesets
-❌ **Don't** access associations without preloading — causes N+1 queries
-❌ **Don't** call Repo directly from LiveViews or controllers — use contexts
-❌ **Don't** forget indexes on foreign keys
-❌ **Don't** combine schema changes and data backfill in one migration
-❌ **Don't** interpolate user input into SQL fragments — use `^` parameterization
-
-✅ **Do** use changesets for all inserts/updates
-✅ **Do** preload associations before accessing them
-✅ **Do** use `Ecto.Multi` for complex multi-step operations
-✅ **Do** add both changeset validations AND database constraints
-✅ **Do** wrap database operations in context modules
-✅ **Do** write reversible migrations using `change/0`
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| elixir-essentials | ecto-essentials | testing-essentials |
-| None (standalone) | ecto-essentials | ecto-changeset-patterns |
-| None (standalone) | ecto-essentials | ecto-nested-associations |
-| phoenix-liveview-essentials | ecto-essentials | phoenix-liveview-essentials |
-| security-essentials | ecto-essentials | security-essentials |
-
-See `agents/ecto-conventions.md` for comprehensive Ecto patterns and best practices.

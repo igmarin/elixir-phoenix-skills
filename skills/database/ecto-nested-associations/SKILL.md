@@ -24,11 +24,12 @@ Use this skill before writing ANY nested association or multi-table code.
 ## RULES — Follow these with no exceptions
 
 1. **Use `cast_assoc/3` for has_many/has_one** — never manually insert children in a separate step
-2. **Use `Ecto.Multi` for operations spanning multiple unrelated tables** — Multi provides explicit rollback control
+2. **Use `Ecto.Multi` for operations spanning multiple unrelated tables** — Multi provides explicit rollback control; do NOT use `Ecto.Multi` for nested associations
 3. **Set `on_delete` explicitly in migrations** — `:delete_all` for owned children, `:nothing` for independent entities
 4. **Always create indexes on foreign key columns** — missing FK indexes cause slow joins
 5. **Use `on_replace: :delete` in `cast_assoc` for list management** — allows removing items by omitting them
 6. **Preload associations before updating them** — `cast_assoc` compares against currently loaded data
+7. **Do NOT require foreign keys in child changesets** — `cast_assoc` sets them automatically
 
 ---
 
@@ -128,6 +129,25 @@ def create_order_with_payment(order_attrs, payment_attrs) do
 end
 ```
 
+### Handling Ecto.Multi Results
+
+Always pattern-match on both success and error tuples from `Repo.transaction/1`:
+
+```elixir
+case create_order_with_payment(order_attrs, payment_attrs) do
+  {:ok, %{order: order, payment: payment}} ->
+    # All operations succeeded
+    {:ok, order}
+
+  {:error, failed_operation, failed_changeset, changes_so_far} ->
+    # failed_operation — the Multi step name that failed, e.g. :order or :payment
+    # failed_changeset — the changeset or value that caused the failure
+    # changes_so_far  — map of already-completed operations (rolled back automatically)
+    Logger.error("Multi failed at #{failed_operation}: #{inspect(failed_changeset.errors)}")
+    {:error, failed_changeset}
+end
+```
+
 ---
 
 ## on_delete Strategies
@@ -158,27 +178,3 @@ end
 | `:delete_all` | Delete all children | Owned children (comments, items) |
 | `:nilify_all` | Set FK to nil | Optional relationships |
 | `:restrict` | Prevent parent deletion | Critical relationships |
-
----
-
-## Common Pitfalls
-
-❌ **Don't** manually insert children when using `cast_assoc`
-❌ **Don't** forget to preload before updating with `cast_assoc`
-❌ **Don't** require foreign keys in child changesets
-❌ **Don't** forget FK indexes
-❌ **Don't** use `Ecto.Multi` for nested associations — use `cast_assoc`
-
-✅ **Do** use `cast_assoc` for has_many/has_one
-✅ **Do** use `Ecto.Multi` for unrelated tables
-✅ **Do** set `on_delete` explicitly
-✅ **Do** use `on_replace: :delete` for list management
-✅ **Do** preload associations before updating
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **ecto-essentials** | For schema and migration patterns |
-| **ecto-changeset-patterns** | For changeset composition |
-| **testing-essentials** | For testing nested associations |

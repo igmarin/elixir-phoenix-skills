@@ -33,12 +33,12 @@ Use this skill before writing ANY `.ex` or `.exs` file.
 8. **Let it crash** — don't write defensive code for impossible states
 9. **Use `@doc` and `@moduledoc`** for all public APIs
 10. **Prefer immutability** — never mutate data in place
+11. **Don't** use `String.to_atom/1` on user input (atom table exhaustion)
+12. **Consider `for` comprehensions** before chaining 3+ Enum operations
 
 ---
 
 ## Pattern Matching
-
-Pattern matching is the primary control flow mechanism in Elixir. Prefer it over conditional statements.
 
 ### Prefer Pattern Matching Over if/else
 
@@ -83,34 +83,6 @@ def handle_response(_), do: {:error, :unknown}
 
 ## Pipe Operator
 
-Use the pipe operator `|>` to chain function calls for improved readability.
-
-### Basic Piping
-
-❌ **Bad:**
-```elixir
-String.upcase(String.trim(user_input))
-```
-
-✅ **Good:**
-```elixir
-user_input
-|> String.trim()
-|> String.upcase()
-```
-
-### Pipe into Function Heads
-
-❌ **Bad:**
-```elixir
-def process_user(user) do
-  validated = validate_user(user)
-  transformed = transform_user(validated)
-  save_user(transformed)
-end
-```
-
-✅ **Good:**
 ```elixir
 def process_user(user) do
   user
@@ -121,8 +93,6 @@ end
 ```
 
 ## With Statement
-
-Use `with` for sequential operations that can fail.
 
 ❌ **Bad (nested case):**
 ```elixir
@@ -152,8 +122,6 @@ end
 
 ### With Statement — Inline Error Handling
 
-Handle specific errors in the else block:
-
 ```elixir
 def transfer_money(from_id, to_id, amount) do
   with {:ok, from_account} <- get_account(from_id),
@@ -177,8 +145,6 @@ end
 
 ## Guards
 
-Use guards for simple type and value checks in function heads.
-
 ```elixir
 def calculate(x) when is_integer(x) and x > 0 do
   x * 2
@@ -188,8 +154,6 @@ def calculate(_), do: {:error, :invalid_input}
 ```
 
 ## List Comprehensions
-
-Use `for` comprehensions for complex transformations and filtering.
 
 ❌ **Bad (multiple passes):**
 ```elixir
@@ -211,7 +175,7 @@ end
 ## Naming Conventions
 
 | Element | Convention | Example |
-|---------|-----------|---------|
+|---------|-----------|--------|
 | Module names | `PascalCase` | `MyApp.Accounts.User` |
 | Function names | `snake_case` | `create_user/1` |
 | Variables | `snake_case` | `user_name` |
@@ -220,8 +184,6 @@ end
 | Dangerous functions | end with `!` | `save!`, `update!` |
 
 ## Tagged Tuples for Error Handling
-
-The idiomatic way to handle success and failure in Elixir.
 
 ```elixir
 def fetch_user(id) do
@@ -239,8 +201,6 @@ end
 ```
 
 ## Bang Functions
-
-Functions ending with `!` raise errors instead of returning tuples.
 
 ```elixir
 # Returns {:ok, user} or {:error, changeset}
@@ -260,8 +220,6 @@ end
 
 ## Early Returns
 
-Use pattern matching in function heads for early returns.
-
 ```elixir
 def process_data(nil), do: {:error, :no_data}
 def process_data([]), do: {:error, :empty_list}
@@ -271,8 +229,6 @@ end
 ```
 
 ## Avoid Defensive Programming
-
-Don't check for things that can't happen. Let it crash.
 
 ❌ **Bad (defensive):**
 ```elixir
@@ -290,45 +246,12 @@ end
 def get_username(%User{name: name}), do: name
 ```
 
-If the user is nil or doesn't have a name, it's a bug that should crash and be fixed.
-
-## Anonymous Functions
-
-Use the capture operator `&` for concise anonymous functions.
-
-❌ **Verbose:**
-```elixir
-Enum.map(list, fn x -> x * 2 end)
-```
-
-✅ **Concise:**
-```elixir
-Enum.map(list, &(&1 * 2))
-```
-
-✅ **Named function capture:**
-```elixir
-Enum.map(users, &User.format/1)
-```
-
-## Common Pitfalls
-
-❌ **Don't** nest if/else — use pattern matching or case
-❌ **Don't** forget `@impl true` on callbacks
-❌ **Don't** use `String.to_atom/1` on user input (atom table exhaustion)
-❌ **Don't** write defensive code for impossible states
-❌ **Don't** chain more than 3 Enum operations without considering `for` comprehensions
-
-✅ **Do** use pattern matching as primary control flow
-✅ **Do** return tagged tuples for fallible operations
-✅ **Do** pipe for 2+ transformations
-✅ **Do** use `with` for sequential fallible operations
-✅ **Do** let processes crash and rely on supervisors
+If the user is nil or missing a name, it's a bug that should crash and be fixed.
 
 ## Integration
 
 | Predecessor | This Skill | Successor |
-|-------------|------------|----------|
+|-------------|------------|-----------|
 | None (always first) | elixir-essentials | testing-essentials |
 | None (always first) | elixir-essentials | otp-essentials |
 | None (always first) | elixir-essentials | typespec-dialyzer |

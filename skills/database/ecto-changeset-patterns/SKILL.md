@@ -21,15 +21,39 @@ metadata:
 
 Use this skill before writing ANY advanced changeset code.
 
-## RULES — Follow these with no exceptions
+## RULES — Quick Checklist
 
-1. **Create separate named changesets per operation** — `registration_changeset`, `email_changeset`, `password_changeset`; never overload a single `changeset/2`
-2. **Never require foreign key fields in `cast_assoc` child changesets** — the parent sets them automatically
-3. **Compose changesets with pipes** — each validation step is a separate function for reuse and clarity
-4. **Use `unsafe_validate_unique` paired with `unique_constraint`** — never one without the other
-5. **Use `update_change/3` for field transformations** — trimming, downcasing, slugifying happen in the changeset
-6. **Accept `opts \\ []` for conditional validation** — allows callers to toggle validation rules
-7. **Validate at the changeset level, not in context functions** — context functions should be thin wrappers
+1. Separate named changesets per operation (`registration_changeset`, `email_changeset`, etc.)
+2. Never require foreign key fields in `cast_assoc` child changesets
+3. Compose changesets with pipes; each validation step is a separate function
+4. Always pair `unsafe_validate_unique` with `unique_constraint`
+5. Use `update_change/3` for field transformations (trim, downcase, slugify)
+6. Accept `opts \ []` for conditional validation
+7. Validate at the changeset level, not in context functions
+
+---
+
+## Workflow: Building a New Schema
+
+When adding changesets to a new schema, apply patterns in this order:
+
+1. **Define separate named changesets** for each operation (registration, update, password change, etc.)
+2. **Compose validations** into small, reusable private functions piped together
+3. **Add uniqueness validation** — pair `unsafe_validate_unique` with `unique_constraint`
+4. **Apply field transformations** via `update_change/3` in the changeset, not in controllers
+5. **Verify** by testing in `iex -S mix` or running your changeset tests. A quick iex smoke test:
+
+```elixir
+# In iex -S mix
+MyApp.Accounts.User.registration_changeset(%MyApp.Accounts.User{}, %{email: "bad", username: ""})
+# => Inspect .valid? and .errors to confirm validations fire as expected
+
+# Or a minimal ExUnit test
+test "registration_changeset requires email and username" do
+  changeset = User.registration_changeset(%User{}, %{})
+  assert %{email: ["can't be blank"], username: ["can't be blank"]} = errors_on(changeset)
+end
+```
 
 ---
 
@@ -133,13 +157,6 @@ end
 ## Conditional Validation with opts
 
 ```elixir
-def registration_changeset(user, attrs, opts \\ []) do
-  user
-  |> cast(attrs, [:email, :username, :password])
-  |> validate_email(opts)
-  |> validate_password(opts)
-end
-
 # Normal registration
 def register_user(attrs) do
   %User{}
@@ -200,24 +217,4 @@ end
 
 ---
 
-## Common Pitfalls
-
-❌ **Don't** overload a single `changeset/2` for all operations
-❌ **Don't** require foreign keys in `cast_assoc` child changesets
-❌ **Don't** use `unsafe_validate_unique` without `unique_constraint`
-❌ **Don't** transform fields in controllers — do it in changesets
-❌ **Don't** validate uniqueness in application code alone
-
-✅ **Do** create separate named changesets per operation
-✅ **Do** compose changesets with small, reusable validation functions
-✅ **Do** use `opts` for conditional validation
-✅ **Do** use `update_change/3` for field transformations
-✅ **Do** pair `unsafe_validate_unique` with `unique_constraint`
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **ecto-essentials** | For schema and migration patterns |
-| **ecto-nested-associations** | For `cast_assoc` with nested data |
-| **testing-essentials** | For changeset testing patterns |
+> **Companion skills:** `ecto-essentials` (schema/migration patterns), `ecto-nested-associations` (`cast_assoc` with nested data), `testing-essentials` (changeset testing). Use independently if companion files are not present.

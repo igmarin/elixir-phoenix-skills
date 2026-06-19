@@ -33,7 +33,7 @@ if [[ "$(uname -s)" != "Linux" ]]; then
     DRY_RUN_BIN="$HOME/.cargo/bin/rs-guard"
   else
     echo "On non-Linux hosts, install rs-guard locally to run the API dry-run:" >&2
-    echo "  cargo install rs-guard --version 1.0.2 --locked" >&2
+    echo "  cargo install rs-guard --version 1.2.0 --locked" >&2
     exit 1
   fi
 fi
