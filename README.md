@@ -1,6 +1,6 @@
 # Elixir Phoenix Skills
 
-![Elixir Phoenix Skills](https://github.com/user-attachments/assets/placeholder-logo.png)
+![Elixir Phoenix Skills](https://github.com/user-attachments/assets/ac5da537-5062-4a67-a8a3-114129bc101a)
 
 A curated library of **public Elixir/Phoenix agent skills** that teach AI tools how to write idiomatic Elixir code, test Phoenix applications, and follow production-minded conventions. This repository acts as a **Domain Knowledge Registry** of specialized Elixir & Phoenix AI Skills, consumable by external MCP or CLI runtimes.
 
