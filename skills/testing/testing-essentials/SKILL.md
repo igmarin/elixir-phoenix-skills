@@ -29,16 +29,8 @@ Use this skill before writing ANY `_test.exs` file.
 4. **Define test data in fixtures** (`test/support/`) — never build it inline across multiple tests
 5. **Use `has_element?/2` and `element/2` for LiveView assertions** — not `html =~ "text"` for structure checks
 6. **Always test the unauthorized case** for any protected resource
-7. **Test the public context interface**, not internal implementation details
-8. **Use `describe` blocks** to group tests by function or behavior
-9. **Never hardcode dates** — use relative timestamps to prevent flaky tests
-10. **Write the failing test first** — TDD workflow: test fails → implement → test passes
-
----
-
-## TDD Workflow
-
-Write the failing test first. Run it to confirm it fails for the right reason. Implement the minimum code to make it pass. Never write implementation before the test exists.
+7. **Never hardcode dates** — use relative timestamps to prevent flaky tests
+8. **Write the failing test first** — run to confirm it fails for the right reason, then implement
 
 ```bash
 mix test test/my_app/accounts_test.exs  # Should fail first
@@ -202,8 +194,6 @@ Chain order matters — later functions receive assigns from earlier ones.
 
 ## Timestamp Testing
 
-Never hardcode dates — use relative timestamps to prevent flaky tests as time passes.
-
 ❌ **Bad — breaks after 2026:**
 ```elixir
 assert post.published_at == ~U[2026-01-15 12:00:00Z]
@@ -226,29 +216,14 @@ assert Blog.list_published_posts() == [old_post]
 
 ---
 
-## Common Pitfalls
+## Troubleshooting Common Failures
 
-❌ **Don't** build test data inline across multiple tests — use fixtures
-❌ **Don't** use `async: true` with shared DB state or external services
-❌ **Don't** use `html =~ "text"` for LiveView structure checks — use `has_element?/2`
-❌ **Don't** skip testing the unauthorized case
-❌ **Don't** hardcode timestamps
-❌ **Don't** test internal implementation details — test the public interface
+- **Sandbox ownership errors** (`ownership timeout` or `DBConnection.OwnershipError`): a test tagged `async: true` is sharing DB state — flip to `async: false`.
+- **LiveView sandbox errors** (`cannot find ownership process`): LiveView tests must use `async: false`; ensure `ConnCase` tags the test accordingly.
+- **`Application.put_env` leaking between tests**: always restore in an `on_exit` callback, and use `async: false` for the affected suite.
+- **Flaky timestamp assertions**: replace hardcoded datetimes with `DateTime.diff/3` comparisons (see Timestamp Testing above).
+- **Unexpected redirect in LiveView**: confirm the test user has the required role/session via `register_and_log_in_user` setup.
 
-✅ **Do** write the failing test first (TDD)
-✅ **Do** use `describe` blocks to group tests by function
-✅ **Do** test both happy path and error cases
-✅ **Do** use `errors_on/1` for changeset error assertions
-✅ **Do** use setup chaining for reusable test context
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| elixir-essentials | testing-essentials | phoenix-liveview-essentials |
-| elixir-essentials | testing-essentials | ecto-essentials |
-| None (standalone) | testing-essentials | property-based-testing |
-| None (standalone) | testing-essentials | benchee-profiling |
-| code-quality | testing-essentials | quality (persona) |
+---
 
 See `agents/testing-guide.md` for comprehensive examples covering async tests, Mox mocking, file upload testing, and Ecto query testing.

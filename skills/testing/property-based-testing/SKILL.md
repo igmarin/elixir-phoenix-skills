@@ -4,9 +4,9 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  Use when writing tests that need to cover many input combinations. Invoke before writing complex
-  test scenarios with edge cases. Covers StreamData, ExUnitProperties, generators, shrinking,
-  and property-based testing patterns.
+  Use when writing tests that need to cover many input combinations or complex edge cases. Generates
+  custom StreamData generators, writes ExUnitProperties tests, configures shrinking strategies, and
+  creates property-based test patterns for data transformations, algorithms, and state machines.
   Trigger words: property-based testing, StreamData, ExUnitProperties, generators, fuzzing, shrinking.
 metadata:
   user-invocable: "true"
@@ -15,17 +15,13 @@ metadata:
 
 # Property-Based Testing
 
-Property-based testing generates hundreds of test cases automatically, finding edge cases you'd never think to write.
-
 ## RULES — Follow these with no exceptions
 
 1. **Define properties, not examples** — state what should always be true, not specific inputs/outputs
 2. **Use `ExUnitProperties` for generators** — the standard library for property-based testing in Elixir
 3. **Start with simple generators** — `integer()`, `string()`, `list_of()` before custom generators
 4. **Test invariants, not specific values** — "output length equals input length" not "output is [1, 2, 3]"
-5. **Use `check all` for multiple properties** — test several invariants in one property
-6. **Leverage shrinking** — let StreamData find minimal failing cases
-7. **Combine with example-based tests** — property-based tests complement, not replace, unit tests
+5. **Leverage shrinking** — let StreamData find minimal failing cases
 
 ---
 
@@ -72,28 +68,23 @@ end
 
 ## Generators
 
-### Built-in Generators
+### Less Obvious Built-ins
 
 ```elixir
-# Integers
-integer()              # Any integer
-integer(0..100)        # Integer in range
-positive_integer()     # Positive integers
-
-# Strings
-string(:ascii)         # ASCII strings
-string(:alphanumeric)  # Alphanumeric strings
-binary()               # Binary data
-
-# Collections
-list_of(integer())           # List of integers
-list_of(integer(), min_length: 1)  # Non-empty list
-map_of(string(), integer())    # Map with string keys
-
-# Booleans and nil
-boolean()
-constant(nil)
+# Combine multiple generators with one_of
 one_of([constant(:a), constant(:b), constant(:c)])
+one_of([integer(), string(:ascii), boolean()])
+
+# Compose generators with gen all
+gen all x <- integer(0..100),
+        y <- integer(0..100),
+        x != y do
+  {x, y}
+end
+
+# Non-empty collections
+list_of(integer(), min_length: 1)
+map_of(string(:alphanumeric), integer())
 ```
 
 ### Custom Generators
@@ -137,18 +128,9 @@ defmodule MyApp.SortingTest do
     check all list <- list_of(integer()) do
       sorted = Enum.sort(list)
 
-      # Check that each element is <= the next
       sorted
       |> Enum.chunk_every(2, 1, :discard)
-      |> Enum.each(fn [a, b] ->
-        assert a <= b
-      end)
-    end
-  end
-
-  property "sorted list has same length as original" do
-    check all list <- list_of(integer()) do
-      assert length(Enum.sort(list)) == length(list)
+      |> Enum.each(fn [a, b] -> assert a <= b end)
     end
   end
 
@@ -162,34 +144,7 @@ end
 
 ---
 
-## Combining Properties
-
-```elixir
-property "JSON encoding and decoding is idempotent" do
-  check all data <- map_of(string(:alphanumeric), one_of([integer(), string(:ascii), boolean()])) do
-    encoded = Jason.encode!(data)
-    decoded = Jason.decode!(encoded)
-
-    # Keys are always strings after decode
-    assert Map.keys(decoded) == Map.keys(data)
-
-    # Values match (with type coercion for integers)
-    for {key, value} <- data do
-      case value do
-        v when is_integer(v) -> assert decoded[key] == v
-        v when is_binary(v) -> assert decoded[key] == v
-        v when is_boolean(v) -> assert decoded[key] == v
-      end
-    end
-  end
-end
-```
-
----
-
 ## Shrinking
-
-StreamData automatically shrinks failing cases to find minimal examples:
 
 ```elixir
 property "no list contains its own length as element" do
@@ -206,40 +161,18 @@ end
 
 ---
 
-## When to Use Property-Based Testing
+## Workflow: Write → Run → Interpret → Refine
 
-✅ **Good candidates:**
-- Data transformations (encoding, parsing, formatting)
-- Mathematical operations
-- Sorting and filtering algorithms
-- State machines
-- Serialization/deserialization
+1. **Write property** — define an invariant using `check all` with appropriate generators
+2. **Run test** — `mix test test/my_test.exs`
+3. **Interpret shrinking output** — on failure, StreamData reports both the original failing input and the shrunk minimal example:
+   ```
+   ** (ExUnit.AssertionError)
+   Failed with generated values (after 3 successful runs):
 
-❌ **Not ideal for:**
-- Database operations (use fixtures)
-- External API calls (use mocks)
-- UI interactions (use LiveView tests)
-- Simple CRUD operations
-
----
-
-## Common Pitfalls
-
-❌ **Don't** write example-based tests as property tests
-❌ **Don't** use overly complex generators — start simple
-❌ **Don't** ignore shrinking — it finds minimal failing cases
-❌ **Don't** replace all unit tests with property tests
-❌ **Don't** forget to test invariants, not specific values
-
-✅ **Do** define properties (invariants), not examples
-✅ **Do** use built-in generators first
-✅ **Do** leverage shrinking for debugging
-✅ **Do** combine with example-based tests
-✅ **Do** test transformations and algorithms
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **testing-essentials** | For general testing patterns |
-| **benchee-profiling** | For performance testing |
+       * Clause:    list <- list_of(integer())
+         Generated: [0]
+         (shrunk from [42, -7, 0, 15])
+   ```
+4. **Refine generator or property** — if the shrunk case reveals a generator producing invalid inputs, add constraints (e.g. `min_length: 1`, `integer(1..100)`); if it reveals a real bug, fix the implementation
+5. **Re-run** — confirm the fix holds across new generated cases
