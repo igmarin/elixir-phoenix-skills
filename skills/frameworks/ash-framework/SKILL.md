@@ -16,30 +16,6 @@ metadata:
 
 # Ash Framework
 
-Ash Framework is a declarative data management framework for Elixir, providing a resource-oriented approach to building applications.
-
----
-
-## Decision Guide — When to Use Ash
-
-✅ **Good candidates for Ash:**
-- Complex domains with many relationships and intricate business rules
-- Projects needing fine-grained authorization
-- Apps requiring multiple API formats (JSON, GraphQL)
-- Teams comfortable with DSLs and abstractions
-
-❌ **Not ideal for Ash:**
-- Simple CRUD applications or small projects with straightforward data models
-- Teams new to Elixir/Phoenix or projects with tight deadlines (learning curve is significant)
-- Contexts where Phoenix's manual flexibility is more appropriate
-
-**Key principles:**
-- Use Ash's declarative patterns instead of imperative Phoenix context code
-- Use AshPostgres, AshPhoenix, or AshJsonApi rather than reimplementing integrations
-- Plan for a significant learning curve; the DSL differs materially from plain Ecto/Phoenix
-
----
-
 ## Setup Workflow
 
 Follow this sequence when starting a new Ash project:
@@ -83,7 +59,7 @@ end
 
 ### Step 4 — Define Your First Resource
 
-Start with attributes, then add relationships and actions incrementally. Use the [Resource Definition](#resource-definition) section below for a full example.
+Start with attributes, then add relationships and actions incrementally. See [Resource Definition](#resource-definition) below.
 
 ### Step 5 — Generate and Run Migrations
 
@@ -92,17 +68,17 @@ mix ash_postgres.generate_migrations
 mix ash_postgres.migrate
 ```
 
-**Validation checkpoint:** Compile the project and confirm all resources load cleanly:
+**Validation checkpoint:** Confirm all resources load cleanly:
 
 ```bash
 mix compile --force 2>&1 | grep -E '(error|warning)'
 ```
 
-Expected output: no lines printed. If you see compilation errors, check that every resource listed in the domain module exists and that the `data_layer` option is set correctly.
+Expected output: no lines printed.
 
-**Common migration failure — conflict on existing table:** If `ash_postgres.generate_migrations` errors with a conflict, check the generated migration file in `priv/repo/migrations/` and remove or rename the conflicting `create table` statement before re-running.
-
-**Common compilation error — unknown DSL option:** Ash surfaces these as `** (Spark.Error.DslError)`. Check the path printed in the error (e.g., `MyApp.Blog.Post > attributes > attribute > :constraints`) to locate the offending block.
+**Common failures:**
+- **Migration conflict on existing table** — open the generated file in `priv/repo/migrations/` and remove or rename the conflicting `create table` statement before re-running.
+- **`Spark.Error.DslError` (unknown DSL option)** — check the path in the error (e.g., `MyApp.Blog.Post > attributes > attribute > :constraints`) to locate the offending block.
 
 ### Step 6 — Call Actions from Your Application
 
@@ -205,49 +181,43 @@ post
 
 ### Policies (Authorization)
 
+> Full policy reference: see `POLICIES.md`.
+
 ```elixir
-defmodule MyApp.Blog.Post do
-  # ... attributes and actions ...
+policies do
+  policy action_type(:read) do
+    authorize_if relates_to_actor_via(:author)
+    authorize_if expr(status == :published)
+  end
 
-  policies do
-    policy action_type(:read) do
-      authorize_if relates_to_actor_via(:author)
-      authorize_if expr(status == :published)
-    end
+  policy action_type(:create) do
+    authorize_if actor_present()
+  end
 
-    policy action_type(:create) do
-      authorize_if actor_present()
-    end
+  policy action(:update) do
+    authorize_if relates_to_actor_via(:author)
+  end
 
-    policy action(:update) do
-      authorize_if relates_to_actor_via(:author)
-    end
-
-    policy action(:destroy) do
-      authorize_if relates_to_actor_via(:author)
-    end
+  policy action(:destroy) do
+    authorize_if relates_to_actor_via(:author)
   end
 end
 ```
 
-**Policy authorization failure:** If a call raises `Ash.Error.Forbidden`, the actor did not satisfy any `authorize_if` clause. Enable policy debugging to inspect which clause failed:
+**Debugging authorization failures:** If a call raises `Ash.Error.Forbidden`, enable policy breakdown logging:
 
 ```elixir
-# In config/dev.exs
+# config/dev.exs
 config :ash, :policies, log_policy_breakdowns: :error
 ```
-
-This logs a breakdown of each evaluated clause so you can identify which condition needs adjustment.
 
 ---
 
 ### AshPhoenix LiveView Integration
 
-The pattern for integrating AshPhoenix with LiveView forms follows three steps:
+> Full LiveView reference: see `LIVEVIEW.md`.
 
-1. Load the resource and build a changeset in `mount/3`
-2. Re-build the changeset on `"validate"` events using `to_form/1`
-3. Call the domain update/create function on `"save"` and handle `{:ok, _}` / `{:error, _}`
+Pattern: (1) load resource and build changeset in `mount/3`, (2) rebuild changeset on `"validate"` events, (3) call domain function on `"save"` and handle `{:ok, _}` / `{:error, _}`.
 
 ```elixir
 defmodule MyAppWeb.PostLive.Edit do
@@ -259,13 +229,11 @@ defmodule MyAppWeb.PostLive.Edit do
   @impl true
   def mount(%{"id" => id}, _session, socket) do
     post = Blog.get!(Post, id)
-
     form =
       post
       |> Ash.Changeset.for_update(:update, %{})
       |> AshPhoenix.Form.for_update()
       |> to_form()
-
     {:ok, assign(socket, form: form, post: post)}
   end
 
@@ -276,7 +244,6 @@ defmodule MyAppWeb.PostLive.Edit do
       |> Ash.Changeset.for_update(:update, params)
       |> AshPhoenix.Form.for_update()
       |> to_form()
-
     {:noreply, assign(socket, form: form)}
   end
 
@@ -286,10 +253,7 @@ defmodule MyAppWeb.PostLive.Edit do
          |> Ash.Changeset.for_update(:update, params)
          |> Blog.update() do
       {:ok, post} ->
-        {:noreply,
-         socket
-         |> put_flash(:info, "Post updated.")
-         |> assign(post: post)}
+        {:noreply, socket |> put_flash(:info, "Post updated.") |> assign(post: post)}
 
       {:error, changeset} ->
         form = changeset |> AshPhoenix.Form.for_update() |> to_form()
@@ -298,11 +262,3 @@ defmodule MyAppWeb.PostLive.Edit do
   end
 end
 ```
-
----
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| ecto-essentials | ash-framework | None (standalone) |

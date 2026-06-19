@@ -159,19 +159,14 @@ end
 
 ### Supervision Strategies
 
+| Strategy | Behaviour |
+|---|---|
+| `:one_for_one` | Restart only the failed child (most common) |
+| `:one_for_all` | Restart ALL children when one fails |
+| `:rest_for_one` | Restart failed child and all children started after it |
+
 ```elixir
-# one_for_one — restart only the failed child (most common)
-children = [
-  {MyApp.Cache, []},
-  {MyApp.Worker, []}
-]
 Supervisor.start_link(children, strategy: :one_for_one)
-
-# one_for_all — restart ALL children when one fails
-Supervisor.start_link(children, strategy: :one_for_all)
-
-# rest_for_one — restart failed child and all children started AFTER it
-Supervisor.start_link(children, strategy: :rest_for_one)
 ```
 
 ### Application Supervision Tree
@@ -281,21 +276,17 @@ end)
 
 ## Agent
 
+Use Agent for simple state that doesn't need the full GenServer pattern:
+
 ```elixir
 defmodule MyApp.Counter do
   use Agent
 
-  def start_link(initial_value) do
-    Agent.start_link(fn -> initial_value end, name: __MODULE__)
-  end
+  def start_link(initial_value),
+    do: Agent.start_link(fn -> initial_value end, name: __MODULE__)
 
-  def value do
-    Agent.get(__MODULE__, & &1)
-  end
-
-  def increment do
-    Agent.update(__MODULE__, &(&1 + 1))
-  end
+  def value, do: Agent.get(__MODULE__, & &1)
+  def increment, do: Agent.update(__MODULE__, &(&1 + 1))
 end
 ```
 
@@ -352,13 +343,8 @@ defmodule MyApp.EtsCache do
   end
 
   # Writes go through the GenServer to serialize mutations
-  def put(key, value) do
-    GenServer.call(__MODULE__, {:put, key, value})
-  end
-
-  def delete(key) do
-    GenServer.call(__MODULE__, {:delete, key})
-  end
+  def put(key, value), do: GenServer.call(__MODULE__, {:put, key, value})
+  def delete(key), do: GenServer.call(__MODULE__, {:delete, key})
 
   # --- Callbacks ---
 
@@ -383,10 +369,13 @@ end
 ```
 
 **Key ETS options:**
-- `:set` — unique keys (default); `:bag` — duplicate keys allowed
-- `:public` — any process can read/write; `:protected` — owner writes, all read
-- `read_concurrency: true` — optimise for concurrent reads
-- `write_concurrency: true` — optimise for concurrent writes (trades some read performance)
+
+| Option | Meaning |
+|---|---|
+| `:set` / `:bag` | Unique keys vs. duplicate keys allowed |
+| `:public` / `:protected` | Any process reads/writes vs. owner writes, all read |
+| `read_concurrency: true` | Optimise for concurrent reads |
+| `write_concurrency: true` | Optimise for concurrent writes (trades some read performance) |
 
 ---
 

@@ -14,8 +14,6 @@ metadata:
 
 # Broadway Data Pipelines
 
-Broadway is a framework for building data ingestion and processing pipelines in Elixir.
-
 ---
 
 ## End-to-End Setup Workflow
@@ -63,8 +61,7 @@ defmodule MyApp.MessagePipeline do
         default: [concurrency: 10]
       ],
       batchers: [
-        default: [concurrency: 5, batch_size: 100, batch_timeout: 2000],
-        s3: [concurrency: 2, batch_size: 50]
+        default: [concurrency: 5, batch_size: 100, batch_timeout: 2000]
       ]
     )
   end
@@ -83,13 +80,6 @@ defmodule MyApp.MessagePipeline do
   def handle_batch(:default, messages, _, _) do
     data = Enum.map(messages, & &1.data)
     MyApp.Repo.insert_all(MyApp.Record, data)
-    messages
-  end
-
-  def handle_batch(:s3, messages, _, _) do
-    Enum.each(messages, fn message ->
-      S3.upload(message.data)
-    end)
     messages
   end
 
@@ -156,94 +146,3 @@ defmodule MyApp.MessagePipeline do
   end
 end
 ```
-
----
-
-## Custom Producers
-
-Use a raw `GenStage` producer when Broadway's built-in producer modules don't fit your source (database polling, custom APIs, files).
-
-```elixir
-defmodule MyApp.CustomProducer do
-  use GenStage
-
-  def start_link(opts), do: GenStage.start_link(__MODULE__, opts)
-
-  @impl true
-  def init(_opts), do: {:producer, %{queue: :queue.new()}}
-
-  @impl true
-  def handle_demand(demand, state) when demand > 0 do
-    messages = fetch_messages(demand)
-    {:noreply, messages, state}
-  end
-
-  defp fetch_messages(count) do
-    Enum.map(1..count, fn i -> %{id: i, data: "message_#{i}"} end)
-  end
-end
-```
-
----
-
-## Rate Limiting
-
-```elixir
-Broadway.start_link(__MODULE__,
-  name: __MODULE__,
-  producer: [
-    module: {MyApp.Producer, []},
-    rate_limiting: [
-      allowed_messages: 100,
-      interval: 1000  # 100 messages per second
-    ]
-  ],
-  processors: [default: [concurrency: 10]],
-  batchers: [default: [batch_size: 50]]
-)
-```
-
----
-
-## Testing
-
-Use `Broadway.Test` helpers to exercise message and batch handling without a live producer.
-
-```elixir
-defmodule MyApp.MessagePipelineTest do
-  use ExUnit.Case
-  import Broadway.Test
-
-  test "processes messages successfully" do
-    message = %Broadway.Message{data: %{id: 1, value: "test"}}
-    [processed_message] = handle_message(MyApp.MessagePipeline, message)
-    assert processed_message.data.processed_at
-  end
-
-  test "handles batch processing" do
-    messages = [%Broadway.Message{data: %{id: 1}}, %Broadway.Message{data: %{id: 2}}]
-    processed = handle_batch(MyApp.MessagePipeline, :default, messages)
-    assert length(processed) == 2
-  end
-end
-```
-
----
-
-## LiveDashboard Integration
-
-```elixir
-# router.ex
-live_dashboard "/dashboard",
-  additional_pages: [
-    broadway: {BroadwayDashboard, pipelines: [MyApp.MessagePipeline]}
-  ]
-```
-
----
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| otp-essentials | broadway-data-pipelines | testing-essentials |

@@ -27,12 +27,9 @@ Use this skill before writing ANY `on_mount` hook or LiveView auth code.
 ## RULES — Follow these with no exceptions
 
 1. **Always use `on_mount` callbacks for LiveView auth** — never check auth in `mount/3` directly
-2. **Use `mount_current_scope/2` to extract scope from session** — never access session tokens manually or parse session data in LiveViews
-3. **Handle both `:cont` and `:halt` returns from `on_mount`** — `:halt` must redirect with a flash message, never silently drop the connection
-4. **Resolve import conflicts explicitly** — use `except:` to avoid ambiguity between `Phoenix.Controller` and `Phoenix.LiveView` exports of `redirect/2` and `put_flash/3`
-5. **Use bracket access `assigns[:current_scope]` in templates** — dot access `@current_scope` crashes on nil when user is not authenticated
-6. **Test auth redirects by asserting `{:error, {:redirect, %{to: path}}}`** — verify the redirect tuple from `live/2`, not rendered content
-7. **Define `on_mount` hooks once, reference via `live_session` in router** — never duplicate auth logic across LiveView modules
+2. **Use `mount_current_scope/2` to extract scope from session** — never access session tokens manually
+3. **`:halt` must redirect with a flash message** — never silently drop the connection
+4. **Define `on_mount` hooks once, reference via `live_session` in router** — never duplicate auth logic across LiveView modules
 
 ---
 
@@ -53,7 +50,6 @@ defmodule MyAppWeb.UserAuth do
   import Phoenix.LiveView
   import Phoenix.Controller, except: [redirect: 2, put_flash: 3]
 
-  # Called by live_session :require_authenticated_user
   def on_mount(:require_authenticated_user, _params, session, socket) do
     socket = mount_current_scope(socket, session)
 
@@ -69,7 +65,6 @@ defmodule MyAppWeb.UserAuth do
     end
   end
 
-  # Called by live_session :redirect_if_authenticated
   def on_mount(:redirect_if_authenticated, _params, session, socket) do
     socket = mount_current_scope(socket, session)
 
@@ -80,7 +75,6 @@ defmodule MyAppWeb.UserAuth do
     end
   end
 
-  # Called by live_session :mount_current_scope (public pages)
   def on_mount(:mount_current_scope, _params, session, socket) do
     {:cont, mount_current_scope(socket, session)}
   end
@@ -109,33 +103,27 @@ end
 defmodule MyAppWeb.Router do
   use MyAppWeb, :router
 
-  # Public pages — scope is mounted but not required
   live_session :mount_current_scope,
     on_mount: [{MyAppWeb.UserAuth, :mount_current_scope}] do
     scope "/", MyAppWeb do
       pipe_through :browser
-
       live "/", HomeLive.Index
     end
   end
 
-  # Authenticated pages
   live_session :require_authenticated_user,
     on_mount: [{MyAppWeb.UserAuth, :require_authenticated_user}] do
     scope "/", MyAppWeb do
       pipe_through [:browser, :require_authenticated_user]
-
       live "/dashboard", DashboardLive.Index
       live "/settings", SettingsLive.Index
     end
   end
 
-  # Guest-only pages
   live_session :redirect_if_authenticated,
     on_mount: [{MyAppWeb.UserAuth, :redirect_if_authenticated}] do
     scope "/", MyAppWeb do
       pipe_through [:browser, :redirect_if_user]
-
       live "/users/register", UserRegistrationLive
       live "/users/log_in", UserLoginLive
     end
@@ -147,8 +135,6 @@ end
 
 ## Template Access
 
-Phoenix 1.8+ uses `Scope` structs. Always use bracket access in templates — dot access crashes when the user is not authenticated:
-
 ```elixir
 # In LiveView — access user through scope
 def mount(_params, _session, socket) do
@@ -156,7 +142,7 @@ def mount(_params, _session, socket) do
   {:ok, assign(socket, :posts, Posts.list_posts(user))}
 end
 
-# In templates — bracket access is safe on nil; dot access is not
+# In templates — use bracket access for optional assigns
 <%= if assigns[:current_scope] && @current_scope.user do %>
   <p>Welcome, <%= @current_scope.user.email %></p>
 <% end %>
@@ -192,11 +178,3 @@ describe "redirect_if_authenticated" do
   end
 end
 ```
-
----
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| phoenix-liveview-essentials | phoenix-liveview-auth | testing-essentials |

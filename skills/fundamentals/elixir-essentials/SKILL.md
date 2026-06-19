@@ -40,41 +40,7 @@ Use this skill before writing ANY `.ex` or `.exs` file.
 
 ## Pattern Matching
 
-### Prefer Pattern Matching Over if/else
-
-❌ **Bad:**
-```elixir
-def process(result) do
-  if result.status == :ok do
-    result.data
-  else
-    nil
-  end
-end
-```
-
-✅ **Good:**
-```elixir
-def process(%{status: :ok, data: data}), do: data
-def process(_), do: nil
-```
-
-### Use Case for Multiple Patterns
-
-❌ **Bad:**
-```elixir
-def handle_response(response) do
-  if response.status == 200 do
-    {:ok, response.body}
-  else if response.status == 404 do
-    {:error, :not_found}
-  else
-    {:error, :unknown}
-  end
-end
-```
-
-✅ **Good:**
+✅ **Good — prefer multi-clause functions with pattern matching over if/else:**
 ```elixir
 def handle_response(%{status: 200, body: body}), do: {:ok, body}
 def handle_response(%{status: 404}), do: {:error, :not_found}
@@ -175,7 +141,7 @@ end
 ## Naming Conventions
 
 | Element | Convention | Example |
-|---------|-----------|--------|
+|---------|-----------|-------|
 | Module names | `PascalCase` | `MyApp.Accounts.User` |
 | Function names | `snake_case` | `create_user/1` |
 | Variables | `snake_case` | `user_name` |
@@ -202,21 +168,7 @@ end
 
 ## Bang Functions
 
-```elixir
-# Returns {:ok, user} or {:error, changeset}
-def create_user(attrs) do
-  %User{}
-  |> User.changeset(attrs)
-  |> Repo.insert()
-end
-
-# Returns user or raises
-def create_user!(attrs) do
-  %User{}
-  |> User.changeset(attrs)
-  |> Repo.insert!()
-end
-```
+Use `!` suffix for functions that raise on failure instead of returning `{:ok, _} | {:error, _}`. Prefer the non-bang variant in application logic; use bang in tests or when failure is truly unrecoverable.
 
 ## Early Returns
 
@@ -230,17 +182,6 @@ end
 
 ## Avoid Defensive Programming
 
-❌ **Bad (defensive):**
-```elixir
-def get_username(user) do
-  if user && user.name do
-    user.name
-  else
-    "Unknown"
-  end
-end
-```
-
 ✅ **Good (trust your types):**
 ```elixir
 def get_username(%User{name: name}), do: name
@@ -250,9 +191,8 @@ If the user is nil or missing a name, it's a bug that should crash and be fixed.
 
 ## Integration
 
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| None (always first) | elixir-essentials | testing-essentials |
-| None (always first) | elixir-essentials | otp-essentials |
-| None (always first) | elixir-essentials | typespec-dialyzer |
-| None (always first) | elixir-essentials | code-quality |
+Successor skills to apply after this one:
+- [testing-essentials](../testing-essentials/SKILL.md)
+- [otp-essentials](../otp-essentials/SKILL.md)
+- [typespec-dialyzer](../typespec-dialyzer/SKILL.md)
+- [code-quality](../code-quality/SKILL.md)

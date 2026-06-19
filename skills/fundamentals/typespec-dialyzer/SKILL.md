@@ -4,9 +4,9 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  MANDATORY for adding type safety to Elixir code. Invoke before writing public functions or refactoring.
+  Use when adding type safety to Elixir code, writing public functions, or refactoring.
   Covers @spec, @type, Dialyxir setup, typespec best practices, and CI integration.
-  Critical for refactoring discipline and catching type errors at compile time.
+  Supports incremental adoption and catching type errors before production.
   Trigger words: typespec, @spec, @type, Dialyzer, Dialyxir, type safety, type checking.
 metadata:
   user-invocable: "true"
@@ -17,13 +17,9 @@ metadata:
 
 ## RULES — Follow these with no exceptions
 
-1. **Define custom types with `@type`** — make complex types readable and reusable
-2. **Use `@typedoc` for custom types** — document what the type represents
-3. **Run Dialyzer in CI** — catch type errors before they reach production
-4. **Start with core modules** — add typespecs incrementally, don't try to type everything at once
-5. **Use Dialyxir's `--format short`** — easier to read and fix errors
-6. **Never use `any()` as a catch-all** — be specific with types
-7. **Never ignore Dialyzer warnings without documenting why** — use `.dialyzer_ignore.exs`
+1. **Run Dialyzer in CI** — catch type errors before they reach production
+2. **Start with core modules** — add typespecs incrementally, don't try to type everything at once
+3. **Never ignore Dialyzer warnings without documenting why** — use `.dialyzer_ignore.exs`
 
 ---
 
@@ -123,10 +119,7 @@ end
 ### Run Dialyzer
 
 ```bash
-# First run builds the PLT (slow)
-mix dialyzer
-
-# Subsequent runs are fast
+# First run builds the PLT
 mix dialyzer
 
 # Format output
@@ -174,7 +167,7 @@ mix dialyzer --format short
 mix dialyzer --format short
 
 # 4. If a warning is a known false positive, document and suppress it
-echo '{"lib/my_app/legacy.ex", :no_return}' >> .dialyzer_ignore.exs
+#    Add the entry to .dialyzer_ignore.exs in Elixir tuple syntax, then:
 mix dialyzer --ignore-file .dialyzer_ignore.exs
 ```
 
@@ -239,12 +232,3 @@ end
 - name: Dialyzer
   run: mix dialyzer --format short
 ```
-
----
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| elixir-essentials | typespec-dialyzer | code-quality |
-| elixir-essentials | typespec-dialyzer | credo-config |

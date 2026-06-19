@@ -24,9 +24,9 @@ Use this skill before writing ANY nested association or multi-table code.
 ## RULES — Follow these with no exceptions
 
 1. **Use `cast_assoc/3` for has_many/has_one** — never manually insert children in a separate step
-2. **Use `Ecto.Multi` for operations spanning multiple unrelated tables** — Multi provides explicit rollback control; do NOT use `Ecto.Multi` for nested associations
+2. **Use `Ecto.Multi` for operations spanning multiple unrelated tables** — do NOT use `Ecto.Multi` for nested associations
 3. **Set `on_delete` explicitly in migrations** — `:delete_all` for owned children, `:nothing` for independent entities
-4. **Always create indexes on foreign key columns** — missing FK indexes cause slow joins
+4. **Always create indexes on foreign key columns**
 5. **Use `on_replace: :delete` in `cast_assoc` for list management** — allows removing items by omitting them
 6. **Preload associations before updating them** — `cast_assoc` compares against currently loaded data
 7. **Do NOT require foreign keys in child changesets** — `cast_assoc` sets them automatically
@@ -84,6 +84,28 @@ Blog.create_post(%{
 })
 ```
 
+### Handling cast_assoc Failures
+
+When `Repo.insert/1` or `Repo.update/1` fails, nested changeset errors are embedded inside the parent changeset. Traverse them explicitly:
+
+```elixir
+case Repo.insert(Post.changeset(%Post{}, attrs)) do
+  {:ok, post} ->
+    {:ok, post}
+
+  {:error, changeset} ->
+    IO.inspect(changeset.errors, label: "post errors")
+
+    changeset.changes
+    |> Map.get(:comments, [])
+    |> Enum.each(fn comment_changeset ->
+      IO.inspect(comment_changeset.errors, label: "comment errors")
+    end)
+
+    {:error, changeset}
+end
+```
+
 ---
 
 ## cast_assoc for Updates with on_replace
@@ -136,13 +158,9 @@ Always pattern-match on both success and error tuples from `Repo.transaction/1`:
 ```elixir
 case create_order_with_payment(order_attrs, payment_attrs) do
   {:ok, %{order: order, payment: payment}} ->
-    # All operations succeeded
     {:ok, order}
 
-  {:error, failed_operation, failed_changeset, changes_so_far} ->
-    # failed_operation — the Multi step name that failed, e.g. :order or :payment
-    # failed_changeset — the changeset or value that caused the failure
-    # changes_so_far  — map of already-completed operations (rolled back automatically)
+  {:error, failed_operation, failed_changeset, _changes_so_far} ->
     Logger.error("Multi failed at #{failed_operation}: #{inspect(failed_changeset.errors)}")
     {:error, failed_changeset}
 end
@@ -179,10 +197,19 @@ end
 | `:nilify_all` | Set FK to nil | Optional relationships |
 | `:restrict` | Prevent parent deletion | Critical relationships |
 
----
+### Verifying FK Indexes After Migration
 
-## Integration
+After running migrations, confirm FK indexes exist:
 
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| ecto-essentials | ecto-nested-associations | testing-essentials |
+```bash
+# In psql
+\d comments
+```
+
+Expect an index entry for each FK column (e.g. `comments_post_id_index`). If missing, add it in a new migration:
+
+```elixir
+def change do
+  create index(:comments, [:post_id])
+end
+```

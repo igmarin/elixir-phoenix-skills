@@ -23,22 +23,16 @@ Use this skill before modifying ANY schema, query, or migration.
 
 ## RULES — Follow these with no exceptions
 
-1. **Always use changesets** for inserts and updates — never pass raw maps to Repo
-2. **Preload associations** before accessing them — avoid N+1 queries
-3. **Use transactions** for multi-step operations that must succeed together
-4. **Add database constraints** (unique_index, foreign_key, check_constraint) AND changeset validations
-5. **Use contexts** for database access — never call Repo directly from web layer (LiveViews, controllers)
-6. **Add indexes** on foreign keys and frequently queried fields — never forget indexes on foreign keys
-7. **Use `timestamps()`** in every schema — track when records were created/updated
-8. **Use `Ecto.Multi`** for complex multi-step operations instead of nested `Repo.transaction`
-9. **Parameterize all user input in queries** — never interpolate values into SQL fragments, always use `^`
-10. **Never combine schema changes and data backfill** in the same migration
+1. **Add database constraints** (unique_index, foreign_key, check_constraint) AND changeset validations — both layers are required
+2. **Add indexes** on foreign keys and frequently queried fields — never omit indexes on foreign keys
+3. **Parameterize all user input in queries** — never interpolate values into SQL fragments, always use `^`
+4. **Never combine schema changes and data backfill** in the same migration
 
 ---
 
 ## Schema Definition
 
-Define schemas with proper types and associations. All subsequent examples reference these schemas.
+Define schemas with proper types and associations.
 
 ```elixir
 # Parent schema
@@ -92,8 +86,6 @@ end
 ```
 
 ## Query Composition
-
-Build queries composably using `Ecto.Query`.
 
 ```elixir
 import Ecto.Query
@@ -222,8 +214,6 @@ end
 
 ## Dynamic Queries
 
-Build queries dynamically based on filters.
-
 ```elixir
 def list_images(filters) do
   Image
@@ -237,7 +227,7 @@ defp apply_filters(query, filters) do
       where(query, [i], i.folder_id == ^folder_id)
 
     {:search, term}, query ->
-      where(query, [i], ilike(i.title, ^"%#{term}%"))
+      where(query, [i], ilike(i.title, ^"#{term}"))
 
     {:min_size, size}, query ->
       where(query, [i], i.file_size >= ^size)
@@ -309,16 +299,12 @@ create unique_index(:folders, [:name])
 
 ## Context Pattern
 
-Organize all database operations in context modules — never call Repo from the web layer.
+Organize all database operations in context modules — **never call Repo from the web layer** (LiveViews, controllers).
 
 ```elixir
 defmodule MyApp.Media do
   alias MyApp.Media.{Image, Folder}
   alias MyApp.Repo
-
-  def list_images, do: Repo.all(Image)
-
-  def get_image!(id), do: Repo.get!(Image, id)
 
   def create_image(attrs) do
     %Image{}
@@ -331,12 +317,10 @@ defmodule MyApp.Media do
     |> Image.changeset(attrs)
     |> Repo.update()
   end
-
-  def delete_image(%Image{} = image) do
-    Repo.delete(image)
-  end
 end
 ```
+
+All standard CRUD functions (`list_*`, `get_*!`, `delete_*`) follow the same pattern. Controllers and LiveViews call context functions only — never `Repo` directly.
 
 ---
 

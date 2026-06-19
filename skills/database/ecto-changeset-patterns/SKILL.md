@@ -17,10 +17,6 @@ metadata:
 
 # Ecto Changeset Patterns
 
-<!-- Adapted from j-morgan6/elixir-phoenix-guide (MIT License, Copyright (c) 2026 Joseph Morgan) -->
-
-Use this skill before writing ANY advanced changeset code.
-
 ## RULES — Quick Checklist
 
 1. Separate named changesets per operation (`registration_changeset`, `email_changeset`, etc.)
@@ -28,7 +24,7 @@ Use this skill before writing ANY advanced changeset code.
 3. Compose changesets with pipes; each validation step is a separate function
 4. Always pair `unsafe_validate_unique` with `unique_constraint`
 5. Use `update_change/3` for field transformations (trim, downcase, slugify)
-6. Accept `opts \ []` for conditional validation
+6. Accept `opts \\ []` for conditional validation
 7. Validate at the changeset level, not in context functions
 
 ---
@@ -217,12 +213,12 @@ end
 
 ---
 
-> **Companion skills:** `ecto-essentials` (schema/migration patterns), `ecto-nested-associations` (`cast_assoc` with nested data), `testing-essentials` (changeset testing). Use independently if companion files are not present.
+## Related Skills
 
----
+| Skill | When to Use |
+|-------|-------------|
+| `ecto-essentials` | Start here for schema definitions and migration patterns before writing changesets |
+| `ecto-nested-associations` | Use when `cast_assoc` involves deeply nested data structures |
+| `testing-essentials` | Use after this skill to write changeset tests with `errors_on/1` helpers |
 
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| ecto-essentials | ecto-changeset-patterns | testing-essentials |
+Each skill can be used independently if companion files are not present.
