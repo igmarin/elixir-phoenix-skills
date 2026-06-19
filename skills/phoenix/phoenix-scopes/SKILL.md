@@ -149,3 +149,11 @@ def on_mount(:require_authenticated_user, _params, session, socket) do
   end
 end
 ```
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| phoenix-liveview-essentials | phoenix-scopes | security-essentials |

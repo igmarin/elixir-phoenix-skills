@@ -239,3 +239,11 @@ live_dashboard "/dashboard",
     broadway: {BroadwayDashboard, pipelines: [MyApp.MessagePipeline]}
   ]
 ```
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| otp-essentials | broadway-data-pipelines | testing-essentials |

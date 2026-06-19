@@ -268,3 +268,11 @@ When completing a migration, output MUST include:
 - **Creating index without `concurrently` on large tables**
 - **No `down/0` defined**
 - **Skipping idempotent cycle test**
+
+---
+
+## Integration
+
+| Predecessor | This Persona | Successor |
+|-------------|---------------|-----------|
+| ecto-essentials | ecto-migration | None (standalone) |

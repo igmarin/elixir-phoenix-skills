@@ -167,3 +167,11 @@ end
 | **phoenix-scopes** | Phoenix 1.8+ Scope-based auth |
 | **testing-essentials** | Testing patterns |
 | **security-essentials** | Broader security best practices |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| phoenix-liveview-essentials | phoenix-authorization-patterns | security-essentials |

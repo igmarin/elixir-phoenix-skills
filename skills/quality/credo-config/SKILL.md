@@ -202,6 +202,5 @@ checks: %{
 
 | Predecessor | This Skill | Successor |
 |-------------|------------|-----------|
-| **code-quality** | For overall code quality |
-| **typespec-dialyzer** | For type safety |
-| **security-essentials** | For security scanning with Sobelow |
+| code-quality | credo-config | typespec-dialyzer |
+| code-quality | credo-config | security-essentials |

@@ -186,6 +186,5 @@ end
 
 | Predecessor | This Skill | Successor |
 |-------------|------------|-----------|
-| **security-essentials** | For token handling and input validation |
-| **testing-essentials** | For API testing patterns |
-| **req-http-client** | For making HTTP requests from Elixir |
+| elixir-essentials | phoenix-json-api | testing-essentials |
+| security-essentials | phoenix-json-api | req-http-client |

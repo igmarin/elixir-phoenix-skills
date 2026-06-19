@@ -175,7 +175,6 @@ end
 
 | Predecessor | This Skill | Successor |
 |-------------|------------|-----------|
-| **deployment-gotchas** | For production configuration |
-| **security-essentials** | For sensitive data logging rules |
-| **otp-essentials** | For process monitoring patterns |
-| **benchee-profiling** | For performance profiling |
+| otp-essentials | telemetry-essentials | deployment-gotchas |
+| otp-essentials | telemetry-essentials | benchee-profiling |
+| security-essentials | telemetry-essentials | deployment-gotchas |

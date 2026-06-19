@@ -148,6 +148,5 @@ end
 
 | Predecessor | This Skill | Successor |
 |-------------|------------|-----------|
-| **phoenix-liveview-essentials** | For LiveView lifecycle patterns |
-| **testing-essentials** | For testing upload patterns |
-| **security-essentials** | For file type validation |
+| phoenix-liveview-essentials | phoenix-uploads | testing-essentials |
+| phoenix-liveview-essentials | phoenix-uploads | security-essentials |

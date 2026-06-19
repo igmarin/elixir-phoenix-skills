@@ -42,7 +42,7 @@ defmodule MyApp.BlogTest do
 
   describe "list_posts/0" do
     test "returns all published posts" do
-      post = insert(:post, published: true)
+      post = post_fixture(published: true)
       assert Blog.list_posts() == [post]
     end
   end
@@ -91,3 +91,11 @@ Expected failure output:
 3. **Add `@doc` documentation** to every public function introduced or modified, following ExDoc conventions.
 4. **Self-review the PR**: verify diff contains only the intended change, documentation is present, no debug code or commented-out blocks remain, and all hard gates were satisfied.
 5. **Produce the PR** with a description that references the failing test, the minimal implementation, and the quality suite result.
+
+---
+
+## Integration
+
+| Predecessor | This Persona | Successor |
+|-------------|---------------|-----------|
+| testing-essentials | tdd | None (standalone) |

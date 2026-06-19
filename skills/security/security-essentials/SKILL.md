@@ -208,3 +208,11 @@ pipeline :api do
   # No :protect_from_forgery — APIs use Bearer tokens instead
 end
 ```
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| elixir-essentials | security-essentials | None (standalone) |

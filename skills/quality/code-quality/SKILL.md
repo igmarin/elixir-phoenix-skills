@@ -4,8 +4,8 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  Invoke when analyzing or refactoring Elixir code. Covers duplication detection, ABC complexity,
-  unused private functions, template duplication, and Credo integration.
+  MANDATORY for ALL code quality and refactoring work. Invoke before analyzing or refactoring Elixir code.
+  Covers duplication detection, ABC complexity, unused private functions, template duplication, and Credo integration.
   Provides thresholds and fix patterns for each quality issue.
   Trigger words: code quality, duplication, complexity, unused functions, Credo, refactoring, analysis.
 metadata:
@@ -161,3 +161,12 @@ defp aliases do
   ]
 end
 ```
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| elixir-essentials | code-quality | credo-config |
+| elixir-essentials | code-quality | typespec-dialyzer |

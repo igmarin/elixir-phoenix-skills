@@ -218,3 +218,11 @@ end
 ---
 
 > **Companion skills:** `ecto-essentials` (schema/migration patterns), `ecto-nested-associations` (`cast_assoc` with nested data), `testing-essentials` (changeset testing). Use independently if companion files are not present.
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| ecto-essentials | ecto-changeset-patterns | testing-essentials |

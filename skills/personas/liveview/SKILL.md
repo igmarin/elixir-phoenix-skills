@@ -162,3 +162,11 @@ When completing a LiveView feature, produce a report covering: module path and r
 1. Verify `phx-click="event_name"` matches `handle_event("event_name", ...)` exactly.
 2. Check `phx-value-*` bindings are strings (they're always sent as strings).
 3. Verify the element is inside the LiveView's DOM (not in a nested layout).
+
+---
+
+## Integration
+
+| Predecessor | This Persona | Successor |
+|-------------|---------------|-----------|
+| phoenix-liveview-essentials | liveview | None (standalone) |

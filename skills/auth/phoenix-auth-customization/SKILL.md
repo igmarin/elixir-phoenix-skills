@@ -141,3 +141,11 @@ mix test
   </:actions>
 </.simple_form>
 ```
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| phoenix-liveview-essentials | phoenix-auth-customization | security-essentials |

@@ -176,3 +176,11 @@ end
    ```
 4. **Refine generator or property** — if the shrunk case reveals a generator producing invalid inputs, add constraints (e.g. `min_length: 1`, `integer(1..100)`); if it reveals a real bug, fix the implementation
 5. **Re-run** — confirm the fix holds across new generated cases
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| testing-essentials | property-based-testing | None (standalone) |

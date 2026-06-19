@@ -230,7 +230,7 @@ end
 
 ```yaml
 - name: Cache PLT
-  uses: actions/cache@v3
+  uses: actions/cache@6f8efc29b200d32929f49075959781ed54ec270c # v3
   with:
     path: priv/plts
     key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
@@ -239,3 +239,12 @@ end
 - name: Dialyzer
   run: mix dialyzer --format short
 ```
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| elixir-essentials | typespec-dialyzer | code-quality |
+| elixir-essentials | typespec-dialyzer | credo-config |

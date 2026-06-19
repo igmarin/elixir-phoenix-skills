@@ -139,3 +139,11 @@ Produce a `# Quality Report — [Date]` with three sections:
 1. Recompile with `mix compile --force`.
 2. Run `mix dialyzer` to identify type inconsistencies.
 3. Update `@spec` annotations to match the refactored code.
+
+---
+
+## Integration
+
+| Predecessor | This Persona | Successor |
+|-------------|---------------|-----------|
+| code-quality | quality | None (standalone) |

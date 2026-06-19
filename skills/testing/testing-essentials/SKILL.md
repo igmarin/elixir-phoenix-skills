@@ -227,3 +227,11 @@ assert Blog.list_published_posts() == [old_post]
 ---
 
 See `agents/testing-guide.md` for comprehensive examples covering async tests, Mox mocking, file upload testing, and Ecto query testing.
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| elixir-essentials | testing-essentials | None (standalone) |

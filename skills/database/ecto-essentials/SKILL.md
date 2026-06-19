@@ -337,3 +337,12 @@ defmodule MyApp.Media do
   end
 end
 ```
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| elixir-essentials | ecto-essentials | ecto-changeset-patterns |
+| elixir-essentials | ecto-essentials | testing-essentials |

@@ -285,6 +285,5 @@ end
 
 | Predecessor | This Skill | Successor |
 |-------------|------------|-----------|
-| **ecto-essentials** | For database-related tasks |
-| **phoenix-liveview-essentials** | When using phx.gen.live |
-| **testing-essentials** | For testing generators |
+| elixir-essentials | mix-tasks-generators | phoenix-liveview-essentials |
+| ecto-essentials | mix-tasks-generators | testing-essentials |

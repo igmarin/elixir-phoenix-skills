@@ -175,3 +175,11 @@ end
 - **phoenix-pubsub-patterns** — underlying PubSub primitives used by Channels and Presence
 - **phoenix-liveview-essentials** — use instead of Channels for server-rendered real-time UI
 - **testing-essentials** — patterns for testing channel joins, handle_in, and Presence
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| phoenix-liveview-essentials | phoenix-channels-essentials | testing-essentials |

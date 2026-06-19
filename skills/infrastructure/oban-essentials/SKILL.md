@@ -289,7 +289,5 @@ SendReport.new(%{user_id: user.id, report_id: report.id})
 
 | Predecessor | This Skill | Successor |
 |-------------|------------|-----------|
-| **testing-essentials** | Before writing worker tests |
-| **elixir-essentials** | Before writing worker modules |
-| **otp-essentials** | When choosing between Oban and raw OTP for background work |
-| **broadway-data-pipelines** | When needing data pipeline processing instead of job queues |
+| elixir-essentials | oban-essentials | testing-essentials |
+| otp-essentials | oban-essentials | broadway-data-pipelines |

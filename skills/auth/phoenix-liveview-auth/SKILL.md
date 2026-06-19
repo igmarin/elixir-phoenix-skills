@@ -192,3 +192,11 @@ describe "redirect_if_authenticated" do
   end
 end
 ```
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| phoenix-liveview-essentials | phoenix-liveview-auth | testing-essentials |

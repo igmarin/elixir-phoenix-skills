@@ -166,3 +166,11 @@ If stream patching is not working as expected, check for:
 - Missing `id={dom_id}` on each item element
 - Accidentally replacing the entire stream assign instead of using `stream_insert`/`stream_delete`
 - DOM ID collisions caused by non-unique item IDs
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| phoenix-liveview-essentials | liveview-streams | testing-essentials |

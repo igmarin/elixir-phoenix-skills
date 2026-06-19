@@ -317,6 +317,6 @@ end
 | None (standalone) | phoenix-liveview-essentials | phoenix-scopes |
 | None (standalone) | phoenix-liveview-essentials | phoenix-pubsub-patterns |
 | None (standalone) | phoenix-liveview-essentials | phoenix-liveview-auth |
-| **ecto-essentials** | When working with database operations | |
+| ecto-essentials | phoenix-liveview-essentials | testing-essentials |
 
 See `agents/liveview-checklist.md` for a step-by-step LiveView development checklist.

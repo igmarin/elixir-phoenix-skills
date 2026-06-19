@@ -39,7 +39,7 @@ Triages and decomposes any Elixir/Phoenix request into ordered sub-tasks, then d
 
 ### Core Skills Catalog
 
-The eight most-used skills are listed here. For the full catalog of all available skills, see `SKILLS_CATALOG.md`.
+The eight most-used skills are listed here. For the full catalog of all available skills, see `directory.json` at the repository root.
 
 | Skill | Use when... | Notes |
 | ----- | ----------- | ----- |
@@ -149,3 +149,12 @@ This pull request contains custom input validation, so we will perform a securit
 **Use `elixir-essentials` alone** if you only need Elixir language guidance without orchestration.
 
 **Use `testing-essentials` alone** if the test approach is already decided and you just need to write the spec.
+
+---
+
+## Integration
+
+| Predecessor | This Persona | Successor |
+|-------------|---------------|-----------|
+| None (always first) | elixir-skill-router | elixir-essentials |
+| None (always first) | elixir-skill-router | phoenix-liveview-essentials |

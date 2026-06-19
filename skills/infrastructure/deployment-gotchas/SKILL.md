@@ -216,3 +216,11 @@ if config_env() == :prod do
   config :logger, level: log_level
 end
 ```
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| telemetry-essentials | deployment-gotchas | None (standalone) |

@@ -278,6 +278,5 @@ Code.require_file("bench/json_benchmark.exs")
 
 | Predecessor | This Skill | Successor |
 |-------------|------------|----------|
-| **property-based-testing** | For testing correctness before optimization |
-| **telemetry-essentials** | For production performance monitoring |
-| **code-quality** | For overall code quality |
+| property-based-testing | benchee-profiling | telemetry-essentials |
+| code-quality | benchee-profiling | telemetry-essentials |

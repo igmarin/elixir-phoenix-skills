@@ -191,3 +191,11 @@ Req.get!("https://api.example.com/stream",
   end
 )
 ```
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| elixir-essentials | req-http-client | testing-essentials |

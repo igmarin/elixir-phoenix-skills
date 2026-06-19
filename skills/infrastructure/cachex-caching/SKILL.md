@@ -282,3 +282,11 @@ defmodule MyApp.AccountsTest do
   end
 end
 ```
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| otp-essentials | cachex-caching | testing-essentials |

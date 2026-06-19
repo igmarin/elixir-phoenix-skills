@@ -394,7 +394,6 @@ end
 
 | Predecessor | This Skill | Successor |
 |-------------|------------|-----------|
-| **elixir-essentials** | Before writing any `.ex` file |
-| **testing-essentials** | Before writing OTP tests |
-| **telemetry-essentials** | When adding observability to OTP processes |
-| **oban-essentials** | When choosing between OTP and Oban for background work |
+| elixir-essentials | otp-essentials | telemetry-essentials |
+| elixir-essentials | otp-essentials | oban-essentials |
+| testing-essentials | otp-essentials | telemetry-essentials |

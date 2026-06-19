@@ -84,7 +84,7 @@ defmodule MyApp.Emails.UserEmail do
   end
 
   def password_reset(user, token) do
-    reset_link = MyAppWeb.Router.Helpers.reset_url(MyAppWeb.Endpoint, :edit, token)
+    reset_link = url(~p"/users/reset_password/#{token}")
 
     new()
     |> to({user.name, user.email})
@@ -254,6 +254,5 @@ config :swoosh, serve: true
 
 | Predecessor | This Skill | Successor |
 |-------------|------------|-----------|
-| **oban-essentials** | For async email delivery |
-| **testing-essentials** | For email testing patterns |
-| **phoenix-liveview-essentials** | For email form UI |
+| oban-essentials | swoosh-emails | testing-essentials |
+| phoenix-liveview-essentials | swoosh-emails | testing-essentials |

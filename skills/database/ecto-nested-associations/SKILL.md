@@ -178,3 +178,11 @@ end
 | `:delete_all` | Delete all children | Owned children (comments, items) |
 | `:nilify_all` | Set FK to nil | Optional relationships |
 | `:restrict` | Prevent parent deletion | Critical relationships |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| ecto-essentials | ecto-nested-associations | testing-essentials |

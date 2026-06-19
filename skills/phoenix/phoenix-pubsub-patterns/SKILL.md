@@ -165,3 +165,11 @@ end
 - **Broadcast sent but LiveView not updating?** Confirm the topic string in `subscribe` and `broadcast` match exactly (case-sensitive). Add a temporary `IO.inspect` in `handle_info/2` to confirm the message is arriving.
 - **Duplicate messages?** You subscribed outside the `if connected?(socket)` guard — the static render and the live render both subscribed.
 - **`handle_info` clause missing?** An unhandled PubSub message will crash the LiveView process. Add a catch-all `def handle_info(_, socket), do: {:noreply, socket}` if other processes may send unexpected messages.
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| phoenix-liveview-essentials | phoenix-pubsub-patterns | testing-essentials |

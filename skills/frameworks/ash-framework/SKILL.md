@@ -298,3 +298,11 @@ defmodule MyAppWeb.PostLive.Edit do
   end
 end
 ```
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| ecto-essentials | ash-framework | None (standalone) |

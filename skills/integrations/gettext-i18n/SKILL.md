@@ -279,6 +279,5 @@ end
 
 | Predecessor | This Skill | Successor |
 |-------------|------------|----------|
-| **phoenix-liveview-essentials** | For LiveView locale handling |
-| **phoenix-json-api** | For API localization |
-| **testing-essentials** | For testing translations |
+| phoenix-liveview-essentials | gettext-i18n | testing-essentials |
+| phoenix-liveview-essentials | gettext-i18n | phoenix-json-api |
