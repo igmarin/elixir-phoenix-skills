@@ -13,5 +13,6 @@ chunk_head_lines = 400
 chunk_tail_lines = 400
 
 [circuit_breaker]
+enabled = true
 failure_threshold = 5
 recovery_timeout_secs = 60

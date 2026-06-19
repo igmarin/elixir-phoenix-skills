@@ -21,6 +21,17 @@ metadata:
 
 Use this skill before writing ANY Oban worker or enqueuing jobs.
 
+## End-to-End Workflow
+
+When setting up a new Oban worker, follow these steps in order:
+
+1. **Add queue to config** — define the queue name and concurrency in `config/config.exs`
+2. **Define worker module** — `use Oban.Worker` with explicit `queue`, `max_attempts`, and `unique` options
+3. **Enqueue from context** — call `Oban.insert/1` inside a context function, not a LiveView
+4. **Write tests** — use `Oban.Testing` with `assert_enqueued` and `perform_job`, covering all return paths
+
+---
+
 ## RULES — Follow these with no exceptions
 
 1. **Always `use Oban.Worker`** with explicit `queue` and `max_attempts` options
@@ -56,13 +67,6 @@ defmodule MyApp.Workers.SendWelcomeEmail do
   end
 end
 ```
-
-### Key Points
-
-- `queue` — which queue runs this worker (must match config)
-- `max_attempts` — total attempts including the first (3 = 1 original + 2 retries)
-- `unique` — deduplication; `period` in seconds, `keys` specifies which args fields to compare
-- Pattern match on `%Oban.Job{args: ...}` — args are always string-keyed maps (JSON serialized)
 
 ---
 
@@ -130,7 +134,7 @@ def perform(%Oban.Job{args: args}) do
 end
 ```
 
-**Never raise in workers.** An unhandled exception counts as a retryable failure but produces noisy logs and stack traces. Use explicit `{:error, reason}` instead.
+**Never raise in workers.** Use explicit `{:error, reason}` instead.
 
 ---
 
@@ -198,12 +202,6 @@ use Oban.Worker,
     states: [:available, :scheduled, :executing]
   ]
 ```
-
-### When to Use
-
-- **Email sending** — don't send the same email twice within 5 minutes
-- **Data syncing** — don't start a sync if one is already running
-- **Webhook delivery** — deduplicate retry attempts
 
 ---
 
@@ -287,25 +285,10 @@ SendReport.new(%{user_id: user.id, report_id: report.id})
 
 ---
 
-## Common Pitfalls
-
-❌ **Don't** raise in workers — use `{:error, reason}` or `{:cancel, reason}`
-❌ **Don't** put large data in job args — store IDs and fetch in the worker
-❌ **Don't** use `Oban.insert!/1` — handle the error tuple
-❌ **Don't** enqueue from LiveViews — enqueue from contexts
-❌ **Don't** forget to make workers idempotent
-❌ **Don't** call `perform/1` directly in tests — use `perform_job/2`
-
-✅ **Do** return tagged tuples for all outcomes
-✅ **Do** use `unique` to prevent duplicate jobs
-✅ **Do** test all return paths (success, error, cancel)
-✅ **Do** configure queue concurrency based on resource needs
-✅ **Do** use `Oban.Plugins.Pruner` to keep the jobs table clean
-
 ## Integration
 
 | Predecessor | This Skill | Successor |
-|-------------|------------|----------|
+|-------------|------------|-----------|
 | **testing-essentials** | Before writing worker tests |
 | **elixir-essentials** | Before writing worker modules |
 | **otp-essentials** | When choosing between Oban and raw OTP for background work |
