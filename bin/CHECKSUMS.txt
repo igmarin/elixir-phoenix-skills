@@ -1,0 +1,14 @@
+# rs-guard pre-built binaries
+#
+# Version: 1.0.0
+# Source:  https://github.com/nebulaideas/rs-guard/releases/tag/v1.0.0
+#
+# rs-guard-linux-x64    — downloaded from GitHub release v1.0.0 (rs-guard asset)
+# rs-guard-macos-arm64  — built from source at tag v1.0.0 (aarch64-apple-darwin, release profile)
+#
+# To verify:
+#   shasum -a 256 bin/rs-guard-linux-x64 bin/rs-guard-macos-arm64
+#
+# SHA-256 checksums:
+95212398e72ca877e01ea9808a5ca9665bf69695f28e49f38dfe59c585b97a6e  rs-guard-linux-x64
+02382f7e785e65250c4620e7088708aa215e00990c054ca34c52861c930463d5  rs-guard-macos-arm64

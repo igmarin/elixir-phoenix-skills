@@ -19,16 +19,31 @@ metadata:
 
 <!-- Adapted from j-morgan6/elixir-phoenix-guide (MIT License, Copyright (c) 2026 Joseph Morgan) -->
 
-Use this skill before writing ANY authorization or access control code.
-
 ## RULES — Follow these with no exceptions
 
-1. **Always authorize on the server in event handlers** — UI-only checks (hiding buttons) are not security
+1. **Always authorize on the server in event handlers** — never rely on UI-only checks
 2. **Verify resource ownership by comparing `current_scope.user.id` against the resource's `user_id`** — never trust client-sent user IDs
 3. **Use policy modules for complex authorization** — don't inline permission checks in LiveViews or controllers
 4. **Add `data-confirm` attribute for destructive UI actions** — client-side confirmation before server round-trip
 5. **Test both authorized and unauthorized paths** — every `handle_event` that mutates data needs an authz test
 6. **Scope queries to the current user in contexts** — `where(user_id: ^user_id)` prevents IDOR vulnerabilities
+
+---
+
+## Authorization Workflow for a New Resource
+
+Follow these steps in order when adding authorization to any new resource:
+
+1. **Add scoped queries in the context** — ensure all queries filter by `user_id` so unauthorized data is never returned
+2. **Define policy module rules** — add clauses for every action (`view`, `edit`, `delete`, etc.) before wiring up any LiveView
+3. **Add server-side checks in LiveView event handlers** — call `Policy.authorize/3` or compare `current_scope.user.id` against the resource's `user_id` in every `handle_event` that mutates data
+4. **Write unauthorized-path tests first** — confirm that a non-owner receives an error and that the mutation does not occur
+5. **Only then add UI controls** — hide or disable buttons for unauthorized users *after* server-side checks are verified
+
+**Validation checkpoints:**
+- Every context function that returns or mutates a resource is scoped to the current user ✓
+- Policy module has a catch-all clause returning `{:error, :unauthorized}` ✓
+- Every mutating `handle_event` has a corresponding unauthorized-path test ✓
 
 ---
 
@@ -55,8 +70,6 @@ end
 ---
 
 ## Scoped Queries in Contexts
-
-The strongest authorization pattern: queries only return data the user owns.
 
 ```elixir
 defmodule MyApp.Blog do
@@ -146,25 +159,11 @@ end
 
 ---
 
-## Common Pitfalls
+## Related Skills
 
-❌ **Don't** rely on UI-only checks (hiding buttons)
-❌ **Don't** trust client-sent user IDs
-❌ **Don't** inline complex permission checks in LiveViews
-❌ **Don't** forget to test unauthorized paths
-❌ **Don't** forget `data-confirm` on destructive actions
-
-✅ **Do** always authorize on the server
-✅ **Do** use scoped queries to prevent IDOR
-✅ **Do** use policy modules for complex permissions
-✅ **Do** test both authorized and unauthorized paths
-✅ **Do** add `data-confirm` for destructive actions
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **phoenix-liveview-auth** | For authentication (who you are) |
-| **phoenix-scopes** | For Phoenix 1.8+ Scope-based auth |
-| **testing-essentials** | For testing patterns |
-| **security-essentials** | For security best practices |
+| Skill | Purpose |
+|---|---|
+| **phoenix-liveview-auth** | Authentication (who you are) |
+| **phoenix-scopes** | Phoenix 1.8+ Scope-based auth |
+| **testing-essentials** | Testing patterns |
+| **security-essentials** | Broader security best practices |
