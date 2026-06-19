@@ -169,6 +169,8 @@ scope "/" do
 end
 ```
 
+> **Deeper topics:** For performance profiling and benchmarking, see the `benchee-profiling` skill. For exporting metrics to external tools (Prometheus, Datadog) and production deployment considerations, see the `deployment-gotchas` skill. For low-level metric aggregation and reporter configuration, consult the [Telemetry.Metrics](https://hexdocs.pm/telemetry_metrics) and [TelemetryMetricsPrometheus](https://hexdocs.pm/telemetry_metrics_prometheus) library docs.
+
 ---
 
 ## Integration

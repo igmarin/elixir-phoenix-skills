@@ -16,7 +16,6 @@ metadata:
       skills: [oban-essentials, testing-essentials, telemetry-essentials]
   keywords: elixir, oban, background-job, async, retry, monitoring, worker
 ---
-# Background Job Persona
 
 Orchestrates robust background job implementation with TDD discipline, proper retry/discard strategies, comprehensive failure scenario testing, and production monitoring for Oban jobs.
 
@@ -142,41 +141,31 @@ end
 
 ## Phase 4: Failure Scenario Testing & Monitoring
 
-**Objective:** Verify retry/discard behaviour under injected failures and confirm observability.
+**Objective:** Verify retry/discard behaviour under injected failures and confirm observability. This phase focuses on the *Oban-level* return contract and production instrumentation — distinct from Phase 2's unit logic tests.
 
 **Steps:**
-1. Test that transient errors return `{:error, ...}` (Oban will retry).
-2. Test that permanent errors return `:discard` (Oban will not retry).
+1. Assert transient errors return `{:error, ...}` so Oban re-enqueues the job (do not raise).
+2. Assert permanent errors return `:discard` so Oban does not retry.
 3. Verify telemetry events fire on success and failure paths.
 4. Confirm monitoring dashboard or alert is configured for queue depth.
 
 **HARD GATE — Failure Scenarios Tested:**
-- [ ] Transient error → returns `{:error, ...}` (Oban retries)
-- [ ] Permanent error → returns `:discard` (not re-enqueued)
-- [ ] Error logging assertions pass
+- [ ] Transient error path → return value is `{:error, ...}` (Oban retries)
+- [ ] Permanent error path → return value is `:discard` (not re-enqueued)
+- [ ] Telemetry/logging assertions pass
 - [ ] Performance acceptable under expected load
 
 **If gate fails:** Address failure scenarios before deploying.
 
+**Never deploy until all four phase gates above are green.**
+
 ---
-
-## HARD GATE: Production Readiness
-
-**Never deploy until all four phase gates above are green.** Quick cross-check:
-- Idempotency guard implemented and tested (Phase 1 strategy → Phase 2 TDD)
-- Telemetry and error-logging wired
-- Queue timeout configured
 
 ## Error Recovery
 
-**Job fails repeatedly in production:**
-1. Check Oban dashboard for retry counts and error reasons.
-2. Classify error (transient vs. permanent) and adjust handling.
-3. Fix root cause; redeploy.
+**Job fails repeatedly:** Check the Oban dashboard for retry counts and error reasons, reclassify the error (transient vs. permanent) and update handling accordingly, then fix the root cause and redeploy.
 
-**Queue backs up:**
-1. Scale Oban queue concurrency or promote jobs to a higher-priority queue.
-2. Optimise job execution time or batch size.
+**Queue backs up:** Scale Oban queue concurrency or promote jobs to a higher-priority queue; optimise job execution time or batch size if throughput is the bottleneck.
 
 ## Output Style
 

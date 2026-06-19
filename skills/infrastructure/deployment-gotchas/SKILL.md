@@ -23,14 +23,13 @@ Use this skill before modifying ANY deployment or release configuration.
 
 ## RULES — Follow these with no exceptions
 
-1. **Use `runtime.exs` for secrets and URLs** — `config.exs`/`prod.exs` are compiled into the release and cannot read env vars at boot
-2. **Run migrations via release commands (`bin/migrate`)** — `mix` is not available in production releases
-3. **Set `PHX_HOST` and `PHX_SERVER=true`** — without these, URL generation breaks and the server won't start
-4. **Run `mix assets.deploy` before building the release** — forgetting this means no CSS/JS in production
-5. **Never hardcode secrets** — use `System.get_env!/1` in `runtime.exs` (the `!` crashes on boot if missing)
-6. **Add a `/health` endpoint that queries the database** — load balancers need it, and a 200-only check hides DB failures
-7. **Use `config :logger, level: :info` in production** — `:debug` logs query parameters including user data
-8. **Use Docker multi-stage builds** for Elixir releases — separate build and runtime stages
+1. **Use `runtime.exs` for all secrets and URLs; never hardcode secrets — use `System.get_env!/1`** — see §1 & §5
+2. **Run migrations via release commands (`bin/migrate`)** — see §2
+3. **Set `PHX_HOST` and `PHX_SERVER=true`** — see §3
+4. **Run `mix assets.deploy` before building the release** — see §4
+5. **Add a `/health` endpoint that queries the database** — see §6
+6. **Use `config :logger, level: :info` in production** — see §7
+7. **Use Docker multi-stage builds** for Elixir releases — see §4
 
 ---
 
@@ -155,7 +154,9 @@ CMD ["bin/my_app", "start"]
 
 ## 5. Never Hardcode Secrets
 
-✅ **Good — read from environment, crash if missing:**
+Always use `System.get_env!/1` in `runtime.exs` so the app crashes on startup if a required secret is missing rather than silently misconfiguring.
+
+✅ **Good — read from environment, crash on startup if missing:**
 ```elixir
 # config/runtime.exs
 if config_env() == :prod do

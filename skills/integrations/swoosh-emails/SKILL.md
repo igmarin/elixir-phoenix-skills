@@ -14,18 +14,16 @@ metadata:
 
 # Swoosh Emails
 
-Swoosh is the standard email library for Elixir/Phoenix applications.
-
 ## RULES — Follow these with no exceptions
 
-1. **Use Swoosh for all email sending** — the standard library with adapter support for all providers
+1. **Use Swoosh for all email sending** — adapter support for all providers
 2. **Define emails in separate modules** — `MyApp.Emails.UserEmail`, not inline in contexts
 3. **Use Phoenix components for email templates** — reuse UI components in emails
 4. **Configure delivery per environment** — Local adapter in dev/test, real adapter in prod
 5. **Test emails with Swoosh.TestAssertions** — assert emails were sent with correct content
 6. **Never send emails synchronously in web requests** — use Oban or Task for async delivery
 7. **Use `Swoosh.Preview` in development** — preview emails in the browser
-8. **Prefer Oban over Task.start for async delivery** — `Task.start` silently drops errors on failure; Oban provides retries and observability
+8. **Prefer Oban over Task.start** — retries + observability vs silent failures
 
 ---
 
@@ -58,8 +56,8 @@ After adding deps and configuring the supervision tree, confirm everything works
 ```elixir
 # In iex -S mix (dev environment with Local adapter)
 MyApp.Mailer.deliver(Swoosh.Email.new(to: "test@example.com", from: "noreply@myapp.com", subject: "Test"))
-# => {:ok, %{}} means Finch is running and the mailer is configured correctly
-# => {:error, ...} means Finch is missing from the supervision tree or adapter is misconfigured
+# => {:ok, %{}} — mailer configured correctly
+# => {:error, ...} — Finch missing from supervision tree or adapter misconfigured
 ```
 
 ---
@@ -117,15 +115,10 @@ end
 ## Configuration
 
 ```elixir
-# config/config.exs
-config :my_app, MyApp.Mailer,
-  adapter: Swoosh.Adapters.Local
-
 # config/dev.exs
 config :my_app, MyApp.Mailer,
   adapter: Swoosh.Adapters.Local
 
-# Enable preview server
 config :swoosh, serve: true
 
 # config/test.exs
@@ -151,8 +144,6 @@ config :my_app, MyApp.Mailer,
 ## Sending Emails
 
 ### With Oban (Recommended for Production)
-
-Oban persists jobs to the database, retries on failure, and surfaces errors via job monitoring — prefer it over `Task.start` whenever delivery failures matter.
 
 ```elixir
 defmodule MyApp.Workers.SendWelcomeEmail do
@@ -184,17 +175,13 @@ end
 
 ### With Task (Simple Cases Only)
 
-Use `Task.start` only for non-critical emails where silent failure is acceptable. Errors are not logged or retried.
-
 ```elixir
-# In a context module
 defmodule MyApp.Accounts do
   alias MyApp.Emails.UserEmail
   alias MyApp.Mailer
 
   def register_user(attrs) do
     with {:ok, user} <- create_user(attrs) do
-      # Fire-and-forget — errors are silently dropped
       Task.start(fn ->
         user |> UserEmail.welcome() |> Mailer.deliver()
       end)
@@ -220,7 +207,6 @@ defmodule MyApp.AccountsTest do
 
     assert {:ok, user} = Accounts.register_user(attrs)
 
-    # Assert email was sent
     assert_email_sent(fn email ->
       assert email.to == [{user.name, user.email}]
       assert email.subject =~ "Welcome"

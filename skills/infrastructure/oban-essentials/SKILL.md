@@ -35,13 +35,10 @@ When setting up a new Oban worker, follow these steps in order:
 ## RULES — Follow these with no exceptions
 
 1. **Always `use Oban.Worker`** with explicit `queue` and `max_attempts` options
-2. **Return `{:ok, result}` for success, `{:error, reason}` for retryable failures, `{:cancel, reason}` for permanent failures** — never return bare `:ok` or raise
-3. **Make workers idempotent** — the same job may run more than once due to retries or node restarts
-4. **Use `unique` option to prevent duplicate jobs** — specify `period`, `fields`, and `keys`
-5. **Test with `Oban.Testing`** — use `assert_enqueued` and `perform_job`, never call `perform/1` directly
-6. **Never put large data in job args** — store IDs and fetch fresh data in the worker
-7. **Use `Oban.insert/1`** (not `Oban.insert!/1`) and handle the error tuple
-8. **Enqueue from contexts, not LiveViews** — keep web layer thin
+2. **Make workers idempotent** — the same job may execute more than once
+3. **Never put large data in job args** — store IDs and fetch fresh data in the worker
+4. **Use `Oban.insert/1`** (not `Oban.insert!/1`) and handle the error tuple
+5. **Enqueue from contexts, not LiveViews** — keep web layer thin
 
 ---
 
@@ -117,6 +114,8 @@ end
 
 ## Return Values
 
+Return exactly one of these from `perform/1`:
+
 ```elixir
 @impl Oban.Worker
 def perform(%Oban.Job{args: args}) do
@@ -158,8 +157,6 @@ config :my_app, Oban,
 ---
 
 ## Idempotency
-
-Workers must be safe to run multiple times with the same args.
 
 ❌ **Bad — sends duplicate emails on retry:**
 ```elixir
@@ -229,6 +226,11 @@ config :my_app, Oban,
 
 ## Testing
 
+- **Use `perform_job/2`** — not `perform/1`. `perform_job` validates args and simulates the Oban runtime.
+- **Use `assert_enqueued/1`** — verify jobs were enqueued with correct args.
+- **Use `Oban.Testing` inline mode** in test config — jobs run synchronously in the test process.
+- **Test all return paths** — success, retryable error, and cancel.
+
 ```elixir
 defmodule MyApp.Workers.SendWelcomeEmailTest do
   use MyApp.DataCase, async: true
@@ -259,13 +261,6 @@ defmodule MyApp.Workers.SendWelcomeEmailTest do
 end
 ```
 
-### Testing Rules
-
-- **Use `perform_job/2`** — not `perform/1`. `perform_job` validates args and simulates the Oban runtime.
-- **Use `assert_enqueued/1`** — verify jobs were enqueued with correct args.
-- **Use `Oban.Testing` inline mode** in test config — jobs run synchronously in the test process.
-- **Test all return paths** — success, retryable error, and cancel.
-
 ---
 
 ## Job Args Best Practices
@@ -282,12 +277,3 @@ SendReport.new(%{
 ```elixir
 SendReport.new(%{user_id: user.id, report_id: report.id})
 ```
-
----
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| elixir-essentials | oban-essentials | testing-essentials |
-| otp-essentials | oban-essentials | broadway-data-pipelines |

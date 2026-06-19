@@ -15,18 +15,6 @@ metadata:
 
 # Req HTTP Client
 
-Req is the modern HTTP client for Elixir, designed for simplicity and composability.
-
-## RULES — Follow these with no exceptions
-
-1. **Use Req for all HTTP requests** — the modern standard, replacing HTTPoison and Tesla
-2. **Always handle error tuples** — `Req.get/1` returns `{:ok, response}` or `{:error, exception}`
-3. **Set timeouts explicitly** — don't rely on defaults for production APIs
-4. **Use retries for transient failures** — configure retry logic for 5xx and network errors
-5. **Test with `Req.Test`** — use the built-in test adapter for mocking HTTP responses
-6. **Parse JSON responses automatically** — use `Req.post(..., json: data)` and `decode_json: true`
-7. **Never hardcode API URLs** — use configuration for base URLs and API keys
-
 ---
 
 ## End-to-End Workflow
@@ -60,7 +48,10 @@ defmodule MyApp.ApiClient do
     case Req.get(base_request(), url: "/users/#{id}") do
       {:ok, %{status: 200, body: body}} -> {:ok, body}
       {:ok, %{status: 404}}             -> {:error, :not_found}
+      {:ok, %{status: 429}}             -> {:error, :rate_limited}   # extend with additional codes as needed
+      {:ok, %{status: status}} when status >= 500 -> {:error, :server_error}
       {:ok, %{status: status}}          -> {:error, {:unexpected_status, status}}
+      {:error, %Mint.TransportError{reason: :timeout}} -> {:error, :timeout}
       {:error, exception}               -> {:error, Exception.message(exception)}
     end
   end
@@ -117,38 +108,6 @@ Checkpoint: confirm a `{:ok, body}` tuple is returned; check logs for retry warn
 
 ---
 
-## Error Handling
-
-Extend the base pattern from the workflow with additional status codes and transport-level errors:
-
-```elixir
-defmodule MyApp.ExternalApi do
-  def fetch_user(id) do
-    case Req.get("https://api.example.com/users/#{id}", receive_timeout: 10_000) do
-      {:ok, %{status: 200, body: body}} ->
-        {:ok, body}
-
-      {:ok, %{status: 404}} ->
-        {:error, :not_found}
-
-      {:ok, %{status: 429}} ->
-        {:error, :rate_limited}
-
-      {:ok, %{status: status}} when status >= 500 ->
-        {:error, :server_error}
-
-      {:error, %Mint.TransportError{reason: :timeout}} ->
-        {:error, :timeout}
-
-      {:error, exception} ->
-        {:error, Exception.message(exception)}
-    end
-  end
-end
-```
-
----
-
 ## Retries
 
 ```elixir
@@ -191,11 +150,3 @@ Req.get!("https://api.example.com/stream",
   end
 )
 ```
-
----
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| elixir-essentials | req-http-client | testing-essentials |
