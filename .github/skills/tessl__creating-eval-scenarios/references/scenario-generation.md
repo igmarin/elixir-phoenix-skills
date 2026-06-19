@@ -1,6 +1,6 @@
 # GENERATE-EVAL-SCENARIOS (Skill-Based)
 
-Generate evaluation scenarios that measure how useful and effective a skill is.  Together the scenarios will cover every line by line instruction in the skill, and provide evidence for whether it is followed when its relevant to do so.
+Generate evaluation scenarios that measure how useful and effective a skill is.  Together the scenarios will cover every line-by-line instruction in the skill, and provide evidence for whether it is followed when its relevant to do so.
 
 Good scenarios will contain tasks where a general-purpose agent can produce *some* solution, but only some of the reasonable solutions will follow the instructions of the skill. E.g. if the skill says to use a particular library, the task won't proscribe the library but the criteria will.
 
@@ -9,7 +9,7 @@ The scenarios will be used in an eval harness with the following constraints:
 2. No other environment set up will be carried out.  The agent will not have access to additional input files, API keys, special accounts or proprietary software.  They will have network access.
 3. The agent should be able to finish the task within 10 mins to avoid a time out.
 4. The agent will not be able to interact with a user.
-4. The files left in the workspace at the end will be sent to an LLM to grade.  No large files should be left in the workspace -- the agent should be asked to clean up any large files it downloaded (>50MB), and it should avoid generating very large files if possible.
+4. The files left in the workspace at the end will be sent to an LLM to grade.  No large files should be left in the workspace -- the agent should be asked to clean up any large files it downloaded (>50MB), and it should avoid generating large files if possible.
 5. Only the files will be available for grading --> no agent logs or session transcripts will be available to the grader -- this means that the workflow or tools used by the agent will only be visible to the grader if the agent is asked to make a log of them or script its behavior in some way.
 
 ## Configuration
@@ -53,7 +53,7 @@ Plan 5 scenario ideas before writing any files. Group the instructions to design
 4. Tasks should be designed to be **feasible** given the limitations of the eval system -- if there is no way to do this given the nature of the dependencies needed, then the scenario should be marked as infeasible.
    -- Do NOT create a folder for infeasible scenarios. Record them in `summary_infeasible.json` instead.
 5. Good scenarios should:
-   -- **be realistic** real world tasks that a user may ask for
+   -- **be realistic** real-world tasks that a user may ask for
    -- **not contain the instructions** that are being tested - but instead instruct something higher level so that they discriminate between the agent following the skill and not.   E.g. if the instruction enumerates files to be made during initialisation, then the task wouldn't enumerate the files, but will just ask for initialisation.
 
 
@@ -69,8 +69,8 @@ A couple-word summary of the instructions being tested (e.g. "Correct directory 
 
 The checklist that will be used to evaluate the final artifacts from the solution.  
 - Items in the checklist should be derived by the instructions being tested. 
-  - DO TEST skill specific instructions
-  - DON'T test general software engineering practises that aren't specifically instructed in the skill.
+  - DO TEST skill-specific instructions
+  - DON'T test general software engineering practices that aren't specifically instructed in the skill.
   - DON'T test for the general quality of the task outputs (e.g. that files are created, that task instructions are followed)
   - **For every criteria it should be possible to point to the instruction it is testing**
 - Items should be a precise, testable checklist of elements that a grader can check for.  
@@ -134,7 +134,7 @@ The checklist that will be used to evaluate the final artifacts from the solutio
 
 ### 3c. `task.md`
 
-Describes a realistic problem that *naturally requires* that the skill instructions are relevant — but without revealing the instructions or hinting at them strongly. Make it so a competant agent could solve it in ways that the skill didn't specify.  Make it challenging and interesting rather than testing what's obvious.
+Describes a realistic problem that *naturally requires* that the skill instructions are relevant — but without revealing the instructions or hinting at them strongly. Make it so a competent agent could solve it in ways that the skill didn't specify.  Make it challenging and interesting rather than testing what's obvious.
 
 ```markdown
 # [Task Title]
@@ -167,7 +167,7 @@ The following files are provided as inputs. Extract them before beginning.
 **The task must be self-contained and actionable.** An agent should be able to read the task and immediately start working using only the task description plus the skill (or their own knowledge). If the task is too vague to act on, add more context — but focus on the problem, not the solution.
 
 **The task should not have a large number of prerequisites or leave large files.**
-- Avoid requiring the agent to download very large files (>100MB) or to install and set up a complex environment before starting.  Mark the scenario as infeasible if this is unavoidable.
+- Avoid requiring the agent to download large files (>100MB) or to install and set up a complex environment before starting.  Mark the scenario as infeasible if this is unavoidable.
 
 **Good vs bad tasks:**
 Don't hint too heavily at the solution or give away details that will make it easy to pass.
@@ -201,7 +201,7 @@ Run these checks across all scenarios:
 - [ ] Each criteria.json ideally has 10+ checklist items, testing many of the instructions from the skill
 
 Finally:
-- [ ] Make sure that no scenario mentions that this is an eval, or a simulated excerise or that its not real.  Just ask for the task to be completed!
+- [ ] Make sure that no scenario mentions that this is an eval, or a simulated exercise or that its not real.  Just ask for the task to be completed!
  
 
 ## Task 5: Create Summary Files

@@ -34,9 +34,9 @@ Ash Framework is a declarative data management framework for Elixir, providing a
 - Contexts where Phoenix's manual flexibility is more appropriate
 
 **Key principles:**
-- Learn the Ash way — don't try to write Phoenix contexts in Ash syntax
-- Leverage extensions (AshPostgres, AshPhoenix, AshJsonApi) rather than reimplementing integrations
-- Budget time for learning; the DSL and resource model differ significantly from plain Ecto/Phoenix
+- Use Ash's declarative patterns instead of imperative Phoenix context code
+- Use AshPostgres, AshPhoenix, or AshJsonApi rather than reimplementing integrations
+- Plan for a significant learning curve; the DSL differs materially from plain Ecto/Phoenix
 
 ---
 
@@ -60,7 +60,7 @@ Run `mix deps.get`.
 
 ### Step 2 — Configure AshPostgres
 
-Add your repo to `config/config.exs` and ensure `AshPostgres.Repo` is used in your Repo module:
+Use `AshPostgres.Repo` in your Repo module and add the repo to `config/config.exs`:
 
 ```elixir
 defmodule MyApp.Repo do
@@ -83,7 +83,7 @@ end
 
 ### Step 4 — Define Your First Resource
 
-Start with attributes, then add relationships and actions incrementally. See the [Resource Definition](#resource-definition) section below for a full example.
+Start with attributes, then add relationships and actions incrementally. Use the [Resource Definition](#resource-definition) section below for a full example.
 
 ### Step 5 — Generate and Run Migrations
 
@@ -100,9 +100,9 @@ mix compile --force 2>&1 | grep -E '(error|warning)'
 
 Expected output: no lines printed. If you see compilation errors, check that every resource listed in the domain module exists and that the `data_layer` option is set correctly.
 
-**Common migration failure — conflict on existing table:** If `ash_postgres.generate_migrations` errors with a conflict, inspect the generated migration file in `priv/repo/migrations/` and remove or rename the conflicting `create table` statement before re-running.
+**Common migration failure — conflict on existing table:** If `ash_postgres.generate_migrations` errors with a conflict, check the generated migration file in `priv/repo/migrations/` and remove or rename the conflicting `create table` statement before re-running.
 
-**Common compilation error — unknown DSL option:** Ash surfaces these as `** (Spark.Error.DslError)`. Read the path printed in the error (e.g., `MyApp.Blog.Post > attributes > attribute > :constraints`) to locate the offending block.
+**Common compilation error — unknown DSL option:** Ash surfaces these as `** (Spark.Error.DslError)`. Check the path printed in the error (e.g., `MyApp.Blog.Post > attributes > attribute > :constraints`) to locate the offending block.
 
 ### Step 6 — Call Actions from Your Application
 

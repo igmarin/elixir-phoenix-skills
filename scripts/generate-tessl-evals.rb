@@ -56,14 +56,30 @@ def fallback_instructions(skill_name, description)
 end
 
 def extract_instructions(skill_name, skill_path)
-  markdown = File.read(File.join(ROOT, skill_path))
+  full_path = File.join(ROOT, skill_path)
+  unless File.exist?(full_path)
+    abort "Invalid skill path (file not found): #{skill_path}"
+  end
+  markdown = File.read(full_path)
   metadata, body = split_frontmatter(markdown)
   description = sentence_from_description(metadata["description"])
 
   candidates = instruction_candidates(body).uniq.first(12)
   instructions = candidates.map do |candidate|
+    # Classify why each instruction was given so the eval harness can weight
+    # "preferences" and "new knowledge" ahead of plain "reminders":
+    #   - "preference": hard constraints/prohibitions (MUST, Never, Do not,
+    #     Don't, SHOULD, Always, Avoid, Prefer, HARD-GATE) — the skill is
+    #     expressing a preferred choice among options or a non-negotiable rule.
+    #   - "new knowledge": action verbs (Use, Run, Verify, Generate, Create,
+    #     Write, Review, Check, Plan, Produce, ...) — the skill teaches the
+    #     agent a concrete action it may not otherwise know to take.
+    #   - "reminder": everything else — generic guidance the agent likely knows.
+    # The keyword sets here mirror instruction_candidates (line 41) so every
+    # extracted candidate lands in a deliberate bucket instead of defaulting
+    # to "reminder" when its leading keyword is missing from this map.
     why =
-      if candidate.match?(/\b(MUST|must|Never|Do not|Don't|HARD-GATE)\b/)
+      if candidate.match?(/\b(MUST|must|SHOULD|should|Never|Do not|Don't|Always|Avoid|Prefer|HARD-GATE)\b/)
         "preference"
       elsif candidate.match?(/\b(Use|Run|Verify|Generate|Create|Write|Review|Check|Estimate|Identify|Prioritize|Plan|Draft|Classify|Rank|Select|Scan|Assign|Break|Define|Save|Produce)\b/)
         "new knowledge"

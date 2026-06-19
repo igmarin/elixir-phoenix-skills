@@ -138,7 +138,7 @@ Every skill directory must contain a `SKILL.md` file with valid YAML frontmatter
 
 **Blocking:**
 
-- Bash scripts must start with `#!/bin/bash` and use `set -e` (or `set -euo pipefail`)
+- Bash scripts must start with `#!/bin/bash` or `#!/usr/bin/env bash` and use `set -e` (or `set -euo pipefail`)
 - No secrets, tokens, or API keys hardcoded anywhere — use `${{ secrets.NAME }}` in workflows, `ENV` variables in scripts
 - GitHub Actions workflows must pin third-party actions to a specific version tag (e.g. `@v6`, `@github-v1.2.24`) — do not use `@latest` or `@main`. Commit SHA pinning is also acceptable
 - Scripts must not use deprecated or insecure APIs for their language/runtime — flag shell injection via unquoted variables, unvalidated URL construction, or `eval` on untrusted input

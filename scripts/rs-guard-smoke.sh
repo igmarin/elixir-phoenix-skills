@@ -65,7 +65,7 @@ grep -q "Verdict:" "$OUTPUT_FILE" || {
   exit 1
 }
 
-grep -qE "RS_GUARD_VERDICT_METADATA|State:" "$OUTPUT_FILE" || {
+grep -q "RS_GUARD_VERDICT_METADATA" "$OUTPUT_FILE" || {
   echo "Expected review metadata missing from rs-guard output." >&2
   exit 1
 }

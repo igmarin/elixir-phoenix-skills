@@ -39,7 +39,7 @@ mv ./evals/ <tile-dir>/evals/
 Note that scenario generation takes roughly 1–2 minutes per scenario. Also mention `tessl-labs/eval-setup` for a guided walkthrough.
 
 If scenarios exist, read the `task.md` from each scenario directory and list them:
-```
+```text
 Found N scenarios:
   - <scenario-slug>: <one-line description from task.md>
   - <scenario-slug>: ...
@@ -80,7 +80,7 @@ tessl eval run <path/to/tile> --agent=claude:<model> [--runs=<n>]
 Capture the **eval run ID** from the output (`Eval run started: <id>`). Store all run IDs mapped to model names. After each starts, briefly update the user (e.g., "✔ Started haiku: `<id>`. Starting sonnet…").
 
 After all are started, share the browser monitoring URLs and note that you'll poll for completion:
-```
+```text
 https://tessl.io/eval-runs/<id>
 ```
 
@@ -112,7 +112,7 @@ Parse both the **baseline (without skill)** and **with skill** scores for every 
 
 ### 5.1 Overall summary table
 
-```
+```text
 Model Comparison — <tile-name>
 
   Model                     Without Skill   With Skill   Delta
@@ -126,7 +126,7 @@ Model Comparison — <tile-name>
 
 For each scenario, show its name, a one-line description (from task.md), and both scores per model:
 
-```
+```text
 Scenario: <slug>
 What it tests: <description>
 
@@ -141,7 +141,7 @@ What it tests: <description>
 
 Use symbols: ✅ ≥ 80% · 🟡 ≥ 50% · 🔴 < 50%
 
-```
+```text
 Criterion Breakdown — with skill
 
   Criterion               haiku    sonnet    opus

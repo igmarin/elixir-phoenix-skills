@@ -35,7 +35,7 @@ If lint fails, see [Common Lint Errors](#common-lint-errors) below, fix issues, 
 
 ## Tile Structure
 
-```
+```text
 <tile-name>/
 ├── tile.json
 └── <skill-name>/

@@ -45,7 +45,11 @@ chmod +x "$ASSET_PATH"
 
 (
   cd "$INSTALL_DIR"
-  sha256sum -c "${RS_GUARD_ASSET}.sha256"
+  if command -v sha256sum &>/dev/null; then
+    sha256sum -c "${RS_GUARD_ASSET}.sha256"
+  else
+    shasum -a 256 -c "${RS_GUARD_ASSET}.sha256"
+  fi
 )
 
 ACTUAL_SHA256="$(awk '{ print $1 }' "$INSTALL_DIR/${RS_GUARD_ASSET}.sha256")"

@@ -9,7 +9,8 @@ DEFAULT_DESTINATION = File.join(ROOT, "evals")
 DESTINATION = File.expand_path(ARGV[0] || DEFAULT_DESTINATION, ROOT)
 
 abort "Missing tessl-evals/ source directory" unless Dir.exist?(SOURCE)
-abort "Refusing to stage outside the repository: #{DESTINATION}" unless DESTINATION.start_with?(ROOT)
+abort "Refusing to stage outside the repository: #{DESTINATION}" unless DESTINATION == ROOT || DESTINATION.start_with?("#{ROOT}/")
+abort "Refusing to overwrite the repository root or the source directory" if DESTINATION == ROOT || DESTINATION == SOURCE
 
 FileUtils.rm_rf(DESTINATION)
 FileUtils.mkdir_p(DESTINATION)

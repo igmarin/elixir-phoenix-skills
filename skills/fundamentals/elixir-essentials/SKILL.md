@@ -24,17 +24,17 @@ Use this skill before writing ANY `.ex` or `.exs` file.
 ## RULES — Follow these with no exceptions
 
 1. **Use pattern matching over if/else** for control flow and data extraction
-2. **Add `@impl true`** before every callback function (mount, handle_event, handle_info, etc.)
-3. **Return `{:ok, result} | {:error, reason}` tuples** for fallible operations
+2. **Use `@impl true`** before every callback function (mount, handle_event, handle_info, etc.)
+3. **Produce `{:ok, result} | {:error, reason}` tuples** for fallible operations
 4. **Use `with` for 2+ sequential fallible operations** instead of nested case
 5. **Use the pipe operator** for 2+ chained transformations
 6. **Never nest if/else statements** — use case, cond, or multi-clause functions
-7. **Predicate functions end with `?`**, dangerous functions end with `!`
-8. **Let it crash** — don't write defensive code for impossible states
+7. **Use `?` suffix for predicate functions**, `!` suffix for dangerous functions
+8. **Never write defensive code for impossible states** — let it crash
 9. **Use `@doc` and `@moduledoc`** for all public APIs
 10. **Prefer immutability** — never mutate data in place
 11. **Don't** use `String.to_atom/1` on user input (atom table exhaustion)
-12. **Consider `for` comprehensions** before chaining 3+ Enum operations
+12. **Prefer `for` comprehensions** before chaining 3+ Enum operations
 
 ---
 

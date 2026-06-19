@@ -18,7 +18,8 @@
 #
 # Binary resolution order:
 #   1. rs-guard in PATH
-#   2. ~/.cargo/bin/rs-guard     (installed via `cargo install rs-guard`)
+#   2. ./rs-guard in repo root   (default output of scripts/rs-guard-install.sh)
+#   3. ~/.cargo/bin/rs-guard     (installed via `cargo install rs-guard`)
 #
 # Install locally with: cargo install rs-guard --version 1.2.0 --locked
 #
@@ -32,6 +33,8 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 if command -v rs-guard &>/dev/null; then
   RS_GUARD_BIN="rs-guard"
+elif [ -x "$REPO_ROOT/rs-guard" ]; then
+  RS_GUARD_BIN="$REPO_ROOT/rs-guard"
 elif [ -x "$HOME/.cargo/bin/rs-guard" ]; then
   RS_GUARD_BIN="$HOME/.cargo/bin/rs-guard"
 else
