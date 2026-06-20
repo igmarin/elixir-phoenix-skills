@@ -143,8 +143,10 @@ Route client messages to context functions and always return an explicit reply:
 ```elixir
 @impl true
 def handle_in("new_message", %{"body" => body}, socket) do
+  sanitized_body = String.slice(body || "", 0, 10_000) |> String.trim()
+
   broadcast!(socket, "new_message", %{
-    body: body,
+    body: sanitized_body,
     user_id: socket.assigns.user_id,
     timestamp: DateTime.utc_now()
   })

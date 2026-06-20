@@ -99,8 +99,18 @@ defmodule MyApp.MessagePipeline do
     messages
   end
 
-  defp process_data(data) do
+  defp process_data(%{"body" => body} = data) do
+    sanitized = %{data | "body" => String.slice(body || "", 0, 10_000)}
+    Map.put(sanitized, :processed_at, DateTime.utc_now())
+  end
+  defp process_data(data) when is_map(data) do
     Map.put(data, :processed_at, DateTime.utc_now())
+  end
+  defp process_data(data) when is_binary(data) do
+    case Jason.decode(data) do
+      {:ok, parsed} -> process_data(parsed)
+      {:error, _} -> raise "Invalid JSON"
+    end
   end
 end
 ```
