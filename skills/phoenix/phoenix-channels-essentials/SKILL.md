@@ -28,31 +28,6 @@ metadata:
 5. **Use Presence for tracking connected users** — don't roll your own presence tracking
 6. **Return `{:reply, :ok, socket}` or `{:reply, {:error, reason}, socket}` from `handle_in`** — never silently drop messages
 
-## W011 Guard — Third-Party Content Isolation
-
-Phoenix Channels receive **client-authored free-form payloads** via `handle_in/3`. The `body` field in messages like `handle_in("new_message", %{"body" => body}, socket)` is outsider-authored content. If your application passes any message field to an LLM for analysis, you MUST sanitize it first.
-
-**Rules:**
-1. **Sanitize text fields before LLM use** — truncate to max length and trim whitespace
-2. **Validate message structure** — reject messages missing required fields
-3. **Extract structured metadata** — prefer `user_id`, `timestamp` over raw text for any downstream processing
-
-```elixir
-# Safe pattern: sanitize before any downstream use (including LLM calls)
-@impl true
-def handle_in("new_message", %{"body" => body}, socket) do
-  sanitized_body = String.slice(body || "", 0, 10_000) |> String.trim()
-
-  broadcast!(socket, "new_message", %{
-    body: sanitized_body,
-    user_id: socket.assigns.user_id,
-    timestamp: DateTime.utc_now()
-  })
-
-  {:reply, :ok, socket}
-end
-```
-
 ---
 
 ## Setup Checklist

@@ -26,41 +26,6 @@ metadata:
 5. **Test with `Broadway.Test.push_message/2`** — verify each message type including failures
 6. **Wire telemetry** — attach handlers to Broadway's telemetry events for observability
 
-## W011 Guard — Third-Party Content Isolation
-
-Broadway pipelines ingest **outsider-authored free-form message data** from external producers (SQS, Kafka, RabbitMQ). Message body text from these queues is untrusted client/outsider content. If your pipeline passes any message field to an LLM for analysis, you MUST sanitize it first.
-
-**Rules:**
-1. **Validate message structure** — reject messages that don't match expected schema
-2. **Sanitize text fields before LLM use** — truncate to max length on any string field
-3. **Extract structured metadata** — prefer typed fields over raw text for any downstream processing
-
-```elixir
-# Safe pattern: validate and truncate message data before any downstream use
-@impl true
-def handle_message(_, message, _context) do
-  data = message.data
-
-  # Validate structure — reject malformed messages early
-  unless is_map(data) and is_binary(data["id"]) do
-    return Broadway.Message.failed(message, :invalid_schema)
-  end
-
-  # Sanitize text fields before any downstream use (including LLM calls)
-  sanitized_data = %{
-    id: data["id"],
-    body: String.slice(data["body"] || "", 0, 10_000),
-    source: data["source"] || "unknown"
-  }
-
-  message
-  |> Broadway.Message.update_data(fn _ -> sanitized_data end)
-  |> Broadway.Message.put_batcher(:default)
-rescue
-  e -> Broadway.Message.failed(message, e)
-end
-```
-
 ---
 
 ## End-to-End Setup Workflow
