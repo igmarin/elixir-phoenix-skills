@@ -253,3 +253,184 @@ If stream patching is not working as expected, check for:
 | Predecessor | This Skill | Successor |
 |-------------|------------|-----------|
 | phoenix-liveview-essentials | liveview-streams | testing-essentials |
+
+---
+
+## Search and Filtering with Streams
+
+```elixir
+defmodule MyAppWeb.PostLive.Index do
+  use MyAppWeb, :live_view
+
+  @impl true
+  def mount(_params, _session, socket) do
+    {:ok,
+     socket
+     |> assign(:query, "")
+     |> assign(:filter, "all")
+     |> stream_configure(:posts, dom_id: &"post-#{&1.id}")
+     |> stream(:posts, Blog.list_posts())}
+  end
+
+  @impl true
+  def handle_event("search", %{"query" => query}, socket) do
+    filtered_posts =
+      socket.assigns.filter
+      |> Blog.list_posts_filtered()
+      |> Enum.filter(fn post ->
+        String.contains?(String.downcase(post.title), String.downcase(query))
+      end)
+
+    {:noreply,
+     socket
+     |> assign(:query, query)
+     |> stream(:posts, filtered_posts, reset: true)}
+  end
+
+  @impl true
+  def handle_event("filter", %{"filter" => filter}, socket) do
+    filtered_posts = Blog.list_posts_filtered(filter)
+
+    {:noreply,
+     socket
+     |> assign(:filter, filter)
+     |> stream(:posts, filtered_posts, reset: true)}
+  end
+end
+```
+
+---
+
+## Edit-in-Place with Streams
+
+```elixir
+defmodule MyAppWeb.PostLive.Index do
+  use MyAppWeb, :live_view
+
+  @impl true
+  def mount(_params, _session, socket) do
+    {:ok,
+     socket
+     |> stream_configure(:posts, dom_id: &"post-#{&1.id}")
+     |> stream(:posts, Blog.list_posts())
+     |> assign(:editing_id, nil)}
+  end
+
+  @impl true
+  def handle_event("start_edit", %{"id" => id}, socket) do
+    {:noreply, assign(socket, :editing_id, id)}
+  end
+
+  @impl true
+  def handle_event("cancel_edit", _, socket) do
+    {:noreply, assign(socket, :editing_id, nil)}
+  end
+
+  @impl true
+  def handle_event("save_edit", %{"id" => id, "post" => post_params}, socket) do
+    post = Blog.get_post!(id)
+    {:ok, updated_post} = Blog.update_post(post, post_params)
+
+    {:noreply,
+     socket
+     |> assign(:editing_id, nil)
+     |> stream_insert(:posts, updated_post)}
+  end
+end
+```
+
+```heex
+<div id="posts" phx-update="stream">
+  <div :for={{dom_id, post} <- @streams.posts} id={dom_id}>
+    <%= if @editing_id == post.id do %>
+      <!-- Edit mode -->
+      <.form phx-submit="save_edit" phx-click="cancel_edit">
+        <input name="post[title]" value={post.title} />
+        <button type="submit">Save</button>
+        <button type="button" phx-click="cancel_edit">Cancel</button>
+      </.form>
+    <% else %>
+      <!-- Display mode -->
+      <h3><%= post.title %></h3>
+      <button phx-click="start_edit" phx-value-id={post.id}>Edit</button>
+    <% end %>
+  </div>
+</div>
+```
+
+---
+
+## Sorting with Streams
+
+```elixir
+def handle_event("sort", %{"column" => column}, socket) do
+  current_direction = socket.assigns.sort_direction || :asc
+  new_direction = if current_direction == :asc, do: :desc, else: :asc
+
+  sorted_posts =
+    socket.assigns.posts
+    |> Enum.sort_by(&Map.get(&1, String.to_existing_atom(column)), new_direction)
+
+  {:noreply,
+   socket
+   |> assign(:sort_column, column)
+   |> assign(:sort_direction, new_direction)
+   |> stream(:posts, sorted_posts, reset: true)}
+end
+```
+
+---
+
+## Performance Considerations
+
+1. **Batch DOM operations** — When inserting multiple items, use `stream_insert_many` to batch the renders
+2. **Lazy loading** — Consider using `paginate: true` option for very large datasets
+3. **Debounce search** — Add `phx-debounce="blur"` to search inputs to avoid excessive re-renders
+4. **Virtual scrolling** — For very large lists (10000+), consider combining streams with virtual scrolling
+
+---
+
+## Real-World Example: Activity Feed
+
+```elixir
+defmodule MyAppWeb.ActivityLive do
+  use MyAppWeb, :live_view
+
+  @per_page 50
+
+  @impl true
+  def mount(_params, _session, socket) do
+    if connected?(socket) do
+      Phoenix.PubSub.subscribe(MyApp.PubSub, "activity")
+    end
+
+    {:ok,
+     socket
+     |> assign(:page, 1)
+     |> assign(:loading, false)
+     |> stream_configure(:activities, dom_id: &"activity-#{&1.id}")
+     |> stream(:activities, Activity.list_activities(page: 1, per_page: @per_page))}
+  end
+
+  @impl true
+  def handle_info({:new_activity, activity}, socket) do
+    {:noreply, stream_insert(socket, :activities, activity, at: 0)}
+  end
+
+  @impl true
+  def handle_event("load_more", _, socket) do
+    if socket.assigns.loading do
+      {:noreply, socket}
+    else
+      next_page = socket.assigns.page + 1
+      new_activities = Activity.list_activities(page: next_page, per_page: @per_page)
+
+      {:noreply,
+       socket
+       |> assign(:page, next_page)
+       |> assign(:loading, false)
+       |> stream_insert_many(:activities, new_activities)}
+    end
+  end
+end
+```

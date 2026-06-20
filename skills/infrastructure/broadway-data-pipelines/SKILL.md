@@ -187,3 +187,228 @@ end
 ```
 
 > **Telemetry:** Broadway emits telemetry events for message processing and batching. Attach handlers via `:telemetry.attach/4` and optionally visualise them with [`broadway_dashboard`](https://hexdocs.pm/broadway_dashboard/). See the [Broadway Telemetry guide](https://hexdocs.pm/broadway/Broadway.html#module-telemetry) for event names and metadata.
+
+---
+
+## SQS Producer Configuration
+
+```elixir
+Broadway.start_link(__MODULE__,
+  name: __MODULE__,
+  producer: [
+    module: {
+      BroadwaySQS.Producer,
+      queue_url: System.get_env("SQS_QUEUE_URL"),
+      config: [
+        region: "us-west-2",
+        max_number_of_messages: 10,
+        wait_time_seconds: 20
+      ]
+    },
+    concurrency: 1
+  ],
+  processors: [
+    default: [
+      concurrency: 10,
+      max_demand: 10,
+      min_demand: 5
+    ]
+  ],
+  batchers: [
+    default: [
+      concurrency: 5,
+      batch_size: 100,
+      batch_timeout: 5_000
+    ]
+  ]
+)
+```
+
+---
+
+## Kafka Producer Configuration
+
+```elixir
+Broadway.start_link(__MODULE__,
+  name: __MODULE__,
+  producer: [
+    module: {
+      BroadwayKafka.Producer,
+      brokers: ["localhost:9092"],
+      group_id: "my_consumer_group",
+      topics: ["my-topic"]
+    }
+  ],
+  processors: [
+    default: [concurrency: 10]
+  ],
+  batchers: [
+    default: [concurrency: 5, batch_size: 100, batch_timeout: 5_000]
+  ]
+)
+```
+
+---
+
+## Message Transformation
+
+```elixir
+@impl true
+def handle_message(_, message, _context) do
+  message
+  |> Broadway.Message.update_data(&parse_json/1)
+  |> Broadway.Message.put_batcher(:default)
+rescue
+  e ->
+    Broadway.Message.failed(message, :invalid_json)
+end
+
+defp parse_json(%{} = data), do: data
+defp parse_json(data) when is_binary(data) do
+  case Jason.decode(data) do
+    {:ok, parsed} -> parsed
+    {:error, _} -> raise "Invalid JSON"
+  end
+end
+```
+
+---
+
+## Rate Limiting
+
+```elixir
+defmodule MyApp.RateLimitedPipeline do
+  use Broadway
+
+  # Limit to 1000 messages per second
+  @rate_limit 1000
+
+  def start_link(_opts) do
+    Broadway.start_link(__MODULE__,
+      name: __MODULE__,
+      producer: [
+        module: {BroadwaySQS.Producer, queue_url: System.get_env("SQS_QUEUE_URL")}
+      ],
+      processors: [
+        default: [
+          concurrency: 10,
+          max_demand: 10
+        ]
+      ],
+      batchers: [
+        default: [concurrency: 5, batch_size: 100, batch_timeout: 2000]
+      ]
+    )
+  end
+
+  @impl true
+  def handle_message(_, message, _context) do
+    # Apply rate limiting
+    Process.sleep(1000 / @rate_limit)
+
+    message
+    |> Broadway.Message.update_data(&process_data/1)
+    |> Broadway.Message.put_batcher(:default)
+  end
+
+  defp process_data(data), do: data
+end
+```
+
+---
+
+## Retry Strategies
+
+```elixir
+@impl true
+def handle_message(_, message, _context) do
+  attempt = Map.get(message.data, :retry_count, 0)
+
+  case process_with_retry(message.data, attempt) do
+    {:ok, result} ->
+      Broadway.Message.update_data(message, fn _ -> result end)
+
+    {:error, reason} when attempt < 3 ->
+      # Requeue with incremented retry count
+      Broadway.Message.update_data(message, fn data ->
+        Map.put(data, :retry_count, attempt + 1)
+      end)
+      |> Broadway.Message.put_backoff(attempt * 1000)
+
+    {:error, reason} ->
+      Broadway.Message.failed(message, {:max_retries_exceeded, reason})
+  end
+end
+
+defp process_with_retry(data, attempt) do
+  # Your processing logic here
+  {:ok, data}
+rescue
+  e ->
+    {:error, e}
+end
+```
+
+---
+
+## Telemetry Events
+
+```elixir
+# Attach telemetry handler in your application startup
+:telemetry.attach(
+  "broadway-handler",
+  [:broadway, :message, :start],
+  [:broadway, :message, :stop],
+  [:broadway, :message, :failure],
+  fn event, measurements, metadata, _ ->
+    IO.puts("Event: #{event}")
+    IO.puts("Measurements: #{inspect(measurements)}")
+    IO.puts("Metadata: #{inspect(metadata)}")
+  end
+)
+```
+
+**Key telemetry events:**
+- `[:broadway, :processor, :start]` — processor started
+- `[:broadway, :processor, :stop]` — processor stopped
+- `[:broadway, :batch, :start]` — batch processing started
+- `[:broadway, :batch, :stop]` — batch processing completed
+- `[:broadway, :message, :failure]` — message processing failed
+
+---
+
+## Concurrency Tuning
+
+```elixir
+# For CPU-bound processing
+processors: [
+  default: [
+    concurrency: System.schedulers_online() * 2,
+    max_demand: 50
+  ]
+]
+
+# For I/O-bound processing
+processors: [
+  default: [
+    concurrency: System.schedulers_online() * 4,
+    max_demand: 100
+  ]
+]
+
+# For mixed workloads
+processors: [
+  default: [
+    concurrency: System.schedulers_online() * 2,
+    max_demand: 50
+  ]
+]
+
+batchers: [
+  default: [
+    concurrency: System.schedulers_online(),
+    batch_size: 100,
+    batch_timeout: 5_000
+  ]
+]
+```

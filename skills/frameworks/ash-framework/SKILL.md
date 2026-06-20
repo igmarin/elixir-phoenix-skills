@@ -298,3 +298,141 @@ end
 ```
 
 See the [AshJsonApi docs](https://hexdocs.pm/ash_json_api) for pagination, includes, and error serialization.
+
+---
+
+## Calculations and Aggregates
+
+```elixir
+# Add a count aggregate to a resource
+aggregates do
+  count :comment_count, :comments
+  count :published_comment_count, :comments do
+    filter expr(status == :published)
+  end
+end
+
+# Use in queries
+MyApp.Blog.Post
+|> Ash.Query.filter(comment_count > 0)
+|> MyApp.Blog.read!()
+```
+
+---
+
+## Custom Validations
+
+```elixir
+# Custom validation in create action
+create :create do
+  accept [:title, :body, :author_id]
+
+  validate str_length(:title, min: 1, max: 255) do
+    message "Title must be between 1 and 255 characters"
+  end
+
+  validate changing(:body) do
+    if Map.get(attributes, :status) == :published do
+      message "Published posts cannot have body changed"
+    end
+  end
+end
+```
+
+---
+
+## Not Found Handling
+
+```elixir
+# Use bang (!) version for raising not found
+post = MyApp.Blog.Post |> Ash.get!(id)
+
+# Use non-bang version for graceful handling
+case MyApp.Blog.Post |> Ash.get(id) do
+  {:ok, post} -> # handle found
+  {:error, _} -> # handle not found
+end
+```
+
+---
+
+## Sorting and Filtering
+
+```elixir
+# Sort by multiple fields
+MyApp.Blog.Post
+|> Ash.Query.sort([inserted_at: :desc, title: :asc])
+|> MyApp.Blog.read!()
+
+# Filter with complex conditions
+MyApp.Blog.Post
+|> Ash.Query.filter(
+  status == :published and
+  author_id == ^current_user.id and
+  inserted_at >= ^from_date
+)
+|> MyApp.Blog.read!()
+```
+
+---
+
+## Pagination
+
+```elixir
+# Offset-based pagination
+MyApp.Blog.Post
+|> Ash.Query.page(offset: 0, limit: 20)
+|> MyRequest.read!()
+
+# Keyset pagination (cursor-based, more efficient)
+MyApp.Blog.Post
+|> Ash.Query.page(limit: 20, after: last_inserted_at)
+|> MyApp.Blog.read!()
+```
+
+---
+
+## Error Handling Patterns
+
+```elixir
+# Pattern matching on all outcomes
+case MyApp.Blog.Post
+     |> Ash.Changeset.for_create(params)
+     |> MyApp.Blog.create() do
+  {:ok, post} ->
+    {:ok, post}
+
+  {:error, %Ash.Error.InvalidInput{fields: fields}} ->
+    {:error, :validation, fields}
+
+  {:error, %Ash.Error.Forbidden{}} ->
+    {:error, :unauthorized}
+
+  {:error, error} ->
+    Logger.error("Unexpected error: #{inspect(error)}")
+    {:error, :internal_error}
+end
+```
+
+---
+
+## Migrations from Ecto to Ash
+
+When migrating from Ecto contexts to Ash:
+
+1. **Create Ash resource matching existing schema** — don't change the DB first
+2. **Update context functions to delegate to Ash** — wrap existing Repo calls
+3. **Add policies** — begin with open policy, then restrict
+4. **Update callers gradually** — one resource at a time
+5. **Delete old context** — only after all callers use Ash
+
+```elixir
+# Old Ecto approach
+def get_post!(id), do: Repo.get!(Post, id)
+
+# New Ash approach - keep same interface
+def get_post!(id) do
+  MyApp.Blog.Post
+  |> Ash.get!(id)
+end
+```
