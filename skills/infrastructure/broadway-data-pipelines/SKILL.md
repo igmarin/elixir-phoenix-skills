@@ -26,6 +26,48 @@ metadata:
 5. **Test with `Broadway.Test.push_message/2`** — verify each message type including failures
 6. **Wire telemetry** — attach handlers to Broadway's telemetry events for observability
 
+## W011 Guard — Third-Party Content Isolation
+
+Broadway pipelines ingest **outsider-authored free-form message data** from external producers (SQS, Kafka, RabbitMQ). Message body text from these queues is untrusted client/outsider content that could contain indirect prompt injection.
+
+**Rules:**
+1. **Never pass raw queue message `data` directly to an LLM** — always validate and sanitize first
+2. **Parse and validate message structure** — reject messages that don't match expected schema
+3. **Truncate or sanitize text fields** — enforce max length on any string field that could contain injection payloads
+4. **If LLM analysis is needed** — extract only structured metadata fields, never raw message body text
+
+```elixir
+# ✅ Safe: validate and truncate message data
+@impl true
+def handle_message(_, message, _context) do
+  data = message.data
+
+  # Validate structure — reject malformed messages early
+  unless is_map(data) and is_binary(data["id"]) do
+    return Broadway.Message.failed(message, :invalid_schema)
+  end
+
+  # Sanitize text fields before any downstream use
+  sanitized_data = %{
+    id: data["id"],
+    body: String.slice(data["body"] || "", 0, 10_000),
+    source: data["source"] || "unknown"
+  }
+
+  message
+  |> Broadway.Message.update_data(fn _ -> sanitized_data end)
+  |> Broadway.Message.put_batcher(:default)
+rescue
+  e -> Broadway.Message.failed(message, e)
+end
+
+# ❌ Dangerous: raw message body passed to LLM
+def handle_message(_, message, _context) do
+  # message.data from queue is untrusted — NEVER pass raw to LLM
+  MyApp.LLMAnalyzer.analyze(message.data["body"])  # HIGH RISK
+end
+```
+
 ---
 
 ## End-to-End Setup Workflow

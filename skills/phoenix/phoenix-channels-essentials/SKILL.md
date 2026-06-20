@@ -28,6 +28,39 @@ metadata:
 5. **Use Presence for tracking connected users** — don't roll your own presence tracking
 6. **Return `{:reply, :ok, socket}` or `{:reply, {:error, reason}, socket}` from `handle_in`** — never silently drop messages
 
+## W011 Guard — Third-Party Content Isolation
+
+Phoenix Channels receive **client-authored free-form payloads** via `handle_in/3` (e.g., `handle_in("new_message", %{"body" => body}, socket)`). This is outsider-authored content that could contain indirect prompt injection.
+
+**Rules:**
+1. **Never pass raw client `body` directly to an LLM** — always sanitize and validate first
+2. **Extract only structured, typed fields** — extract `user_id`, `timestamp`, etc., never raw text fields as-is
+3. **Validate content length and format** — reject oversized payloads before processing
+4. **If LLM analysis is needed** — pass only anonymized metadata (not user content) to the LLM
+
+```elixir
+# ✅ Safe: extract structured fields, sanitize content
+@impl true
+def handle_in("new_message", %{"body" => body}, socket) do
+  # Validate and truncate body before any downstream use
+  sanitized_body = String.slice(body, 0, 10_000) |> String.trim()
+
+  broadcast!(socket, "new_message", %{
+    body: sanitized_body,
+    user_id: socket.assigns.user_id,
+    timestamp: DateTime.utc_now()
+  })
+
+  {:reply, :ok, socket}
+end
+
+# ❌ Dangerous: raw body passed to context or LLM without validation
+def handle_in("new_message", %{"body" => body}, socket) do
+  # body is untrusted outsider content — never use raw
+  MyApp.Analysis.analyze(body)  # If this feeds an LLM, HIGH RISK
+end
+```
+
 ---
 
 ## Setup Checklist
