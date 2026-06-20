@@ -385,7 +385,7 @@ Benchee.run(
 
 ## Interpreting Results
 
-```
+```text
 Name                  ips        average  deviation      median      99th %
 --------------------------------------------------------------------------------
 Enum.map            2.10e6      0.48μs    ±0.71%      0.47μs      0.51μs

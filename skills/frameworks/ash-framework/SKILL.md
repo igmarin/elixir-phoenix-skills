@@ -47,74 +47,6 @@ Follow this sequence when starting a new Ash project:
 
 ---
 
-## Setup Workflow
-
-Follow this sequence when starting a new Ash project:
-
-### Step 1 — Add Dependencies
-
-```elixir
-# mix.exs
-defp deps do
-  [
-    {:ash, "~> 3.0"},
-    {:ash_postgres, "~> 2.0"}
-  ]
-end
-```
-
-Run `mix deps.get`.
-
-### Step 2 — Configure AshPostgres
-
-```elixir
-defmodule MyApp.Repo do
-  use AshPostgres.Repo, otp_app: :my_app
-end
-```
-
-### Step 3 — Define a Domain Module
-
-```elixir
-defmodule MyApp.Blog do
-  use Ash.Domain
-
-  resources do
-    resource MyApp.Blog.Post
-    resource MyApp.Blog.Comment
-  end
-end
-```
-
-### Step 4 — Define Your First Resource
-
-Define attributes, then define relationships and actions incrementally. See [Resource Definition](#resource-definition) below.
-
-### Step 5 — Generate and Run Migrations
-
-```bash
-mix ash_postgres.generate_migrations
-mix ash_postgres.migrate
-```
-
-**Validation checkpoint:** Confirm all resources load cleanly:
-
-```bash
-mix compile --force 2>&1 | grep -E '(error|warning)'
-```
-
-Expected output: no lines printed.
-
-**Common failures:**
-- **Migration conflict on existing table** — open the generated file in `priv/repo/migrations/` and remove or rename the conflicting `create table` statement before re-running.
-- **`Spark.Error.DslError` (unknown DSL option)** — check the path in the error (e.g., `MyApp.Blog.Post > attributes > attribute > :constraints`) to locate the offending block.
-
-### Step 6 — Call Actions from Your Application
-
-Use `Ash.Changeset` and domain functions (e.g., `MyApp.Blog.create!`) to interact with resources. See [Using Actions](#using-actions) below.
-
----
-
 ## Core Concepts
 
 ### Resource Definition
@@ -322,8 +254,16 @@ MyApp.Blog.Post
 
 ## Custom Validations
 
+❌ **Bad — no validations, relying only on database constraints:**
 ```elixir
-# Custom validation in create action
+create :create do
+  accept [:title, :body, :author_id]
+  # No validations - bugs will reach the database
+end
+```
+
+✅ **Good — validations in the action layer:**
+```elixir
 create :create do
   accept [:title, :body, :author_id]
 
@@ -343,14 +283,19 @@ end
 
 ## Not Found Handling
 
+❌ **Bad — ignoring not found, will raise unhelpful error:**
 ```elixir
-# Use bang (!) version for raising not found
+# Directly chaining bang function without checking
 post = MyApp.Blog.Post |> Ash.get!(id)
+# Raises Ash.Error.Query.NotFound with no context
+```
 
-# Use non-bang version for graceful handling
+✅ **Good — explicit handling of both cases:**
+```elixir
 case MyApp.Blog.Post |> Ash.get(id) do
-  {:ok, post} -> # handle found
-  {:error, _} -> # handle not found
+  {:ok, post} -> {:ok, post}
+  {:error, %Ash.Error.Query.NotFound{}} -> {:error, :not_found}
+  {:error, error} -> {:error, error}
 end
 ```
 
@@ -358,32 +303,33 @@ end
 
 ## Sorting and Filtering
 
+❌ **Bad — string interpolation in filters (injection risk):**
 ```elixir
-# Sort by multiple fields
+# NEVER do this - user input directly interpolated
 MyApp.Blog.Post
-|> Ash.Query.sort([inserted_at: :desc, title: :asc])
-|> MyApp.Blog.read!()
+|> Ash.Query.filter("status == '#{params["status"]}'")
+```
 
-# Filter with complex conditions
+✅ **Good — parameterized filters with safe values:**
+```elixir
+# Use ^ for safe interpolation of trusted values
 MyApp.Blog.Post
-|> Ash.Query.filter(
-  status == :published and
-  author_id == ^current_user.id and
-  inserted_at >= ^from_date
-)
-|> MyApp.Blog.read!()
+|> Ash.Query.filter(status == ^status and author_id == ^current_user.id)
+|> Ash.Query.sort([inserted_at: :desc])
 ```
 
 ---
 
 ## Pagination
 
+❌ **Bad — no pagination on large queries:**
 ```elixir
-# Offset-based pagination
-MyApp.Blog.Post
-|> Ash.Query.page(offset: 0, limit: 20)
-|> MyRequest.read!()
+# Returns ALL records - memory explosion for large tables
+MyApp.Blog.Post |> MyApp.Blog.read!()
+```
 
+✅ **Good — always paginate large result sets:**
+```elixir
 # Keyset pagination (cursor-based, more efficient)
 MyApp.Blog.Post
 |> Ash.Query.page(limit: 20, after: last_inserted_at)
@@ -394,8 +340,17 @@ MyApp.Blog.Post
 
 ## Error Handling Patterns
 
+❌ **Bad — catching all errors with generic handler:**
 ```elixir
-# Pattern matching on all outcomes
+# Too broad, loses information
+case MyApp.Blog.create(params) do
+  {:ok, post} -> {:ok, post}
+  {:error, _} -> {:error, :failed}
+end
+```
+
+✅ **Good — specific error handling with typed matches:**
+```elixir
 case MyApp.Blog.Post
      |> Ash.Changeset.for_create(params)
      |> MyApp.Blog.create() do
@@ -408,6 +363,9 @@ case MyApp.Blog.Post
   {:error, %Ash.Error.Forbidden{}} ->
     {:error, :unauthorized}
 
+  {:error, %Ash.Error.Changeset{errors: errors}} ->
+    {:error, :invalid_changeset, errors}
+
   {:error, error} ->
     Logger.error("Unexpected error: #{inspect(error)}")
     {:error, :internal_error}
@@ -418,21 +376,30 @@ end
 
 ## Migrations from Ecto to Ash
 
-When migrating from Ecto contexts to Ash:
-
-1. **Create Ash resource matching existing schema** — don't change the DB first
-2. **Update context functions to delegate to Ash** — wrap existing Repo calls
-3. **Add policies** — begin with open policy, then restrict
-4. **Update callers gradually** — one resource at a time
-5. **Delete old context** — only after all callers use Ash
-
+❌ **Bad — changing DB schema before creating Ash resource:**
 ```elixir
-# Old Ecto approach
-def get_post!(id), do: Repo.get!(Post, id)
+# Wrong order - Ash won't find the table
+alter table(:posts) do add :new_field, :string end
+# Then create Ash resource - will fail
+```
 
-# New Ash approach - keep same interface
+✅ **Good — create Ash resource first, let Ash generate migrations:**
+```elixir
+# Step 1: Create Ash resource matching existing schema
+defmodule MyApp.Blog.Post do
+  use Ash.Resource, domain: MyApp.Blog, data_layer: AshPostgres.DataLayer
+  postgres do
+    table "posts"
+    repo MyApp.Repo
+  end
+end
+
+# Step 2: Generate and run migration
+# mix ash_postgres.generate_migrations
+# mix ash_postgres.migrate
+
+# Step 3: Update context to delegate to Ash
 def get_post!(id) do
-  MyApp.Blog.Post
-  |> Ash.get!(id)
+  MyApp.Blog.Post |> Ash.get!(id)
 end
 ```

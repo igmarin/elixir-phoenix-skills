@@ -235,10 +235,9 @@ defmodule MyAppWeb.PostControllerTest do
 
     post = insert(:post, user: user)
 
-    assert Phoenix.ConnTest.assertraised(
-      fn -> delete(conn, ~p"/posts/#{post.id}") end,
-      "Not authorized"
-    )
+    assert_raise MyAppWeb.AuthorizationError, fn ->
+      delete(conn, ~p"/posts/#{post.id}")
+    end
   end
 
   test "deletes post for admin user", %{conn: conn} do

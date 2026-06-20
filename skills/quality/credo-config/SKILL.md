@@ -148,7 +148,6 @@ Readability issues are easiest to fix. Design issues often indicate architectura
       checks: %{
         enabled: [
           {Credo.Check.Design.TagTODO, [priority: :high]},
-          {Credo.Check.Design.LongClauseAC, [max_length: 5]},
           {Credo.Check.Readability.Specs, []},
         ]
       }
@@ -212,7 +211,7 @@ jobs:
           elixir-version: '1.15'
           otp-version: '26.0'
       - run: mix deps.get
-      - run: mix Credo --strict
+      - run: mix credo --strict
 ```
 
 CI must use `--strict` to catch all issues. Exit code 0 means clean; non-zero means issues found.

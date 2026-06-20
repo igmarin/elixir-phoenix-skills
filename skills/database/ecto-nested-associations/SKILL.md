@@ -213,14 +213,14 @@ end
 ## Many-to-Many Associations
 
 ```elixir
-# Schema for many-to-many with join_through
+# Schema for many-to-many with join_through (in schema block only)
 schema "posts" do
   field :title, :string
-  many_to_many :tags, MyApp.Blog.Tag, join_through: "post_tags"
+  many_to_many :tags, MyApp.Blog.Tag, join_through: "post_tags", on_replace: :delete
   timestamps()
 end
 
-# Creating with tags (use put_assoc for many_to_many)
+# Creating with tags - use put_assoc in the context function
 def create_post(attrs) do
   %Post{}
   |> Post.changeset(attrs)
@@ -228,12 +228,31 @@ def create_post(attrs) do
   |> Repo.insert()
 end
 
-# changeset must use many_to_many/3 not cast_assoc
+# Changeset does NOT use many_to_many/3 (that is a schema macro, not changeset function)
 def changeset(post, attrs) do
   post
   |> cast(attrs, [:title])
   |> validate_required([:title])
-  |> many_to_many(:tags, Tag, on_replace: :delete)
+end
+
+# For nested tag creation/update, use cast_assoc with a join schema
+# Define a PostTag join schema:
+defmodule MyApp.Blog.PostTag do
+  use Ecto.Schema
+
+  schema "post_tags" do
+    belongs_to :post, MyApp.Blog.Post
+    belongs_to :tag, MyApp.Blog.Tag
+    timestamps()
+  end
+end
+
+# Then use cast_assoc in the parent changeset:
+def changeset(post, attrs) do
+  post
+  |> cast(attrs, [:title])
+  |> validate_required([:title])
+  |> cast_assoc(:post_tags, with: &PostTag.changeset/2)
 end
 ```
 

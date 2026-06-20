@@ -256,6 +256,7 @@ mix deps.audit && mix hex.audit && mix sobelow --config
 ```
 
 **Sobelow categories:**
+
 | Category | What it catches | Severity |
 |----------|----------------|----------|
 | Config | Hardcoded secrets, insecure configurations | HIGH |

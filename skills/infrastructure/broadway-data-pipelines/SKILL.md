@@ -186,7 +186,20 @@ defmodule MyApp.MessagePipeline do
 end
 ```
 
-> **Telemetry:** Broadway emits telemetry events for message processing and batching. Attach handlers via `:telemetry.attach/4` and optionally visualise them with [`broadway_dashboard`](https://hexdocs.pm/broadway_dashboard/). See the [Broadway Telemetry guide](https://hexdocs.pm/broadway/Broadway.html#module-telemetry) for event names and metadata.
+> **Telemetry:** Broadway emits telemetry events for message processing and batching. Attach handlers via `:telemetry.attach_many/4` to handle multiple event patterns with a single callback, and optionally visualise them with [`broadway_dashboard`](https://hexdocs.pm/broadway_dashboard/). See the [Broadway Telemetry guide](https://hexdocs.pm/broadway/Broadway.html#module-telemetry) for event names and metadata.
+
+```elixir
+:telemetry.attach_many(
+  "broadway-handler",
+  [
+    [:broadway, :message, :start],
+    [:broadway, :message, :stop],
+    [:broadway, :message, :failure]
+  ],
+  &MyApp.Telemetry.handle_event/4,
+  %{}
+)
+```
 
 ---
 
