@@ -23,14 +23,14 @@ Gettext is the standard internationalization library for Elixir/Phoenix applicat
 2. **Extract strings** — run `mix gettext.extract --merge` to generate/update `.pot` and `.po` files
 3. **Verify `.po` files** — confirm new `msgid` entries appear with empty `msgstr` values
 4. **Add translations** — fill in `msgstr` values for each target locale
-5. **Set locale per request** — configure a plug or LiveView mount to call `Gettext.put_locale/1`
+5. **Set locale per request** — configure a plug or LiveView mount to call `Gettext.put_locale/2`
 6. **Test** — assert translated strings appear when locale is set
 
 ---
 
 ## RULES — Follow these with no exceptions
 
-1. **Set locale per request** — use `Gettext.put_locale/1` in plugs or LiveView mount
+1. **Set locale per request** — use `Gettext.put_locale/2` in plugs or LiveView mount
 2. **Don't translate error messages meant for logs** — only translate user-facing text
 3. **Use domain-specific contexts** — `dgettext("errors", "Not found")` for different domains
 

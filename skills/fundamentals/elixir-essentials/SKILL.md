@@ -168,7 +168,7 @@ end
 
 ## Bang Functions
 
-Use `!` suffix for functions that raise on failure instead of returning `{:ok, _} | {:error, _}`. Prefer the non-bang variant in application logic; use bang in tests or when failure is truly unrecoverable.
+Use `!` suffix for functions that raise on failure. Prefer the non-bang variant in application logic; use bang in tests or when failure is truly unrecoverable.
 
 ## Early Returns
 

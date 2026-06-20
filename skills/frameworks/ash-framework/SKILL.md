@@ -57,7 +57,7 @@ end
 
 ### Step 4 — Define Your First Resource
 
-Start with attributes, then add relationships and actions incrementally. See [Resource Definition](#resource-definition) below.
+Define attributes, then define relationships and actions incrementally. See [Resource Definition](#resource-definition) below.
 
 ### Step 5 — Generate and Run Migrations
 

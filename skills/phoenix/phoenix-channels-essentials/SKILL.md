@@ -106,6 +106,8 @@ channel.join()
   .receive("error", resp => console.error("Unable to join", resp))
 ```
 
+> Where does `window.userToken` come from? Render it from the server into the page template, e.g. `<script>window.userToken = "<%= @user_token %>";</script>`, after generating the token in your controller or LiveView mount.
+
 ---
 
 ## Topic Authorization
@@ -121,6 +123,7 @@ defmodule MyAppWeb.RoomChannel do
   def join("room:" <> room_id, _payload, socket) do
     user_id = socket.assigns.user_id
 
+    # Delegate authorization to the context module — keeps the channel thin
     if Rooms.member?(room_id, user_id) do
       send(self(), :after_join)
       {:ok, assign(socket, :room_id, room_id)}

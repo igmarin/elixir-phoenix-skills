@@ -137,7 +137,7 @@ When Dialyzer reports errors, follow this cycle: **read → locate → fix → r
 
 ### Example Dialyzer Output
 
-```
+```text
 lib/my_app/accounts.ex:12:no_return
 Function create_user/1 has no local return.
 

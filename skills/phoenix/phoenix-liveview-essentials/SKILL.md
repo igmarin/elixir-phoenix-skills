@@ -103,8 +103,13 @@ end
 ```elixir
 @impl true
 def handle_event("delete", %{"id" => id}, socket) do
-  Posts.delete_post(id)
-  {:noreply, assign(socket, :posts, Posts.list_posts())}
+  case Posts.delete_post(id) do
+    {:ok, _post} ->
+      {:noreply, assign(socket, :posts, Posts.list_posts())}
+
+    {:error, _reason} ->
+      {:noreply, put_flash(socket, :error, "Could not delete post")}
+  end
 end
 ```
 

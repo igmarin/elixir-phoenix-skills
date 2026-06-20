@@ -60,6 +60,7 @@ Expected failure output:
 3. **Run**: `mix test test/path/to/file_test.exs` — confirm the target test now PASSES.
 
 **HARD GATE — Implementation Verification**
+- Explicit user approval obtained for the proposed implementation before writing any files.
 - Target test PASSES.
 - No new test failures introduced.
 - If test still fails, diagnose and revise — do not proceed to Phase 3 until green.
@@ -79,8 +80,8 @@ Expected failure output:
    mix test
    ```
 2. **All four commands must be green.** If any fail:
-   - `mix format`: run `mix format` then re-check.
-   - `mix credo`: fix each flagged issue; do not suppress warnings without justification.
+   - `mix format`: run `mix format` then re-check, and re-run the remaining quality tools (`mix credo`, `mix dialyzer`, `mix test`) in case the formatting changes introduced any new issues.
+   - `mix credo`: fix each flagged issue; do not suppress warnings without explicit user approval.
    - `mix dialyzer`: add or correct typespecs to resolve warnings.
    - `mix test`: diagnose regressions — do not proceed until all tests pass.
 
