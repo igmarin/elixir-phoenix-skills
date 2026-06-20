@@ -4,11 +4,13 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  Use when considering, adopting, or working with Ash Framework for Elixir applications. Invoke
-  before starting a new project or major refactor. Guides defining Ash resources with attributes
-  and relationships, configuring actions and policies, using Ash extensions (AshPostgres,
+  MANDATORY when considering, adopting, or working with Ash Framework for Elixir applications.
+  Invoke before starting a new Ash project or major refactor. Guides defining Ash resources with
+  attributes and relationships, configuring actions and policies, using Ash extensions (AshPostgres,
   AshPhoenix, AshJsonApi), and migrating from Phoenix contexts to Ash DSL patterns.
-  Trigger words: Ash Framework, Ash resource, Ash action, resource-oriented, DSL, alternative to contexts.
+  Trigger words: Ash Framework, Ash resource, Ash action, resource-oriented, DSL, alternative to contexts,
+  Ash domain, Ash policy, Ash extension, ash_postgres, ash_phoenix, Ash.JsonApi, AshQuery,
+  AshChangeset, use Ash.Resource, use Ash.Domain.
 metadata:
   user-invocable: "true"
   version: 1.0.0
@@ -16,71 +18,32 @@ metadata:
 
 # Ash Framework
 
-## Setup Workflow
+## RULES — Follow these with no exceptions
+
+1. **Use `use Ash.Resource` for domain resources** — never manually implement protocols
+2. **Define actions explicitly** — don't rely on `defaults [:read, :create]` without understanding what they expose
+3. **Add policies for authorization** — every resource with sensitive data must have explicit policy blocks
+4. **Use `Ash.Changeset.for_create/3` and `Ash.Changeset.for_update/3`** — not bare struct manipulation
+5. **Run `mix ash_postgres.generate_migrations` before manual migration** — let Ash generate the schema
+6. **Verify resource loads** — run `mix compile` and confirm no `Spark.Error.DslError` before proceeding
+
+---
+
+## End-to-End Workflow
 
 Follow this sequence when starting a new Ash project:
 
-### Step 1 — Add Dependencies
-
-```elixir
-# mix.exs
-defp deps do
-  [
-    {:ash, "~> 3.0"},
-    {:ash_postgres, "~> 2.0"}
-  ]
-end
-```
-
-Run `mix deps.get`.
-
-### Step 2 — Configure AshPostgres
-
-```elixir
-defmodule MyApp.Repo do
-  use AshPostgres.Repo, otp_app: :my_app
-end
-```
-
-### Step 3 — Define a Domain Module
-
-```elixir
-defmodule MyApp.Blog do
-  use Ash.Domain
-
-  resources do
-    resource MyApp.Blog.Post
-    resource MyApp.Blog.Comment
-  end
-end
-```
-
-### Step 4 — Define Your First Resource
-
-Define attributes, then define relationships and actions incrementally. See [Resource Definition](#resource-definition) below.
-
-### Step 5 — Generate and Run Migrations
-
-```bash
-mix ash_postgres.generate_migrations
-mix ash_postgres.migrate
-```
-
-**Validation checkpoint:** Confirm all resources load cleanly:
-
-```bash
-mix compile --force 2>&1 | grep -E '(error|warning)'
-```
-
-Expected output: no lines printed.
-
-**Common failures:**
-- **Migration conflict on existing table** — open the generated file in `priv/repo/migrations/` and remove or rename the conflicting `create table` statement before re-running.
-- **`Spark.Error.DslError` (unknown DSL option)** — check the path in the error (e.g., `MyApp.Blog.Post > attributes > attribute > :constraints`) to locate the offending block.
-
-### Step 6 — Call Actions from Your Application
-
-Use `Ash.Changeset` and domain functions (e.g., `MyApp.Blog.create!`) to interact with resources. See [Using Actions](#using-actions) below.
+1. **Add dependencies** — add `{:ash, "~> 3.0"}` and `{:ash_postgres, "~> 2.0"}` to `mix.exs`
+2. **Configure Repo** — change `use Ecto.Repo` to `use AshPostgres.Repo, otp_app: :my_app`
+3. **Define Domain module** — create a domain with `use Ash.Domain` and `resources do ... end`
+4. **Define Resource** — use `use Ash.Resource, domain: MyApp.Domain, data_layer: AshPostgres.DataLayer`
+5. **Configure postgres** — add `table` and `repo` in the `postgres do` block
+6. **Define attributes** — use `uuid_primary_key`, `attribute`, `timestamps()` in the `attributes do` block
+7. **Define relationships** — use `belongs_to`, `has_many`, `many_to_many` in `relationships do` block
+8. **Define actions** — use `actions do` with `defaults`, `create`, `update`, `read` blocks
+9. **Add policies** — use `policies do` block with `authorize_if` or `forbid_if` rules
+10. **Generate migrations** — run `mix ash_postgres.generate_migrations` then `mix ash_postgres.migrate`
+11. **Test with Ash API** — use `Domain.create!(resource, attributes)` to verify the resource works
 
 ---
 
@@ -267,3 +230,176 @@ end
 ```
 
 See the [AshJsonApi docs](https://hexdocs.pm/ash_json_api) for pagination, includes, and error serialization.
+
+---
+
+## Calculations and Aggregates
+
+```elixir
+# Add a count aggregate to a resource
+aggregates do
+  count :comment_count, :comments
+  count :published_comment_count, :comments do
+    filter expr(status == :published)
+  end
+end
+
+# Use in queries
+MyApp.Blog.Post
+|> Ash.Query.filter(comment_count > 0)
+|> MyApp.Blog.read!()
+```
+
+---
+
+## Custom Validations
+
+❌ **Bad — no validations, relying only on database constraints:**
+```elixir
+create :create do
+  accept [:title, :body, :author_id]
+  # No validations - bugs will reach the database
+end
+```
+
+✅ **Good — validations in the action layer:**
+```elixir
+create :create do
+  accept [:title, :body, :author_id]
+
+  validate str_length(:title, min: 1, max: 255) do
+    message "Title must be between 1 and 255 characters"
+  end
+
+  validate changing(:body) do
+    if Map.get(attributes, :status) == :published do
+      message "Published posts cannot have body changed"
+    end
+  end
+end
+```
+
+---
+
+## Not Found Handling
+
+❌ **Bad — ignoring not found, will raise unhelpful error:**
+```elixir
+# Directly chaining bang function without checking
+post = MyApp.Blog.Post |> Ash.get!(id)
+# Raises Ash.Error.Query.NotFound with no context
+```
+
+✅ **Good — explicit handling of both cases:**
+```elixir
+case MyApp.Blog.Post |> Ash.get(id) do
+  {:ok, post} -> {:ok, post}
+  {:error, %Ash.Error.Query.NotFound{}} -> {:error, :not_found}
+  {:error, error} -> {:error, error}
+end
+```
+
+---
+
+## Sorting and Filtering
+
+❌ **Bad — string interpolation in filters (injection risk):**
+```elixir
+# NEVER do this - user input directly interpolated
+MyApp.Blog.Post
+|> Ash.Query.filter("status == '#{params["status"]}'")
+```
+
+✅ **Good — parameterized filters with safe values:**
+```elixir
+# Use ^ for safe interpolation of trusted values
+MyApp.Blog.Post
+|> Ash.Query.filter(status == ^status and author_id == ^current_user.id)
+|> Ash.Query.sort([inserted_at: :desc])
+```
+
+---
+
+## Pagination
+
+❌ **Bad — no pagination on large queries:**
+```elixir
+# Returns ALL records - memory explosion for large tables
+MyApp.Blog.Post |> MyApp.Blog.read!()
+```
+
+✅ **Good — always paginate large result sets:**
+```elixir
+# Keyset pagination (cursor-based, more efficient)
+MyApp.Blog.Post
+|> Ash.Query.page(limit: 20, after: last_inserted_at)
+|> MyApp.Blog.read!()
+```
+
+---
+
+## Error Handling Patterns
+
+❌ **Bad — catching all errors with generic handler:**
+```elixir
+# Too broad, loses information
+case MyApp.Blog.create(params) do
+  {:ok, post} -> {:ok, post}
+  {:error, _} -> {:error, :failed}
+end
+```
+
+✅ **Good — specific error handling with typed matches:**
+```elixir
+case MyApp.Blog.Post
+     |> Ash.Changeset.for_create(params)
+     |> MyApp.Blog.create() do
+  {:ok, post} ->
+    {:ok, post}
+
+  {:error, %Ash.Error.InvalidInput{fields: fields}} ->
+    {:error, :validation, fields}
+
+  {:error, %Ash.Error.Forbidden{}} ->
+    {:error, :unauthorized}
+
+  {:error, %Ash.Error.Changeset{errors: errors}} ->
+    {:error, :invalid_changeset, errors}
+
+  {:error, error} ->
+    Logger.error("Unexpected error: #{inspect(error)}")
+    {:error, :internal_error}
+end
+```
+
+---
+
+## Migrations from Ecto to Ash
+
+❌ **Bad — changing DB schema before creating Ash resource:**
+```elixir
+# Wrong order - Ash won't find the table
+alter table(:posts) do add :new_field, :string end
+# Then create Ash resource - will fail
+```
+
+✅ **Good — create Ash resource first, let Ash generate migrations:**
+```elixir
+# Step 1: Create Ash resource matching existing schema
+defmodule MyApp.Blog.Post do
+  use Ash.Resource, domain: MyApp.Blog, data_layer: AshPostgres.DataLayer
+  postgres do
+    table "posts"
+    repo MyApp.Repo
+  end
+end
+
+# Step 2: Generate and run migration
+# mix ash_postgres.generate_migrations
+# mix ash_postgres.migrate
+
+# Step 3: Update context to delegate to Ash
+def get_post!(id) do
+  MyApp.Blog.Post |> Ash.get!(id)
+end
+```

@@ -10,9 +10,10 @@ description: >
   TDD → Planning → Implementation → Quality → Review. First response
   line MUST be "Next skill: skills/[category]/[name]". Falls back to `elixir-essentials`
   for language ambiguity or `phoenix-liveview-essentials` for web ambiguity. Use when scope is
-  unclear, best approach uncertain, or request spans multiple concerns. Trigger: where do I
-  start, help me plan an Elixir feature, break this down, what's the best approach, not sure
-  how to approach this, multi-step Elixir task, complex Phoenix task, what should I do first.
+  unclear, best approach uncertain, or request spans multiple concerns.
+  Trigger words: where do I start, help me plan, break this down, best approach, not sure how,
+  multi-step, complex task, complex Phoenix, what should I do first, orchestrate, triage,
+  route to skill, skill routing, entry point, skill router.
 metadata:
   version: 1.0.0
   user-invocable: "true"
@@ -80,9 +81,10 @@ Decomposition:
 3. **Routing statement**:
 ```text
 Next skill: skills/testing/testing-essentials
-Priority: TDD → oban-essentials → elixir-essentials → ecto-essentials → phoenix-liveview-essentials → code-quality.
 
 This request spans jobs, email, data, and LiveView. Starting with failing tests for the job completion callback.
+
+Priority: TDD → oban-essentials → elixir-essentials → ecto-essentials → phoenix-liveview-essentials → code-quality.
 ```
 
 **Example 2 — "I'm not sure where to start — I need to refactor this GenServer so it doesn't crash under load, and also review the authentication logic for security issues."**
@@ -97,9 +99,10 @@ Decomposition:
 3. **Routing statement**:
 ```text
 Next skill: skills/security/security-essentials
-Priority: security-essentials > testing-essentials > otp-essentials > code-quality.
 
 Authentication touches security boundaries, so we audit that first before addressing the GenServer crash.
+
+Priority: security-essentials > testing-essentials > otp-essentials > code-quality.
 ```
 
 ### Typical Workflows
@@ -137,9 +140,10 @@ When multiple skills apply, immediately follow the routing line with one concise
 
 ```text
 Next skill: skills/security/security-essentials
-Priority: security-essentials > code-quality; Chain: security-essentials then code-quality.
 
 This pull request contains custom input validation, so we will perform a security review first followed by code quality review.
+
+Priority: security-essentials > code-quality; Chain: security-essentials then code-quality.
 ```
 
 **Language**: Generated artifacts and output MUST be in English unless explicitly requested otherwise.

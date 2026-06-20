@@ -4,10 +4,11 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  Use when implementing caching in Elixir applications. Invoke before adding caching layers.
+  MANDATORY for implementing caching in Elixir applications. Invoke before adding caching layers.
   Configures Cachex instances, implements cache-aside and get-or-set patterns, sets TTL policies,
   builds cache warmers, monitors cache statistics, and sets up distributed caching across nodes.
-  Trigger words: Cachex, caching, cache, TTL, ETS, distributed cache, cache warmer.
+  Trigger words: Cachex, caching, cache, TTL, ETS, distributed cache, cache warmer, cache warmup,
+  cache invalidation, cache hits, cache misses, Cachex.fetch, Cachex.put, Cachex.get.
 metadata:
   user-invocable: "true"
   version: 1.0.0
@@ -17,9 +18,12 @@ metadata:
 
 ## RULES — Follow these with no exceptions
 
-1. **Set appropriate TTL for cached data** — don't cache indefinitely unless data is immutable
-2. **Use cache warmers for expensive data** — pre-populate cache on startup
-3. **Monitor cache hit rates** — use telemetry to track cache effectiveness
+1. **Set TTL on every cached entry** — never cache indefinitely unless data is truly immutable
+2. **Use `Cachex.fetch/3` for get-or-set** — never check-then-set (race condition risk)
+3. **Invalidate on writes** — call `Cachex.del/2` after any data mutation
+4. **Enable stats: true** — without stats you cannot measure cache effectiveness
+5. **Use cache warmers for startup** — pre-populate expensive data when application starts
+6. **Handle cache failures gracefully** — fall back to database on cache errors
 
 ---
 
@@ -28,10 +32,31 @@ metadata:
 Follow this sequence when adding caching to a feature:
 
 1. **Add dependency** — add `{:cachex, "~> 3.6"}` to `mix.exs` and run `mix deps.get`
-2. **Configure cache** — start a named Cachex instance in your application supervisor with appropriate limits and TTL
-3. **Implement get-or-set** — wrap data-fetching calls with `Cachex.fetch/3` to atomically cache results
-4. **Add invalidation** — call `Cachex.del/2` after mutating data; fall back to TTL expiry if deletion fails
-5. **Verify with stats** — enable `stats: true`, call `Cachex.stats/1` after exercising the code, and confirm `hit_rate` is non-zero
+2. **Configure cache** — start a named Cachex instance in your application supervisor
+3. **Implement get-or-set** — use `Cachex.fetch/3` for atomic cache-aside pattern
+4. **Add invalidation** — call `Cachex.del/2` after mutating data
+5. **Enable stats** — configure `stats: true` in cache options
+6. **Add cache warmer** — for expensive data, pre-populate on startup
+7. **Verify hit rate** — call `Cachex.stats/1` and confirm `hit_rate` is non-zero
+8. **Monitor in production** — emit telemetry events for cache operations
+
+---
+
+## Error Handling
+
+Cachex operations return `{:ok, result}` or `{:error, reason}`. Always handle errors gracefully:
+
+```elixir
+# Never let cache failures crash your application
+def get_user(id) do
+  case Cachex.fetch(:my_cache, "user:#{id}", fn _ ->
+    {:commit, Repo.get(User, id)}
+  end) do
+    {:ok, user} -> user
+    {:error, _} -> Repo.get(User, id)  # Fallback to database
+  end
+end
+```
 
 ---
 
@@ -44,16 +69,38 @@ defp deps do
     {:cachex, "~> 3.6"}
   ]
 end
+```
 
-# application.ex
-def start(_type, _args) do
-  children = [
-    {Cachex, name: :my_cache, limit: 1000}
-  ]
+**In your application supervisor:**
 
-  Supervisor.start_link(children, strategy: :one_for_one)
+```elixir
+# lib/my_app/application.ex
+defmodule MyApp.Application do
+  use Application
+
+  @impl true
+  def start(_type, _args) do
+    children = [
+      # Basic cache with 1000 entry limit
+      {Cachex, name: :my_cache, limit: 1000},
+      
+      # Cache with stats enabled for monitoring
+      {Cachex, name: :stats_cache, limit: 5000, stats: true},
+      
+      # Cache with TTL and LRW eviction policy
+      {Cachex,
+       name: :ttl_cache,
+       limit: 10_000,
+       ttl: :timer.minutes(10),
+       policy: Cachex.Policy.LRW}
+    ]
+
+    Supervisor.start_link(children, strategy: :one_for_one)
+  end
 end
 ```
+
+Always name caches explicitly — use the atom name in all `Cachex.get/2`, `Cachex.put/3`, `Cachex.del/2` calls.
 
 ---
 
@@ -179,6 +226,52 @@ end
 
 {:ok, stats} = Cachex.stats(:my_cache)
 # %{hit_rate: 85.5, hits: 8550, misses: 1450, gets: 10000, sets: 1200, evictions: 100}
+```
+
+**Interpret hit rate:**
+- `> 80%` — excellent, cache is very effective
+- `60-80%` — good, normal for read-heavy workloads
+- `< 60%` — investigate, consider adjusting TTL or key strategy
+- `< 20%` — cache may be ineffective, evaluate if it's worth the overhead
+
+---
+
+## Telemetry Integration
+
+Emit telemetry events for cache operations to monitor in production:
+
+```elixir
+defmodule MyApp.Telemetry do
+  def execute(:cache, :hit, cache_name, key) do
+    :telemetry.execute(
+      [:my_app, :cache, cache_name],
+      %{hits: 1},
+      %{key: key}
+    )
+  end
+
+  def execute(:cache, :miss, cache_name, key) do
+    :telemetry.execute(
+      [:my_app, :cache, cache_name],
+      %{misses: 1},
+      %{key: key}
+    )
+  end
+end
+
+# In your cache wrapper
+def get_user(id) do
+  case Cachex.fetch(:my_cache, "user:#{id}", fn _ ->
+    {:commit, Repo.get(User, id)}
+  end) do
+    {:ok, user} ->
+      Telemetry.execute(:cache, :hit, :my_cache, "user:#{id}")
+      user
+    {:error, _} ->
+      Telemetry.execute(:cache, :miss, :my_cache, "user:#{id}")
+      Repo.get(User, id)
+  end
+end
 ```
 
 ---

@@ -4,13 +4,15 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  Use when creating custom Mix tasks or using Phoenix generators. Invoke before defining
+  MANDATORY when creating custom Mix tasks or using Phoenix generators. Invoke before defining
   custom Mix task modules with argument parsing and subcommands, scaffolding resources with
   phx.gen.live or phx.gen.context, generating authentication systems with phx.gen.auth,
   configuring dependencies and aliases in mix.exs, or writing tests for custom tasks.
   Covers Mix.Tasks module creation, generator patterns, and Mix project configuration.
   Trigger words: Mix task, custom task, phx.gen, generators, mix.exs, project configuration,
-  phx.gen.live, phx.gen.auth, scaffold, seed data, ecto.setup.
+  phx.gen.live, phx.gen.auth, scaffold, seed data, ecto.setup, mix help, Mix.Project,
+  OptionParser, @shortdoc, preferred_cli_env, alias, mix run, generator, phx.gen.html,
+  phx.gen.context, phx.gen.json, phx.gen.channel.
 metadata:
   user-invocable: "true"
   version: 1.0.0
@@ -18,20 +20,76 @@ metadata:
 
 # Mix Tasks & Generators
 
-## Key Rules
+## RULES — Follow these with no exceptions
 
-- Always call `Mix.Task.run("app.start")` in tasks that need the application started
-- Create custom tasks for project-specific workflows; don't override standard Mix tasks
+1. **Always call `Mix.Task.run("app.start")` first** — tasks that access the database or Repo need the app started
+2. **Create custom tasks for project-specific workflows** — don't override standard Mix tasks
+3. **Use `OptionParser.parse/2` for argument parsing** — never use raw `System.argv()` for complex arguments
+4. **Add `@shortdoc` to every task** — tasks appear in `mix help` using this attribute
+5. **Register `preferred_cli_env` in mix.exs** — set environment for custom tasks (dev/test/prod)
+6. **Use transactions for data modifications** — wrap `Repo.insert_all`, `Repo.delete_all` in `Repo.transaction()`
+7. **Test custom tasks with `Mix.Project.in_project/4`** — ensure tasks work correctly in isolation
+8. **Follow `Mix.Tasks.Namespace.TaskName` naming** — file path must match: `lib/mix/tasks/namespace.task_name.ex`
+
+---
+
+## End-to-End Workflow
+
+Follow this sequence when creating a custom Mix task:
+
+1. **Create file** — create `lib/mix/tasks/<namespace>.<task_name>.ex`
+2. **Define module** — use `defmodule Mix.Tasks.MyApp.TaskName do use Mix.Task`
+3. **Add `@shortdoc`** — one-line description for `mix help`
+4. **Implement `run/1`** — parse args with `OptionParser.parse/2` if needed
+5. **Start app** — call `Mix.Task.run("app.start")` if using Repo
+6. **Implement logic** — use transactions for data modifications
+7. **Add to mix.exs** — register `preferred_cli_env` if needed
+8. **Test** — use `Mix.Project.in_project/4` test helper
+9. **Verify** — run `mix help | grep task_name` to confirm registration
 
 ---
 
 ## Phoenix Generators
 
-### LiveView CRUD with Enum Field
+### Complete Generator Reference
 
 ```bash
-# Enum fields require the explicit enum:value:... syntax
+# Generate JSON context and schema (full CRUD with tests)
+mix phx.gen.json Accounts User users email:string name:string --web API
+
+# Generate LiveView CRUD with Enum field
 mix phx.gen.live Blog Post posts title:string body:text status:enum:draft:published:archived
+
+# Generate LiveView for existing table
+mix phx.gen.live Blog Post posts --table existing_posts
+
+# Generate context (logic layer)
+mix phx.gen.context Accounts User users email:string password_hash:string
+
+# Generate Channel
+mix phx.gen.channel Room
+
+# Generate HTML (no LiveView)
+mix phx.gen.html Blog Post posts title:string body:text
+
+# Generate authentication system
+mix phx.gen.auth Accounts User users --web Admin
+
+# Generate embedded schema
+mix phx.gen.embedded Post do
+  field :title, :string
+  field :body, :string
+end
+
+# Generate context with existing schema
+mix phx.gen.context Blog Post posts --table posts --app MyApp
+```
+
+### Enum Field Syntax
+
+```bash
+# Enum fields require special enum:value:syntax
+mix phx.gen.live Blog Post posts status:enum:draft:published:archived
 ```
 
 ### Auth
@@ -261,6 +319,12 @@ end
 defmodule Mix.Tasks.MyApp.SeedDataTest do
   use ExUnit.Case
 
+  setup do
+    # Ensure clean state before each test
+    MyApp.Repo.delete_all(MyApp.User)
+    :ok
+  end
+
   test "seeds data successfully" do
     # Run in test environment
     Mix.Project.in_project(:my_app, ".", fn _ ->
@@ -270,5 +334,273 @@ defmodule Mix.Tasks.MyApp.SeedDataTest do
       assert MyApp.Repo.aggregate(MyApp.User, :count) > 0
     end)
   end
+
+  test "seeds data with specific count" do
+    Mix.Project.in_project(:my_app, ".", fn _ ->
+      Mix.Tasks.MyApp.SeedData.run([])
+
+      count = MyApp.Repo.aggregate(MyApp.User, :count)
+      assert count == 10  # or whatever the seed creates
+    end)
+  end
+
+  test "handles empty database" do
+    Mix.Project.in_project(:my_app, ".", fn _ ->
+      # Database already clean
+      Mix.Tasks.MyApp.SeedData.run([])
+
+      assert MyApp.Repo.aggregate(MyApp.User, :count) > 0
+    end)
+  end
 end
+```
+
+---
+
+## Error Handling Patterns
+
+```elixir
+defmodule Mix.Tasks.MyApp.ImportData do
+  use Mix.Task
+
+  @shortdoc "Imports data from CSV file"
+
+  @impl Mix.Task
+  def run(args) do
+    {opts, positional, errors} = OptionParser.parse(args,
+      strict: [file: :string, dry_run: :boolean],
+      aliases: [f: :file, d: :dry_run]
+    )
+
+    # Handle missing required arguments
+    if Keyword.get(opts, :file) == nil do
+      Mix.shell().error("Missing required --file argument")
+      Mix.shell().info("\nUsage: mix my_app.import_data --file <path>")
+      Mix.raise("Invalid arguments")
+    end
+
+    # Handle unknown arguments
+    if errors != [] do
+      Enum.each(errors, fn {key, value} ->
+        Mix.shell().error("Unknown option: #{key} #{value}")
+      end)
+      Mix.raise("Invalid arguments")
+    end
+
+    Mix.Task.run("app.start")
+
+    # Main logic with proper error handling
+    file = Keyword.get(opts, :file)
+
+    case read_and_validate_file(file) do
+      {:ok, data} ->
+        process_data(data, opts)
+
+      {:error, :file_not_found} ->
+        Mix.shell().error("File not found: #{file}")
+        Mix.raise("Import failed")
+
+      {:error, :invalid_format} ->
+        Mix.shell().error("Invalid file format: #{file}")
+        Mix.raise("Import failed")
+    end
+  end
+
+  defp read_and_validate_file(path) do
+    if File.exists?(path) do
+      case File.read(path) do
+        {:ok, content} -> parse_content(content)
+        {:error, _} -> {:error, :read_failed}
+      end
+    else
+      {:error, :file_not_found}
+    end
+  end
+
+  defp parse_content(content) do
+    # Parse and return data
+    {:ok, []}
+  end
+
+  defp process_data(data, opts) do
+    if Keyword.get(opts, :dry_run) do
+      Mix.shell().info("Would import #{length(data)} records (dry run)")
+    else
+      # Actual import
+      Mix.shell().info("Imported #{length(data)} records")
+    end
+  end
+end
+```
+
+---
+
+## Common Task Patterns
+
+### Database Reset Task
+
+```elixir
+defmodule Mix.Tasks.MyApp.Reset do
+  use Mix.Task
+
+  @shortdoc "Resets the database (drops, creates, migrates, seeds)"
+
+  @impl Mix.Task
+  def run(_) do
+    Mix.Task.run("app.start")
+
+    Mix.shell().info("Dropping database...")
+    Mix.Task.run("ecto.drop")
+    Mix.shell().info("Creating database...")
+    Mix.Task.run("ecto.create")
+    Mix.shell().info("Running migrations...")
+    Mix.Task.run("ecto.migrate")
+    Mix.shell().info("Seeding data...")
+    Mix.Task.run("my_app.seed_data")
+
+    Mix.shell().info("Reset complete!")
+  end
+end
+```
+
+### Health Check Task
+
+```elixir
+defmodule Mix.Tasks.MyApp.HealthCheck do
+  use Mix.Task
+
+  @shortdoc "Verifies application health (DB, cache, external services)"
+
+  @impl Mix.Task
+  def run(_) do
+    Mix.Task.run("app.start")
+
+    results = [
+      {"Database", check_db()},
+      {"Cache", check_cache()},
+      {"External API", check_api()}
+    ]
+
+    Mix.shell().info("\nHealth Check Results:")
+    Enum.each(results, fn {name, :ok} ->
+      Mix.shell().info("  ✓ #{name}: OK")
+    end)
+
+    failures = Enum.filter(results, fn {_, status} -> status != :ok end)
+    if failures != [] do
+      Enum.each(failures, fn {name, reason} ->
+        Mix.shell().error("  ✗ #{name}: #{reason}")
+      end)
+      Mix.raise("Health check failed")
+    end
+  end
+
+  defp check_db do
+    case MyApp.Repo.run_query("SELECT 1") do
+      {:ok, _} -> :ok
+      {:error, reason} -> reason
+    end
+  end
+
+  defp check_cache do
+    :ok = Cachex.put(:health_cache, "ping", "pong")
+    case Cachex.get(:health_cache, "ping") do
+      {:ok, "pong"} -> :ok
+      _ -> "Cache not responding"
+    end
+  end
+
+  defp check_api do
+    case Req.get("https://api.example.com/health") do
+      {:ok, %{status: 200}} -> :ok
+      {:error, reason} -> reason
+    end
+  end
+end
+```
+
+### Cleanup Task
+
+```elixir
+defmodule Mix.Tasks.MyApp.Cleanup do
+  use Mix.Task
+
+  @shortdoc "Cleans up old records (sessions, expired data, logs)"
+
+  @impl Mix.Task
+  def run(args) do
+    {opts, _, _} = OptionParser.parse(args, strict: [dry_run: :boolean])
+
+    Mix.Task.run("app.start")
+
+    dry_run? = Keyword.get(opts, :dry_run, false)
+
+    if dry_run? do
+      Mix.shell().info("DRY RUN - No changes will be made")
+    end
+
+    expired_sessions = MyApp.Session
+      |> where(inserted_at: < fragment("now() - interval '30 days'"))
+      |> MyApp.Repo.all()
+
+    Mix.shell().info("Found #{length(expired_sessions)} expired sessions")
+
+    unless dry_run? do
+      {count, _} = MyApp.Session
+        |> where(inserted_at: < fragment("now() - interval '30 days'"))
+        |> MyApp.Repo.delete_all()
+
+      Mix.shell().info("Deleted #{count} expired sessions")
+    end
+  end
+end
+```
+
+---
+
+## Phoenix Generator Reference
+
+```bash
+# Generate a JSON API context and schema
+mix phx.gen.json Accounts User users email:string name:string
+
+# Generate LiveView CRUD for existing schema
+mix phx.gen.live Blog Post posts title:string body:text --live
+
+# Generate a channel
+mix phx.gen.channel Room
+
+# Generate embedded schema (for embedded types)
+mix phx.gen.embedded Post do
+  field :title, :string
+  field :body, :string
+end
+
+# Generate context with JSON and web files
+mix phx.gen.context Accounts User users email:string password_hash:string --web Admin
+
+# Generate with existing table (skip migration)
+mix phx.gen.live Blog Post posts --table posts --app MyApp
+```
+
+---
+
+## Task Output Formatting
+
+```elixir
+# Use colored output
+IO.puts(:cyan, "Starting task...")
+IO.puts(:green, "✓ Success")
+IO.puts(:red, "✗ Failed")
+
+# Progress bars for long operations
+Mix.shell().info("Processing records...")
+records
+|> Enum.with_index()
+|> Enum.each(fn {record, index} ->
+  process_record(record)
+  if rem(index, 100) == 0 do
+    Mix.shell().info("  Processed #{index + 1}/#{total} records")
+  end
+end)
 ```
