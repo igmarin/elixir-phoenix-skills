@@ -30,13 +30,20 @@ Use this skill before writing ANY `_test.exs` file.
 5. **Use `has_element?/2` and `element/2` for LiveView assertions** — not `html =~ "text"` for structure checks
 6. **Always test the unauthorized case** for any protected resource
 7. **Never hardcode dates** — use relative timestamps to prevent flaky tests
-8. **Write the failing test first** — run to confirm it fails for the right reason, then implement
 
-```bash
-mix test test/my_app/accounts_test.exs  # Should fail first
-# ... implement ...
-mix test test/my_app/accounts_test.exs  # Should pass
-```
+---
+
+## Workflow: Writing a New Test File
+
+Follow these steps in order, with explicit validation at each checkpoint:
+
+1. **Check existing fixtures** — inspect `test/support/fixtures/` for relevant fixtures before creating new ones
+2. **Create fixture if needed** — add to the appropriate fixtures module (see Fixture Pattern below)
+3. **Verify compilation** — run `mix test` to confirm the fixture compiles before writing any tests
+4. **Write the failing test** — implement the test case; run `mix test path/to/file_test.exs` and confirm it fails with a meaningful message (not a compile error)
+5. **Verify the failure message** — the failure should describe a missing behaviour, not a setup problem
+6. **Implement the feature**
+7. **Verify the test passes** — re-run `mix test path/to/file_test.exs` and confirm green
 
 ---
 
@@ -166,7 +173,7 @@ end
 
 ## Setup Chaining
 
-Compose reusable setup functions with `setup [:func1, :func2]`. Each function receives and returns a context map.
+Use `setup [:func1, :func2]` to compose reusable setup functions; order matters as later functions receive assigns from earlier ones.
 
 ```elixir
 defmodule MyAppWeb.PostLiveTest do
@@ -187,8 +194,6 @@ defmodule MyAppWeb.PostLiveTest do
   end
 end
 ```
-
-Chain order matters — later functions receive assigns from earlier ones.
 
 ---
 

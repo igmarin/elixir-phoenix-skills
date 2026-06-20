@@ -78,7 +78,7 @@ steps:
 
 2. **Configure CD pipeline** — write to `.github/workflows/cd.yml`.
 
-   Fill in `DEPLOY_CLI` (e.g., `flyctl`, `gigalixir`, custom Docker) and the appropriate secret names. Begin each job's `steps:` with the same `checkout` + `setup-beam` actions (same SHAs and versions) used in the CI job above:
+   Fill in `DEPLOY_CLI` (e.g., `flyctl`, `gigalixir`, custom Docker) and the appropriate secret names. Each job must use the same `checkout` + `setup-beam` actions (same SHAs and versions) as the CI job above.
 
 ```yaml
 jobs:
@@ -86,27 +86,20 @@ jobs:
     runs-on: ubuntu-latest
     environment: staging
     steps:
-      # same checkout + setup-beam steps as CI (same SHAs/versions)
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - uses: erlef/setup-beam@5304e04ea2b355f03681464e683d92e3b2f18451
+        with:
+          elixir-version: "1.17.x"
+          otp-version: "27.x"
       - run: mix deps.get
       - run: mix ecto.migrate
         env:
           MIX_ENV: staging
           DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
       - run: <DEPLOY_CLI>
-
-  deploy-production:
-    runs-on: ubuntu-latest
-    environment: production
-    needs: deploy-staging
-    steps:
-      # same checkout + setup-beam steps as CI (same SHAs/versions)
-      - run: mix deps.get
-      - run: mix ecto.migrate
-        env:
-          MIX_ENV: prod
-          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
-      - run: <DEPLOY_CLI>
 ```
+
+   Duplicate `deploy-staging` as `deploy-production` with `environment: production`, `needs: deploy-staging`, `MIX_ENV: prod`, and `DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}`.
 
 ---
 

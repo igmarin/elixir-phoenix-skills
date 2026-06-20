@@ -19,9 +19,7 @@ metadata:
 
 <!-- Adapted from j-morgan6/elixir-phoenix-guide (MIT License, Copyright (c) 2026 Joseph Morgan) -->
 
-Use this skill before writing ANY Phoenix Channels code. For non-LiveView real-time features.
-
-## RULES — Follow these with no exceptions
+## RULES
 
 1. **Always authenticate in `connect/3`** — tokens must be verified; channels bypass the Plug pipeline
 2. **Authorize in `join/3`** — verify the user can access the requested topic
@@ -37,9 +35,9 @@ Use this skill before writing ANY Phoenix Channels code. For non-LiveView real-t
 1. Mount the socket in `endpoint.ex` → see [Socket Authentication](#socket-authentication)
 2. Generate a token server-side after user authentication → see [Step 2](#step-2--generate-tokens-server-side)
 3. Verify the token in `connect/3`; if auth fails, confirm salt matches between `sign` and `verify` and `max_age` hasn't expired → see [Step 3](#step-3--verify-tokens-in-the-socket)
-4. Authorize topics in `join/3` → see [Topic Authorization](#topic-authorization-handle_in-and-presence-tracking)
-5. Implement `handle_in` clauses routing client messages to context functions
-6. Add Presence tracking via `Presence.track/3` in `handle_info(:after_join, ...)`
+4. Authorize topics in `join/3` → see [Topic Authorization](#topic-authorization)
+5. Implement `handle_in` clauses routing client messages to context functions → see [handle_in Patterns](#handle_in-patterns)
+6. Add Presence tracking via `Presence.track/3` in `handle_info(:after_join, ...)` → see [Presence Tracking](#presence-tracking)
 7. Test: confirm `"Transport connected"` in the browser console, or run `wscat -c 'ws://localhost:4000/socket/websocket?token=TOKEN&vsn=2.0.0'`. If connection fails: verify socket is mounted in `endpoint.ex`, token is valid, and the client is passing the correct params key.
 
 ---
@@ -110,17 +108,11 @@ channel.join()
 
 ---
 
-## Topic Authorization, handle_in, and Presence Tracking
+## Topic Authorization
 
-The following is a complete `RoomChannel` that combines authorization, message handling, and Presence tracking:
+Authorize in `join/3` before allowing a client into a topic:
 
 ```elixir
-defmodule MyAppWeb.Presence do
-  use Phoenix.Presence,
-    otp_app: :my_app,
-    pubsub_server: MyApp.PubSub
-end
-
 defmodule MyAppWeb.RoomChannel do
   use MyAppWeb, :channel
   alias MyAppWeb.Presence
@@ -136,42 +128,108 @@ defmodule MyAppWeb.RoomChannel do
       {:error, %{reason: "unauthorized"}}
     end
   end
-
-  @impl true
-  def handle_info(:after_join, socket) do
-    {:ok, _} = Presence.track(socket, socket.assigns.user_id, %{
-      online_at: inspect(System.system_time(:second))
-    })
-
-    push(socket, "presence_state", Presence.list(socket))
-    {:noreply, socket}
-  end
-
-  @impl true
-  def handle_in("new_message", %{"body" => body}, socket) do
-    broadcast!(socket, "new_message", %{
-      body: body,
-      user_id: socket.assigns.user_id,
-      timestamp: DateTime.utc_now()
-    })
-
-    {:reply, :ok, socket}
-  end
-
-  @impl true
-  def handle_in("typing", _payload, socket) do
-    broadcast!(socket, "user_typing", %{user_id: socket.assigns.user_id})
-    {:reply, :ok, socket}
-  end
 end
 ```
 
 ---
 
-## Advanced Topics (Not Covered Here)
+## handle_in Patterns
 
-The following areas are candidates for dedicated skill files:
+Route client messages to context functions and always return an explicit reply:
 
-- **Testing** — `ChannelCase`, `subscribe_and_join/3`, asserting pushes and broadcasts
-- **Error handling** — graceful `handle_in` fallbacks, client-facing error shapes
-- **Scaling** — multi-node PubSub configuration, Presence CRDT considerations
+```elixir
+@impl true
+def handle_in("new_message", %{"body" => body}, socket) do
+  broadcast!(socket, "new_message", %{
+    body: body,
+    user_id: socket.assigns.user_id,
+    timestamp: DateTime.utc_now()
+  })
+
+  {:reply, :ok, socket}
+end
+
+@impl true
+def handle_in("typing", _payload, socket) do
+  broadcast!(socket, "user_typing", %{user_id: socket.assigns.user_id})
+  {:reply, :ok, socket}
+end
+```
+
+---
+
+## Presence Tracking
+
+Define a Presence module once per app, then track users in `handle_info(:after_join, ...)`:
+
+```elixir
+defmodule MyAppWeb.Presence do
+  use Phoenix.Presence,
+    otp_app: :my_app,
+    pubsub_server: MyApp.PubSub
+end
+```
+
+```elixir
+# Inside RoomChannel (after join/3 sends :after_join via send/2)
+@impl true
+def handle_info(:after_join, socket) do
+  {:ok, _} = Presence.track(socket, socket.assigns.user_id, %{
+    online_at: inspect(System.system_time(:second))
+  })
+
+  push(socket, "presence_state", Presence.list(socket))
+  {:noreply, socket}
+end
+```
+
+---
+
+## Channel Testing
+
+Use `Phoenix.ChannelTest` to test socket connections, joins, and message handling:
+
+```elixir
+defmodule MyAppWeb.RoomChannelTest do
+  use MyAppWeb.ChannelCase
+
+  setup do
+    user_id = 1
+    token = Phoenix.Token.sign(MyAppWeb.Endpoint, "user socket", user_id)
+
+    {:ok, socket} =
+      Phoenix.ChannelTest.connect(MyAppWeb.UserSocket, %{"token" => token})
+
+    {:ok, _, socket} =
+      Phoenix.ChannelTest.subscribe_and_join(socket, MyAppWeb.RoomChannel, "room:42")
+
+    %{socket: socket, user_id: user_id}
+  end
+
+  test "new_message broadcasts to room", %{socket: socket} do
+    Phoenix.ChannelTest.push(socket, "new_message", %{"body" => "hello"})
+    assert_broadcast "new_message", %{body: "hello"}
+    assert_reply ref, :ok
+  end
+
+  test "join is rejected when user is not a room member" do
+    user_id = 99
+    token = Phoenix.Token.sign(MyAppWeb.Endpoint, "user socket", user_id)
+    {:ok, socket} = Phoenix.ChannelTest.connect(MyAppWeb.UserSocket, %{"token" => token})
+
+    assert {:error, %{reason: "unauthorized"}} =
+             Phoenix.ChannelTest.join(socket, MyAppWeb.RoomChannel, "room:42")
+  end
+
+  test "connect rejects missing token" do
+    assert :error = Phoenix.ChannelTest.connect(MyAppWeb.UserSocket, %{})
+  end
+end
+```
+
+Key helpers from `Phoenix.ChannelTest`:
+- `connect/2` — establishes a socket connection, runs `connect/3`
+- `subscribe_and_join/3` — joins a topic and subscribes the test process to broadcasts
+- `push/3` — sends a message from the client to the channel
+- `assert_reply` — asserts a reply was sent back to the pushing client
+- `assert_broadcast` — asserts a message was broadcast to all subscribers

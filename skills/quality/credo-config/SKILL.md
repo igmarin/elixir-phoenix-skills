@@ -15,15 +15,6 @@ metadata:
 
 # Credo Configuration
 
-## RULES — Follow these with no exceptions
-
-1. **Use `.credo.exs` for project-specific configuration** — don't rely on defaults alone
-2. **Enable strict mode in CI** — catch more issues before merge
-3. **Disable specific checks with comments** — `# credo:disable-for-next-line` for intentional violations
-4. **Customize checks for your team** — adjust strictness based on project needs
-
----
-
 ## Setup Workflow
 
 ### 1. Add Dependency
@@ -48,8 +39,6 @@ mix deps.get
 ```bash
 mix credo gen.config
 ```
-
-This creates `.credo.exs` in the project root with all available checks listed.
 
 ### 4. Customize `.credo.exs`
 
@@ -164,7 +153,13 @@ end
 
 ## Custom Checks
 
-Create custom checks for project-specific patterns:
+Create custom checks for project-specific patterns in three steps:
+
+1. Define a module using `use Credo.Check` in `lib/credo/checks/`.
+2. Implement `run/2` with `Credo.Code.prewalk/2` to traverse the AST and collect issues.
+3. Register the module under `checks.enabled` in `.credo.exs`.
+
+The example below detects direct `Repo.` calls inside LiveView modules — adapt `find_issues/3` to match your own patterns:
 
 ```elixir
 # lib/credo/checks/no_direct_repo_in_live_view.ex
@@ -182,6 +177,16 @@ defmodule Credo.Check.NoDirectRepoInLiveView do
     |> Credo.Code.prewalk(&find_issues(&1, &2, issue_meta))
   end
 
+  # Detect calls of the form MyApp.Repo.<any function>
+  defp find_issues(
+         {{:., _, [{:__aliases__, meta, [_, "Repo"]}, _fn]}, _, _} = ast,
+         issues,
+         issue_meta
+       ) do
+    issue = format_issue(issue_meta, message: "Avoid direct Repo calls in LiveViews.", line_no: meta[:line])
+    {ast, [issue | issues]}
+  end
+
   defp find_issues(ast, issues, _issue_meta), do: {ast, issues}
 end
 ```
@@ -195,12 +200,3 @@ checks: %{
   ]
 }
 ```
-
----
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| code-quality | credo-config | typespec-dialyzer |
-| code-quality | credo-config | security-essentials |

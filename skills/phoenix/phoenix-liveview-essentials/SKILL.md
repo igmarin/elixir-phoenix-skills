@@ -24,8 +24,8 @@ Use this skill before writing ANY LiveView module or `.heex` template.
 ## RULES — Follow these with no exceptions
 
 1. **Always add `@impl true`** before every callback (mount, handle_event, handle_info, render)
-2. **Initialize assigns before they're accessed in render/1** — use mount/3 for static defaults, handle_params/3 for URL-dependent assigns (see Two-Phase Rendering and Mount sections below)
-3. **Check `connected?(socket)`** before PubSub subscriptions, timers, or side effects (see Mount section below)
+2. **Initialize assigns before they're accessed in render/1** — use mount/3 for static defaults, handle_params/3 for URL-dependent assigns
+3. **Check `connected?(socket)`** before PubSub subscriptions, timers, or side effects
 4. **Use `Map.get(assigns, :key, default)`** for optional assigns in helper functions
 5. **Return proper tuples** — `{:ok, socket}` from mount, `{:noreply, socket}` from handle_event
 6. **Use `with` for error handling** in event handlers — assign errors to socket, don't crash
@@ -38,8 +38,6 @@ Use this skill before writing ANY LiveView module or `.heex` template.
 
 ## Recommended Build Order
 
-When building a LiveView from scratch, follow this sequence:
-
 1. **Define `mount/3`** — initialize all assigns with static defaults
 2. **Add `handle_params/3`** — set URL-dependent assigns, subscribe to PubSub
 3. **Write `render/1`** — reference only assigns initialized in steps 1–2
@@ -50,12 +48,12 @@ When building a LiveView from scratch, follow this sequence:
 
 ## Critical Concept: Two-Phase Rendering
 
-**LiveView renders happen in TWO phases:**
+LiveView renders twice per page load:
 
-1. **Static/Disconnected Render** — Initial HTTP request; `connected?(socket)` is `false`; side effects won't work.
-2. **Connected Render** — WebSocket established; `connected?(socket)` is `true`; events and live updates work.
+- **Phase 1 — Disconnected:** HTTP request; `connected?(socket)` is `false`; side effects won't work.
+- **Phase 2 — Connected:** WebSocket established; `connected?(socket)` is `true`; events and live updates work.
 
-Phase 1: HTTP → `mount(connected?=false)` → `handle_params` → render static HTML → sent to browser. Phase 2: WebSocket connects → `mount(connected?=true)` → `handle_params` → render reactive LiveView active.
+Both phases run `mount` → `handle_params` → render. Initialize all assigns to safe defaults in Phase 1 so the static HTML never raises a `KeyError`.
 
 ---
 
@@ -96,7 +94,7 @@ def mount(_params, _session, socket) do
 end
 ```
 
-**✅ Validation checkpoint:** After implementing mount, verify all assigns used in render/1 are initialized by checking that the static render (before WebSocket connects) displays without a `KeyError`.
+**✅ Validation checkpoint:** Verify all assigns used in render/1 are initialized — the static render must display without a `KeyError`.
 
 ---
 
@@ -110,9 +108,9 @@ def handle_event("delete", %{"id" => id}, socket) do
 end
 ```
 
-For events that create or update records, use the Error Handling pattern below — assign changeset errors to the socket rather than raising.
+For create/update events, use the Error Handling pattern below — assign changeset errors to the socket rather than raising.
 
-**✅ Validation checkpoint:** After implementing handle_event, confirm each handler returns `{:noreply, socket}` and that error paths assign errors to the socket rather than raising.
+**✅ Validation checkpoint:** Each handler must return `{:noreply, socket}`; error paths assign errors to the socket rather than raising.
 
 ---
 
@@ -134,7 +132,7 @@ end
 
 ## Handle Params
 
-Respond to URL changes (called in BOTH render phases). Always initialize URL-dependent assigns here rather than in mount so they are available on both static and connected renders.
+Called in BOTH render phases on URL changes. Place URL-dependent assigns here so they are available in both static and connected renders.
 
 ```elixir
 @impl true
@@ -169,14 +167,9 @@ socket = assign(socket, count: 0, name: "User", active: true)
 socket = update(socket, :count, &(&1 + 1))
 ```
 
-✅ **In render/1:** Direct access is safe if initialized in mount.
+**In render/1** — direct access is safe when initialized in mount:
 
 ```elixir
-@impl true
-def mount(_params, _session, socket) do
-  {:ok, assign(socket, :count, 0)}
-end
-
 @impl true
 def render(assigns) do
   ~H"""
@@ -185,7 +178,7 @@ def render(assigns) do
 end
 ```
 
-✅ **In helper functions:** Use Map.get for optional assigns.
+**In helper functions** — use `Map.get` for optional assigns:
 
 ```elixir
 defp format_user(socket) do

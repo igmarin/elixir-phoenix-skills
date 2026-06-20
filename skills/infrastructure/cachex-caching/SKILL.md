@@ -60,17 +60,19 @@ end
 ## Basic Operations
 
 ```elixir
-Cachex.put(:my_cache, "user:123", %{name: "John", age: 30})
-
+# Cache miss returns {:ok, nil}, not an error tuple
 case Cachex.get(:my_cache, "user:123") do
-  {:ok, value} -> IO.inspect(value)
-  {:ok, nil} -> IO.puts("Cache miss")
+  {:ok, nil} -> :miss
+  {:ok, value} -> {:hit, value}
 end
 
+# put with explicit TTL (overrides cache-level default)
 Cachex.put(:my_cache, "session:abc", data, ttl: :timer.minutes(30))
 
+# Atomic delete — returns {:ok, true | false}; false means key was absent
 Cachex.del(:my_cache, "user:123")
 
+# Wipe entire cache
 Cachex.clear(:my_cache)
 ```
 
@@ -176,14 +178,49 @@ end
 {Cachex, name: :my_cache, stats: true}
 
 {:ok, stats} = Cachex.stats(:my_cache)
+# %{hit_rate: 85.5, hits: 8550, misses: 1450, gets: 10000, sets: 1200, evictions: 100}
+```
 
-IO.inspect(stats)
-# %{
-#   hit_rate: 85.5,
-#   hits: 8550,
-#   misses: 1450,
-#   gets: 10000,
-#   sets: 1200,
-#   evictions: 100
-# }
+---
+
+## Distributed Caching
+
+**Broadcast-based invalidation across nodes:**
+
+```elixir
+defmodule MyApp.CacheSync do
+  @topic "cache:invalidate"
+
+  def broadcast_delete(key) do
+    Phoenix.PubSub.broadcast(MyApp.PubSub, @topic, {:invalidate, key})
+  end
+
+  def handle_info({:invalidate, key}, state) do
+    Cachex.del(:my_cache, key)
+    {:noreply, state}
+  end
+end
+
+# Subscribe in your GenServer or LiveView
+Phoenix.PubSub.subscribe(MyApp.PubSub, "cache:invalidate")
+```
+
+**Remote reads via RPC (single authoritative node pattern):**
+
+```elixir
+def get_user_distributed(id) do
+  case Cachex.get(:my_cache, "user:#{id}") do
+    {:ok, nil} ->
+      :rpc.call(primary_node(), Cachex, :get, [:my_cache, "user:#{id}"])
+      |> case do
+        {:ok, nil} -> fetch_from_db(id)
+        {:ok, value} -> value
+      end
+
+    {:ok, value} ->
+      value
+  end
+end
+
+defp primary_node, do: Application.fetch_env!(:my_app, :primary_cache_node)
 ```

@@ -46,7 +46,7 @@ metadata:
 3. Verify the test **FAILS** with `mix test test/my_app_web/live/my_live_test.exs` — failure must be "module not defined".
 
 **HARD GATE — Test Fails:**
-- [ ] Test file exists and is written
+- [ ] Test file exists and written
 - [ ] `mix test` fails with "module not defined"
 
 ```elixir
@@ -116,9 +116,8 @@ end
 ```
 
 **HARD GATE — Implementation Complete:**
-- [ ] `mount/3` sets all declared assigns
-- [ ] HEEx template renders without crash
-- [ ] All listed events handled
+- [ ] All assigns initialized in `mount/3`
+- [ ] All events handled
 
 ---
 
@@ -128,9 +127,9 @@ end
 2. Run full suite: `mix test` — must **PASS**.
 
 **LiveView Quality Checklist:**
-- [ ] No computed assigns in `render` (compute in `mount`/`handle_event`, assign result)
+- [ ] No computed assigns in `render` (compute in `mount`/`handle_event`)
 - [ ] Collections >10 items use `stream/3`, not for-comprehension assigns
-- [ ] `phx-update="stream"` on stream containers; `id={dom_id}` on each item
+- [ ] `phx-update="stream"` on containers; `id={dom_id}` on each item
 - [ ] Bracket access (`assigns[:key]`) for nullable assigns in templates
 - [ ] Events use `phx-value-*` for data passing
 - [ ] `@impl true` on all callbacks
@@ -139,11 +138,7 @@ end
 
 ## Output Style
 
-When completing a LiveView feature, report:
-- Module path and route
-- Test file path, approach (live/live_isolated/unit), and RED→GREEN status
-- Implementation details (template path, events handled, streams used, auth method)
-- Quality gate results (test count, streams compliance, bracket access, `@impl true` coverage)
+Report module path, route, test file (approach + RED→GREEN status), and quality gate results (streams compliance, bracket access, `@impl true` coverage).
 
 ---
 

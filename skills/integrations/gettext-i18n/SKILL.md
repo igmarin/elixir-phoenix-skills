@@ -6,7 +6,7 @@ license: MIT
 description: >
   Use when implementing internationalization (i18n) in Elixir/Phoenix applications. Invoke before
   adding translations or supporting multiple languages. Covers Gettext setup, translation functions,
-  pluralization, and locale management.
+  pluralization, locale management, and .po/.pot file workflows.
   Trigger words: gettext, i18n, internationalization, translation, locale, pluralization, multiple languages.
 metadata:
   user-invocable: "true"
@@ -30,11 +30,9 @@ Gettext is the standard internationalization library for Elixir/Phoenix applicat
 
 ## RULES — Follow these with no exceptions
 
-1. **Extract translations regularly** — run `mix gettext.extract` after adding new strings
-2. **Set locale per request** — use `Gettext.put_locale/1` in plugs or LiveView mount
-3. **Don't translate error messages meant for logs** — only translate user-facing text
-4. **Use domain-specific contexts** — `dgettext("errors", "Not found")` for different domains
-5. **Use interpolation, not string concatenation** — always pass bindings as keyword lists
+1. **Set locale per request** — use `Gettext.put_locale/1` in plugs or LiveView mount
+2. **Don't translate error messages meant for logs** — only translate user-facing text
+3. **Use domain-specific contexts** — `dgettext("errors", "Not found")` for different domains
 
 ---
 
@@ -169,11 +167,6 @@ mix gettext.extract --merge
 
 ## Setting Locale
 
-Create a dedicated plug at `lib/my_app_web/plugs/set_locale.ex`. The plug should:
-- Check for a locale in query params, session, and `Accept-Language` header (in that priority order)
-- Validate the locale against a list of supported locales (e.g. `~w(en es fr de)`)
-- Call `Gettext.put_locale(MyAppWeb.Gettext, locale)` with the resolved locale, falling back to `"en"`
-
 ```elixir
 # lib/my_app_web/plugs/set_locale.ex
 defmodule MyAppWeb.Plugs.SetLocale do
@@ -194,8 +187,39 @@ defmodule MyAppWeb.Plugs.SetLocale do
     conn
   end
 
-  # Implement locale_from_params/1, locale_from_session/1, locale_from_header/1
-  # each returning a locale string if valid and in @supported_locales, else nil
+  defp locale_from_params(conn) do
+    conn.params["locale"]
+    |> validate_locale()
+  end
+
+  defp locale_from_session(conn) do
+    conn
+    |> get_session("locale")
+    |> validate_locale()
+  end
+
+  defp locale_from_header(conn) do
+    conn
+    |> get_req_header("accept-language")
+    |> List.first()
+    |> parse_accept_language()
+    |> validate_locale()
+  end
+
+  defp parse_accept_language(nil), do: nil
+
+  defp parse_accept_language(header) do
+    # Take the first (highest-priority) locale tag, e.g. "es-MX,es;q=0.9" -> "es"
+    header
+    |> String.split(",")
+    |> List.first()
+    |> String.split("-")
+    |> List.first()
+    |> String.trim()
+  end
+
+  defp validate_locale(locale) when locale in @supported_locales, do: locale
+  defp validate_locale(_), do: nil
 end
 ```
 
@@ -225,12 +249,3 @@ defmodule MyAppWeb.PageTest do
   end
 end
 ```
-
----
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| phoenix-liveview-essentials | gettext-i18n | testing-essentials |
-| phoenix-liveview-essentials | gettext-i18n | phoenix-json-api |

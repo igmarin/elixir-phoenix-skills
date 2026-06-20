@@ -22,13 +22,14 @@ Orchestrates code quality checks, safe refactoring, and documentation updates ac
 
 ## Complexity Thresholds
 
+Proceed to Phase 2 if any of these non-default thresholds are exceeded:
+
 | Metric | Threshold | Action |
 |--------|-----------|--------|
 | Function Length | > 20 lines | Extract function or private helper |
 | Parameter Count | > 4 | Use keyword list or map |
 | Module Length | > 400 lines | Extract context or sub-module |
 | Nesting Depth | > 3 levels | Extract function or use `with` |
-| Duplication | > 3 similar blocks | Extract shared module/function |
 | Pipe Chain | > 5 pipes | Extract into named function |
 
 ## Agent Phases
@@ -37,39 +38,27 @@ Orchestrates code quality checks, safe refactoring, and documentation updates ac
 
 Run the following tools and address all violations:
 
-**Tool Integration:**
 ```bash
-# Formatting
-mix format --check-formatted
-
-# Linting and complexity
-mix credo --strict
-
-# Type checking
-mix dialyzer
-
-# Dependency audit
-mix hex.audit
+mix format --check-formatted   # Formatting
+mix credo --strict             # Linting and complexity
+mix dialyzer                   # Type checking
+mix hex.audit                  # Dependency audit
 ```
 
 ---
 
 ### Phase 2: Refactoring (Optional)
 
-**Decision Gate — Proceed if any threshold from the table above is exceeded; otherwise skip to Phase 3.**
+**Decision Gate — Proceed if any threshold above is exceeded; otherwise skip to Phase 3.**
 
-**If refactoring is needed, follow TDD discipline:**
-
-### TDD Enforcement for Refactoring
-
-**Before any code change:**
-1. Write characterization test that documents current behavior.
-2. **Verify test PASSES** — `mix test test/path/to/file_test.exs`.
-3. **Refactoring Checkpoint** — Propose specific refactoring (e.g., "Extract `calculate_discount` to private function and add @doc").
+**TDD Enforcement — Before any code change:**
+1. Write characterization test documenting current behavior.
+2. **Verify PASSES** — `mix test test/path/to/file_test.exs`.
+3. **Checkpoint** — Propose specific refactoring (e.g., "Extract `calculate_discount` to private function").
 4. **User Approval** — Wait for explicit confirmation.
-5. **Implement Refactoring** — Make the structural change only.
-6. **Verify PASS** — Run characterization test again.
-7. **Regression Check** — Run `mix test` for full suite.
+5. **Implement** — Make the structural change only.
+6. **Verify PASSES** — Run characterization test again.
+7. **Regression Check** — `mix test` for full suite.
 
 **HARD GATE — Test Verification:**
 - Characterization test EXISTS and PASSES before refactoring
@@ -96,15 +85,7 @@ Document public APIs:
 
 ## HARD-GATE: Quality Before Merge
 
-**NEVER open PR before:**
-```bash
-mix format --check-formatted        # Formatter must pass
-mix credo --strict                  # Credo must pass
-mix test                            # All tests must pass
-mix dialyzer                        # No type warnings
-mix hex.audit                       # Dependency audit
-```
-Plus: `@doc` and `@spec` annotations on all public APIs.
+**NEVER open PR before all Phase 1 checks pass** (`mix format --check-formatted`, `mix credo --strict`, `mix dialyzer`, `mix hex.audit`) **plus `mix test`** (full suite green) **and `@doc`/`@spec` annotations on all public APIs.**
 
 **If gate fails:** Fix the failing item before opening PR.
 
@@ -119,8 +100,8 @@ Produce a `# Quality Report — [Date]` with three sections:
 
 ## Error Recovery
 
-**Credo violations after refactoring:** Run `mix format` for auto-fixable issues, then `mix credo --strict` and fix remaining violations manually.
+**Credo violations after refactoring:** Run `mix format` for auto-fixable issues, then fix remaining manually with `mix credo --strict`.
 
-**Characterization test fails after refactoring:** Revert the change, re-examine the extraction to ensure the new function preserves the exact contract, then attempt a smaller, more focused refactoring step.
+**Characterization test fails after refactoring:** Revert the change, re-examine the extraction to ensure the contract is preserved, then attempt a smaller, more focused refactoring step.
 
 **Dialyzer errors after refactoring:** Recompile with `mix compile --force`, then update `@spec` annotations to match the refactored code.

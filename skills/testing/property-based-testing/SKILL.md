@@ -18,10 +18,8 @@ metadata:
 ## RULES — Follow these with no exceptions
 
 1. **Define properties, not examples** — state what should always be true, not specific inputs/outputs
-2. **Use `ExUnitProperties` for generators** — the standard library for property-based testing in Elixir
-3. **Start with simple generators** — `integer()`, `string()`, `list_of()` before custom generators
-4. **Test invariants, not specific values** — "output length equals input length" not "output is [1, 2, 3]"
-5. **Leverage shrinking** — let StreamData find minimal failing cases
+2. **Test invariants, not specific values** — "output length equals input length" not "output is [1, 2, 3]"
+3. **Leverage shrinking** — let StreamData find minimal failing cases; add constraints like `min_length: 1` or `integer(1..100)` when shrunk cases expose invalid generator inputs
 
 ---
 
@@ -34,11 +32,6 @@ defp deps do
     {:stream_data, "~> 1.0", only: :test}
   ]
 end
-```
-
-```elixir
-# test/test_helper.exs
-ExUnit.start()
 ```
 
 ---

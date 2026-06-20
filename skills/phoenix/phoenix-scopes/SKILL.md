@@ -28,23 +28,15 @@ Phoenix 1.8 introduced `Scope` as the new authentication primitive, replacing di
 
 ## Scope Struct Definition
 
-Define one Scope struct wrapping the user. Add roles, permissions, and tenant fields as your project requires:
-
 ```elixir
 defmodule MyApp.Scope do
   defstruct [:user, :role, :permissions, :tenant]
-
-  @type t :: %__MODULE__{
-    user: MyApp.Accounts.User.t() | nil,
-    role: atom() | nil,
-    permissions: [atom()] | nil,
-    tenant: String.t() | nil
-  }
 
   def for_user(%MyApp.Accounts.User{} = user) do
     %__MODULE__{
       user: user,
       role: user.role,
+      # derive permissions from role; extend permissions_for/1 as needed
       permissions: permissions_for(user.role)
     }
   end
@@ -57,10 +49,8 @@ defmodule MyApp.Scope do
   def can?(%__MODULE__{permissions: perms}, action) when is_list(perms), do: action in perms
   def can?(%__MODULE__{}, _action), do: false
 
-  # Permissions are project-specific; define per role as needed.
   defp permissions_for(:admin), do: [:read, :write, :delete, :manage_users]
   defp permissions_for(:editor), do: [:read, :write]
-  defp permissions_for(:viewer), do: [:read]
   defp permissions_for(_), do: []
 end
 ```
@@ -68,8 +58,6 @@ end
 ---
 
 ## Using Scopes in LiveViews
-
-Access `current_scope` from `socket.assigns` and check authentication or permissions before proceeding:
 
 ```elixir
 defmodule MyAppWeb.DashboardLive do
@@ -149,11 +137,3 @@ def on_mount(:require_authenticated_user, _params, session, socket) do
   end
 end
 ```
-
----
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| phoenix-liveview-essentials | phoenix-scopes | security-essentials |

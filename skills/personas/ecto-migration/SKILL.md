@@ -55,8 +55,8 @@ Orchestrates safe Ecto migrations with idempotent cycles, rollback planning, and
 1. Generate migration: `mix ecto.gen.migration <descriptive_name>`.
 2. Implement `up/0` (or `change/0` for reversible migrations).
 3. Implement `down/0` for explicit rollback.
-4. Apply Ecto migration conventions (see ecto-essentials skill if available).
-5. For data transformations in migrations, follow changeset patterns (see ecto-changeset-patterns skill if available).
+4. Apply Ecto migration conventions (see ecto-essentials skill).
+5. For data transformations in migrations, follow changeset patterns (see ecto-changeset-patterns skill).
 
 **Idempotent cycle test:**
 ```bash
@@ -98,7 +98,7 @@ defmodule MyApp.Repo.Migrations.AddPublishedAtToPosts do
 end
 ```
 
-**Add NOT NULL column with expand-contract** (risky — three separate migrations):
+**Add NOT NULL column with expand-contract** (risky — three separate migrations following the strategy defined in Phase 1):
 ```elixir
 # Step 1: Add nullable column with default
 defmodule MyApp.Repo.Migrations.AddStatusToPosts do
@@ -182,7 +182,7 @@ MIX_ENV=test mix ecto.migrate
 ### Phase 4: Deployment
 
 **Steps:**
-1. Deploy code that handles both old and new schema (expand-contract).
+1. Deploy code that handles both old and new schema (expand-contract pattern from Phase 1).
 2. Run the migration, then backfill if needed.
 3. Deploy cleanup code (remove old column references), then drop old columns in a later migration.
 
@@ -238,7 +238,7 @@ When completing a migration, output MUST include:
 3. If rollback is truly irreversible, document it and plan a forward-only fix migration.
 
 **Lock timeout on large table:**
-1. Switch to expand-contract: add nullable, backfill separately, enforce NOT NULL.
+1. Apply the expand-contract strategy from Phase 1: add nullable, backfill separately, enforce NOT NULL.
 2. Use `concurrently: true` and `@disable_ddl_transaction true` for index creation.
 3. Schedule during low-traffic windows.
 
@@ -252,11 +252,3 @@ When completing a migration, output MUST include:
 - **Creating index without `concurrently` on large tables**
 - **No `down/0` defined**
 - **Skipping idempotent cycle test**
-
----
-
-## Integration
-
-| Predecessor | This Persona | Successor |
-|-------------|---------------|-----------|
-| ecto-essentials | ecto-migration | None (standalone) |

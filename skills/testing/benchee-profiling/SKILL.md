@@ -4,8 +4,9 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  Use when profiling and benchmarking Elixir code. Invoke before optimizing performance-critical code.
-  Covers Benchee setup, benchmark patterns, comparison, profiling, and CI integration.
+  Sets up Benchee benchmarks, measures execution time, compares function implementations, generates
+  profiling reports with :fprof and :eprof, and integrates benchmark regression checks into CI pipelines.
+  Use when profiling and benchmarking Elixir code, or before optimizing performance-critical code.
   Trigger words: Benchee, benchmark, profiling, performance, optimization, speed, comparison.
 metadata:
   user-invocable: "true"
@@ -18,13 +19,19 @@ Benchee is the standard benchmarking library for Elixir, providing accurate perf
 
 ## RULES — Follow these with no exceptions
 
-1. **Use Benchee for all benchmarking** — the standard library with statistical analysis
-2. **Benchmark in production-like conditions** — use `MIX_ENV=prod` for realistic results
-3. **Compare alternatives** — always benchmark at least 2 approaches to justify optimization
-4. **Run benchmarks multiple times** — use `warmup` and `time` for statistical significance
-5. **Profile before optimizing** — use `:fprof` or `:eprof` to find actual bottlenecks
-6. **Document performance regressions** — track benchmark results over time
-7. **Don't optimize prematurely** — measure first, optimize second
+1. **Benchmark in production-like conditions** — use `MIX_ENV=prod` for realistic results
+2. **Compare alternatives** — always benchmark at least 2 approaches to justify optimization
+3. **Document performance regressions** — track benchmark results over time in `bench/baseline.json` with a >10% threshold
+
+---
+
+## Workflow
+
+1. **Profile with `:fprof` or `:eprof`** — identify which function is the actual bottleneck; verify the output explicitly names the expected slow call site before proceeding
+2. **Identify the bottleneck** — confirm the slow call site before writing any benchmarks; if the profile output is ambiguous, re-run with a larger workload to amplify signal
+3. **Write a comparative Benchee benchmark** — implement at least 2 alternative approaches
+4. **Validate improvement** — confirm the faster approach wins across input sizes using `inputs:`; if results are within noise (< 5% difference), run 3 additional times to rule out variance
+5. **Save baseline** — write results to `bench/baseline.json` and check for regressions (>10% threshold); if a regression is detected, compare against the previous 3 baseline runs before raising an error to rule out noise
 
 ---
 
@@ -44,19 +51,19 @@ end
 ## Basic Benchmark
 
 ```elixir
-# bench/string_benchmark.exs
+# bench/list_benchmark.exs
 list = Enum.to_list(1..10_000)
 
 Benchee.run(%{
   "Enum.map" => fn -> Enum.map(list, &(&1 * 2)) end,
   "for comprehension" => fn -> for i <- list, do: i * 2 end,
-  "Enum.map with capture" => fn -> Enum.map(list, &(&1 * 2)) end
+  ":lists.map (Erlang)" => fn -> :lists.map(fn x -> x * 2 end, list) end
 })
 ```
 
 ```bash
 # Run benchmark
-MIX_ENV=prod mix run bench/string_benchmark.exs
+MIX_ENV=prod mix run bench/list_benchmark.exs
 ```
 
 ---
@@ -92,7 +99,6 @@ Benchee.run(
 ## Comparing Approaches
 
 ```elixir
-# Benchmark different implementations
 defmodule StringOperations do
   def concat_loop(strings) do
     Enum.reduce(strings, "", fn s, acc -> acc <> s end)
@@ -121,12 +127,10 @@ Benchee.run(%{
 ## Profiling with :fprof
 
 ```elixir
-# Profile a function call
 :fprof.trace(:start, file: 'trace.trace')
 MyApp.SlowFunction.run()
 :fprof.trace(:stop)
 
-# Analyze the trace
 :fprof.profile(file: 'trace.trace')
 :fprof.analyse(dest: 'analysis.txt')
 ```
@@ -136,42 +140,14 @@ MyApp.SlowFunction.run()
 ## Profiling with :eprof
 
 ```elixir
-# Start profiling
 :eprof.start()
 
-# Profile function calls
 :eprof.start_profiling([self()])
 MyApp.SlowFunction.run()
 :eprof.stop_profiling()
 
-# Show results
 :eprof.analyze()
-
-# Stop
 :eprof.stop()
-```
-
----
-
-## Memory Profiling
-
-```elixir
-Benchee.run(
-  %{
-    "small struct" => fn -> %User{name: "John", age: 30} end,
-    "large struct" => fn ->
-      %{
-        name: "John",
-        age: 30,
-        email: "john@example.com",
-        address: "123 Main St",
-        phone: "555-1234"
-      }
-    end
-  },
-  memory_time: 5,
-  reduction_time: 5
-)
 ```
 
 ---
@@ -204,7 +180,7 @@ jobs:
           path: results.json
 ```
 
-### Benchmark Comparison Script
+### Regression Comparison Script
 
 ```elixir
 # bench/compare_with_baseline.exs
@@ -219,11 +195,9 @@ results =
     formatters: [{Benchee.Formatters.Console, comparison: true}]
   )
 
-# Compare with baseline
 if File.exists?(baseline_file) do
   baseline = File.read!(baseline_file) |> Jason.decode!()
 
-  # Check for regressions
   current_ips = results.scenarios |> hd() |> Map.get(:ips)
   baseline_ips = baseline["ips"]
 
@@ -234,7 +208,6 @@ if File.exists?(baseline_file) do
   end
 end
 
-# Save current results as new baseline
 File.write!(baseline_file, Jason.encode!(%{ips: results.scenarios |> hd() |> Map.get(:ips)}))
 ```
 
@@ -257,26 +230,3 @@ Code.require_file("bench/string_benchmark.exs")
 Code.require_file("bench/list_benchmark.exs")
 Code.require_file("bench/json_benchmark.exs")
 ```
-
----
-
-## Common Pitfalls
-
-❌ **Don't** benchmark in dev environment — use `MIX_ENV=prod`
-❌ **Don't** skip warmup time — JIT compilation affects results
-❌ **Don't** benchmark without comparison — you need a baseline
-❌ **Don't** optimize without profiling — find actual bottlenecks
-❌ **Don't** ignore statistical significance — run long enough
-
-✅ **Do** use Benchee for all benchmarking
-✅ **Do** benchmark in production-like conditions
-✅ **Do** compare at least 2 approaches
-✅ **Do** profile before optimizing
-✅ **Do** track results over time
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| property-based-testing | benchee-profiling | telemetry-essentials |
-| code-quality | benchee-profiling | telemetry-essentials |

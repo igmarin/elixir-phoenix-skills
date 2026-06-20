@@ -4,7 +4,7 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  MANDATORY for ALL code quality and refactoring work. Invoke before analyzing or refactoring Elixir code.
+  Handles all code quality and refactoring work for Elixir. Use when analyzing or refactoring Elixir code.
   Covers duplication detection, ABC complexity, unused private functions, template duplication, and Credo integration.
   Provides thresholds and fix patterns for each quality issue.
   Trigger words: code quality, duplication, complexity, unused functions, Credo, refactoring, analysis.
@@ -27,8 +27,6 @@ metadata:
 4. **Duplicated templates must become components** — when 2+ HEEx files share >40% identical markup, extract to a function component
 5. **Address duplication before complexity** — extracting shared code first
 6. **Prefer composition over inheritance** — extract shared functions into modules imported/used where needed
-7. **Run Credo before committing** — `mix credo` catches style violations
-8. **Run Sobelow for security** — `mix sobelow` catches security vulnerabilities
 
 ---
 
@@ -45,8 +43,6 @@ metadata:
 ## What Gets Detected
 
 ### Code Duplication
-
-Detects when the same function appears in multiple modules with >70% body similarity.
 
 **Example output:**
 ```
@@ -76,8 +72,6 @@ import AppWeb.Live.Helpers, only: [format_time: 1]
 
 ### ABC Complexity
 
-Measures function complexity — threshold is 30. Break any function exceeding this into smaller helpers.
-
 **How to fix:**
 ```elixir
 # Before: one large function (complexity 41)
@@ -96,13 +90,9 @@ end
 
 ### Unused Private Functions
 
-Detects `defp` functions that are defined but never called within the module.
-
-**Common after refactoring** — when you extract code to a shared module, the original private functions may become dead code.
+Remove any private functions that are no longer called after refactoring.
 
 ### Template Duplication
-
-Detects when HEEx templates in the same directory share >40% identical markup.
 
 **How to fix:**
 ```elixir
@@ -161,12 +151,3 @@ defp aliases do
   ]
 end
 ```
-
----
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| elixir-essentials | code-quality | credo-config |
-| elixir-essentials | code-quality | typespec-dialyzer |

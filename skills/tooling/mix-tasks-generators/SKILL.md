@@ -20,44 +20,24 @@ metadata:
 
 ## Key Rules
 
-1. **Use Phoenix generators for standard patterns** — `phx.gen.live`, `phx.gen.context`, etc.
-2. **Create custom tasks for project-specific workflows** — don't repeat complex shell commands
-3. **Follow Mix task naming conventions** — `Mix.Tasks.MyApp.TaskName`
-4. **Don't override standard Mix tasks** — create new tasks instead
-5. **Always call `Mix.Task.run("app.start")` in tasks that need the application started**
+- Always call `Mix.Task.run("app.start")` in tasks that need the application started
+- Create custom tasks for project-specific workflows; don't override standard Mix tasks
 
 ---
 
 ## Phoenix Generators
 
-### LiveView CRUD
+### LiveView CRUD with Enum Field
 
 ```bash
-# Generate LiveView CRUD for a resource
+# Enum fields require the explicit enum:value:... syntax
 mix phx.gen.live Blog Post posts title:string body:text status:enum:draft:published:archived
-```
-
-### Context and Schema
-
-```bash
-# Generate context and schema only (no web layer)
-mix phx.gen.context Blog Post posts title:string body:text
-
-# Generate schema only
-mix phx.gen.schema Blog.Post posts title:string body:text
-```
-
-### JSON API
-
-```bash
-# Generate JSON API controllers
-mix phx.gen.json Blog Post posts title:string body:text
 ```
 
 ### Auth
 
 ```bash
-# Generate authentication system
+# Generate authentication system (creates accounts context, user schema, and session plumbing)
 mix phx.gen.auth Accounts User users
 ```
 
@@ -65,7 +45,7 @@ mix phx.gen.auth Accounts User users
 
 ## Custom Mix Tasks
 
-### Basic Task
+### Basic Task with Transaction Safety
 
 ```elixir
 # lib/mix/tasks/my_app.seed_data.ex
@@ -78,15 +58,20 @@ defmodule Mix.Tasks.MyApp.SeedData do
   def run(_args) do
     Mix.Task.run("app.start")
 
-    # Your seeding logic
-    MyApp.Seeds.run()
+    case MyApp.Repo.transaction(fn -> MyApp.Seeds.run() end) do
+      {:ok, _} ->
+        count = MyApp.Repo.aggregate(MyApp.User, :count)
+        Mix.shell().info("Data seeded successfully! (#{count} users in DB)")
 
-    Mix.shell().info("Data seeded successfully!")
+      {:error, reason} ->
+        Mix.shell().error("Seeding failed, transaction rolled back: #{inspect(reason)}")
+        Mix.raise("Seed failed")
+    end
   end
 end
 ```
 
-### Task with Arguments
+### Task with Arguments and Validation
 
 ```elixir
 defmodule Mix.Tasks.MyApp.ImportUsers do
@@ -110,12 +95,21 @@ defmodule Mix.Tasks.MyApp.ImportUsers do
       Mix.shell().info("Dry run mode - no changes will be made")
     end
 
-    case MyApp.UserImporter.import_from_csv(file, dry_run: dry_run?) do
-      {:ok, count} ->
-        Mix.shell().info("Imported #{count} users")
+    before_count = MyApp.Repo.aggregate(MyApp.User, :count)
+
+    case MyApp.Repo.transaction(fn ->
+           MyApp.UserImporter.import_from_csv(file, dry_run: dry_run?)
+         end) do
+      {:ok, {:ok, count}} ->
+        after_count = MyApp.Repo.aggregate(MyApp.User, :count)
+        Mix.shell().info("Imported #{count} users (total in DB: #{after_count}, was: #{before_count})")
+
+      {:ok, {:error, reason}} ->
+        Mix.shell().error("Import validation failed: #{reason}")
+        Mix.raise("Import failed")
 
       {:error, reason} ->
-        Mix.shell().error("Import failed: #{reason}")
+        Mix.shell().error("Import failed, transaction rolled back: #{inspect(reason)}")
         Mix.raise("Import failed")
     end
   end
@@ -278,12 +272,3 @@ defmodule Mix.Tasks.MyApp.SeedDataTest do
   end
 end
 ```
-
----
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| elixir-essentials | mix-tasks-generators | phoenix-liveview-essentials |
-| ecto-essentials | mix-tasks-generators | testing-essentials |

@@ -36,7 +36,7 @@ Orchestrates robust background job implementation with TDD discipline, proper re
 
 **HARD GATE — Job Design Complete:**
 - [ ] Purpose, trigger, input/output defined
-- [ ] Idempotency strategy specified (unique key / status check / conditional guard)
+- [ ] Idempotency strategy specified
 - [ ] All errors classified as transient/permanent
 - [ ] Queue and timeout values chosen
 
@@ -53,13 +53,12 @@ Orchestrates robust background job implementation with TDD discipline, proper re
 2. Write failing tests covering: successful execution, idempotency (run twice = same result), transient error raises, permanent error discards.
 3. Confirm tests **FAIL** for the right reason (job not yet implemented).
 4. Propose implementation approach and wait for explicit user approval.
-5. Implement job using the structure shown in Phase 3; confirm tests **PASS**.
+5. Implement job; confirm tests **PASS**.
 6. Run full test suite: `mix test` — confirm no regressions.
 
 **HARD GATE — Tests Pass:**
-- [ ] Tests exist and run
-- [ ] Tests failed before implementation
-- [ ] All tests pass after implementation (including idempotency scenario)
+- [ ] RED confirmed (tests failed before implementation)
+- [ ] GREEN confirmed (all tests pass, including idempotency scenario)
 - [ ] Full suite green
 
 **Example job test skeleton** (for `SendWelcomeEmail` worker):
@@ -132,8 +131,7 @@ end
 **HARD GATE — Retry Strategy Configured:**
 - [ ] `max_attempts` set with appropriate backoff
 - [ ] Permanent errors return `:discard`; transient errors return `{:error, reason}`
-- [ ] Timeout configured at job level
-- [ ] Telemetry/observability wired
+- [ ] Timeout and telemetry/observability configured
 
 **If gate fails:** Job is not production-ready.
 
@@ -141,17 +139,17 @@ end
 
 ## Phase 4: Failure Scenario Testing & Monitoring
 
-**Objective:** Verify retry/discard behaviour under injected failures and confirm observability. This phase focuses on the *Oban-level* return contract and production instrumentation — distinct from Phase 2's unit logic tests.
+**Objective:** Verify retry/discard behaviour under injected failures and confirm observability.
 
 **Steps:**
-1. Assert transient errors return `{:error, ...}` so Oban re-enqueues the job (do not raise).
+1. Assert transient errors return `{:error, ...}` so Oban re-enqueues the job.
 2. Assert permanent errors return `:discard` so Oban does not retry.
 3. Verify telemetry events fire on success and failure paths.
 4. Confirm monitoring dashboard or alert is configured for queue depth.
 
 **HARD GATE — Failure Scenarios Tested:**
-- [ ] Transient error path → return value is `{:error, ...}` (Oban retries)
-- [ ] Permanent error path → return value is `:discard` (not re-enqueued)
+- [ ] Transient error path → `{:error, ...}` (Oban retries)
+- [ ] Permanent error path → `:discard` (not re-enqueued)
 - [ ] Telemetry/logging assertions pass
 - [ ] Performance acceptable under expected load
 
@@ -161,50 +159,29 @@ end
 
 ---
 
-## Error Recovery
-
-**Job fails repeatedly:** Check the Oban dashboard for retry counts and error reasons, reclassify the error (transient vs. permanent) and update handling accordingly, then fix the root cause and redeploy.
-
-**Queue backs up:** Scale Oban queue concurrency or promote jobs to a higher-priority queue; optimise job execution time or batch size if throughput is the bottleneck.
-
 ## Output Style
 
-When completing a background job implementation, output MUST include:
+When completing a background job implementation, output MUST follow this structure:
 
-```markdown
+```
 # Background Job Report — [Job Name]
-
 ## Design
 - Worker module: <path>
 - Idempotency strategy: <unique constraint / status check / conditional guard>
 - Error classification: transient (<list>) / permanent (<list>)
-
 ## TDD
 - RED: <failure message confirming job behavior missing>
 - GREEN: <test passes after implementation>
-
 ## Retry Configuration
 - max_attempts: <n>, Queue: <name>, Uniqueness: <period/fields>
 - Discard conditions: <list>
-
 ## Failure Scenarios Tested
 - Transient error → retries: ✓
 - Permanent error → discards: ✓
 - Idempotency → no duplicate side effects: ✓
-
 ## Monitoring
 - Telemetry events: <list>
 - Queue depth alerts: <configured threshold>
 ```
-
----
-
-## Integration
-
-| Predecessor | This Persona | Successor |
-|-------------|--------------|----------|
-| oban-essentials | background-job | quality |
-| tdd | background-job | code-quality |
-| None (standalone) | background-job | PR submission |
 
 **Use `oban-essentials` alone** if the job design is already decided and you only need to implement the worker module.

@@ -32,13 +32,13 @@ When setting up a new Oban worker, follow these steps in order:
 
 ---
 
-## RULES — Follow these with no exceptions
+## RULES — Quick Reference
 
-1. **Always `use Oban.Worker`** with explicit `queue` and `max_attempts` options
-2. **Make workers idempotent** — the same job may execute more than once
-3. **Never put large data in job args** — store IDs and fetch fresh data in the worker
-4. **Use `Oban.insert/1`** (not `Oban.insert!/1`) and handle the error tuple
-5. **Enqueue from contexts, not LiveViews** — keep web layer thin
+1. `use Oban.Worker` with explicit `queue` and `max_attempts` — see [Worker Definition](#worker-definition)
+2. Make workers **idempotent** — the same job may execute more than once — see [Idempotency](#idempotency)
+3. **Never put large data in job args** — store IDs and fetch fresh data in the worker — see [Job Args Best Practices](#job-args-best-practices)
+4. Use `Oban.insert/1` (not `Oban.insert!/1`) and handle the error tuple — see [Enqueuing Jobs](#enqueuing-jobs)
+5. **Enqueue from contexts, not LiveViews** — keep the web layer thin — see [Enqueuing from Contexts](#enqueuing-from-contexts)
 
 ---
 
@@ -114,7 +114,7 @@ end
 
 ## Return Values
 
-Return exactly one of these from `perform/1`:
+Return exactly one of these from `perform/1`. Use `{:error, reason}` for retryable failures; never raise.
 
 ```elixir
 @impl Oban.Worker
@@ -132,8 +132,6 @@ def perform(%Oban.Job{args: args}) do
   {:snooze, 60}
 end
 ```
-
-**Never raise in workers.** Use explicit `{:error, reason}` instead.
 
 ---
 

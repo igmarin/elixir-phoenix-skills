@@ -20,14 +20,16 @@ metadata:
 
 Follow these steps in order when building a new Broadway pipeline:
 
-1. **Add dependencies** — add `broadway` (and any producer library) to `mix.exs`, then run `mix deps.get`
+1. **Add dependencies** — add `broadway` (and any producer library) to `mix.exs`
 2. **Define the pipeline module** — implement `handle_message/3` and `handle_batch/4` callbacks
 3. **Add to supervision tree** — include the pipeline module in `application.ex`
-4. **Verify producer connectivity** — start the app and confirm the producer connects (check logs for errors)
+4. **Verify producer connectivity** — confirm the producer connects on startup
 5. **Test with a single message** — use `Broadway.Test` helpers before scaling concurrency
 6. **Scale concurrency** — tune processor and batcher concurrency based on CPU cores and throughput targets
-7. **Validate error handling** — intentionally send a bad message and confirm `handle_failed/2` fires correctly
-8. **Enable observability** — wire up telemetry events and optionally add `broadway_dashboard`
+7. **Validate error handling** — intentionally send a bad message and confirm `handle_failed/2` fires
+8. **Enable observability** — wire up telemetry events and optionally add `broadway_dashboard`; see [Broadway Telemetry docs](https://hexdocs.pm/broadway/Broadway.html#module-telemetry) and [broadway_dashboard](https://hexdocs.pm/broadway_dashboard/)
+
+> **Producer libraries:** For SQS use `broadway_sqs`, for Kafka use `broadway_kafka`, for RabbitMQ use `broadway_rabbitmq`. See each library's README for producer-specific configuration.
 
 ---
 
@@ -45,7 +47,9 @@ end
 
 ---
 
-## Basic Pipeline
+## Minimal Pipeline
+
+A simple starting point. Handles a message and inserts a batch into the database.
 
 ```elixir
 defmodule MyApp.MessagePipeline do
@@ -107,7 +111,30 @@ end
 
 ---
 
-## Error Handling
+## Testing
+
+```elixir
+defmodule MyApp.MessagePipelineTest do
+  use ExUnit.Case
+  import Broadway.Test
+
+  test "processes a single message" do
+    ref = push_message(MyApp.MessagePipeline, %{id: 1, value: "hello"})
+    assert_receive {:ack, ^ref, [%{data: %{id: 1}}], []}
+  end
+
+  test "marks malformed messages as failed" do
+    ref = push_message(MyApp.MessagePipeline, nil)
+    assert_receive {:ack, ^ref, [], [_failed]}
+  end
+end
+```
+
+---
+
+## Production-Ready Pipeline
+
+Expands the minimal example with structured error handling, a dead-letter queue, and batch failure recovery. Use this variant when reliability and observability matter.
 
 ```elixir
 defmodule MyApp.MessagePipeline do
@@ -146,3 +173,5 @@ defmodule MyApp.MessagePipeline do
   end
 end
 ```
+
+> **Telemetry:** Broadway emits telemetry events for message processing and batching. Attach handlers via `:telemetry.attach/4` and optionally visualise them with [`broadway_dashboard`](https://hexdocs.pm/broadway_dashboard/). See the [Broadway Telemetry guide](https://hexdocs.pm/broadway/Broadway.html#module-telemetry) for event names and metadata.
