@@ -14,17 +14,16 @@ metadata:
 
 # Swoosh Emails
 
-Swoosh is the standard email library for Elixir/Phoenix applications.
-
 ## RULES — Follow these with no exceptions
 
-1. **Use Swoosh for all email sending** — the standard library with adapter support for all providers
+1. **Use Swoosh for all email sending**
 2. **Define emails in separate modules** — `MyApp.Emails.UserEmail`, not inline in contexts
 3. **Use Phoenix components for email templates** — reuse UI components in emails
 4. **Configure delivery per environment** — Local adapter in dev/test, real adapter in prod
 5. **Test emails with Swoosh.TestAssertions** — assert emails were sent with correct content
 6. **Never send emails synchronously in web requests** — use Oban or Task for async delivery
 7. **Use `Swoosh.Preview` in development** — preview emails in the browser
+8. **Prefer Oban over Task.start** — retries and observability vs silent failures
 
 ---
 
@@ -35,8 +34,8 @@ Swoosh is the standard email library for Elixir/Phoenix applications.
 defp deps do
   [
     {:swoosh, "~> 1.14"},
-    {:finch, "~> 0.18"},  # Required for HTTP-based adapters
-    {:gen_smtp, "~> 1.0"}  # Required for SMTP adapter
+    {:finch, "~> 0.18"},
+    {:gen_smtp, "~> 1.0"}
   ]
 end
 
@@ -44,60 +43,118 @@ end
 def start(_type, _args) do
   children = [
     # ...
-    {Finch, name: MyApp.Finch}  # Required for Swoosh
+    {Finch, name: MyApp.Finch}
   ]
   # ...
 end
+```
+
+### Validate Setup
+
+After adding deps and configuring the supervision tree, confirm everything works before writing email modules:
+
+```elixir
+# In iex -S mix (dev environment with Local adapter)
+MyApp.Mailer.deliver(Swoosh.Email.new(to: "test@example.com", from: "noreply@myapp.com", subject: "Test"))
+# => {:ok, %{}} — mailer configured correctly
+# => {:error, ...} — Finch missing from supervision tree or adapter misconfigured
 ```
 
 ---
 
 ## Defining Emails
 
+### Plain HTML Bodies
+
 ```elixir
 # lib/my_app/emails/user_email.ex
 defmodule MyApp.Emails.UserEmail do
   import Swoosh.Email
-  use Phoenix.Component
 
   def welcome(user) do
     new()
     |> to({user.name, user.email})
     |> from({"MyApp", "noreply@myapp.com"})
     |> subject("Welcome to MyApp!")
-    |> render_body("welcome.html", %{user: user})
+    |> html_body("""
+      <h1>Welcome, #{user.name}!</h1>
+      <p>Thanks for signing up.</p>
+    """)
+    |> text_body("Welcome, #{user.name}! Thanks for signing up.")
   end
 
   def password_reset(user, token) do
+    reset_link = url(~p"/users/reset_password/#{token}")
+
     new()
     |> to({user.name, user.email})
     |> from({"MyApp", "noreply@myapp.com"})
     |> subject("Reset your password")
-    |> render_body("password_reset.html", %{user: user, token: token})
+    |> html_body("""
+      <h1>Reset your password</h1>
+      <p><a href=\"#{reset_link}\">Reset Password</a></p>
+    """)
+    |> text_body("Reset your password: #{reset_link}")
+  end
+end
+```
+
+### With Phoenix Components (Preferred for Rich Templates)
+
+Use `Phoenix.Component` and `Phoenix.Template` to render HEEx templates as email bodies, reusing UI components:
+
+```elixir
+# lib/my_app/emails/user_email.ex
+defmodule MyApp.Emails.UserEmail do
+  import Swoosh.Email
+  import Phoenix.Component, only: [sigil_H: 2]
+  alias MyAppWeb.EmailComponents
+
+  def welcome(user) do
+    html = render_html(user)
+
+    new()
+    |> to({user.name, user.email})
+    |> from({"MyApp", "noreply@myapp.com"})
+    |> subject("Welcome to MyApp!")
+    |> html_body(html)
+    |> text_body("Welcome, #{user.name}! Thanks for signing up.")
   end
 
-  defp render_body(email, template, assigns) do
-    email
-    |> html_body(render_html(template, assigns))
-    |> text_body(render_text(template, assigns))
-  end
+  defp render_html(user) do
+    assigns = %{user: user}
 
-  defp render_html(template, assigns) do
-    render_component(&html_template/1, Map.put(assigns, :template, template))
-  end
-
-  defp html_template(%{template: "welcome.html", user: user} = assigns) do
     ~H"""
-    <h1>Welcome, <%= @user.name %>!</h1>
-    <p>Thanks for signing up.</p>
+    <EmailComponents.layout>
+      <h1>Welcome, <%= @user.name %>!</h1>
+      <p>Thanks for signing up.</p>
+      <EmailComponents.button href={url(~p"/dashboard")}>Get Started</EmailComponents.button>
+    </EmailComponents.layout>
+    """
+    |> Phoenix.HTML.Safe.to_iodata()
+    |> IO.iodata_to_binary()
+  end
+end
+
+# lib/my_app_web/components/email_components.ex
+defmodule MyAppWeb.EmailComponents do
+  use Phoenix.Component
+
+  def layout(assigns) do
+    ~H"""
+    <html>
+      <body style="font-family: sans-serif; max-width: 600px; margin: auto;">
+        <%= render_slot(@inner_block) %>
+      </body>
+    </html>
     """
   end
 
-  defp html_template(%{template: "password_reset.html", user: user, token: token} = assigns) do
+  def button(assigns) do
     ~H"""
-    <h1>Reset your password</h1>
-    <p>Click the link below to reset your password:</p>
-    <a href={reset_url(@token)}>Reset Password</a>
+    <a href={@href} style="background: #4F46E5; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none;">
+      <%= render_slot(@inner_block) %>
+    </a>
     """
   end
 end
@@ -111,13 +168,6 @@ end
 # lib/my_app/mailer.ex
 defmodule MyApp.Mailer do
   use Swoosh.Mailer, otp_app: :my_app
-
-  # Optional: add default from address
-  def deliver(email) do
-    email
-    |> put_provider_option(:template_id, "welcome_template")
-    |> super()
-  end
 end
 ```
 
@@ -126,15 +176,10 @@ end
 ## Configuration
 
 ```elixir
-# config/config.exs
-config :my_app, MyApp.Mailer,
-  adapter: Swoosh.Adapters.Local
-
 # config/dev.exs
 config :my_app, MyApp.Mailer,
   adapter: Swoosh.Adapters.Local
 
-# Enable preview server
 config :swoosh, serve: true
 
 # config/test.exs
@@ -158,25 +203,6 @@ config :my_app, MyApp.Mailer,
 ---
 
 ## Sending Emails
-
-```elixir
-# In a context module
-defmodule MyApp.Accounts do
-  alias MyApp.Emails.UserEmail
-  alias MyApp.Mailer
-
-  def register_user(attrs) do
-    with {:ok, user} <- create_user(attrs) do
-      # Send email asynchronously
-      Task.start(fn ->
-        user |> UserEmail.welcome() |> Mailer.deliver()
-      end)
-
-      {:ok, user}
-    end
-  end
-end
-```
 
 ### With Oban (Recommended for Production)
 
@@ -208,6 +234,25 @@ def register_user(attrs) do
 end
 ```
 
+### With Task (Simple Cases Only)
+
+```elixir
+defmodule MyApp.Accounts do
+  alias MyApp.Emails.UserEmail
+  alias MyApp.Mailer
+
+  def register_user(attrs) do
+    with {:ok, user} <- create_user(attrs) do
+      Task.start(fn ->
+        user |> UserEmail.welcome() |> Mailer.deliver()
+      end)
+
+      {:ok, user}
+    end
+  end
+end
+```
+
 ---
 
 ## Testing Emails
@@ -223,7 +268,6 @@ defmodule MyApp.AccountsTest do
 
     assert {:ok, user} = Accounts.register_user(attrs)
 
-    # Assert email was sent
     assert_email_sent(fn email ->
       assert email.to == [{user.name, user.email}]
       assert email.subject =~ "Welcome"
@@ -250,27 +294,3 @@ config :swoosh, serve: true
 
 # Access preview at http://localhost:4000/dev/mailbox
 ```
-
----
-
-## Common Pitfalls
-
-❌ **Don't** send emails synchronously in web requests
-❌ **Don't** define emails inline in contexts
-❌ **Don't** forget to configure test adapter
-❌ **Don't** hardcode email addresses — use config
-❌ **Don't** forget to add Finch to supervision tree
-
-✅ **Do** use Swoosh for all email sending
-✅ **Do** define emails in separate modules
-✅ **Do** use Oban for async delivery in production
-✅ **Do** test with `Swoosh.TestAssertions`
-✅ **Do** use preview server in development
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **oban-essentials** | For async email delivery |
-| **testing-essentials** | For email testing patterns |
-| **phoenix-liveview-essentials** | For email form UI |

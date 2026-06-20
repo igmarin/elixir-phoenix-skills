@@ -23,22 +23,29 @@ Use this skill before modifying ANY deployment or release configuration.
 
 ## RULES — Follow these with no exceptions
 
-1. **Use `runtime.exs` for secrets and URLs** — `config.exs`/`prod.exs` are compiled into the release and cannot read env vars at boot
-2. **Run migrations via release commands (`bin/migrate`)** — `mix` is not available in production releases
-3. **Set `PHX_HOST` and `PHX_SERVER=true`** — without these, URL generation breaks and the server won't start
-4. **Run `mix assets.deploy` before building the release** — forgetting this means no CSS/JS in production
-5. **Never hardcode secrets** — use `System.get_env!/1` in `runtime.exs` (the `!` crashes on boot if missing)
-6. **Add a `/health` endpoint that queries the database** — load balancers need it, and a 200-only check hides DB failures
-7. **Use `config :logger, level: :info` in production** — `:debug` logs query parameters including user data
-8. **Use Docker multi-stage builds** for Elixir releases — separate build and runtime stages
+1. **Use `runtime.exs` for all secrets and URLs; never hardcode secrets — use `System.get_env!/1`** — see §1 & §5
+2. **Run migrations via release commands (`bin/migrate`)** — see §2
+3. **Set `PHX_HOST` and `PHX_SERVER=true`** — see §3
+4. **Run `mix assets.deploy` before building the release** — see §4
+5. **Add a `/health` endpoint that queries the database** — see §6
+6. **Use `config :logger, level: :info` in production** — see §7
+7. **Use Docker multi-stage builds** for Elixir releases — see §4
+
+---
+
+## End-to-End Deployment Workflow
+
+```
+1. Build image (mix assets.deploy → mix release → docker build)
+2. Run migrations (bin/my_app eval "MyApp.Release.migrate()")
+3. Start app (bin/my_app start)
+4. Verify /health returns HTTP 200 and {"database": "connected"}
+5. If health check fails → rollback: bin/my_app eval "MyApp.Release.rollback(MyApp.Repo, <version>)"
+```
 
 ---
 
 ## 1. runtime.exs vs config.exs
-
-**The incident:** App deploys fine but uses the wrong database URL.
-
-**Why:** `config.exs` and `prod.exs` are evaluated at **compile time**. `runtime.exs` is evaluated at **boot time**.
 
 ❌ **Bad — compiled into release, cannot read env vars at boot:**
 ```elixir
@@ -63,8 +70,6 @@ end
 
 ## 2. Release Migrations
 
-**The incident:** Deploy succeeds but app crashes because new columns don't exist. `mix ecto.migrate` fails — `mix: command not found`.
-
 ✅ **Good — release module for migrations:**
 ```elixir
 # lib/my_app/release.ex
@@ -73,7 +78,6 @@ defmodule MyApp.Release do
 
   def migrate do
     load_app()
-
     for repo <- repos() do
       {:ok, _, _} = Ecto.Migrator.with_repo(repo, &Ecto.Migrator.run(&1, :up, all: true))
     end
@@ -84,9 +88,7 @@ defmodule MyApp.Release do
     {:ok, _, _} = Ecto.Migrator.with_repo(repo, &Ecto.Migrator.run(&1, :down, to: version))
   end
 
-  defp repos do
-    Application.fetch_env!(@app, :ecto_repos)
-  end
+  defp repos, do: Application.fetch_env!(@app, :ecto_repos)
 
   defp load_app do
     Application.ensure_all_started(:ssl)
@@ -152,7 +154,9 @@ CMD ["bin/my_app", "start"]
 
 ## 5. Never Hardcode Secrets
 
-✅ **Good — read from environment, crash if missing:**
+Always use `System.get_env!/1` in `runtime.exs` so the app crashes on startup if a required secret is missing rather than silently misconfiguring.
+
+✅ **Good — read from environment, crash on startup if missing:**
 ```elixir
 # config/runtime.exs
 if config_env() == :prod do
@@ -216,26 +220,8 @@ end
 
 ---
 
-## Common Pitfalls
-
-❌ **Don't** put secrets in `config/prod.exs` — use `runtime.exs`
-❌ **Don't** run `mix ecto.migrate` in production — use release commands
-❌ **Don't** forget `PHX_HOST` and `PHX_SERVER=true`
-❌ **Don't** skip `mix assets.deploy` before release
-❌ **Don't** use a health endpoint that doesn't check the database
-❌ **Don't** use `:debug` log level in production
-
-✅ **Do** use `System.get_env!/1` for required env vars
-✅ **Do** create a `Release` module for migrations
-✅ **Do** use Docker multi-stage builds
-✅ **Do** add a `/health` endpoint that queries the DB
-✅ **Do** use `:info` log level in production
-
 ## Integration
 
 | Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **security-essentials** | When managing secrets and auditing dependencies |
-| **telemetry-essentials** | When setting up production logging and metrics |
-| **ecto-essentials** | When writing release migration modules |
-| **phoenix-liveview-essentials** | When configuring endpoint for production |
+|-------------|------------|-----------|
+| telemetry-essentials | deployment-gotchas | None (standalone) |

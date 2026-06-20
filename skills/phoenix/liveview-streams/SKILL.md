@@ -82,10 +82,9 @@ end
 </div>
 ```
 
-**Key points:**
-- `phx-update="stream"` is required
-- Each item gets a `dom_id` from the stream
-- The `id={dom_id}` attribute is required for DOM patching
+**Verify after adding the template:** Open browser DevTools → Network → WS frames. Confirm incoming frames contain targeted patch operations for individual items, not full list replacements. If you see full re-renders, check:
+- `phx-update="stream"` is present on the container `<div>`
+- `id={dom_id}` is present on each item element
 
 ---
 
@@ -155,37 +154,23 @@ end
 </div>
 ```
 
----
-
-## Stream vs Regular Assigns
-
-| Feature | Regular Assigns | Streams |
-|---------|----------------|---------|
-| DOM patching | Re-renders entire list | Patches only changed items |
-| Memory | Keeps full list in socket | Can discard after render |
-| Performance | Degrades with list size | Constant time updates |
-| Use case | < 100 items | 100+ items |
+**Verify after implementing load_more:** Trigger the event and confirm in DevTools WS frames that only the new batch of items is appended, not the entire list. If DOM IDs collide across pages, items will overwrite each other — ensure your ID scheme is globally unique.
 
 ---
 
-## Common Pitfalls
+## Debugging Checklist
 
-❌ **Don't** use regular assigns for 100+ items
-❌ **Don't** forget `phx-update="stream"` in templates
-❌ **Don't** forget `id={dom_id}` on each item
-❌ **Don't** replace the entire stream — use `stream_insert`/`stream_delete`
-❌ **Don't** stream unlimited items without pagination
+If stream patching is not working as expected, check for:
 
-✅ **Do** use streams for large collections
-✅ **Do** use `stream_insert` and `stream_delete` for updates
-✅ **Do** combine with pagination or infinite scroll
-✅ **Do** configure custom DOM IDs when needed
-✅ **Do** test with realistic data sizes
+- Missing `phx-update="stream"` on the container `<div>`
+- Missing `id={dom_id}` on each item element
+- Accidentally replacing the entire stream assign instead of using `stream_insert`/`stream_delete`
+- DOM ID collisions caused by non-unique item IDs
+
+---
 
 ## Integration
 
 | Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **phoenix-liveview-essentials** | For LiveView lifecycle patterns |
-| **phoenix-pubsub-patterns** | For real-time updates with streams |
-| **testing-essentials** | For testing stream behavior |
+|-------------|------------|-----------|
+| phoenix-liveview-essentials | liveview-streams | testing-essentials |

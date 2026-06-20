@@ -4,7 +4,7 @@ type: persona
 tags: [personas]
 license: MIT
 description: >
-  Orchestrates the full Elixir TDD cycle with hard gates: test MUST exist, be run, and FAIL for the correct reason (e.g. function not defined, not syntax error) before any implementation code — propose minimal implementation and wait for user approval → verify test PASSES → run full suite with mix format, mix credo, mix dialyzer, mix test all green → produce @doc documentation and self-reviewed PR; phases context/test design→implementation→iterate→finish. Use when practicing test-driven development, red-green-refactor, TDD workflow, writing tests before code, adding tests first, or building an Elixir feature where specs must gate implementation.
+  Orchestrates the full Elixir TDD cycle with hard gates: test MUST exist, be run, and FAIL for the correct reason (e.g. function not defined, not syntax error) before any implementation code — proposes minimal implementation and waits for user approval → verifies test PASSES → runs full suite (mix format, mix credo, mix dialyzer, mix test) all green → produces @doc documentation and self-reviewed PR. Operates in four phases: context/test design → implementation → iterate → finish. Use when practicing test-driven development, red-green-refactor, TDD workflow, writing tests before code, adding tests first, or building an Elixir feature where specs must gate implementation.
 metadata:
   version: 1.0.0
   user-invocable: "true"
@@ -27,119 +27,76 @@ Orchestrates the full Elixir TDD cycle. Write the test first, watch it fail for 
 2. **Write the minimal failing test** — see Example below.
 3. **Run**: `mix test test/path/to/file_test.exs` — confirm it FAILS.
 
-**HARD GATE — Test Verification**
+**HARD GATE — Test Feedback**
 - Test EXISTS and is RUN.
 - FAILS for correct reason (e.g., `** (UndefinedFunctionError) function MyApp.Blog.list_posts/0 is undefined`).
-- If FAIL is incorrect (syntax, config), fix the test.
+- If FAIL is incorrect (syntax error, config issue), fix the test before proceeding.
 
-### Phase 2: Implementation
-1. **Proposal Checkpoint**: Propose implementation (e.g., "Add `list_posts/0` to `MyApp.Blog` context").
-2. **User Approval**: Wait for explicit confirmation.
-3. **Minimal Implement**: Smallest change to pass test.
-4. **Verify PASS**: `mix test test/path/to/file_test.exs`.
-
-*If test does not pass, fix minimal changes and re-verify.*
-
-### Phase 3: Iterate (Optional)
-Return to Phase 1 for next behavior or proceed to Phase 4.
-
-### Phase 4: Finish
-1. **Quality Check**: `mix format --check-formatted && mix credo && mix dialyzer && mix test`.
-2. **Document public API**: Add `@doc` and `@moduledoc` to all public functions.
-3. **quality/code-quality**: Self-review PR diff.
-4. **Open PR**: Feature complete.
-
-## Concrete Example
-
-Abbreviated walkthrough for adding a `list_posts/0` function to a Blog context.
-
-**Step 1 — Write the failing test** (`test/my_app/blog_test.exs`):
+#### Example: Minimal Failing Test
 ```elixir
+# test/my_app/blog_test.exs
 defmodule MyApp.BlogTest do
   use MyApp.DataCase, async: true
 
   alias MyApp.Blog
 
   describe "list_posts/0" do
-    test "returns all posts" do
-      post = post_fixture()
+    test "returns all published posts" do
+      post = post_fixture(published: true)
       assert Blog.list_posts() == [post]
     end
   end
-
-  defp post_fixture(attrs \\ %{}) do
-    {:ok, post} =
-      attrs
-      |> Enum.into(%{title: "Test", body: "Body"})
-      |> Blog.create_post()
-
-    post
-  end
 end
 ```
-Run: `mix test test/my_app/blog_test.exs`
-Expected failure: `** (UndefinedFunctionError) function MyApp.Blog.list_posts/0 is undefined`
 
-**Step 2 — Propose & confirm**
-> Proposal: Add `def list_posts, do: Repo.all(Post)` to `lib/my_app/blog.ex`. Proceed?
-
-**Step 3 — Minimal implementation** (`lib/my_app/blog.ex`):
-```elixir
-@doc """
-Returns the list of posts.
-"""
-def list_posts do
-  Repo.all(Post)
-end
+Expected failure output:
 ```
-Run: `mix test test/my_app/blog_test.exs` → `1 test, 0 failures`
-
-**Step 4 — Quality check**:
-```bash
-mix format --check-formatted && mix credo && mix dialyzer && mix test
+** (UndefinedFunctionError) function MyApp.Blog.list_posts/0 is undefined or private
 ```
-All green → add @doc → self-review → open PR.
 
----
+### Phase 2: Implementation
+1. **Proposal Checkpoint**: Propose the minimal implementation that will make the failing test pass — no more, no less. Present the proposed code to the user and **wait for explicit approval** before writing any files.
+2. **On approval**: Write the implementation.
+3. **Run**: `mix test test/path/to/file_test.exs` — confirm the target test now PASSES.
 
-## Output Style
+**HARD GATE — Implementation Verification**
+- Explicit user approval obtained for the proposed implementation before writing any files.
+- Target test PASSES.
+- No new test failures introduced.
+- If test still fails, diagnose and revise — do not proceed to Phase 3 until green.
 
-When completing a TDD cycle, produce a report with:
+### Phase 3: Iterate
+1. **Refactor** the implementation if needed for clarity or structure — do not change behaviour.
+2. **Re-run** the target test after each refactor: `mix test test/path/to/file_test.exs`.
+3. **Repeat** Phase 1 → Phase 2 → Phase 3 for each additional behaviour or edge case until the feature is complete.
+4. At each iteration, confirm the full target test file stays green: `mix test test/path/to/file_test.exs`.
 
-- **RED**: test file path and line, exact failure message, confirmation the failure is for the correct reason.
-- **Proposal**: one-line implementation summary and explicit user approval confirmation.
-- **GREEN**: implementation file path and line, test pass confirmation.
-- **Iterate**: number of additional RED→GREEN cycles and a summary of each.
-- **Quality Gate**: `mix format`, `mix credo`, `mix dialyzer`, `mix test` results.
+### Phase 4: Finish
+1. **Run full quality suite** in order:
+   ```
+   mix format --check-formatted
+   mix credo --strict
+   mix dialyzer
+   mix test
+   ```
+2. **All four commands must be green.** If any fail:
+   - `mix format`: run `mix format` then re-check, and re-run the remaining quality tools (`mix credo`, `mix dialyzer`, `mix test`) in case the formatting changes introduced any new issues.
+   - `mix credo`: fix each flagged issue; do not suppress warnings without explicit user approval.
+   - `mix dialyzer`: add or correct typespecs to resolve warnings.
+   - `mix test`: diagnose regressions — do not proceed until all tests pass.
+
+**HARD GATE — Quality Check**
+- All four mix commands exit with 0.
+- No warnings suppressed without explicit user approval.
+
+3. **Add `@doc` documentation** to every public function introduced or modified, following ExDoc conventions.
+4. **Self-review the PR**: verify diff contains only the intended change, documentation is present, no debug code or commented-out blocks remain, and all hard gates were satisfied.
+5. **Produce the PR** with a description that references the failing test, the minimal implementation, and the quality suite result.
 
 ---
 
 ## Integration
 
 | Predecessor | This Persona | Successor |
-|-------------|--------------|----------|
-| elixir-skill-router | tdd | code-quality |
-| None (standalone) | tdd | quality |
-| None (standalone) | tdd | PR submission |
-
-**Use `testing-essentials` alone** if you only need to decide which test to write next.
-
-**Use `tdd` for the full cycle** when building a feature from scratch.
-
----
-
-## Error Recovery
-
-**Test fails for the wrong reason (syntax/config error):**
-1. Identify error class — `SyntaxError`, `File.Error` indicate test problems, not missing features.
-2. Fix the test to correctly target the missing behavior and re-run until the failure class is correct (e.g., `UndefinedFunctionError`).
-
-**Implementation makes test pass but breaks other tests:**
-1. Run `mix test` to identify regressions.
-2. Revise implementation to satisfy both the new test and existing tests.
-3. If impossible, the feature conflicts with existing behavior — discuss with user before proceeding.
-
-**Quality gate fails (credo/dialyzer):**
-1. Run `mix credo --strict` to see all violations; fix them.
-2. For dialyzer warnings, assess whether they expose a real type error.
-3. Run `mix format` to auto-fix formatting issues.
+|-------------|---------------|-----------|
+| testing-essentials | tdd | None (standalone) |

@@ -15,22 +15,13 @@ metadata:
 
 # Req HTTP Client
 
-Req is the modern HTTP client for Elixir, designed for simplicity and composability.
-
-## RULES — Follow these with no exceptions
-
-1. **Use Req for all HTTP requests** — the modern standard, replacing HTTPoison and Tesla
-2. **Always handle error tuples** — `Req.get/1` returns `{:ok, response}` or `{:error, exception}`
-3. **Set timeouts explicitly** — don't rely on defaults for production APIs
-4. **Use retries for transient failures** — configure retry logic for 5xx and network errors
-5. **Test with `Req.Test`** — use the built-in test adapter for mocking HTTP responses
-6. **Parse JSON responses automatically** — use `Req.post(..., json: data)` and `decode_json: true`
-7. **Never hardcode API URLs** — use configuration for base URLs and API keys
-
 ---
 
-## Setup
+## End-to-End Workflow
 
+Follow this sequence when integrating an external API:
+
+**Step 1 — Add dependency**
 ```elixir
 # mix.exs
 defp deps do
@@ -39,100 +30,81 @@ defp deps do
   ]
 end
 ```
+Checkpoint: run `mix deps.get` and confirm Req compiles without errors.
 
----
-
-## Basic Requests
-
+**Step 2 — Create a configured client module**
 ```elixir
-# GET request
-case Req.get("https://api.example.com/users") do
-  {:ok, %{status: 200, body: body}} ->
-    IO.inspect(body)
-
-  {:ok, %{status: status}} ->
-    IO.puts("Request failed with status: #{status}")
-
-  {:error, exception} ->
-    IO.puts("Request failed: #{Exception.message(exception)}")
-end
-
-# GET with query params
-Req.get!("https://api.example.com/users", params: %{page: 1, per_page: 20})
-
-# POST with JSON body
-Req.post!("https://api.example.com/users",
-  json: %{name: "John", email: "john@example.com"}
-)
-
-# POST with form data
-Req.post!("https://api.example.com/login",
-  form: [username: "john", password: "secret"]
-)
-```
-
----
-
-## Configuration
-
-```elixir
-# Create a configured Req client
 defmodule MyApp.ApiClient do
   def base_request do
     Req.new(
-      base_url: "https://api.example.com",
+      base_url: Application.get_env(:my_app, :api_base_url),
       headers: [{"authorization", "Bearer #{api_token()}"}],
       receive_timeout: 30_000,
-      retry: :transient,
-      retry_delay: &(&1 * 1000)  # Exponential backoff
+      retry: :transient
     )
   end
 
-  def get_users do
-    base_request()
-    |> Req.get!(url: "/users", params: %{page: 1})
+  def fetch_user(id) do
+    case Req.get(base_request(), url: "/users/#{id}") do
+      {:ok, %{status: 200, body: body}} -> {:ok, body}
+      {:ok, %{status: 404}}             -> {:error, :not_found}
+      {:ok, %{status: 429}}             -> {:error, :rate_limited}   # extend with additional codes as needed
+      {:ok, %{status: status}} when status >= 500 -> {:error, :server_error}
+      {:ok, %{status: status}}          -> {:error, {:unexpected_status, status}}
+      {:error, %Mint.TransportError{reason: :timeout}} -> {:error, :timeout}
+      {:error, exception}               -> {:error, Exception.message(exception)}
+    end
   end
 
-  def create_user(attrs) do
-    base_request()
-    |> Req.post!(url: "/users", json: attrs)
+  defp api_token, do: Application.get_env(:my_app, :api_token)
+end
+```
+Checkpoint: verify the module compiles with `mix compile`.
+
+**Step 3 — Test with Req.Test before touching a real API**
+```elixir
+defmodule MyApp.ApiClientTest do
+  use ExUnit.Case, async: true
+
+  setup do
+    Req.Test.adapter(MyApp.ApiClient)
+    :ok
   end
 
-  defp api_token do
-    Application.get_env(:my_app, :api_token)
+  test "fetches user successfully" do
+    Req.Test.stub(MyApp.ApiClient, fn conn ->
+      Req.Test.json(conn, %{"id" => 1, "name" => "John"})
+    end)
+    assert {:ok, %{"name" => "John"}} = MyApp.ApiClient.fetch_user(1)
+  end
+
+  test "handles not found" do
+    Req.Test.stub(MyApp.ApiClient, fn conn ->
+      conn |> Plug.Conn.put_status(404) |> Req.Test.json(%{"error" => "not found"})
+    end)
+    assert {:error, :not_found} = MyApp.ApiClient.fetch_user(999)
   end
 end
 ```
+Checkpoint: run `mix test` — all stubs must pass before using the real API.
+
+**Step 4 — Verify in IEx against the real endpoint**
+```elixir
+iex> MyApp.ApiClient.fetch_user(1)
+{:ok, %{"id" => 1, "name" => "John", ...}}
+```
+Checkpoint: confirm a `{:ok, body}` tuple is returned; check logs for retry warnings if the request is slow.
 
 ---
 
-## Error Handling
+## Quick-Reference: Request Types
 
-```elixir
-defmodule MyApp.ExternalApi do
-  def fetch_user(id) do
-    case Req.get("https://api.example.com/users/#{id}", receive_timeout: 10_000) do
-      {:ok, %{status: 200, body: body}} ->
-        {:ok, body}
-
-      {:ok, %{status: 404}} ->
-        {:error, :not_found}
-
-      {:ok, %{status: 429}} ->
-        {:error, :rate_limited}
-
-      {:ok, %{status: status}} when status >= 500 ->
-        {:error, :server_error}
-
-      {:error, %Mint.TransportError{reason: :timeout}} ->
-        {:error, :timeout}
-
-      {:error, exception} ->
-        {:error, Exception.message(exception)}
-    end
-  end
-end
-```
+| Pattern | Example |
+|---|---|
+| GET | `Req.get!(url, params: %{page: 1})` |
+| POST JSON | `Req.post!(url, json: %{name: "John"})` |
+| POST form | `Req.post!(url, form: [username: "john", password: "secret"])` |
+| With error handling | Use `Req.get/1` (not bang) and pattern match `{:ok, %{status: _, body: _}}` / `{:error, _}` |
 
 ---
 
@@ -147,74 +119,17 @@ Req.get!("https://api.example.com/data",
   retry_log_level: :warning
 )
 
-# Custom retry logic
+# Custom retry logic (e.g. also retry on 429)
 Req.get!("https://api.example.com/data",
   retry: fn response ->
     case response do
-      %{status: 429} -> true  # Retry on rate limit
-      %{status: s} when s >= 500 -> true  # Retry on server errors
+      %{status: 429} -> true
+      %{status: s} when s >= 500 -> true
       _ -> false
     end
   end,
-  retry_delay: fn attempt ->
-    # Wait 1s, 2s, 4s, 8s...
-    :timer.seconds(:math.pow(2, attempt - 1) |> round())
-  end
+  max_retries: 3
 )
-```
-
----
-
-## JSON Handling
-
-```elixir
-# Automatic JSON decoding
-{:ok, %{body: data}} = Req.get("https://api.example.com/users", decode_json: true)
-
-# Send JSON body
-{:ok, response} = Req.post("https://api.example.com/users",
-  json: %{name: "John", email: "john@example.com"},
-  decode_json: true
-)
-
-# Access decoded data
-user = response.body
-IO.puts(user["name"])
-```
-
----
-
-## Testing with Req.Test
-
-```elixir
-defmodule MyApp.ExternalApiTest do
-  use ExUnit.Case, async: true
-
-  setup do
-    Req.Test.adapter(MyApp.ExternalApi)
-    :ok
-  end
-
-  test "fetches user successfully" do
-    Req.Test.stub(MyApp.ExternalApi, fn conn ->
-      Req.Test.json(conn, %{
-        "id" => 1,
-        "name" => "John",
-        "email" => "john@example.com"
-      })
-    end)
-
-    assert {:ok, %{"name" => "John"}} = MyApp.ExternalApi.fetch_user(1)
-  end
-
-  test "handles not found" do
-    Req.Test.stub(MyApp.ExternalApi, fn conn ->
-      conn |> Plug.Conn.put_status(404) |> Req.Test.json(%{"error" => "not found"})
-    end)
-
-    assert {:error, :not_found} = MyApp.ExternalApi.fetch_user(999)
-  end
-end
 ```
 
 ---
@@ -222,12 +137,12 @@ end
 ## Streaming Responses
 
 ```elixir
-# Stream large responses
+# Stream large responses to a file
 Req.get!("https://api.example.com/large-file",
   into: File.stream!("download.txt")
 )
 
-# Stream with callback
+# Stream with a callback
 Req.get!("https://api.example.com/stream",
   into: fn {:data, data}, {req, resp} ->
     IO.puts("Received #{byte_size(data)} bytes")
@@ -235,27 +150,3 @@ Req.get!("https://api.example.com/stream",
   end
 )
 ```
-
----
-
-## Common Pitfalls
-
-❌ **Don't** use HTTPoison or Tesla — Req is the modern standard
-❌ **Don't** forget to handle error tuples
-❌ **Don't** rely on default timeouts for production
-❌ **Don't** hardcode API URLs or keys
-❌ **Don't** forget to configure retries for transient failures
-
-✅ **Do** use Req for all HTTP requests
-✅ **Do** handle both `{:ok, response}` and `{:error, exception}`
-✅ **Do** set explicit timeouts
-✅ **Do** use `Req.Test` for testing
-✅ **Do** configure retries for production APIs
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **phoenix-json-api** | When building JSON APIs that consume other APIs |
-| **oban-essentials** | For async API calls |
-| **testing-essentials** | For testing HTTP integrations |

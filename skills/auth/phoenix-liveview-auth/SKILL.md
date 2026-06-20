@@ -22,15 +22,23 @@ metadata:
 
 Use this skill before writing ANY `on_mount` hook or LiveView auth code.
 
+> **Requires** `phoenix-scopes` for Scope struct setup. See `phoenix-authorization-patterns` for access control after authentication, and `phoenix-liveview-essentials` before writing any LiveView module.
+
 ## RULES — Follow these with no exceptions
 
-1. **Always use `on_mount` callbacks for LiveView auth** — never check auth in `mount/3` directly; `on_mount` runs before mount and centralizes auth logic
-2. **Use `mount_current_scope/2` to extract scope from session** — never access session tokens manually or parse session data in LiveViews
-3. **Handle both `:cont` and `:halt` returns from `on_mount`** — `:halt` must redirect with a flash message, never silently drop the connection
-4. **Resolve import conflicts explicitly** — `Phoenix.Controller` and `Phoenix.LiveView` both export `redirect/2` and `put_flash/3`; use `except:` to avoid ambiguity
-5. **Use bracket access `assigns[:current_scope]` in templates** — dot access `@current_scope` crashes on nil when user is not authenticated
-6. **Test auth redirects by asserting `{:error, {:redirect, %{to: path}}}`** — don't test auth by checking rendered content; verify the redirect tuple from `live/2`
-7. **Define `on_mount` hooks once, reference via `live_session` in router** — never duplicate auth logic across LiveView modules
+1. **Always use `on_mount` callbacks for LiveView auth** — never check auth in `mount/3` directly
+2. **Use `mount_current_scope/2` to extract scope from session** — never access session tokens manually
+3. **`:halt` must redirect with a flash message** — never silently drop the connection
+4. **Define `on_mount` hooks once, reference via `live_session` in router** — never duplicate auth logic across LiveView modules
+
+---
+
+## Implementation Workflow
+
+1. **Define `on_mount` hooks** in `UserAuth` with import conflict resolution; verify the module compiles cleanly with `mix compile`
+2. **Add `live_session` blocks** to the router referencing those hooks; verify routes are registered correctly with `mix phx.routes`
+3. **Run auth tests** with `mix test test/my_app_web/live/` and assert redirect tuples match expected paths; if tests fail, check session config and verify `Accounts.get_user_by_session_token/1` returns the correct user
+4. **Add template guards** using bracket access for optional assigns
 
 ---
 
@@ -42,7 +50,6 @@ defmodule MyAppWeb.UserAuth do
   import Phoenix.LiveView
   import Phoenix.Controller, except: [redirect: 2, put_flash: 3]
 
-  # Called by live_session :require_authenticated_user
   def on_mount(:require_authenticated_user, _params, session, socket) do
     socket = mount_current_scope(socket, session)
 
@@ -58,7 +65,6 @@ defmodule MyAppWeb.UserAuth do
     end
   end
 
-  # Called by live_session :redirect_if_authenticated
   def on_mount(:redirect_if_authenticated, _params, session, socket) do
     socket = mount_current_scope(socket, session)
 
@@ -69,7 +75,6 @@ defmodule MyAppWeb.UserAuth do
     end
   end
 
-  # Called by live_session :mount_current_scope (public pages)
   def on_mount(:mount_current_scope, _params, session, socket) do
     {:cont, mount_current_scope(socket, session)}
   end
@@ -98,33 +103,27 @@ end
 defmodule MyAppWeb.Router do
   use MyAppWeb, :router
 
-  # Public pages — scope is mounted but not required
   live_session :mount_current_scope,
     on_mount: [{MyAppWeb.UserAuth, :mount_current_scope}] do
     scope "/", MyAppWeb do
       pipe_through :browser
-
       live "/", HomeLive.Index
     end
   end
 
-  # Authenticated pages
   live_session :require_authenticated_user,
     on_mount: [{MyAppWeb.UserAuth, :require_authenticated_user}] do
     scope "/", MyAppWeb do
       pipe_through [:browser, :require_authenticated_user]
-
       live "/dashboard", DashboardLive.Index
       live "/settings", SettingsLive.Index
     end
   end
 
-  # Guest-only pages
   live_session :redirect_if_authenticated,
     on_mount: [{MyAppWeb.UserAuth, :redirect_if_authenticated}] do
     scope "/", MyAppWeb do
       pipe_through [:browser, :redirect_if_user]
-
       live "/users/register", UserRegistrationLive
       live "/users/log_in", UserLoginLive
     end
@@ -134,61 +133,18 @@ end
 
 ---
 
-## Import Conflict Resolution
-
-`Phoenix.Controller` and `Phoenix.LiveView` both export `redirect/2` and `put_flash/3`.
-
-❌ **Bad — compile error or wrong function called:**
-```elixir
-import Phoenix.Controller
-import Phoenix.LiveView
-```
-
-✅ **Good — explicitly exclude conflicting functions:**
-```elixir
-import Phoenix.LiveView
-import Phoenix.Controller, except: [redirect: 2, put_flash: 3]
-```
-
----
-
-## current_scope vs current_user
-
-Phoenix 1.8+ uses `Scope` structs instead of raw `current_user`.
+## Template Access
 
 ```elixir
-# Phoenix 1.8+ pattern — Scope struct
-defmodule MyApp.Scope do
-  defstruct [:user]
-end
-
 # In LiveView — access user through scope
 def mount(_params, _session, socket) do
   user = socket.assigns.current_scope.user
   {:ok, assign(socket, :posts, Posts.list_posts(user))}
 end
 
-# In templates — use bracket access for safety
+# In templates — use bracket access for optional assigns
 <%= if assigns[:current_scope] && @current_scope.user do %>
   <p>Welcome, <%= @current_scope.user.email %></p>
-<% end %>
-```
-
----
-
-## Safe Template Access
-
-Always use bracket access for assigns that may not exist:
-
-❌ **Bad — crashes if current_scope is nil:**
-```elixir
-<%= @current_scope.user.email %>
-```
-
-✅ **Good — safe bracket access:**
-```elixir
-<%= if assigns[:current_scope] && @current_scope.user do %>
-  <%= @current_scope.user.email %>
 <% end %>
 ```
 
@@ -222,28 +178,3 @@ describe "redirect_if_authenticated" do
   end
 end
 ```
-
----
-
-## Common Pitfalls
-
-❌ **Don't** check auth in `mount/3` — use `on_mount` hooks
-❌ **Don't** access session tokens manually in LiveViews
-❌ **Don't** use `@current_scope` in templates without nil check
-❌ **Don't** duplicate auth logic across LiveView modules
-❌ **Don't** forget to handle `:halt` with a redirect and flash message
-
-✅ **Do** define `on_mount` hooks once and reuse via `live_session`
-✅ **Do** use `mount_current_scope/2` for session extraction
-✅ **Do** resolve import conflicts with `except:`
-✅ **Do** test auth by asserting redirect tuples
-✅ **Do** use bracket access for optional assigns in templates
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **phoenix-scopes** | When implementing Phoenix 1.8+ Scope-based auth |
-| **phoenix-authorization-patterns** | After authentication, for access control |
-| **phoenix-liveview-essentials** | Before writing any LiveView module |
-| **testing-essentials** | Before writing auth tests |

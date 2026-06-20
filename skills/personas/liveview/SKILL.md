@@ -18,23 +18,19 @@ metadata:
 ---
 # LiveView Persona
 
-Orchestrates full LiveView feature development from contract definition through testing and quality gates.
-
 ## Agent Phases
 
 ### Phase 1: Context & Contract
 
-**Steps:**
 1. Define the LiveView's purpose and URL (via `live "/path"` in router).
-2. Define the `mount/3` contract: which params it receives, what session data it needs, what assigns it sets.
-3. Define the assigns shape — what data the template will reference.
+2. Define the project-specific `mount/3` contract: which params and session keys this feature uses, what assigns it sets.
+3. List the assigns shape — every key the template will reference, including streams for collections.
+4. List all events (`handle_event`, `handle_info`, `handle_params`) this LiveView must handle.
 
 **HARD GATE — Contract Defined:**
-- [ ] LiveView name and module path defined
-- [ ] Route pattern defined
-- [ ] mount/3 params and session documented
-- [ ] Assigns shape documented (including streams if using collections)
-- [ ] Events (handle_event, handle_info, handle_params) listed
+- [ ] Module name, file path, and route pattern decided
+- [ ] Assigns shape documented (keys, types, streams if applicable)
+- [ ] All events listed
 
 **If gate fails:** Clarify the LiveView's purpose and data needs before coding.
 
@@ -42,17 +38,16 @@ Orchestrates full LiveView feature development from contract definition through 
 
 ### Phase 2: Test Design
 
-**Steps:**
-1. **testing/testing-essentials** — Choose test approach:
+1. Choose test approach:
    - `live_isolated` for component-level tests
    - `live/2` (LiveViewTest) for full-page tests
    - Unit tests for helper functions
 2. Write test covering: mount renders, key assigns present, events update socket, streams for collections.
+3. Verify the test **FAILS** with `mix test test/my_app_web/live/my_live_test.exs` — failure must be "module not defined".
 
 **HARD GATE — Test Fails:**
-- [ ] Test EXISTS and is written
-- [ ] `mix test test/my_app_web/live/my_live_test.exs` FAILS
-- [ ] Failure is for the correct reason (module not defined)
+- [ ] Test file exists and written
+- [ ] `mix test` fails with "module not defined"
 
 ```elixir
 # test/my_app_web/live/post_live_test.exs
@@ -76,12 +71,10 @@ end
 
 ### Phase 3: Implementation
 
-**Steps:**
-1. **phoenix/phoenix-liveview-essentials** — Implement `mount/3` with proper assigns initialization.
-2. Implement `render/1` with HEEx template.
-3. Implement `handle_event/3` for user interactions.
-4. Use **phoenix/liveview-streams** for any collection with >10 items.
-5. Use **phoenix/phoenix-scopes** for authentication (Phoenix 1.8+) or **auth/phoenix-liveview-auth** (Phoenix 1.7).
+1. Implement `mount/3` — initialize all declared assigns; use `stream/3` for any collection with >10 items.
+2. Implement `render/1` with HEEx template; use `assigns[:key]` bracket access for nullable assigns.
+3. Implement `handle_event/3` (and `handle_info/2`, `handle_params/3` as needed).
+4. For authentication: use Phoenix Scopes (Phoenix 1.8+) or `on_mount` hooks (Phoenix 1.7).
 
 **Minimal implementation:**
 ```elixir
@@ -123,92 +116,42 @@ end
 ```
 
 **HARD GATE — Implementation Complete:**
-- [ ] mount/3 implemented and sets all declared assigns
-- [ ] render/1 implemented with HEEx template
-- [ ] Events handled (handle_event, handle_info as needed)
-- [ ] Streams used for collections >10 items
-- [ ] Bracket access `assigns[:key]` for nullable assigns in templates
+- [ ] All assigns initialized in `mount/3`
+- [ ] All events handled
 
 ---
 
 ### Phase 4: Quality Gate
 
-**Steps:**
-1. Run focused test: `mix test test/my_app_web/live/my_live_test.exs` — must PASS.
-2. Run full suite: `mix test` — must PASS.
-3. Apply **quality/code-quality** for LiveView-specific checks.
+1. Run focused test: `mix test test/my_app_web/live/my_live_test.exs` — must **PASS**.
+2. Run full suite: `mix test` — must **PASS**.
 
 **LiveView Quality Checklist:**
-- [ ] No computed assigns in render (compute in mount/handle_event, assign result)
-- [ ] Collections >10 items use `stream/3` not for-comprehension
-- [ ] `phx-update="stream"` on stream containers
-- [ ] Bracket access for nullable assigns
-- [ ] Events have `phx-value-*` for data passing (not embedded JS)
-- [ ] No `handle_info` interfering with streams
+- [ ] No computed assigns in `render` (compute in `mount`/`handle_event`)
+- [ ] Collections >10 items use `stream/3`, not for-comprehension assigns
+- [ ] `phx-update="stream"` on containers; `id={dom_id}` on each item
+- [ ] Bracket access (`assigns[:key]`) for nullable assigns in templates
+- [ ] Events use `phx-value-*` for data passing
 - [ ] `@impl true` on all callbacks
 
 ---
 
 ## Output Style
 
-When completing a LiveView feature, output MUST include:
-
-```markdown
-# LiveView Report — [LiveView Name]
-
-## Contract
-- Module: <module path>
-- Route: <live URL pattern>
-- mount/3: <params>, <session>, assigns: <list>
-
-## Test
-- File: <test path>
-- Approach: live / live_isolated / unit
-- RED: <initial failure message>
-- GREEN: <test passes>
-
-## Implementation
-- Template: <HEEx file path>
-- Events: <list of handle_event/3 handlers>
-- Streams: <list of stream names and collection sizes>
-- Auth: Scope / current_user / anonymous
-
-## Quality Gate
-- mix test: ✓ (<n> tests, 0 failures)
-- Streams used for >10 items: ✓
-- Bracket access for nullables: ✓
-- @impl true on callbacks: ✓
-```
+Report module path, route, test file (approach + RED→GREEN status), and quality gate results (streams compliance, bracket access, `@impl true` coverage).
 
 ---
 
 ## Error Recovery
 
-**LiveView fails to mount (LiveView test timeout):**
-1. Check the route — does the LiveView mount?
-2. Verify `mount/3` returns `{:ok, socket}` (not a halt or redirect if unintended).
-3. Check assigns access in template — missing assigns cause crash.
+**LiveView fails to mount (test timeout):**
+1. Verify the route exists and `mount/3` returns `{:ok, socket}`.
+2. Check template for missing assigns — unset assigns crash on render.
 
-**Stream rendering shows blank:**
-1. Verify `phx-update="stream"` is on the container element.
-2. Verify `id={dom_id}` is on each stream item.
-3. Check that the stream name matches between `stream/3` and `@streams.name`.
+**Stream renders blank:**
+1. Confirm `phx-update="stream"` is on the container and `id={dom_id}` on each item.
+2. Confirm the stream name matches between `stream/3` and `@streams.name`.
 
 **Event not triggering:**
-1. Verify `phx-click="event_name"` matches `handle_event("event_name", ...)` exactly.
-2. Check `phx-value-*` bindings are strings (they're always sent as strings).
-3. Verify the element is inside the LiveView's DOM (not in a nested layout).
-
----
-
-## Integration
-
-| Predecessor | This Persona | Successor |
-|-------------|--------------|----------|
-| elixir-skill-router | liveview | tdd |
-| phoenix-liveview-essentials | liveview | quality |
-| None (standalone) | liveview | PR submission |
-
-**Use `phoenix-liveview-essentials` alone** if you only need LiveView patterns and conventions.
-
-**Use `liveview` persona** for full feature development from contract to quality gate.
+1. Confirm `phx-click="event_name"` matches `handle_event("event_name", ...)` exactly.
+2. Confirm `phx-value-*` bindings are strings and the element is inside the LiveView's DOM.

@@ -1,1 +1,13 @@
 .DS_Store
+tessl_generations.log
+
+# rs-guard CI artifacts (downloaded by scripts/rs-guard-install.sh)
+/rs-guard
+/rs-guard-x86_64-unknown-linux-gnu
+/rs-guard-x86_64-unknown-linux-gnu.sha256
+
+# rs-guard runtime artifacts
+.rs-guard/
+report.json
+review-result.txt
+rs-guard-metrics.json

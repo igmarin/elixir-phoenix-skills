@@ -19,17 +19,24 @@ metadata:
 
 <!-- Adapted from j-morgan6/elixir-phoenix-guide (MIT License, Copyright (c) 2026 Joseph Morgan) -->
 
-Use this skill before writing ANY JSON API code.
-
 ## RULES — Follow these with no exceptions
 
 1. **Use the `:api` pipeline** — don't mix HTML and JSON pipelines; API routes skip CSRF and sessions
 2. **Render errors as structured JSON** — `{:error, changeset}` must become `{"errors": {...}}`
-3. **Use offset/limit for pagination** — never return unbounded collections; default to a sensible limit
-4. **Version APIs via URL prefix (`/api/v1/`)** — not headers; URL versioning is visible and cacheable
-5. **Use `FallbackController` for consistent error handling** — every action returns `{:ok, result}` or `{:error, reason}`
-6. **Authenticate via Bearer tokens in `Authorization` header** — not cookies
-7. **Use `json/2` helper** — ensures `Content-Type: application/json`
+3. **Version APIs via URL prefix (`/api/v1/`)** — not headers; URL versioning is visible and cacheable
+4. **Use `FallbackController` for consistent error handling** — every action returns `{:ok, result}` or `{:error, reason}`
+
+---
+
+## Build Workflow
+
+Follow these steps in order when constructing a new API endpoint:
+
+1. **Define the route** in the `:api` (or `:api_auth`) pipeline scope with a versioned URL prefix
+2. **Create the controller** with `action_fallback MyAppWeb.FallbackController` and return `{:ok, _}` / `{:error, _}` from every action
+3. **Verify error responses** — confirm that invalid input and missing resources return structured JSON (e.g., `{"errors": {...}}`) before proceeding
+4. **Add the auth plug** (`ApiAuth`) to protected scopes; confirm that missing/invalid tokens yield `401` with a JSON body
+5. **Paginate list endpoints** — ensure `index` accepts `page`/`per_page` params and never returns an unbounded collection
 
 ---
 
@@ -175,24 +182,9 @@ end
 
 ---
 
-## Common Pitfalls
-
-❌ **Don't** mix HTML and JSON pipelines
-❌ **Don't** return unbounded collections — always paginate
-❌ **Don't** use header-based API versioning
-❌ **Don't** return raw changeset errors — format them
-❌ **Don't** use cookies for API auth — use Bearer tokens
-
-✅ **Do** use the `:api` pipeline
-✅ **Do** use `FallbackController` for error handling
-✅ **Do** paginate all list endpoints
-✅ **Do** version APIs via URL prefix
-✅ **Do** use Bearer tokens for authentication
-
 ## Integration
 
 | Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **security-essentials** | For token handling and input validation |
-| **testing-essentials** | For API testing patterns |
-| **req-http-client** | For making HTTP requests from Elixir |
+|-------------|------------|-----------|
+| elixir-essentials | phoenix-json-api | testing-essentials |
+| security-essentials | phoenix-json-api | req-http-client |

@@ -4,10 +4,11 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  MANDATORY for Phoenix 1.8+ authentication work. Invoke before implementing auth with Scope structs.
-  Covers the new Scope-based authentication replacing current_user, scope creation, scope usage in
-  LiveViews and controllers, and migration from current_user to scopes.
-  Trigger words: Scope, current_scope, Phoenix 1.8, authentication, authorization, scope struct.
+  Covers Phoenix 1.8+ Scope-based authentication replacing current_user, including Scope struct
+  definition with roles and permissions, scope creation and usage in LiveViews and controllers,
+  safe template access patterns, and step-by-step migration from current_user to scopes.
+  Use when working with Phoenix 1.8+ authentication, authorization, Scope structs, current_scope,
+  or migrating from current_user to the new scope-based model.
 metadata:
   user-invocable: "true"
   version: 1.0.0
@@ -19,12 +20,9 @@ Phoenix 1.8 introduced `Scope` as the new authentication primitive, replacing di
 
 ## RULES — Follow these with no exceptions
 
-1. **Use Scope structs instead of raw `current_user`** — scopes wrap the user and can carry additional context
-2. **Access user through `socket.assigns.current_scope.user`** — never use `@current_user` directly in Phoenix 1.8+
-3. **Use bracket access in templates** — `assigns[:current_scope]` prevents crashes when unauthenticated
-4. **Extend scopes with additional context** — add roles, permissions, or tenant info to the scope
-5. **Migrate existing `current_user` code to use scopes** — update `on_mount` hooks and templates
-6. **Test scope-based auth thoroughly** — test both authenticated and unauthenticated states
+1. **Use Scope structs instead of raw `current_user`** — scopes wrap the user and carry additional context such as roles, permissions, and tenant info
+2. **Use bracket access in templates** — `assigns[:current_scope]` prevents crashes when unauthenticated
+3. **Test both authenticated and unauthenticated states** — scope-based auth has two distinct code paths
 
 ---
 
@@ -32,38 +30,28 @@ Phoenix 1.8 introduced `Scope` as the new authentication primitive, replacing di
 
 ```elixir
 defmodule MyApp.Scope do
-  @moduledoc """
-  Represents the current authentication scope.
-  Wraps the user and can carry additional context like roles or tenant info.
-  """
+  defstruct [:user, :role, :permissions, :tenant]
 
-  defstruct [:user, :role, :tenant]
-
-  @type t :: %__MODULE__{
-    user: MyApp.Accounts.User.t() | nil,
-    role: atom() | nil,
-    tenant: String.t() | nil
-  }
-
-  @doc """
-  Creates a scope for an authenticated user.
-  """
   def for_user(%MyApp.Accounts.User{} = user) do
-    %__MODULE__{user: user, role: user.role}
+    %__MODULE__{
+      user: user,
+      role: user.role,
+      # derive permissions from role; extend permissions_for/1 as needed
+      permissions: permissions_for(user.role)
+    }
   end
 
-  @doc """
-  Creates an anonymous scope.
-  """
-  def anonymous do
-    %__MODULE__{user: nil}
-  end
+  def anonymous, do: %__MODULE__{user: nil}
 
-  @doc """
-  Returns true if the scope represents an authenticated user.
-  """
   def authenticated?(%__MODULE__{user: nil}), do: false
   def authenticated?(%__MODULE__{}), do: true
+
+  def can?(%__MODULE__{permissions: perms}, action) when is_list(perms), do: action in perms
+  def can?(%__MODULE__{}, _action), do: false
+
+  defp permissions_for(:admin), do: [:read, :write, :delete, :manage_users]
+  defp permissions_for(:editor), do: [:read, :write]
+  defp permissions_for(_), do: []
 end
 ```
 
@@ -80,23 +68,22 @@ defmodule MyAppWeb.DashboardLive do
     scope = socket.assigns.current_scope
 
     if Scope.authenticated?(scope) do
-      posts = Blog.list_user_posts(scope)
-      {:ok, assign(socket, :posts, posts)}
+      {:ok, assign(socket, :posts, Blog.list_user_posts(scope))}
     else
       {:ok, push_navigate(socket, to: ~p"/login")}
     end
   end
 
   @impl true
-  def render(assigns) do
-    ~H"""
-    <h1>Dashboard</h1>
-    <p>Welcome, <%= @current_scope.user.email %></p>
+  def handle_event("delete", %{"id" => id}, socket) do
+    scope = socket.assigns.current_scope
 
-    <%= for post <- @posts do %>
-      <div><%= post.title %></div>
-    <% end %>
-    """
+    if Scope.can?(scope, :delete) do
+      # perform delete
+      {:noreply, socket}
+    else
+      {:noreply, put_flash(socket, :error, "Not authorized")}
+    end
   end
 end
 ```
@@ -116,44 +103,15 @@ end
 
 ---
 
-## Extending Scopes with Roles
-
-```elixir
-defmodule MyApp.Scope do
-  defstruct [:user, :role, :permissions]
-
-  def for_user(%MyApp.Accounts.User{} = user) do
-    %__MODULE__{
-      user: user,
-      role: user.role,
-      permissions: get_permissions(user.role)
-    }
-  end
-
-  def can?(%__MODULE__{permissions: perms}, action) do
-    action in perms
-  end
-
-  defp get_permissions(:admin), do: [:read, :write, :delete, :manage_users]
-  defp get_permissions(:editor), do: [:read, :write]
-  defp get_permissions(:viewer), do: [:read]
-end
-
-# Usage in LiveView
-def handle_event("delete", %{"id" => id}, socket) do
-  scope = socket.assigns.current_scope
-
-  if Scope.can?(scope, :delete) do
-    # Perform delete
-  else
-    {:noreply, put_flash(socket, :error, "Not authorized")}
-  end
-end
-```
-
----
-
 ## Migration from current_user
+
+### Step-by-Step Migration Workflow
+
+1. **Update the Scope struct** — define `MyApp.Scope` with `for_user/1` and `authenticated?/1` as shown above.
+2. **Update `on_mount` hooks** — replace user assignment with scope assignment (see before/after below). After this step, run `mix test test/my_app_web/live/ --trace` and verify all `on_mount` tests pass before proceeding.
+3. **Search and replace `@current_user`** — update all template references to `@current_scope.user`; use `assigns[:current_scope]` for optional access. After this step, run `mix test` and fix any `KeyError` or `FunctionClauseError` failures before continuing.
+4. **Update context functions** — pass `scope` instead of `user` to context functions that need auth context. Re-run `mix test` to confirm no regressions.
+5. **Run the full test suite** — verify both authenticated and unauthenticated flows still work. If failures occur, revert the most recent step, fix the issue, and re-verify before moving forward.
 
 ### Before (Phoenix 1.7)
 
@@ -179,25 +137,3 @@ def on_mount(:require_authenticated_user, _params, session, socket) do
   end
 end
 ```
-
----
-
-## Common Pitfalls
-
-❌ **Don't** use `@current_user` in Phoenix 1.8+ — use `@current_scope.user`
-❌ **Don't** access `@current_scope` without nil check in templates
-❌ **Don't** put sensitive data directly in the scope — use the user struct
-❌ **Don't** forget to update `on_mount` hooks when migrating
-
-✅ **Do** use Scope structs for authentication context
-✅ **Do** use bracket access in templates
-✅ **Do** extend scopes with roles and permissions
-✅ **Do** test both authenticated and unauthenticated states
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **phoenix-liveview-auth** | For `on_mount` patterns |
-| **phoenix-authorization-patterns** | For access control |
-| **testing-essentials** | For testing patterns |

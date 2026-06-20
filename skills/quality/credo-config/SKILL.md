@@ -4,8 +4,9 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  Use when setting up or customizing Credo for Elixir projects. Invoke before configuring .credo.exs
-  or adding Credo to CI. Covers Credo setup, custom checks, strictness levels, and CI integration.
+  Use when setting up or customizing Credo for Elixir projects, configuring .credo.exs, or adding
+  Credo to CI pipelines. Generates .credo.exs configuration files, writes custom check modules,
+  configures strictness levels, and integrates Credo into CI pipelines.
   Trigger words: Credo, .credo.exs, linting, code style, static analysis, custom checks.
 metadata:
   user-invocable: "true"
@@ -14,20 +15,9 @@ metadata:
 
 # Credo Configuration
 
-Credo is a static code analysis tool for Elixir with a focus on code consistency and common pitfalls.
+## Setup Workflow
 
-## RULES — Follow these with no exceptions
-
-1. **Add Credo to all Elixir projects** — catch style violations and potential bugs early
-2. **Use `.credo.exs` for project-specific configuration** — don't rely on defaults alone
-3. **Enable strict mode in CI** — catch more issues before merge
-4. **Disable specific checks with comments** — `# credo:disable-for-next-line` for intentional violations
-5. **Run Credo before committing** — make it part of your development workflow
-6. **Customize checks for your team** — adjust strictness based on project needs
-
----
-
-## Setup
+### 1. Add Dependency
 
 ```elixir
 # mix.exs
@@ -38,9 +28,39 @@ defp deps do
 end
 ```
 
+### 2. Fetch Dependencies
+
+```bash
+mix deps.get
+```
+
+### 3. Generate Default Config
+
+```bash
+mix credo gen.config
+```
+
+### 4. Customize `.credo.exs`
+
+Edit the generated file to match your project's needs. See [Basic Configuration](#basic-configuration) below.
+
+### 5. Verify Setup
+
+```bash
+mix credo
+```
+
+Success: Credo exits 0 and prints a summary with issue counts per category. If issues are found, review them — fix violations, adjust check configuration, or add inline disable comments for intentional exceptions.
+
+### 6. Add to CI
+
+See [CI Integration](#ci-integration) below.
+
 ---
 
 ## Basic Configuration
+
+> Use `mix credo gen.config` for the complete check list rather than writing it by hand.
 
 ```elixir
 # .credo.exs
@@ -54,78 +74,13 @@ end
         included: ["lib/", "src/", "test/", "web/", "apps/"],
         excluded: [~r"/_build/", ~r"/deps/", ~r"/node_modules/"]
       },
-      plugins: [],
-      requires: [],
       checks: %{
         enabled: [
-          # Consistency checks
-          {Credo.Check.Consistency.ExceptionNames, []},
-          {Credo.Check.Consistency.LineEndings, []},
-          {Credo.Check.Consistency.ParameterPatternMatching, []},
-          {Credo.Check.Consistency.SpaceAroundOperators, []},
-          {Credo.Check.Consistency.SpaceInParentheses, []},
-          {Credo.Check.Consistency.TabsOrSpaces, []},
-
-          # Design checks
-          {Credo.Check.Design.AliasUsage, [priority: :low, if_nested_deeper_than: 2, if_called_more_often_than: 0]},
-          {Credo.Check.Design.TagTODO, [exit_status: 2]},
-          {Credo.Check.Design.TagFIXME, []},
-
-          # Readability checks
-          {Credo.Check.Readability.AliasOrder, []},
-          {Credo.Check.Readability.FunctionNames, []},
-          {Credo.Check.Readability.LargeNumbers, []},
           {Credo.Check.Readability.MaxLineLength, [priority: :low, max_length: 120]},
-          {Credo.Check.Readability.ModuleAttributeNames, []},
-          {Credo.Check.Readability.ModuleDoc, []},
-          {Credo.Check.Readability.ModuleNames, []},
-          {Credo.Check.Readability.ParenthesesInCondition, []},
-          {Credo.Check.Readability.ParenthesesOnZeroArityDefs, []},
-          {Credo.Check.Readability.PredicateFunctionNames, []},
-          {Credo.Check.Readability.PreferImplicitTry, []},
-          {Credo.Check.Readability.RedundantBlankLines, []},
-          {Credo.Check.Readability.Semicolons, []},
-          {Credo.Check.Readability.SpaceAfterCommas, []},
-          {Credo.Check.Readability.StringSigils, []},
-          {Credo.Check.Readability.TrailingBlankLine, []},
-          {Credo.Check.Readability.TrailingWhiteSpace, []},
-          {Credo.Check.Readability.UnnecessaryAliasExpansion, []},
-          {Credo.Check.Readability.VariableNames, []},
-          {Credo.Check.Readability.WithSingleClause, []},
-
-          # Refactoring checks
-          {Credo.Check.Refactor.Apply, []},
-          {Credo.Check.Refactor.CondStatements, []},
-          {Credo.Check.Refactor.CyclomaticComplexity, []},
-          {Credo.Check.Refactor.FunctionArity, []},
-          {Credo.Check.Refactor.LongQuoteBlocks, []},
-          {Credo.Check.Refactor.MatchInCondition, []},
-          {Credo.Check.Refactor.NegatedConditionsInUnless, []},
-          {Credo.Check.Refactor.NegatedConditionsWithElse, []},
-          {Credo.Check.Refactor.Nesting, []},
-          {Credo.Check.Refactor.UnlessWithElse, []},
-          {Credo.Check.Refactor.WithClauses, []},
-
-          # Warning checks
-          {Credo.Check.Warning.ExpensiveOperationEnum, []},
-          {Credo.Check.Warning.IExPry, []},
-          {Credo.Check.Warning.IoInspect, []},
-          {Credo.Check.Warning.MissedMetadataKeyInLoggerConfig, []},
-          {Credo.Check.Warning.OperationOnSameValues, []},
-          {Credo.Check.Warning.OperationWithConstantResult, []},
-          {Credo.Check.Warning.RaiseInsideRescue, []},
-          {Credo.Check.Warning.UnsafeExec, []},
-          {Credo.Check.Warning.UnusedEnumOperation, []},
-          {Credo.Check.Warning.UnusedFileOperation, []},
-          {Credo.Check.Warning.UnusedKeywordOperation, []},
-          {Credo.Check.Warning.UnusedListOperation, []},
-          {Credo.Check.Warning.UnusedPathOperation, []},
-          {Credo.Check.Warning.UnusedRegexOperation, []},
-          {Credo.Check.Warning.UnusedStringOperation, []},
-          {Credo.Check.Warning.UnusedTupleOperation, []},
+          {Credo.Check.Design.AliasUsage, [if_nested_deeper_than: 2, if_called_more_often_than: 0]},
+          # ... add or override checks as needed
         ],
         disabled: [
-          # Checks you don't want to run
           {Credo.Check.Consistency.MultiAliasImportRequireUse, []},
           {Credo.Check.Design.DuplicatedCode, []},
         ]
@@ -133,30 +88,6 @@ end
     }
   ]
 }
-```
-
----
-
-## Running Credo
-
-```bash
-# Run with default config
-mix credo
-
-# Run in strict mode
-mix credo --strict
-
-# Run on specific files
-mix credo lib/my_app/accounts.ex
-
-# Show only warnings and above
-mix credo --only warning
-
-# Suggest fixes
-mix credo suggest
-
-# List all checks
-mix credo list-checks
 ```
 
 ---
@@ -204,6 +135,8 @@ checks: %{
   run: mix credo --strict
 ```
 
+Strict mode enables additional checks disabled by default. CI fails on any issue.
+
 ### Mix Alias
 
 ```elixir
@@ -220,7 +153,13 @@ end
 
 ## Custom Checks
 
-Create custom checks for project-specific patterns:
+Create custom checks for project-specific patterns in three steps:
+
+1. Define a module using `use Credo.Check` in `lib/credo/checks/`.
+2. Implement `run/2` with `Credo.Code.prewalk/2` to traverse the AST and collect issues.
+3. Register the module under `checks.enabled` in `.credo.exs`.
+
+The example below detects direct `Repo.` calls inside LiveView modules — adapt `find_issues/3` to match your own patterns:
 
 ```elixir
 # lib/credo/checks/no_direct_repo_in_live_view.ex
@@ -231,32 +170,33 @@ defmodule Credo.Check.NoDirectRepoInLiveView do
   LiveViews should not call Repo directly. Use context functions instead.
   """
 
-  def run(source_file, params) do
-    # Custom check logic
-    # ...
+  def run(%Credo.SourceFile{} = source_file, params) do
+    issue_meta = IssueMeta.for(source_file, params)
+
+    source_file
+    |> Credo.Code.prewalk(&find_issues(&1, &2, issue_meta))
   end
+
+  # Detect calls of the form MyApp.Repo.<any function>
+  defp find_issues(
+         {{:., _, [{:__aliases__, meta, [_, "Repo"]}, _fn]}, _, _} = ast,
+         issues,
+         issue_meta
+       ) do
+    issue = format_issue(issue_meta, message: "Avoid direct Repo calls in LiveViews.", line_no: meta[:line])
+    {ast, [issue | issues]}
+  end
+
+  defp find_issues(ast, issues, _issue_meta), do: {ast, issues}
 end
 ```
 
----
+Register the custom check in `.credo.exs`:
 
-## Common Pitfalls
-
-❌ **Don't** skip Credo in CI
-❌ **Don't** disable all checks — customize for your team
-❌ **Don't** ignore warnings without documenting why
-❌ **Don't** use Credo as the only quality tool — combine with Sobelow, Dialyzer
-
-✅ **Do** add Credo to all projects
-✅ **Do** use `.credo.exs` for configuration
-✅ **Do** run Credo before committing
-✅ **Do** enable strict mode in CI
-✅ **Do** combine with other quality tools
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **code-quality** | For overall code quality |
-| **typespec-dialyzer** | For type safety |
-| **security-essentials** | For security scanning with Sobelow |
+```elixir
+checks: %{
+  enabled: [
+    {Credo.Check.NoDirectRepoInLiveView, []}
+  ]
+}
+```

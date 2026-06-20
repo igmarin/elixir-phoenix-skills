@@ -6,7 +6,7 @@ license: MIT
 description: >
   Use when implementing internationalization (i18n) in Elixir/Phoenix applications. Invoke before
   adding translations or supporting multiple languages. Covers Gettext setup, translation functions,
-  pluralization, and locale management.
+  pluralization, locale management, and .po/.pot file workflows.
   Trigger words: gettext, i18n, internationalization, translation, locale, pluralization, multiple languages.
 metadata:
   user-invocable: "true"
@@ -17,15 +17,22 @@ metadata:
 
 Gettext is the standard internationalization library for Elixir/Phoenix applications.
 
+## End-to-End Workflow
+
+1. **Add Gettext calls** — wrap strings with `gettext/1`, `dgettext/2`, or `ngettext/3` in templates, LiveView, and controllers
+2. **Extract strings** — run `mix gettext.extract --merge` to generate/update `.pot` and `.po` files
+3. **Verify `.po` files** — confirm new `msgid` entries appear with empty `msgstr` values
+4. **Add translations** — fill in `msgstr` values for each target locale
+5. **Set locale per request** — configure a plug or LiveView mount to call `Gettext.put_locale/2`
+6. **Test** — assert translated strings appear when locale is set
+
+---
+
 ## RULES — Follow these with no exceptions
 
-1. **Use Gettext for all user-facing strings** — never hardcode strings in templates or code
-2. **Wrap strings with `gettext/1` or `dgettext/2`** — mark all translatable text
-3. **Use pluralization for counts** — `ngettext/3` handles singular/plural forms
-4. **Extract translations regularly** — run `mix gettext.extract` after adding new strings
-5. **Set locale per request** — use `Gettext.put_locale/1` in plugs or LiveView mount
-6. **Don't translate error messages meant for logs** — only translate user-facing text
-7. **Use domain-specific contexts** — `dgettext("errors", "Not found")` for different domains
+1. **Set locale per request** — use `Gettext.put_locale/2` in plugs or LiveView mount
+2. **Don't translate error messages meant for logs** — only translate user-facing text
+3. **Use domain-specific contexts** — `dgettext("errors", "Not found")` for different domains
 
 ---
 
@@ -38,8 +45,6 @@ defp deps do
     {:gettext, "~> 0.26"}
   ]
 end
-
-# Already included in new Phoenix projects
 ```
 
 ---
@@ -66,6 +71,7 @@ end
   <%= gettext("You have %{count} new messages", count: @message_count) %>
 </p>
 
+<%# Pluralization: pass count as both the integer and a binding %>
 <%= ngettext("There is %{count} item", "There are %{count} items", @item_count, count: @item_count) %>
 ```
 
@@ -78,7 +84,6 @@ defmodule MyAppWeb.HomeLive do
 
   @impl true
   def mount(_params, session, socket) do
-    # Set locale from session or default
     locale = session["locale"] || "en"
     Gettext.put_locale(MyAppWeb.Gettext, locale)
 
@@ -106,27 +111,9 @@ end
 ## Domain-Specific Translations
 
 ```elixir
-# Use different domains for different contexts
-gettext("Save")  # Default domain
-dgettext("errors", "Not found")  # Errors domain
-dgettext("emails", "Welcome email subject")  # Emails domain
-```
-
----
-
-## Pluralization
-
-```elixir
-# Singular and plural forms
-ngettext("There is %{count} comment", "There are %{count} comments", @count, count: @count)
-
-# With interpolation
-ngettext(
-  "You have %{count} new message",
-  "You have %{count} new messages",
-  @count,
-  count: @count
-)
+gettext("Save")                              # Default domain
+dgettext("errors", "Not found")             # Errors domain
+dgettext("emails", "Welcome email subject") # Emails domain
 ```
 
 ---
@@ -149,14 +136,14 @@ priv/gettext/
 ### PO File Format
 
 ```po
-# priv/gettext/en/LC_MESSAGES/default.po
+# priv/gettext/es/LC_MESSAGES/default.po
 msgid "Welcome to our site"
-msgstr "Welcome to our site"
+msgstr "Bienvenido a nuestro sitio"
 
-msgid "You have %{count} new messages"
+msgid "You have %{count} new message"
 msgid_plural "You have %{count} new messages"
-msgstr[0] "You have %{count} new message"
-msgstr[1] "You have %{count} new messages"
+msgstr[0] "Tienes %{count} mensaje nuevo"
+msgstr[1] "Tienes %{count} mensajes nuevos"
 ```
 
 ---
@@ -174,69 +161,74 @@ mix gettext.merge priv/gettext
 mix gettext.extract --merge
 ```
 
+**Validate:** After extraction, open the relevant `.po` files and confirm new `msgid` entries appear with empty `msgstr` values. Fill in translations before deploying.
+
 ---
 
 ## Setting Locale
 
-### In a Plug
-
 ```elixir
+# lib/my_app_web/plugs/set_locale.ex
 defmodule MyAppWeb.Plugs.SetLocale do
   import Plug.Conn
-  import MyAppWeb.Gettext
+
+  @supported_locales ~w(en es fr de)
 
   def init(opts), do: opts
 
   def call(conn, _opts) do
     locale =
-      conn
-      |> get_locale_from_params()
-      |> get_locale_from_session()
-      |> get_locale_from_header()
-      |> Kernel.||("en")
+      locale_from_params(conn) ||
+      locale_from_session(conn) ||
+      locale_from_header(conn) ||
+      "en"
 
     Gettext.put_locale(MyAppWeb.Gettext, locale)
     conn
   end
 
-  defp get_locale_from_params(conn) do
+  defp locale_from_params(conn) do
     conn.params["locale"]
+    |> validate_locale()
   end
 
-  defp get_locale_from_session(nil) do
-    # Check session
-    nil
+  defp locale_from_session(conn) do
+    conn
+    |> get_session("locale")
+    |> validate_locale()
   end
-  defp get_locale_from_session(locale), do: locale
 
-  defp get_locale_from_header(nil) do
-    # Check Accept-Language header
-    nil
+  defp locale_from_header(conn) do
+    conn
+    |> get_req_header("accept-language")
+    |> List.first()
+    |> parse_accept_language()
+    |> validate_locale()
   end
-  defp get_locale_from_header(locale), do: locale
-end
 
-# In router
-pipeline :browser do
-  # ...
-  plug MyAppWeb.Plugs.SetLocale
+  defp parse_accept_language(nil), do: nil
+
+  defp parse_accept_language(header) do
+    # Take the first (highest-priority) locale tag, e.g. "es-MX,es;q=0.9" -> "es"
+    header
+    |> String.split(",")
+    |> List.first()
+    |> String.split("-")
+    |> List.first()
+    |> String.trim()
+  end
+
+  defp validate_locale(locale) when locale in @supported_locales, do: locale
+  defp validate_locale(_), do: nil
 end
 ```
 
-### In LiveView
+Register it in the router pipeline:
 
 ```elixir
-defmodule MyAppWeb.HomeLive do
-  use MyAppWeb, :live_view
-  import MyAppWeb.Gettext
-
-  @impl true
-  def mount(_params, session, socket) do
-    locale = session["locale"] || "en"
-    Gettext.put_locale(MyAppWeb.Gettext, locale)
-
-    {:ok, socket}
-  end
+pipeline :browser do
+  # ...
+  plug MyAppWeb.Plugs.SetLocale
 end
 ```
 
@@ -249,7 +241,6 @@ defmodule MyAppWeb.PageTest do
   use MyAppWeb.ConnCase
 
   test "renders translated welcome message", %{conn: conn} do
-    # Set locale
     Gettext.put_locale(MyAppWeb.Gettext, "es")
 
     conn = get(conn, ~p"/")
@@ -258,27 +249,3 @@ defmodule MyAppWeb.PageTest do
   end
 end
 ```
-
----
-
-## Common Pitfalls
-
-❌ **Don't** hardcode user-facing strings
-❌ **Don't** forget to extract translations after adding strings
-❌ **Don't** translate error messages meant for logs
-❌ **Don't** forget to set locale per request
-❌ **Don't** use string concatenation in translations — use interpolation
-
-✅ **Do** wrap all user-facing strings with `gettext/1`
-✅ **Do** use `ngettext/3` for pluralization
-✅ **Do** extract and merge translations regularly
-✅ **Do** set locale in plugs or LiveView mount
-✅ **Do** use interpolation instead of concatenation
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **phoenix-liveview-essentials** | For LiveView locale handling |
-| **phoenix-json-api** | For API localization |
-| **testing-essentials** | For testing translations |

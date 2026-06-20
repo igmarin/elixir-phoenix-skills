@@ -21,14 +21,12 @@ metadata:
 
 Use this skill before writing ANY PubSub or real-time broadcast code.
 
-## RULES — Follow these with no exceptions
+## Implementation Workflow
 
-1. **Always guard subscriptions with `if connected?(socket)`** — prevents duplicate subscriptions on static render
-2. **Broadcast from contexts, not LiveViews** — keeps real-time logic in the business layer
-3. **Use consistent topic naming** — `"resource:id"` for specific resources, `"resource:action"` for collection-wide events
-4. **Handle PubSub messages in `handle_info/2`** — never in `handle_event/3`; PubSub messages are process messages
-5. **Update assigns immutably with `update/3`** — never replace the full list
-6. **Test PubSub by calling context functions and asserting LiveView updates** — test the full cycle
+1. **Subscribe in `mount`** — guard with `if connected?(socket)` to prevent duplicate subscriptions
+2. **Broadcast from context** — add a private `broadcast/2` helper that fires only on `{:ok, result}`
+3. **Handle in `handle_info/2`** — update assigns immutably with `update/3`
+4. **Verify with a test** — call the context function and assert the LiveView reflects the change
 
 ---
 
@@ -77,6 +75,11 @@ end
 
 ## Broadcasting from Contexts
 
+Broadcast from contexts, not LiveViews — keeps real-time logic in the business layer. Topic naming conventions:
+- `"posts"` — collection-wide; events: `{:post_created, post}`, `{:post_updated, post}`, `{:post_deleted, post}`
+- `"posts:#{post.id}"` — specific resource; events: `{:post_updated, post}`, `{:comment_added, comment}`
+- `"users:#{user.id}"` — user-scoped; events: `{:notification, notification}`, `{:message_received, message}`
+
 ```elixir
 defmodule MyApp.Blog do
   def create_post(attrs) do
@@ -113,67 +116,49 @@ end
 
 ---
 
-## Topic Naming Conventions
+## Testing the Full PubSub Cycle
+
+Test by calling context functions and asserting the LiveView reflects the update — do not test `PubSub.broadcast` in isolation.
 
 ```elixir
-# Collection-wide — all posts
-topic = "posts"
-# Events: {:post_created, post}, {:post_updated, post}, {:post_deleted, post}
+defmodule MyAppWeb.PostLive.IndexTest do
+  use MyAppWeb.ConnCase, async: true
+  import Phoenix.LiveViewTest
 
-# Specific resource — one post
-topic = "posts:#{post.id}"
-# Events: {:post_updated, post}, {:comment_added, comment}
+  test "creates a post and LiveView updates in real time", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/posts")
 
-# User-scoped — all activity for a user
-topic = "users:#{user.id}"
-# Events: {:notification, notification}, {:message_received, message}
-```
+    # Call the context function — it broadcasts internally
+    {:ok, post} = MyApp.Blog.create_post(%{title: "Hello", body: "World"})
 
----
+    # Assert the LiveView received and rendered the broadcast
+    assert render(view) =~ post.title
+  end
 
-## Immutable Assign Updates
+  test "deletes a post and LiveView removes it", %{conn: conn} do
+    post = insert(:post)
+    {:ok, view, _html} = live(conn, ~p"/posts")
 
-✅ **Good — uses update/3 for immutable prepend:**
-```elixir
-def handle_info({:post_created, post}, socket) do
-  {:noreply, update(socket, :posts, fn posts -> [post | posts] end)}
-end
-```
+    {:ok, _} = MyApp.Blog.delete_post(post)
 
-✅ **Good — update a specific item:**
-```elixir
-def handle_info({:post_updated, updated_post}, socket) do
-  {:noreply,
-   update(socket, :posts, fn posts ->
-     Enum.map(posts, fn
-       post when post.id == updated_post.id -> updated_post
-       post -> post
-     end)
-   end)}
+    refute render(view) =~ post.title
+  end
 end
 ```
 
 ---
 
-## Common Pitfalls
+## Troubleshooting / Validation Checkpoints
 
-❌ **Don't** subscribe without checking `connected?(socket)`
-❌ **Don't** broadcast from LiveViews — broadcast from contexts
-❌ **Don't** handle PubSub messages in `handle_event/3`
-❌ **Don't** replace the full list — use `update/3`
-❌ **Don't** test `PubSub.broadcast` in isolation — test the full cycle
+- **Subscription not firing?** Verify the LiveView is fully connected: subscriptions inside `if connected?(socket)` only run after WebSocket upgrade, not on the initial static render.
+- **Broadcast sent but LiveView not updating?** Confirm the topic string in `subscribe` and `broadcast` match exactly (case-sensitive). Add a temporary `IO.inspect` in `handle_info/2` to confirm the message is arriving.
+- **Duplicate messages?** You subscribed outside the `if connected?(socket)` guard — the static render and the live render both subscribed.
+- **`handle_info` clause missing?** An unhandled PubSub message will crash the LiveView process. Add a catch-all `def handle_info(_, socket), do: {:noreply, socket}` if other processes may send unexpected messages.
 
-✅ **Do** guard subscriptions with `connected?(socket)`
-✅ **Do** broadcast from context modules
-✅ **Do** use consistent topic naming
-✅ **Do** handle messages in `handle_info/2`
-✅ **Do** use `update/3` for immutable updates
+---
 
 ## Integration
 
 | Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **phoenix-liveview-essentials** | For LiveView lifecycle patterns |
-| **testing-essentials** | For testing patterns |
-| **phoenix-channels-essentials** | For non-LiveView real-time features |
-| **liveview-streams** | For efficient rendering of large collections |
+|-------------|------------|-----------|
+| phoenix-liveview-essentials | phoenix-pubsub-patterns | testing-essentials |

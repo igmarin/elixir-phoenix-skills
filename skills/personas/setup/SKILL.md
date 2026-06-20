@@ -59,58 +59,47 @@ cp .env.example .env 2>/dev/null || true
 
 **Proceed only after environment check passes.**
 
-**Canonical shared job preamble** (`SHARED_PREAMBLE` — paste verbatim at the start of every job's `steps`; both ci.yml and cd.yml use this block):
+1. **Configure CI pipeline** — write to `.github/workflows/ci.yml`.
+
 ```yaml
 steps:
   - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
   - uses: erlef/setup-beam@5304e04ea2b355f03681464e683d92e3b2f18451
     with:
-      elixir-version: "1.17.x"
+      elixir-version: "1.17.x"   # adjust to match .tool-versions
       otp-version: "27.x"
-```
-
-1. **Configure CI pipeline** — write to `.github/workflows/ci.yml`.
-
-   Start each job with `SHARED_PREAMBLE`, adjusting `elixir-version` to `.tool-versions`, then add:
-```yaml
-      - run: mix deps.get
-      - run: mix compile --warnings-as-errors
-      - run: mix format --check-formatted
-      - run: mix credo --strict
-      - run: mix test --cover
-      - run: mix dialyzer
+  - run: mix deps.get
+  - run: mix compile --warnings-as-errors
+  - run: mix format --check-formatted
+  - run: mix credo --strict
+  - run: mix test --cover
+  - run: mix dialyzer
 ```
 
 2. **Configure CD pipeline** — write to `.github/workflows/cd.yml`.
 
-   Fill in `DEPLOY_CLI` (e.g., `flyctl`, `gigalixir`, custom Docker) and the appropriate secret names before writing the file. Each job begins with `SHARED_PREAMBLE`:
+   Fill in `DEPLOY_CLI` (e.g., `flyctl`, `gigalixir`, custom Docker) and the appropriate secret names. Each job must use the same `checkout` + `setup-beam` actions (same SHAs and versions) as the CI job above.
+
 ```yaml
 jobs:
   deploy-staging:
     runs-on: ubuntu-latest
     environment: staging
     steps:
-      # --- Insert SHARED_PREAMBLE here ---
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - uses: erlef/setup-beam@5304e04ea2b355f03681464e683d92e3b2f18451
+        with:
+          elixir-version: "1.17.x"
+          otp-version: "27.x"
       - run: mix deps.get
       - run: mix ecto.migrate
         env:
           MIX_ENV: staging
           DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
       - run: <DEPLOY_CLI>
-
-  deploy-production:
-    runs-on: ubuntu-latest
-    environment: production
-    needs: deploy-staging
-    steps:
-      # --- Insert SHARED_PREAMBLE here ---
-      - run: mix deps.get
-      - run: mix ecto.migrate
-        env:
-          MIX_ENV: prod
-          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
-      - run: <DEPLOY_CLI>
 ```
+
+   Duplicate `deploy-staging` as `deploy-production` with `environment: production`, `needs: deploy-staging`, `MIX_ENV: prod`, and `DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}`.
 
 ---
 
@@ -118,7 +107,7 @@ jobs:
 
 **Verify everything works end-to-end:**
 
-Confirm the Phase 1 HARD GATE checklist is still fully passing, then additionally verify:
+Confirm every item in the Phase 1 HARD GATE checklist is still fully passing, then additionally verify:
 
 ```bash
 # Start Phoenix server
@@ -128,7 +117,7 @@ mix phx.server
 act push
 ```
 
-**Write `SETUP_CHECKLIST.md`** with the final state of all HARD GATE items (see Phase 1) plus:
+**Write `SETUP_CHECKLIST.md`** recording the final state of all Phase 1 HARD GATE items plus:
 - [ ] CI configured
 - [ ] Secrets configured
 - [ ] Phoenix server starts and serves pages

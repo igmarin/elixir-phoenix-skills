@@ -5,7 +5,8 @@ tags: [atomic]
 license: MIT
 description: >
   Use when implementing caching in Elixir applications. Invoke before adding caching layers.
-  Covers Cachex setup, cache patterns, TTL, warmers, and distributed caching.
+  Configures Cachex instances, implements cache-aside and get-or-set patterns, sets TTL policies,
+  builds cache warmers, monitors cache statistics, and sets up distributed caching across nodes.
   Trigger words: Cachex, caching, cache, TTL, ETS, distributed cache, cache warmer.
 metadata:
   user-invocable: "true"
@@ -14,17 +15,23 @@ metadata:
 
 # Cachex Caching
 
-Cachex is a powerful caching library for Elixir with support for TTL, distributed caching, and cache warmers.
-
 ## RULES — Follow these with no exceptions
 
-1. **Use Cachex for application-level caching** — built on ETS with a rich feature set
-2. **Set appropriate TTL for cached data** — don't cache indefinitely unless data is immutable
-3. **Use cache warmers for expensive data** — pre-populate cache on startup
-4. **Handle cache misses gracefully** — always have a fallback to fetch fresh data
-5. **Monitor cache hit rates** — use telemetry to track cache effectiveness
-6. **Don't cache user-specific data without care** — consider cache key design
-7. **Use `Cachex.fetch/3` for get-or-set patterns** — atomic cache operations
+1. **Set appropriate TTL for cached data** — don't cache indefinitely unless data is immutable
+2. **Use cache warmers for expensive data** — pre-populate cache on startup
+3. **Monitor cache hit rates** — use telemetry to track cache effectiveness
+
+---
+
+## End-to-End Workflow
+
+Follow this sequence when adding caching to a feature:
+
+1. **Add dependency** — add `{:cachex, "~> 3.6"}` to `mix.exs` and run `mix deps.get`
+2. **Configure cache** — start a named Cachex instance in your application supervisor with appropriate limits and TTL
+3. **Implement get-or-set** — wrap data-fetching calls with `Cachex.fetch/3` to atomically cache results
+4. **Add invalidation** — call `Cachex.del/2` after mutating data; fall back to TTL expiry if deletion fails
+5. **Verify with stats** — enable `stats: true`, call `Cachex.stats/1` after exercising the code, and confirm `hit_rate` is non-zero
 
 ---
 
@@ -41,7 +48,6 @@ end
 # application.ex
 def start(_type, _args) do
   children = [
-    # Start cache with configuration
     {Cachex, name: :my_cache, limit: 1000}
   ]
 
@@ -54,22 +60,19 @@ end
 ## Basic Operations
 
 ```elixir
-# Set a value
-Cachex.put(:my_cache, "user:123", %{name: "John", age: 30})
-
-# Get a value
+# Cache miss returns {:ok, nil}, not an error tuple
 case Cachex.get(:my_cache, "user:123") do
-  {:ok, value} -> IO.inspect(value)
-  {:ok, nil} -> IO.puts("Cache miss")
+  {:ok, nil} -> :miss
+  {:ok, value} -> {:hit, value}
 end
 
-# Set with TTL (time to live)
+# put with explicit TTL (overrides cache-level default)
 Cachex.put(:my_cache, "session:abc", data, ttl: :timer.minutes(30))
 
-# Delete a value
+# Atomic delete — returns {:ok, true | false}; false means key was absent
 Cachex.del(:my_cache, "user:123")
 
-# Clear all values
+# Wipe entire cache
 Cachex.clear(:my_cache)
 ```
 
@@ -78,10 +81,8 @@ Cachex.clear(:my_cache)
 ## Get-or-Set Pattern
 
 ```elixir
-# Fetch from cache or compute and cache
 {status, value} =
   Cachex.fetch(:my_cache, "user:123", fn key ->
-    # Cache miss - fetch from database
     user = MyApp.Accounts.get_user(123)
     {:commit, user, ttl: :timer.minutes(5)}
   end)
@@ -101,7 +102,6 @@ defmodule MyApp.CacheWarmer do
   use Cachex.Warmer
 
   def execute(state) do
-    # Pre-populate cache with expensive data
     users = MyApp.Accounts.list_active_users()
 
     actions =
@@ -113,7 +113,6 @@ defmodule MyApp.CacheWarmer do
   end
 end
 
-# Configure cache with warmer
 children = [
   {Cachex,
    name: :my_cache,
@@ -131,38 +130,14 @@ children = [
 children = [
   {Cachex,
    name: :my_cache,
-   # Maximum number of entries
    limit: 10_000,
-   # Eviction policy
    policy: Cachex.Policy.LRW,
-   # Default TTL
    ttl: :timer.minutes(10),
-   # Enable statistics
    stats: true,
-   # Hooks for monitoring
    hooks: [
      %Cachex.Hook{module: MyApp.CacheLogger}
    ]}
 ]
-```
-
----
-
-## Distributed Caching
-
-```elixir
-# For distributed caching across nodes
-children = [
-  {Cachex,
-   name: :distributed_cache,
-   # Use a distributed backend
-   remote: MyApp.DistributedCache,
-   # Or use Cachex's built-in distribution
-   transactions: true}
-]
-
-# Cachex will automatically sync across nodes
-Cachex.put(:distributed_cache, "key", "value")
 ```
 
 ---
@@ -173,8 +148,13 @@ Cachex.put(:distributed_cache, "key", "value")
 defmodule MyApp.Accounts do
   def update_user(user, attrs) do
     with {:ok, updated_user} <- Repo.update(User.changeset(user, attrs)) do
-      # Invalidate cache
-      Cachex.del(:my_cache, "user:#{user.id}")
+      case Cachex.del(:my_cache, "user:#{user.id}") do
+        {:ok, _} ->
+          :ok
+
+        {:error, reason} ->
+          Logger.warning("Cache invalidation failed for user:#{user.id}: #{inspect(reason)}")
+      end
 
       {:ok, updated_user}
     end
@@ -195,133 +175,52 @@ end
 ## Monitoring Cache Stats
 
 ```elixir
-# Enable stats in cache configuration
 {Cachex, name: :my_cache, stats: true}
 
-# Get cache statistics
 {:ok, stats} = Cachex.stats(:my_cache)
-
-IO.inspect(stats)
-# %{
-#   hit_rate: 85.5,
-#   hits: 8550,
-#   misses: 1450,
-#   gets: 10000,
-#   sets: 1200,
-#   evictions: 100
-# }
+# %{hit_rate: 85.5, hits: 8550, misses: 1450, gets: 10000, sets: 1200, evictions: 100}
 ```
 
-### Telemetry Integration
+---
+
+## Distributed Caching
+
+**Broadcast-based invalidation across nodes:**
 
 ```elixir
-defmodule MyApp.CacheTelemetry do
-  def attach do
-    :telemetry.attach(
-      "cachex-stats",
-      [:cachex, :command, :stop],
-      &handle_event/4,
-      nil
-    )
+defmodule MyApp.CacheSync do
+  @topic "cache:invalidate"
+
+  def broadcast_delete(key) do
+    Phoenix.PubSub.broadcast(MyApp.PubSub, @topic, {:invalidate, key})
   end
 
-  def handle_event([:cachex, :command, :stop], measurements, metadata, _config) do
-    # Log cache operations
-    Logger.info("Cache operation",
-      command: metadata.command,
-      key: metadata.key,
-      duration: measurements.duration,
-      hit: metadata.result == :ok
-    )
+  def handle_info({:invalidate, key}, state) do
+    Cachex.del(:my_cache, key)
+    {:noreply, state}
   end
 end
+
+# Subscribe in your GenServer or LiveView
+Phoenix.PubSub.subscribe(MyApp.PubSub, "cache:invalidate")
 ```
 
----
-
-## Cache Key Design
+**Remote reads via RPC (single authoritative node pattern):**
 
 ```elixir
-# Good cache keys
-"user:#{user.id}"                    # User by ID
-"user:#{user.id}:profile"           # User profile
-"posts:page:#{page}:per:#{per_page}" # Paginated posts
-"search:#{query_hash}"              # Search results (hash query)
+def get_user_distributed(id) do
+  case Cachex.get(:my_cache, "user:#{id}") do
+    {:ok, nil} ->
+      :rpc.call(primary_node(), Cachex, :get, [:my_cache, "user:#{id}"])
+      |> case do
+        {:ok, nil} -> fetch_from_db(id)
+        {:ok, value} -> value
+      end
 
-# Bad cache keys
-user                                # Entire struct (changes frequently)
-"posts"                             # Too broad (all posts)
-"#{query}"                          # Unhashed query (too long)
-```
-
----
-
-## Testing with Cachex
-
-```elixir
-defmodule MyApp.AccountsTest do
-  use MyApp.DataCase, async: true
-
-  setup do
-    # Clear cache before each test
-    Cachex.clear(:my_cache)
-    :ok
-  end
-
-  test "caches user after first fetch" do
-    user = user_fixture()
-
-    # First call - cache miss
-    result1 = Accounts.get_user(user.id)
-
-    # Second call - cache hit
-    result2 = Accounts.get_user(user.id)
-
-    assert result1 == result2
-
-    # Verify cache was populated
-    assert {:ok, ^user} = Cachex.get(:my_cache, "user:#{user.id}")
-  end
-
-  test "invalidates cache on update" do
-    user = user_fixture(name: "John")
-
-    # Populate cache
-    Accounts.get_user(user.id)
-
-    # Update user
-    {:ok, updated} = Accounts.update_user(user, %{name: "Jane"})
-
-    # Cache should be invalidated
-    assert {:ok, nil} = Cachex.get(:my_cache, "user:#{user.id}")
-
-    # Next fetch gets fresh data
-    fetched = Accounts.get_user(user.id)
-    assert fetched.name == "Jane"
+    {:ok, value} ->
+      value
   end
 end
+
+defp primary_node, do: Application.fetch_env!(:my_app, :primary_cache_node)
 ```
-
----
-
-## Common Pitfalls
-
-❌ **Don't** cache indefinitely without TTL
-❌ **Don't** forget to invalidate cache on updates
-❌ **Don't** cache user-specific data without proper keys
-❌ **Don't** ignore cache hit rates — monitor effectiveness
-❌ **Don't** use ETS directly — use Cachex for features
-
-✅ **Do** use Cachex for application-level caching
-✅ **Do** set appropriate TTL for cached data
-✅ **Do** use cache warmers for expensive data
-✅ **Do** handle cache misses gracefully
-✅ **Do** monitor cache statistics
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **telemetry-essentials** | For cache monitoring |
-| **otp-essentials** | For understanding ETS and process-based caching |
-| **benchee-profiling** | For measuring cache effectiveness |

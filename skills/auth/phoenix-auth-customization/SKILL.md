@@ -37,13 +37,6 @@ Use this skill when extending `phx.gen.auth` with custom fields.
 ```bash
 # Generate auth with LiveView (recommended)
 mix phx.gen.auth Accounts User users
-
-# This creates:
-# - Migration: priv/repo/migrations/*_create_users_auth_tables.exs
-# - Schema: lib/my_app/accounts/user.ex
-# - Context: lib/my_app/accounts.ex
-# - LiveViews: lib/my_app_web/live/user_*_live.ex
-# - Plugs: lib/my_app_web/user_auth.ex
 ```
 
 ---
@@ -68,6 +61,11 @@ defmodule MyApp.Repo.Migrations.AddUsernameToUsers do
     create unique_index(:users, [:username])
   end
 end
+```
+
+```bash
+# Run migration and verify success before proceeding
+mix ecto.migrate
 ```
 
 ### Step 2: Update the Schema
@@ -125,6 +123,11 @@ def user_fixture(attrs \\ %{}) do
 end
 ```
 
+```bash
+# Verify fixtures pass before updating forms
+mix test
+```
+
 ### Step 4: Update the Registration Form
 
 ```heex
@@ -138,27 +141,3 @@ end
   </:actions>
 </.simple_form>
 ```
-
----
-
-## Common Pitfalls
-
-❌ **Don't** modify generated auth migrations
-❌ **Don't** forget to update test fixtures
-❌ **Don't** forget to confirm users in fixtures
-❌ **Don't** forget to update both form and handler
-❌ **Don't** validate uniqueness in application code alone
-
-✅ **Do** create separate migrations for custom fields
-✅ **Do** update `registration_changeset`
-✅ **Do** update test fixtures with all required fields
-✅ **Do** set `confirmed_at` in fixtures
-✅ **Do** use `unique_constraint` + database index
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **phoenix-liveview-auth** | For LiveView authentication patterns |
-| **ecto-changeset-patterns** | For changeset composition |
-| **testing-essentials** | For testing patterns |

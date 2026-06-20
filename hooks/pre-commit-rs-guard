@@ -1,0 +1,77 @@
+#!/bin/bash
+#
+# rs-guard pre-commit hook
+#
+# Runs an AI-powered review of staged changes using rs-guard before each commit.
+# Uses --dry-run so it never blocks the commit — output is informational only.
+#
+# Provider is read from .reviewer.toml (default: deepseek). Set the matching
+# API key environment variable for your chosen provider:
+#
+#   Provider     | Environment variable
+#   -------------|---------------------
+#   DeepSeek     | DEEPSEEK_API_KEY
+#   OpenAI       | OPENAI_API_KEY
+#   Kimi         | KIMI_API_KEY
+#   Qwen         | DASHSCOPE_API_KEY
+#   OpenRouter   | OPENROUTER_API_KEY
+#
+# Binary resolution order:
+#   1. rs-guard in PATH
+#   2. ./rs-guard in repo root   (default output of scripts/rs-guard-install.sh)
+#   3. ~/.cargo/bin/rs-guard     (installed via `cargo install rs-guard`)
+#
+# Install locally with: cargo install rs-guard --version 1.2.0 --locked
+#
+# Usage: This script is invoked automatically by git via hooks/hooks.json.
+# To install manually: cp hooks/pre-commit-rs-guard .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+if command -v rs-guard &>/dev/null; then
+  RS_GUARD_BIN="rs-guard"
+elif [ -x "$REPO_ROOT/rs-guard" ]; then
+  RS_GUARD_BIN="$REPO_ROOT/rs-guard"
+elif [ -x "$HOME/.cargo/bin/rs-guard" ]; then
+  RS_GUARD_BIN="$HOME/.cargo/bin/rs-guard"
+else
+  echo "[rs-guard] rs-guard not found — skipping pre-commit review."
+  echo "[rs-guard] Install with: cargo install rs-guard --version 1.2.0 --locked"
+  exit 0
+fi
+
+has_api_key=false
+for key in DEEPSEEK_API_KEY OPENAI_API_KEY KIMI_API_KEY DASHSCOPE_API_KEY OPENROUTER_API_KEY; do
+  if [ -n "${!key:-}" ]; then
+    has_api_key=true
+    break
+  fi
+done
+
+if [ "$has_api_key" = false ]; then
+  echo "[rs-guard] No provider API key found — skipping pre-commit review."
+  echo "[rs-guard] Set one of: DEEPSEEK_API_KEY, OPENAI_API_KEY, KIMI_API_KEY, DASHSCOPE_API_KEY, OPENROUTER_API_KEY"
+  exit 0
+fi
+
+DIFF_FILE="$(mktemp /tmp/rs-guard-staged-XXXXXX.diff)"
+trap 'rm -f "$DIFF_FILE"' EXIT
+
+git diff --cached --unified=5 > "$DIFF_FILE"
+
+if [ ! -s "$DIFF_FILE" ]; then
+  exit 0
+fi
+
+echo "[rs-guard] Running AI review on staged changes..."
+
+"$RS_GUARD_BIN" \
+  --diff-file "$DIFF_FILE" \
+  --prompt-file "$REPO_ROOT/.github/review-prompt.md" \
+  --dry-run \
+  2>&1 || echo "[rs-guard] Review exited with a non-zero code (advisory only — commit proceeds)."
+
+echo "[rs-guard] Review complete. Commit proceeding."

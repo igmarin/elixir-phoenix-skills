@@ -4,10 +4,13 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  Use when creating custom Mix tasks or using Phoenix generators. Invoke before writing custom
-  Mix tasks or running phx.gen.* commands. Covers custom task creation, generator patterns,
-  and Mix project configuration.
-  Trigger words: Mix task, custom task, phx.gen, generators, mix.exs, project configuration.
+  Use when creating custom Mix tasks or using Phoenix generators. Invoke before defining
+  custom Mix task modules with argument parsing and subcommands, scaffolding resources with
+  phx.gen.live or phx.gen.context, generating authentication systems with phx.gen.auth,
+  configuring dependencies and aliases in mix.exs, or writing tests for custom tasks.
+  Covers Mix.Tasks module creation, generator patterns, and Mix project configuration.
+  Trigger words: Mix task, custom task, phx.gen, generators, mix.exs, project configuration,
+  phx.gen.live, phx.gen.auth, scaffold, seed data, ecto.setup.
 metadata:
   user-invocable: "true"
   version: 1.0.0
@@ -15,77 +18,34 @@ metadata:
 
 # Mix Tasks & Generators
 
-Mix is Elixir's build tool, providing tasks for compilation, testing, and custom workflows.
+## Key Rules
 
-## RULES — Follow these with no exceptions
-
-1. **Use Phoenix generators for standard patterns** — `phx.gen.live`, `phx.gen.context`, etc.
-2. **Create custom tasks for project-specific workflows** — don't repeat complex shell commands
-3. **Follow Mix task naming conventions** — `Mix.Tasks.MyApp.TaskName`
-4. **Document tasks with `@shortdoc`** — provide help text for `mix help`
-5. **Use `Mix.Task` behavior** — implement `run/1` callback
-6. **Test custom tasks** — use `Mix.Project.in_project/4` for testing
-7. **Don't override standard Mix tasks** — create new tasks instead
+- Always call `Mix.Task.run("app.start")` in tasks that need the application started
+- Create custom tasks for project-specific workflows; don't override standard Mix tasks
 
 ---
 
 ## Phoenix Generators
 
-### LiveView CRUD
+### LiveView CRUD with Enum Field
 
 ```bash
-# Generate LiveView CRUD for a resource
+# Enum fields require the explicit enum:value:... syntax
 mix phx.gen.live Blog Post posts title:string body:text status:enum:draft:published:archived
-
-# This creates:
-# - Context: lib/my_app/blog.ex
-# - Schema: lib/my_app/blog/post.ex
-# - LiveView: lib/my_app_web/live/post_live/index.ex, show.ex, form.ex
-# - Tests: test/my_app/blog_test.exs, test/my_app_web/live/post_live_test.exs
-```
-
-### Context and Schema
-
-```bash
-# Generate context and schema only (no web layer)
-mix phx.gen.context Blog Post posts title:string body:text
-
-# Generate schema only
-mix phx.gen.schema Blog.Post posts title:string body:text
-```
-
-### JSON API
-
-```bash
-# Generate JSON API controllers
-mix phx.gen.json Blog Post posts title:string body:text
-
-# This creates:
-# - Context: lib/my_app/blog.ex
-# - Schema: lib/my_app/blog/post.ex
-# - Controller: lib/my_app_web/controllers/post_controller.ex
-# - View: lib/my_app_web/controllers/post_json.ex
 ```
 
 ### Auth
 
 ```bash
-# Generate authentication system
+# Generate authentication system (creates accounts context, user schema, and session plumbing)
 mix phx.gen.auth Accounts User users
-
-# This creates:
-# - Migration: priv/repo/migrations/*_create_users_auth_tables.exs
-# - Schema: lib/my_app/accounts/user.ex
-# - Context: lib/my_app/accounts.ex
-# - LiveViews: lib/my_app_web/live/user_*_live.ex
-# - Plugs: lib/my_app_web/user_auth.ex
 ```
 
 ---
 
 ## Custom Mix Tasks
 
-### Basic Task
+### Basic Task with Transaction Safety
 
 ```elixir
 # lib/mix/tasks/my_app.seed_data.ex
@@ -98,15 +58,20 @@ defmodule Mix.Tasks.MyApp.SeedData do
   def run(_args) do
     Mix.Task.run("app.start")
 
-    # Your seeding logic
-    MyApp.Seeds.run()
+    case MyApp.Repo.transaction(fn -> MyApp.Seeds.run() end) do
+      {:ok, _} ->
+        count = MyApp.Repo.aggregate(MyApp.User, :count)
+        Mix.shell().info("Data seeded successfully! (#{count} users in DB)")
 
-    Mix.shell().info("Data seeded successfully!")
+      {:error, reason} ->
+        Mix.shell().error("Seeding failed, transaction rolled back: #{inspect(reason)}")
+        Mix.raise("Seed failed")
+    end
   end
 end
 ```
 
-### Task with Arguments
+### Task with Arguments and Validation
 
 ```elixir
 defmodule Mix.Tasks.MyApp.ImportUsers do
@@ -130,12 +95,21 @@ defmodule Mix.Tasks.MyApp.ImportUsers do
       Mix.shell().info("Dry run mode - no changes will be made")
     end
 
-    case MyApp.UserImporter.import_from_csv(file, dry_run: dry_run?) do
-      {:ok, count} ->
-        Mix.shell().info("Imported #{count} users")
+    before_count = MyApp.Repo.aggregate(MyApp.User, :count)
+
+    case MyApp.Repo.transaction(fn ->
+           MyApp.UserImporter.import_from_csv(file, dry_run: dry_run?)
+         end) do
+      {:ok, {:ok, count}} ->
+        after_count = MyApp.Repo.aggregate(MyApp.User, :count)
+        Mix.shell().info("Imported #{count} users (total in DB: #{after_count}, was: #{before_count})")
+
+      {:ok, {:error, reason}} ->
+        Mix.shell().error("Import validation failed: #{reason}")
+        Mix.raise("Import failed")
 
       {:error, reason} ->
-        Mix.shell().error("Import failed: #{reason}")
+        Mix.shell().error("Import failed, transaction rolled back: #{inspect(reason)}")
         Mix.raise("Import failed")
     end
   end
@@ -176,6 +150,17 @@ defmodule Mix.Tasks.MyApp.Migrate do
   end
 end
 ```
+
+### Custom Task Workflow
+
+Follow these steps when creating and integrating a new custom Mix task:
+
+1. **Create the file** at `lib/mix/tasks/<namespace>.<task_name>.ex`
+2. **Implement `run/1`** with argument parsing via `OptionParser.parse/2` as needed
+3. **Add `@shortdoc`** so the task appears in `mix help`
+4. **Register `preferred_cli_env`** in `mix.exs` if the task targets a specific env (e.g., `:dev`)
+5. **Verify registration** — run `mix help | grep my_app` to confirm the task is listed
+6. **Write tests** using `Mix.Project.in_project/4` (see Testing section below)
 
 ---
 
@@ -287,27 +272,3 @@ defmodule Mix.Tasks.MyApp.SeedDataTest do
   end
 end
 ```
-
----
-
-## Common Pitfalls
-
-❌ **Don't** forget to run `Mix.Task.run("app.start")` for tasks that need the app
-❌ **Don't** override standard Mix tasks
-❌ **Don't** skip `@shortdoc` documentation
-❌ **Don't** hardcode paths — use Mix project functions
-❌ **Don't** forget to test custom tasks
-
-✅ **Do** use Phoenix generators for standard patterns
-✅ **Do** create custom tasks for project workflows
-✅ **Do** document tasks with `@shortdoc`
-✅ **Do** use `Mix.shell()` for output
-✅ **Do** test custom tasks
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **ecto-essentials** | For database-related tasks |
-| **phoenix-liveview-essentials** | When using phx.gen.live |
-| **testing-essentials** | For testing generators |

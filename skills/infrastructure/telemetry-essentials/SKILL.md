@@ -24,11 +24,11 @@ Use this skill before writing ANY telemetry, logging, or metrics code.
 ## RULES — Follow these with no exceptions
 
 1. **Use structured logging (`Logger.info("action", key: value)`)** — never string interpolation in log messages
-2. **Attach telemetry handlers in `Application.start/2`** — not in modules that may restart
-3. **Use `Ecto.Repo` telemetry events for query monitoring** — Ecto already emits events
+2. **Attach telemetry handlers in `Application.start/2`** — not in modules that may restart, and never in GenServer `init`
+3. **Use `Ecto.Repo` telemetry events for query monitoring** — Ecto already emits events; don't manually instrument queries
 4. **Use `Phoenix.LiveDashboard` in dev/staging** — free observability with zero code
 5. **Tag telemetry events with metadata (user_id, request_id)** — without correlation IDs, traces are useless
-6. **Never log at `:debug` level in production** — it includes query parameters and PII
+6. **Never log at `:debug` level in production** — it includes query parameters and PII; use `:info` level instead
 
 ---
 
@@ -109,6 +109,18 @@ defmodule MyApp.Telemetry do
 end
 ```
 
+### Verification
+
+After attaching handlers, confirm everything is wired up in `iex`:
+
+```elixir
+# In iex -S mix
+:telemetry.execute([:my_app, :orders, :created], %{count: 1, total_cents: 4999}, %{user_id: 42, source: :web})
+# Expected: Logger output like — [info] Order created total_cents=1 user_id=42
+```
+
+If no log line appears, verify `attach_handlers/0` was called before the event and that the event name matches exactly.
+
 ---
 
 ## Telemetry Spans
@@ -157,27 +169,14 @@ scope "/" do
 end
 ```
 
+> **Deeper topics:** For performance profiling and benchmarking, see the `benchee-profiling` skill. For exporting metrics to external tools (Prometheus, Datadog) and production deployment considerations, see the `deployment-gotchas` skill. For low-level metric aggregation and reporter configuration, consult the [Telemetry.Metrics](https://hexdocs.pm/telemetry_metrics) and [TelemetryMetricsPrometheus](https://hexdocs.pm/telemetry_metrics_prometheus) library docs.
+
 ---
-
-## Common Pitfalls
-
-❌ **Don't** use string interpolation in log messages
-❌ **Don't** attach telemetry handlers in GenServer init
-❌ **Don't** log at `:debug` level in production
-❌ **Don't** forget to tag events with metadata
-❌ **Don't** manually instrument Ecto queries — use built-in events
-
-✅ **Do** use structured logging with key-value pairs
-✅ **Do** attach handlers in `Application.start/2`
-✅ **Do** use `:info` level in production
-✅ **Do** tag events with request_id and user_id
-✅ **Do** use LiveDashboard for dev/staging observability
 
 ## Integration
 
 | Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **deployment-gotchas** | For production configuration |
-| **security-essentials** | For sensitive data logging rules |
-| **otp-essentials** | For process monitoring patterns |
-| **benchee-profiling** | For performance profiling |
+|-------------|------------|-----------|
+| otp-essentials | telemetry-essentials | deployment-gotchas |
+| otp-essentials | telemetry-essentials | benchee-profiling |
+| security-essentials | telemetry-essentials | deployment-gotchas |

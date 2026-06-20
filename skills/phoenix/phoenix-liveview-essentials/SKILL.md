@@ -24,7 +24,7 @@ Use this skill before writing ANY LiveView module or `.heex` template.
 ## RULES — Follow these with no exceptions
 
 1. **Always add `@impl true`** before every callback (mount, handle_event, handle_info, render)
-2. **Initialize assigns before they're accessed in render/1** — use mount/3 for static defaults, handle_params/3 for URL-dependent assigns (pagination, filters, sorting)
+2. **Initialize assigns before they're accessed in render/1** — use mount/3 for static defaults, handle_params/3 for URL-dependent assigns
 3. **Check `connected?(socket)`** before PubSub subscriptions, timers, or side effects
 4. **Use `Map.get(assigns, :key, default)`** for optional assigns in helper functions
 5. **Return proper tuples** — `{:ok, socket}` from mount, `{:noreply, socket}` from handle_event
@@ -36,40 +36,24 @@ Use this skill before writing ANY LiveView module or `.heex` template.
 
 ---
 
-## Critical Concept: Two-Phase Rendering
+## Recommended Build Order
 
-**LiveView renders happen in TWO phases:**
-
-1. **Static/Disconnected Render** — Initial HTTP request
-   - No WebSocket connection
-   - `connected?(socket)` returns `false`
-   - Side effects (PubSub, timers) won't work
-
-2. **Connected Render** — WebSocket established
-   - Full live functionality active
-   - `connected?(socket)` returns `true`
-   - Events and live updates work
-
-**Common Bug:** Accessing uninitialized assigns during static render crashes with `KeyError`.
-
-**Solution:** Initialize assigns before render — use mount/3 for static defaults, handle_params/3 for URL-dependent state.
+1. **Define `mount/3`** — initialize all assigns with static defaults
+2. **Add `handle_params/3`** — set URL-dependent assigns, subscribe to PubSub
+3. **Write `render/1`** — reference only assigns initialized in steps 1–2
+4. **Add `handle_event/3`** — implement user interactions with proper error handling
+5. **Verify static render** — confirm no `KeyError` before WebSocket connects
 
 ---
 
-## Lifecycle Flow
+## Critical Concept: Two-Phase Rendering
 
-```mermaid
-flowchart TD
-    A[HTTP Request arrives] --> B["mount/3 (connected? = false)"]
-    B --> C["handle_params/3 (connected? = false)"]
-    C --> D["render/1 (STATIC HTML)"]
-    D --> E[HTML sent to browser]
-    E --> F[Browser connects WebSocket]
-    F --> G["mount/3 (connected? = true)"]
-    G --> H["handle_params/3 (connected? = true)"]
-    H --> I["render/1 (sent over WebSocket)"]
-    I --> J[LiveView active and reactive]
-```
+LiveView renders twice per page load:
+
+- **Phase 1 — Disconnected:** HTTP request; `connected?(socket)` is `false`; side effects won't work.
+- **Phase 2 — Connected:** WebSocket established; `connected?(socket)` is `true`; events and live updates work.
+
+Both phases run `mount` → `handle_params` → render. Initialize all assigns to safe defaults in Phase 1 so the static HTML never raises a `KeyError`.
 
 ---
 
@@ -85,7 +69,7 @@ def mount(_params, _session, socket) do
     |> assign(:loading, false)
     |> assign(:data, [])
 
-  # Only subscribe when connected
+  # Only subscribe when connected — avoids double subscriptions across both render phases
   if connected?(socket) do
     Phoenix.PubSub.subscribe(MyApp.PubSub, "topic")
   end
@@ -94,43 +78,48 @@ def mount(_params, _session, socket) do
 end
 ```
 
-**Why check connected?** PubSub subscriptions and timers only work with WebSocket connection.
+**Defer expensive operations to the connected phase:**
+
+```elixir
+@impl true
+def mount(_params, _session, socket) do
+  socket =
+    if connected?(socket) do
+      assign(socket, :data, run_expensive_query())
+    else
+      assign(socket, :data, [])  # Placeholder for static render
+    end
+
+  {:ok, socket}
+end
+```
+
+**✅ Validation checkpoint:** Verify all assigns used in render/1 are initialized — the static render must display without a `KeyError`.
 
 ---
 
 ## Handle Event
 
-Use pattern matching for different actions.
-
 ```elixir
 @impl true
-def handle_event("save", %{"post" => post_params}, socket) do
-  case Posts.create_post(post_params) do
-    {:ok, post} ->
-      socket =
-        socket
-        |> put_flash(:info, "Created!")
-        |> assign(:post, post)
+def handle_event("delete", %{"id" => id}, socket) do
+  case Posts.delete_post(id) do
+    {:ok, _post} ->
+      {:noreply, assign(socket, :posts, Posts.list_posts())}
 
-      {:noreply, socket}
-
-    {:error, changeset} ->
-      {:noreply, assign(socket, :changeset, changeset)}
+    {:error, _reason} ->
+      {:noreply, put_flash(socket, :error, "Could not delete post")}
   end
 end
-
-@impl true
-def handle_event("delete", %{"id" => id}, socket) do
-  Posts.delete_post(id)
-  {:noreply, assign(socket, :posts, Posts.list_posts())}
-end
 ```
+
+For create/update events, use the Error Handling pattern below — assign changeset errors to the socket rather than raising.
+
+**✅ Validation checkpoint:** Each handler must return `{:noreply, socket}`; error paths assign errors to the socket rather than raising.
 
 ---
 
 ## Handle Info
-
-Handle async messages and PubSub broadcasts.
 
 ```elixir
 @impl true
@@ -148,12 +137,11 @@ end
 
 ## Handle Params
 
-Respond to URL changes (called in BOTH render phases).
+Called in BOTH render phases on URL changes. Place URL-dependent assigns here so they are available in both static and connected renders.
 
 ```elixir
 @impl true
 def handle_params(%{"id" => id}, _uri, socket) do
-  # This runs during static AND connected render
   post = Posts.get_post!(id)
 
   if connected?(socket) do
@@ -184,16 +172,9 @@ socket = assign(socket, count: 0, name: "User", active: true)
 socket = update(socket, :count, &(&1 + 1))
 ```
 
-### Safe Assign Access
-
-✅ **In render/1:** Direct access is safe if initialized in mount.
+**In render/1** — direct access is safe when initialized in mount:
 
 ```elixir
-@impl true
-def mount(_params, _session, socket) do
-  {:ok, assign(socket, :count, 0)}
-end
-
 @impl true
 def render(assigns) do
   ~H"""
@@ -202,7 +183,7 @@ def render(assigns) do
 end
 ```
 
-✅ **In helper functions:** Use Map.get for optional assigns.
+**In helper functions** — use `Map.get` for optional assigns:
 
 ```elixir
 defp format_user(socket) do
@@ -228,8 +209,6 @@ end
 ---
 
 ## Components
-
-Extract reusable UI into function components.
 
 ```elixir
 def card(assigns) do
@@ -281,17 +260,15 @@ end
 
 ## Error Handling
 
-Always handle errors gracefully in LiveViews.
-
 ```elixir
 @impl true
-def handle_event("save", params, socket) do
-  case save_record(params) do
-    {:ok, record} ->
+def handle_event("save", %{"post" => post_params}, socket) do
+  case Posts.create_post(post_params) do
+    {:ok, post} ->
       socket =
         socket
-        |> put_flash(:info, "Saved successfully")
-        |> assign(:record, record)
+        |> put_flash(:info, "Created!")
+        |> assign(:post, post)
 
       {:noreply, socket}
 
@@ -304,113 +281,11 @@ def handle_event("save", params, socket) do
       {:noreply, socket}
 
     {:error, reason} ->
-      socket = put_flash(socket, :error, "An error occurred: #{reason}")
-      {:noreply, socket}
+      {:noreply, put_flash(socket, :error, "An error occurred: #{reason}")}
   end
 end
 ```
 
 ---
 
-## Common Lifecycle Mistakes
-
-### ❌ Mistake 1: Assuming Assigns Exist
-
-```elixir
-def render(assigns) do
-  ~H"""
-  <p>Count: <%= @count %></p>  <!-- Crash if @count not initialized -->
-  """
-end
-```
-
-### ✅ Fix: Initialize before render
-
-```elixir
-@impl true
-def mount(_params, _session, socket) do
-  {:ok, assign(socket, :count, 0)}
-end
-```
-
-### ❌ Mistake 2: Subscribing in Both Phases
-
-```elixir
-@impl true
-def mount(_params, _session, socket) do
-  # BAD - Subscribes during static render (doesn't work)
-  Phoenix.PubSub.subscribe(MyApp.PubSub, "topic")
-  {:ok, socket}
-end
-```
-
-### ✅ Fix: Check connected?
-
-```elixir
-@impl true
-def mount(_params, _session, socket) do
-  if connected?(socket) do
-    Phoenix.PubSub.subscribe(MyApp.PubSub, "topic")
-  end
-
-  {:ok, socket}
-end
-```
-
-### ❌ Mistake 3: Expensive Operations in Both Phases
-
-```elixir
-@impl true
-def mount(_params, _session, socket) do
-  # BAD - Runs expensive query twice (static + connected)
-  data = run_expensive_query()
-  {:ok, assign(socket, :data, data)}
-end
-```
-
-### ✅ Fix: Defer to connected phase
-
-```elixir
-@impl true
-def mount(_params, _session, socket) do
-  socket =
-    if connected?(socket) do
-      assign(socket, :data, run_expensive_query())
-    else
-      assign(socket, :data, [])
-    end
-
-  {:ok, socket}
-end
-```
-
----
-
-## Common Pitfalls
-
-❌ **Don't** perform expensive operations in render
-❌ **Don't** forget to add `@impl true`
-❌ **Don't** subscribe to PubSub when not connected
-❌ **Don't** modify socket after `push_navigate/2`
-❌ **Don't** use `socket.assigns` in templates (use `@assign_name`)
-❌ **Don't** query the database directly from LiveViews
-
-✅ **Do** handle both connected and disconnected mount
-✅ **Do** use pattern matching in event handlers
-✅ **Do** return proper tuples from callbacks
-✅ **Do** validate uploads before processing
-✅ **Do** provide user feedback with flash messages
-✅ **Do** use streams for large collections
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| elixir-essentials | phoenix-liveview-essentials | testing-essentials |
-| None (standalone) | phoenix-liveview-essentials | liveview-streams |
-| None (standalone) | phoenix-liveview-essentials | phoenix-scopes |
-| None (standalone) | phoenix-liveview-essentials | phoenix-pubsub-patterns |
-| None (standalone) | phoenix-liveview-essentials | phoenix-liveview-auth |
-| **ecto-essentials** | When working with database operations |
-
-See `agents/liveview-checklist.md` for a step-by-step LiveView development checklist.
+See `agents/liveview-checklist.md` for a step-by-step LiveView development checklist. Related skills: `liveview-streams`, `phoenix-pubsub-patterns`, `phoenix-liveview-auth`, `phoenix-scopes`, `testing-essentials`.

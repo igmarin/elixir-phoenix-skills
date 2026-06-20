@@ -23,10 +23,10 @@ Use this skill before writing ANY security-sensitive code.
 
 ## RULES — Follow these with no exceptions
 
-1. **Never use `String.to_atom/1` on user input** — atoms are never garbage collected; user-controlled atoms exhaust the atom table and crash the BEAM VM
+1. **Never use `String.to_atom/1` on user input** — exhausts the atom table and crashes the BEAM VM
 2. **Never interpolate strings into `fragment()` or `SQL.query()`** — always use `?` parameters for fragments and `$1` for raw SQL
 3. **Never redirect to user-controlled URLs** — validate against a whitelist or use verified routes (`~p"..."`)
-4. **Avoid `raw/1` in templates** — Phoenix auto-escapes for a reason; if HTML is required, sanitize first with HtmlSanitizeEx
+4. **Avoid `raw/1` in templates** — if HTML is required, sanitize first with HtmlSanitizeEx
 5. **Never log sensitive data** — passwords, tokens, secrets, API keys must never appear in Logger calls
 6. **Use `Plug.Crypto.secure_compare/2` for token comparison** — never `==`, which enables timing attacks
 7. **Run dependency audits after changes** — `mix deps.audit`, `mix hex.audit`, and `mix sobelow` catch known vulnerabilities
@@ -34,9 +34,20 @@ Use this skill before writing ANY security-sensitive code.
 
 ---
 
-## Atom Table Exhaustion
+## Security Review Process
 
-The BEAM atom table has a fixed limit (default ~1M atoms) and is **never garbage collected**.
+Apply this sequence whenever writing or reviewing security-sensitive code:
+
+1. **Write code** — implement the feature following the rules above
+2. **Run `mix sobelow`** — static analysis catches common security issues
+3. **Review findings** — address each reported issue
+4. **Fix issues** — apply the correct pattern from the sections below
+5. **Re-run until clean** — repeat steps 2–4 until `mix sobelow` reports no issues
+6. **Run full audit** — `mix deps.audit && mix hex.audit && mix sobelow` before merging
+
+---
+
+## Atom Table Exhaustion
 
 ❌ **Bad — user controls the atom:**
 ```elixir
@@ -56,8 +67,6 @@ end
 ---
 
 ## SQL Injection
-
-Ecto's query DSL is safe by default. Danger arises with `fragment/1` and raw SQL.
 
 ❌ **Bad — string interpolation in fragment:**
 ```elixir
@@ -202,31 +211,8 @@ end
 
 ---
 
-## Common Pitfalls
-
-❌ **Don't** use `String.to_atom/1` on user input
-❌ **Don't** interpolate strings into SQL fragments
-❌ **Don't** redirect to user-controlled URLs
-❌ **Don't** use `raw/1` without sanitization
-❌ **Don't** log passwords, tokens, or secrets
-❌ **Don't** use `==` for token comparison
-❌ **Don't** skip dependency audits
-
-✅ **Do** whitelist atom creation from user input
-✅ **Do** parameterize all SQL queries
-✅ **Do** use verified routes (`~p"..."`) for redirects
-✅ **Do** let Phoenix auto-escape templates
-✅ **Do** use `Plug.Crypto.secure_compare/2` for secrets
-✅ **Do** add Sobelow to CI pipeline
-
 ## Integration
 
 | Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| elixir-essentials | security-essentials | elixir-essentials |
-| ecto-essentials | security-essentials | ecto-essentials |
-| phoenix-liveview-auth | security-essentials | phoenix-liveview-auth |
-| code-quality | security-essentials | quality (persona) |
-| **phoenix-authorization-patterns** | When implementing access control |
-| **deployment-gotchas** | When managing secrets in production |
-| **credo-config** | When adding security-focused Credo checks |
+|-------------|------------|-----------|
+| elixir-essentials | security-essentials | None (standalone) |

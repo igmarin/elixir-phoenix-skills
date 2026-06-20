@@ -4,9 +4,9 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  MANDATORY for adding type safety to Elixir code. Invoke before writing public functions or refactoring.
+  Use when adding type safety to Elixir code, writing public functions, or refactoring.
   Covers @spec, @type, Dialyxir setup, typespec best practices, and CI integration.
-  Critical for refactoring discipline and catching type errors at compile time.
+  Supports incremental adoption and catching type errors before production.
   Trigger words: typespec, @spec, @type, Dialyzer, Dialyxir, type safety, type checking.
 metadata:
   user-invocable: "true"
@@ -15,17 +15,11 @@ metadata:
 
 # TypeSpec & Dialyzer
 
-TypeSpecs and Dialyzer provide static analysis for Elixir, catching type errors before runtime.
-
 ## RULES — Follow these with no exceptions
 
-1. **Add `@spec` to all public functions** — typespecs are documentation and enable Dialyzer analysis
-2. **Define custom types with `@type`** — make complex types readable and reusable
-3. **Use `@typedoc` for custom types** — document what the type represents
-4. **Run Dialyzer in CI** — catch type errors before they reach production
-5. **Use `@spec` over documentation alone** — typespecs are machine-checkable
-6. **Start with core modules** — add typespecs incrementally, don't try to type everything at once
-7. **Use Dialyxir's `--format short`** — easier to read and fix errors
+1. **Run Dialyzer in CI** — catch type errors before they reach production
+2. **Start with core modules** — add typespecs incrementally, don't try to type everything at once
+3. **Never ignore Dialyzer warnings without documenting why** — use `.dialyzer_ignore.exs`
 
 ---
 
@@ -35,18 +29,6 @@ TypeSpecs and Dialyzer provide static analysis for Elixir, catching type errors 
 defmodule MyApp.Accounts do
   alias MyApp.Accounts.User
 
-  @doc """
-  Gets a user by ID.
-
-  ## Examples
-
-      iex> get_user(1)
-      %User{}
-
-      iex> get_user(999)
-      nil
-
-  """
   @spec get_user(integer()) :: User.t() | nil
   def get_user(id) do
     Repo.get(User, id)
@@ -137,10 +119,7 @@ end
 ### Run Dialyzer
 
 ```bash
-# First run builds the PLT (slow)
-mix dialyzer
-
-# Subsequent runs are fast
+# First run builds the PLT
 mix dialyzer
 
 # Format output
@@ -152,16 +131,49 @@ mix dialyzer --ignore-file .dialyzer_ignore.exs
 
 ---
 
-## TypeSpec Best Practices
+## Interpreting and Fixing Dialyzer Errors
 
-### Use Built-in Types
+When Dialyzer reports errors, follow this cycle: **read → locate → fix → rerun**.
 
-```elixir
-@spec process(String.t()) :: :ok | {:error, atom()}
-@spec list_users() :: [User.t()]
-@spec get_user(integer()) :: User.t() | nil
-@spec create_user(map()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
+### Example Dialyzer Output
+
+```text
+lib/my_app/accounts.ex:12:no_return
+Function create_user/1 has no local return.
+
+lib/my_app/accounts.ex:20:call
+The call MyApp.Accounts.get_user(<<"admin">>) will never return since the success
+typing is (integer()) and the contract is (integer()) :: User.t() | nil.
 ```
+
+### Common Error Types and Fixes
+
+| Error | Meaning | Fix |
+|-------|---------|-----|
+| `no_return` | Function always raises or crashes | Widen return type or fix crash path |
+| `call` | Argument type doesn't match `@spec` | Fix call site type or update spec |
+| `contract_subtype` | Return type narrower than spec | Widen spec or remove unused clauses |
+| `unknown_type` | Referenced type doesn't exist | Add `@type` or fix module alias |
+| `unmatched_return` | Return value not handled by caller | Handle all branches explicitly |
+
+### Fix-then-Rerun Cycle
+
+```bash
+# 1. Run with short format for readable output
+mix dialyzer --format short
+
+# 2. Fix the flagged function — correct the @spec or the implementation
+# 3. Rerun to confirm fix and check for cascading errors
+mix dialyzer --format short
+
+# 4. If a warning is a known false positive, document and suppress it
+#    Add the entry to .dialyzer_ignore.exs in Elixir tuple syntax, then:
+mix dialyzer --ignore-file .dialyzer_ignore.exs
+```
+
+---
+
+## TypeSpec Best Practices
 
 ### Union Types
 
@@ -211,7 +223,7 @@ end
 
 ```yaml
 - name: Cache PLT
-  uses: actions/cache@v3
+  uses: actions/cache@6f8efc29b200d32929f49075959781ed54ec270c # v3
   with:
     path: priv/plts
     key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
@@ -220,27 +232,3 @@ end
 - name: Dialyzer
   run: mix dialyzer --format short
 ```
-
----
-
-## Common Pitfalls
-
-❌ **Don't** skip `@spec` on public functions
-❌ **Don't** ignore Dialyzer warnings without documenting why
-❌ **Don't** try to add typespecs to everything at once
-❌ **Don't** forget to run Dialyzer in CI
-❌ **Don't** use `any()` as a catch-all — be specific
-
-✅ **Do** add `@spec` to all public functions
-✅ **Do** define custom types with `@type`
-✅ **Do** use `@typedoc` for complex types
-✅ **Do** run Dialyzer in CI
-✅ **Do** add typespecs incrementally
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **elixir-essentials** | For general Elixir patterns |
-| **code-quality** | For overall code quality |
-| **credo-config** | For style and linting |

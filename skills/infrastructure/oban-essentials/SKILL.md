@@ -21,16 +21,24 @@ metadata:
 
 Use this skill before writing ANY Oban worker or enqueuing jobs.
 
-## RULES — Follow these with no exceptions
+## End-to-End Workflow
 
-1. **Always `use Oban.Worker`** with explicit `queue` and `max_attempts` options
-2. **Return `{:ok, result}` for success, `{:error, reason}` for retryable failures, `{:cancel, reason}` for permanent failures** — never return bare `:ok` or raise
-3. **Make workers idempotent** — the same job may run more than once due to retries or node restarts
-4. **Use `unique` option to prevent duplicate jobs** — specify `period`, `fields`, and `keys`
-5. **Test with `Oban.Testing`** — use `assert_enqueued` and `perform_job`, never call `perform/1` directly
-6. **Never put large data in job args** — store IDs and fetch fresh data in the worker
-7. **Use `Oban.insert/1`** (not `Oban.insert!/1`) and handle the error tuple
-8. **Enqueue from contexts, not LiveViews** — keep web layer thin
+When setting up a new Oban worker, follow these steps in order:
+
+1. **Add queue to config** — define the queue name and concurrency in `config/config.exs`
+2. **Define worker module** — `use Oban.Worker` with explicit `queue`, `max_attempts`, and `unique` options
+3. **Enqueue from context** — call `Oban.insert/1` inside a context function, not a LiveView
+4. **Write tests** — use `Oban.Testing` with `assert_enqueued` and `perform_job`, covering all return paths
+
+---
+
+## RULES — Quick Reference
+
+1. `use Oban.Worker` with explicit `queue` and `max_attempts` — see [Worker Definition](#worker-definition)
+2. Make workers **idempotent** — the same job may execute more than once — see [Idempotency](#idempotency)
+3. **Never put large data in job args** — store IDs and fetch fresh data in the worker — see [Job Args Best Practices](#job-args-best-practices)
+4. Use `Oban.insert/1` (not `Oban.insert!/1`) and handle the error tuple — see [Enqueuing Jobs](#enqueuing-jobs)
+5. **Enqueue from contexts, not LiveViews** — keep the web layer thin — see [Enqueuing from Contexts](#enqueuing-from-contexts)
 
 ---
 
@@ -56,13 +64,6 @@ defmodule MyApp.Workers.SendWelcomeEmail do
   end
 end
 ```
-
-### Key Points
-
-- `queue` — which queue runs this worker (must match config)
-- `max_attempts` — total attempts including the first (3 = 1 original + 2 retries)
-- `unique` — deduplication; `period` in seconds, `keys` specifies which args fields to compare
-- Pattern match on `%Oban.Job{args: ...}` — args are always string-keyed maps (JSON serialized)
 
 ---
 
@@ -113,6 +114,8 @@ end
 
 ## Return Values
 
+Return exactly one of these from `perform/1`. Use `{:error, reason}` for retryable failures; never raise.
+
 ```elixir
 @impl Oban.Worker
 def perform(%Oban.Job{args: args}) do
@@ -129,8 +132,6 @@ def perform(%Oban.Job{args: args}) do
   {:snooze, 60}
 end
 ```
-
-**Never raise in workers.** An unhandled exception counts as a retryable failure but produces noisy logs and stack traces. Use explicit `{:error, reason}` instead.
 
 ---
 
@@ -154,8 +155,6 @@ config :my_app, Oban,
 ---
 
 ## Idempotency
-
-Workers must be safe to run multiple times with the same args.
 
 ❌ **Bad — sends duplicate emails on retry:**
 ```elixir
@@ -199,12 +198,6 @@ use Oban.Worker,
   ]
 ```
 
-### When to Use
-
-- **Email sending** — don't send the same email twice within 5 minutes
-- **Data syncing** — don't start a sync if one is already running
-- **Webhook delivery** — deduplicate retry attempts
-
 ---
 
 ## Scheduled and Recurring Jobs
@@ -230,6 +223,11 @@ config :my_app, Oban,
 ---
 
 ## Testing
+
+- **Use `perform_job/2`** — not `perform/1`. `perform_job` validates args and simulates the Oban runtime.
+- **Use `assert_enqueued/1`** — verify jobs were enqueued with correct args.
+- **Use `Oban.Testing` inline mode** in test config — jobs run synchronously in the test process.
+- **Test all return paths** — success, retryable error, and cancel.
 
 ```elixir
 defmodule MyApp.Workers.SendWelcomeEmailTest do
@@ -261,13 +259,6 @@ defmodule MyApp.Workers.SendWelcomeEmailTest do
 end
 ```
 
-### Testing Rules
-
-- **Use `perform_job/2`** — not `perform/1`. `perform_job` validates args and simulates the Oban runtime.
-- **Use `assert_enqueued/1`** — verify jobs were enqueued with correct args.
-- **Use `Oban.Testing` inline mode** in test config — jobs run synchronously in the test process.
-- **Test all return paths** — success, retryable error, and cancel.
-
 ---
 
 ## Job Args Best Practices
@@ -284,29 +275,3 @@ SendReport.new(%{
 ```elixir
 SendReport.new(%{user_id: user.id, report_id: report.id})
 ```
-
----
-
-## Common Pitfalls
-
-❌ **Don't** raise in workers — use `{:error, reason}` or `{:cancel, reason}`
-❌ **Don't** put large data in job args — store IDs and fetch in the worker
-❌ **Don't** use `Oban.insert!/1` — handle the error tuple
-❌ **Don't** enqueue from LiveViews — enqueue from contexts
-❌ **Don't** forget to make workers idempotent
-❌ **Don't** call `perform/1` directly in tests — use `perform_job/2`
-
-✅ **Do** return tagged tuples for all outcomes
-✅ **Do** use `unique` to prevent duplicate jobs
-✅ **Do** test all return paths (success, error, cancel)
-✅ **Do** configure queue concurrency based on resource needs
-✅ **Do** use `Oban.Plugins.Pruner` to keep the jobs table clean
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **testing-essentials** | Before writing worker tests |
-| **elixir-essentials** | Before writing worker modules |
-| **otp-essentials** | When choosing between Oban and raw OTP for background work |
-| **broadway-data-pipelines** | When needing data pipeline processing instead of job queues |

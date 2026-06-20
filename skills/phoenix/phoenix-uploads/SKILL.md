@@ -26,10 +26,22 @@ Use this skill before implementing ANY file upload functionality.
 1. **Use manual uploads (NOT `auto_upload: true`)** for form submission patterns
 2. **Always add upload directory to `static_paths()`** — files won't be accessible without this
 3. **Handle upload errors** — display `error_to_string/1` output in templates
-4. **Create upload directories with `File.mkdir_p!`** before saving files
-5. **Generate unique filenames** — prevent collisions and path traversal attacks
-6. **Validate file types server-side** — never trust client MIME types
-7. **Restart server after changing `static_paths()`** — changes don't apply until restart
+4. **Validate file types server-side** — never trust client MIME types
+5. **Restart server after changing `static_paths()`** — changes don't apply until restart
+
+---
+
+## Implementation Workflow
+
+Follow these steps in order:
+
+1. **Add `uploads` to `static_paths()`** — see Static Paths Configuration below
+2. **Restart the server** — `static_paths()` changes require a full restart to take effect
+3. **Add `allow_upload/3` in `mount/3`** — configure accepted types, entry limits, and file size
+4. **Implement `handle_event("validate", ...)`** — required to trigger change tracking
+5. **Implement `handle_event("save", ...)`** — consume entries, create directories, copy files
+6. **Add the upload form to your template** — include drop target, previews, and error display
+7. **Verify** — confirm upload directory exists, files are saved, and URLs resolve correctly
 
 ---
 
@@ -45,14 +57,7 @@ allow_upload(:upload_name,
 )
 ```
 
-### Auto Upload (Advanced - Use Sparingly)
-
-Only use `auto_upload: true` when:
-- Files should upload immediately on selection
-- You have `handle_progress/3` callback
-- You consume entries outside form submission
-
-**Never use `auto_upload: true` with form submission patterns!**
+> **Note:** Avoid `auto_upload: true` with form submission patterns — it is only appropriate when files must upload immediately on selection via a `handle_progress/3` callback.
 
 ---
 
@@ -139,25 +144,9 @@ end
 
 ---
 
-## Common Pitfalls
-
-❌ **Don't** use `auto_upload: true` with form submission
-❌ **Don't** forget to add upload directory to `static_paths()`
-❌ **Don't** trust client MIME types — validate server-side
-❌ **Don't** use original filenames — generate unique names
-❌ **Don't** forget to create directories with `File.mkdir_p!`
-❌ **Don't** forget to restart after changing `static_paths()`
-
-✅ **Do** use manual uploads for form patterns
-✅ **Do** add upload directory to `static_paths()`
-✅ **Do** generate unique filenames
-✅ **Do** validate file types server-side
-✅ **Do** handle and display upload errors
-
 ## Integration
 
 | Predecessor | This Skill | Successor |
-|-------------|------------|----------|
-| **phoenix-liveview-essentials** | For LiveView lifecycle patterns |
-| **testing-essentials** | For testing upload patterns |
-| **security-essentials** | For file type validation |
+|-------------|------------|-----------|
+| phoenix-liveview-essentials | phoenix-uploads | testing-essentials |
+| phoenix-liveview-essentials | phoenix-uploads | security-essentials |
