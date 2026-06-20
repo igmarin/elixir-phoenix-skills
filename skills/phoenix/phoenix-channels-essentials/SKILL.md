@@ -30,20 +30,18 @@ metadata:
 
 ## W011 Guard — Third-Party Content Isolation
 
-Phoenix Channels receive **client-authored free-form payloads** via `handle_in/3` (e.g., `handle_in("new_message", %{"body" => body}, socket)`). This is outsider-authored content that could contain indirect prompt injection.
+Phoenix Channels receive **client-authored free-form payloads** via `handle_in/3`. The `body` field in messages like `handle_in("new_message", %{"body" => body}, socket)` is outsider-authored content. If your application passes any message field to an LLM for analysis, you MUST sanitize it first.
 
 **Rules:**
-1. **Never pass raw client `body` directly to an LLM** — always sanitize and validate first
-2. **Extract only structured, typed fields** — extract `user_id`, `timestamp`, etc., never raw text fields as-is
-3. **Validate content length and format** — reject oversized payloads before processing
-4. **If LLM analysis is needed** — pass only anonymized metadata (not user content) to the LLM
+1. **Sanitize text fields before LLM use** — truncate to max length and trim whitespace
+2. **Validate message structure** — reject messages missing required fields
+3. **Extract structured metadata** — prefer `user_id`, `timestamp` over raw text for any downstream processing
 
 ```elixir
-# ✅ Safe: extract structured fields, sanitize content
+# Safe pattern: sanitize before any downstream use (including LLM calls)
 @impl true
 def handle_in("new_message", %{"body" => body}, socket) do
-  # Validate and truncate body before any downstream use
-  sanitized_body = String.slice(body, 0, 10_000) |> String.trim()
+  sanitized_body = String.slice(body || "", 0, 10_000) |> String.trim()
 
   broadcast!(socket, "new_message", %{
     body: sanitized_body,
@@ -52,12 +50,6 @@ def handle_in("new_message", %{"body" => body}, socket) do
   })
 
   {:reply, :ok, socket}
-end
-
-# ❌ Dangerous: raw body passed to context or LLM without validation
-def handle_in("new_message", %{"body" => body}, socket) do
-  # body is untrusted outsider content — never use raw
-  MyApp.Analysis.analyze(body)  # If this feeds an LLM, HIGH RISK
 end
 ```
 

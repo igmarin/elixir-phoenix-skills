@@ -28,16 +28,15 @@ metadata:
 
 ## W011 Guard — Third-Party Content Isolation
 
-Broadway pipelines ingest **outsider-authored free-form message data** from external producers (SQS, Kafka, RabbitMQ). Message body text from these queues is untrusted client/outsider content that could contain indirect prompt injection.
+Broadway pipelines ingest **outsider-authored free-form message data** from external producers (SQS, Kafka, RabbitMQ). Message body text from these queues is untrusted client/outsider content. If your pipeline passes any message field to an LLM for analysis, you MUST sanitize it first.
 
 **Rules:**
-1. **Never pass raw queue message `data` directly to an LLM** — always validate and sanitize first
-2. **Parse and validate message structure** — reject messages that don't match expected schema
-3. **Truncate or sanitize text fields** — enforce max length on any string field that could contain injection payloads
-4. **If LLM analysis is needed** — extract only structured metadata fields, never raw message body text
+1. **Validate message structure** — reject messages that don't match expected schema
+2. **Sanitize text fields before LLM use** — truncate to max length on any string field
+3. **Extract structured metadata** — prefer typed fields over raw text for any downstream processing
 
 ```elixir
-# ✅ Safe: validate and truncate message data
+# Safe pattern: validate and truncate message data before any downstream use
 @impl true
 def handle_message(_, message, _context) do
   data = message.data
@@ -47,7 +46,7 @@ def handle_message(_, message, _context) do
     return Broadway.Message.failed(message, :invalid_schema)
   end
 
-  # Sanitize text fields before any downstream use
+  # Sanitize text fields before any downstream use (including LLM calls)
   sanitized_data = %{
     id: data["id"],
     body: String.slice(data["body"] || "", 0, 10_000),
@@ -59,12 +58,6 @@ def handle_message(_, message, _context) do
   |> Broadway.Message.put_batcher(:default)
 rescue
   e -> Broadway.Message.failed(message, e)
-end
-
-# ❌ Dangerous: raw message body passed to LLM
-def handle_message(_, message, _context) do
-  # message.data from queue is untrusted — NEVER pass raw to LLM
-  MyApp.LLMAnalyzer.analyze(message.data["body"])  # HIGH RISK
 end
 ```
 
