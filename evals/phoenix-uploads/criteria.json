@@ -1,0 +1,31 @@
+{
+  "context": "Checks whether the final artifact follows the phoenix-uploads instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: Use this skill before implementing ANY file upload functionality.",
+      "max_score": 20
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: **Use manual uploads (NOT `auto_upload: true`)** for form submission patterns",
+      "max_score": 20
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: **Always add upload directory to `static_paths()`** — files won't be accessible without this",
+      "max_score": 20
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: **Verify** — confirm upload directory exists, files are saved, and URLs resolve correctly",
+      "max_score": 20
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: > **Note:** Avoid `auto_upload: true` with form submission patterns — it is only appropriate when files must upload immediately on selection via a `handle_progress/3` callback.",
+      "max_score": 20
+    }
+  ]
+}

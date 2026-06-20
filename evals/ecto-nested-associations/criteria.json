@@ -1,0 +1,36 @@
+{
+  "context": "Checks whether the final artifact follows the ecto-nested-associations instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: Use this skill before writing ANY nested association or multi-table code.",
+      "max_score": 17
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: **Use `cast_assoc/3` for has_many/has_one** — never manually insert children in a separate step",
+      "max_score": 17
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: **Use `Ecto.Multi` for operations spanning multiple unrelated tables** — do NOT use `Ecto.Multi` for nested associations",
+      "max_score": 17
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: **Always create indexes on foreign key columns**",
+      "max_score": 17
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: **Use `on_replace: :delete` in `cast_assoc` for list management** — allows removing items by omitting them",
+      "max_score": 16
+    },
+    {
+      "name": "instruction-6",
+      "description": "The submitted artifact follows this skill instruction: Always pattern-match on both success and error tuples from `Repo.transaction/1`:",
+      "max_score": 16
+    }
+  ]
+}

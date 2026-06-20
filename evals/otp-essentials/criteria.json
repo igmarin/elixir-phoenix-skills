@@ -1,0 +1,56 @@
+{
+  "context": "Checks whether the final artifact follows the otp-essentials instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: Use this skill before writing ANY GenServer, Supervisor, Task, or Agent module.",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: **Always use `@impl true`** before GenServer/Agent callbacks (init, handle_call, handle_cast, handle_info, terminate)",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: **Use `GenServer.call` for request/response, `GenServer.cast` for fire-and-forget** — never cast when you need a result",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: **Always define a public API wrapping GenServer calls** — callers should never use `GenServer.call(pid, ...)` directly",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: **Use `Task.async`/`Task.await` with bounded timeouts** — never `Task.async` without a corresponding `Task.await` or `Task.yield`",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-6",
+      "description": "The submitted artifact follows this skill instruction: **Use `Task.Supervisor`** for fire-and-forget supervised work",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-7",
+      "description": "The submitted artifact follows this skill instruction: **Prefer ETS over a bottleneck GenServer** for shared read-heavy state — one GenServer serializes all access",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-8",
+      "description": "The submitted artifact follows this skill instruction: Always wrap GenServer calls behind a public module API. Callers should not know they're talking to a GenServer.",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-9",
+      "description": "The submitted artifact follows this skill instruction: Never block in `init/1`. Use `handle_continue` for expensive setup.",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-10",
+      "description": "The submitted artifact follows this skill instruction: **Define children** — list in dependency order (dependencies first)",
+      "max_score": 10
+    }
+  ]
+}

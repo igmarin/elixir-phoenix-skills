@@ -1,0 +1,21 @@
+{
+  "context": "Checks whether the final artifact follows the req-http-client instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: **Step 2 — Create a configured client module**",
+      "max_score": 34
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: Checkpoint: run `mix test` — all stubs must pass before using the real API.",
+      "max_score": 33
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: **Step 4 — Verify in IEx against the real endpoint**",
+      "max_score": 33
+    }
+  ]
+}

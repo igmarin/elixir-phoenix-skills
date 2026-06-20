@@ -1,0 +1,41 @@
+{
+  "context": "Checks whether the final artifact follows the swoosh-emails instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: **Use Swoosh for all email sending**",
+      "max_score": 15
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: **Define emails in separate modules** — `MyApp.Emails.UserEmail`, not inline in contexts",
+      "max_score": 15
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: **Use Phoenix components for email templates** — reuse UI components in emails",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: **Never send emails synchronously in web requests** — use Oban or Task for async delivery",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: **Use `Swoosh.Preview` in development** — preview emails in the browser",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-6",
+      "description": "The submitted artifact follows this skill instruction: **Prefer Oban over Task.start** — retries and observability vs silent failures",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-7",
+      "description": "The submitted artifact follows this skill instruction: Use `Phoenix.Component` and `Phoenix.Template` to render HEEx templates as email bodies, reusing UI components:",
+      "max_score": 14
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "context": "Checks whether the final artifact follows the elixir-skill-router instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: Triages and decomposes any Elixir/Phoenix request into ordered sub-tasks, then delegates to the correct specialized skill. Identify the matching skill from the catalog below and route to it using the format defined in **Output Style**.",
+      "max_score": 15
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: Priority: TDD → Planning → Implementation → Quality → Review.",
+      "max_score": 15
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: **Example 1 — \"I need to add user notifications to my Phoenix app. Users should receive an email when a job completes, and I want a live counter on the dashboard.\"**",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: **Routing statement (required on every response):** The routing statement MUST be the first substantive line of every response, before any analysis or implementation.",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: **Language**: Generated artifacts and output MUST be in English unless explicitly requested otherwise.",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-6",
+      "description": "The submitted artifact follows this skill instruction: **Use `elixir-essentials` alone** if you only need Elixir language guidance without orchestration.",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-7",
+      "description": "The submitted artifact follows this skill instruction: **Use `testing-essentials` alone** if the test approach is already decided and you just need to write the spec.",
+      "max_score": 14
+    }
+  ]
+}

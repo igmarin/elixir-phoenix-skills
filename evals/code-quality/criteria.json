@@ -1,0 +1,41 @@
+{
+  "context": "Checks whether the final artifact follows the code-quality instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: **Duplicated functions must be extracted** — when 2+ modules share >70% identical function implementations, create a shared module",
+      "max_score": 15
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: **Functions must stay below ABC complexity 30** — break complex functions into smaller helpers with single responsibilities",
+      "max_score": 15
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: **Unused private functions must be removed** — dead code identified after refactoring must be cleaned up",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: **Duplicated templates must become components** — when 2+ HEEx files share >40% identical markup, extract to a function component",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: **Prefer composition over inheritance** — extract shared functions into modules imported/used where needed",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-6",
+      "description": "The submitted artifact follows this skill instruction: **Run analysis** — `mix credo --strict` to identify all issues",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-7",
+      "description": "The submitted artifact follows this skill instruction: **Verify fixes** — re-run `mix credo --strict` to confirm all issues are resolved",
+      "max_score": 14
+    }
+  ]
+}
