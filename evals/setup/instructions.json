@@ -1,0 +1,36 @@
+{
+  "target_skill": "setup",
+  "source_path": "skills/personas/setup/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "**HARD GATE — Environment Check** (all items must pass before Phase 2):",
+      "original_snippets": "**HARD GATE — Environment Check** (all items must pass before Phase 2):",
+      "relevant_when": "When a user asks for planning work that should trigger setup.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "Fill in `DEPLOY_CLI` (e.g., `flyctl`, `gigalixir`, custom Docker) and the appropriate secret names. Each job must use the same `checkout` + `setup-beam` actions (same SHAs and versions) as the CI job above.",
+      "original_snippets": "Fill in `DEPLOY_CLI` (e.g., `flyctl`, `gigalixir`, custom Docker) and the appropriate secret names. Each job must use the same `checkout` + `setup-beam` actions (same SHAs and versions) as the CI job above.",
+      "relevant_when": "When a user asks for planning work that should trigger setup.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "**Verify everything works end-to-end:**",
+      "original_snippets": "**Verify everything works end-to-end:**",
+      "relevant_when": "When a user asks for planning work that should trigger setup.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Write `SETUP_CHECKLIST.md`** recording the final state of all Phase 1 HARD GATE items plus:",
+      "original_snippets": "**Write `SETUP_CHECKLIST.md`** recording the final state of all Phase 1 HARD GATE items plus:",
+      "relevant_when": "When a user asks for planning work that should trigger setup.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "When completing project setup, output MUST include:",
+      "original_snippets": "When completing project setup, output MUST include:",
+      "relevant_when": "When a user asks for planning work that should trigger setup.",
+      "why_given": "preference"
+    }
+  ]
+}

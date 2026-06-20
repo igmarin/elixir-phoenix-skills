@@ -1,0 +1,51 @@
+{
+  "context": "Checks whether the final artifact follows the liveview instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: Define the LiveView's purpose and URL (via `live \"/path\"` in router).",
+      "max_score": 12
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: Define the project-specific `mount/3` contract: which params and session keys this feature uses, what assigns it sets.",
+      "max_score": 11
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: List all events (`handle_event`, `handle_info`, `handle_params`) this LiveView must handle.",
+      "max_score": 11
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: Write test covering: mount renders, key assigns present, events update socket, streams for collections.",
+      "max_score": 11
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: Verify the test **FAILS** with `mix test test/my_app_web/live/my_live_test.exs` — failure must be \"module not defined\".",
+      "max_score": 11
+    },
+    {
+      "name": "instruction-6",
+      "description": "The submitted artifact follows this skill instruction: Run focused test: `mix test test/my_app_web/live/my_live_test.exs` — must **PASS**.",
+      "max_score": 11
+    },
+    {
+      "name": "instruction-7",
+      "description": "The submitted artifact follows this skill instruction: Run full suite: `mix test` — must **PASS**.",
+      "max_score": 11
+    },
+    {
+      "name": "instruction-8",
+      "description": "The submitted artifact follows this skill instruction: Verify the route exists and `mount/3` returns `{:ok, socket}`.",
+      "max_score": 11
+    },
+    {
+      "name": "instruction-9",
+      "description": "The submitted artifact follows this skill instruction: Check template for missing assigns — unset assigns crash on render.",
+      "max_score": 11
+    }
+  ]
+}

@@ -6,7 +6,7 @@ require "json"
 require "yaml"
 
 ROOT = File.expand_path("..", __dir__)
-OUTPUT_ROOT = File.join(ROOT, "tessl-evals")
+OUTPUT_ROOT = File.join(ROOT, "evals")
 SKILLS_DIR = File.join(ROOT, "skills")
 
 Instruction = Struct.new(:text, :snippet, :why_given, keyword_init: true)
@@ -167,18 +167,18 @@ def write_skill_eval(skill_name, skill_path)
 
       ## Problem
 
-      A team needs help with a planning task in this area:
+      An Elixir/Phoenix team needs help with a task in this area:
 
-      #{description.empty? ? "Use the repository's planning skill conventions to produce the requested result." : description}
+      #{description.empty? ? "Use the repository's Elixir and Phoenix skill conventions to produce the requested result." : description}
 
-      The team has asked for a concise planning artifact that a reviewer can inspect without needing to observe the agent's process.
+      The team has asked for a concise implementation artifact that a reviewer can inspect without needing to observe the agent's process.
 
       ## Output
 
       Create `answer.md` with:
 
       - a short plan for the work
-      - the concrete planning artifact or recommendation
+      - the concrete Elixir/Phoenix-oriented artifact or recommendation
       - the verification steps or quality gates that should be run
       - any assumptions that affect the result
     MARKDOWN
@@ -187,7 +187,7 @@ def write_skill_eval(skill_name, skill_path)
   write_json(
     File.join(scenario_dir, "criteria.json"),
     {
-      "context" => "Checks whether the final artifact follows the #{skill_name} instructions from the published agnostic-planning-skills plugin.",
+      "context" => "Checks whether the final artifact follows the #{skill_name} instructions from the published Elixir Phoenix Skills plugin.",
       "type" => "weighted_checklist",
       "checklist" => weighted_checklist(instructions)
     }
@@ -207,4 +207,4 @@ skills.each do |skill_name, spec|
   write_skill_eval(skill_name, skill_path)
 end
 
-puts "Generated Tessl eval source for #{skills.length} publishable skills in tessl-evals/"
+puts "Generated Tessl eval source for #{skills.length} publishable skills in evals/"

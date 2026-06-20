@@ -1,0 +1,36 @@
+{
+  "target_skill": "phoenix-uploads",
+  "source_path": "skills/phoenix/phoenix-uploads/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "Use this skill before implementing ANY file upload functionality.",
+      "original_snippets": "Use this skill before implementing ANY file upload functionality.",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-uploads.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Use manual uploads (NOT `auto_upload: true`)** for form submission patterns",
+      "original_snippets": "**Use manual uploads (NOT `auto_upload: true`)** for form submission patterns",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-uploads.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Always add upload directory to `static_paths()`** — files won't be accessible without this",
+      "original_snippets": "**Always add upload directory to `static_paths()`** — files won't be accessible without this",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-uploads.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "**Verify** — confirm upload directory exists, files are saved, and URLs resolve correctly",
+      "original_snippets": "**Verify** — confirm upload directory exists, files are saved, and URLs resolve correctly",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-uploads.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "> **Note:** Avoid `auto_upload: true` with form submission patterns — it is only appropriate when files must upload immediately on selection via a `handle_progress/3` callback.",
+      "original_snippets": "> **Note:** Avoid `auto_upload: true` with form submission patterns — it is only appropriate when files must upload immediately on selection via a `handle_progress/3` callback.",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-uploads.",
+      "why_given": "preference"
+    }
+  ]
+}

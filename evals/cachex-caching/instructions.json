@@ -1,0 +1,18 @@
+{
+  "target_skill": "cachex-caching",
+  "source_path": "skills/infrastructure/cachex-caching/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "**Use cache warmers for expensive data** — pre-populate cache on startup",
+      "original_snippets": "**Use cache warmers for expensive data** — pre-populate cache on startup",
+      "relevant_when": "When a user asks for planning work that should trigger cachex-caching.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Verify with stats** — enable `stats: true`, call `Cachex.stats/1` after exercising the code, and confirm `hit_rate` is non-zero",
+      "original_snippets": "**Verify with stats** — enable `stats: true`, call `Cachex.stats/1` after exercising the code, and confirm `hit_rate` is non-zero",
+      "relevant_when": "When a user asks for planning work that should trigger cachex-caching.",
+      "why_given": "new knowledge"
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "target_skill": "ecto-essentials",
+  "source_path": "skills/database/ecto-essentials/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "Use this skill before modifying ANY schema, query, or migration.",
+      "original_snippets": "Use this skill before modifying ANY schema, query, or migration.",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-essentials.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Never combine schema changes and data backfill** in the same migration",
+      "original_snippets": "**Never combine schema changes and data backfill** in the same migration",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-essentials.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "Define schemas with proper types and associations.",
+      "original_snippets": "Define schemas with proper types and associations.",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-essentials.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Write clear, reversible migrations. After writing a migration, always validate it with the steps below.",
+      "original_snippets": "Write clear, reversible migrations. After writing a migration, always validate it with the steps below.",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-essentials.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Run `mix ecto.migrate` — confirm it applies without errors",
+      "original_snippets": "Run `mix ecto.migrate` — confirm it applies without errors",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-essentials.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Run `mix ecto.rollback` — confirm it reverses cleanly",
+      "original_snippets": "Run `mix ecto.rollback` — confirm it reverses cleanly",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-essentials.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Run `mix ecto.migrate` again — confirm re-applying succeeds",
+      "original_snippets": "Run `mix ecto.migrate` again — confirm re-applying succeeds",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-essentials.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Never call Repo from the web layer** (LiveViews, controllers) — all database operations belong in context modules.",
+      "original_snippets": "**Never call Repo from the web layer** (LiveViews, controllers) — all database operations belong in context modules.",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-essentials.",
+      "why_given": "preference"
+    }
+  ]
+}

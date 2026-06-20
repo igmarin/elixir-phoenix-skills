@@ -1,0 +1,30 @@
+{
+  "target_skill": "gettext-i18n",
+  "source_path": "skills/integrations/gettext-i18n/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "**Verify `.po` files** — confirm new `msgid` entries appear with empty `msgstr` values",
+      "original_snippets": "**Verify `.po` files** — confirm new `msgid` entries appear with empty `msgstr` values",
+      "relevant_when": "When a user asks for planning work that should trigger gettext-i18n.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Don't translate error messages meant for logs** — only translate user-facing text",
+      "original_snippets": "**Don't translate error messages meant for logs** — only translate user-facing text",
+      "relevant_when": "When a user asks for planning work that should trigger gettext-i18n.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "**Use domain-specific contexts** — `dgettext(\"errors\", \"Not found\")` for different domains",
+      "original_snippets": "**Use domain-specific contexts** — `dgettext(\"errors\", \"Not found\")` for different domains",
+      "relevant_when": "When a user asks for planning work that should trigger gettext-i18n.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "gettext(\"Save\")                              # Default domain",
+      "original_snippets": "gettext(\"Save\")                              # Default domain",
+      "relevant_when": "When a user asks for planning work that should trigger gettext-i18n.",
+      "why_given": "new knowledge"
+    }
+  ]
+}

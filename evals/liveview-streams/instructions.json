@@ -1,0 +1,42 @@
+{
+  "target_skill": "liveview-streams",
+  "source_path": "skills/phoenix/liveview-streams/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "**Use streams for collections with 100+ items** — regular assigns re-render the entire list on every change",
+      "original_snippets": "**Use streams for collections with 100+ items** — regular assigns re-render the entire list on every change",
+      "relevant_when": "When a user asks for planning work that should trigger liveview-streams.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Use `stream_insert/3` and `stream_delete/3`** for incremental updates — never replace the entire stream",
+      "original_snippets": "**Use `stream_insert/3` and `stream_delete/3`** for incremental updates — never replace the entire stream",
+      "relevant_when": "When a user asks for planning work that should trigger liveview-streams.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Use `phx-update=\"stream\"` in templates** — required for stream DOM patching",
+      "original_snippets": "**Use `phx-update=\"stream\"` in templates** — required for stream DOM patching",
+      "relevant_when": "When a user asks for planning work that should trigger liveview-streams.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Use `stream_configure/3` for custom DOM IDs** — when default IDs don't match your needs",
+      "original_snippets": "**Use `stream_configure/3` for custom DOM IDs** — when default IDs don't match your needs",
+      "relevant_when": "When a user asks for planning work that should trigger liveview-streams.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Verify after adding the template:** Open browser DevTools → Network → WS frames. Confirm incoming frames contain targeted patch operations for individual items, not full list replacements. If you see full re-renders, check:",
+      "original_snippets": "**Verify after adding the template:** Open browser DevTools → Network → WS frames. Confirm incoming frames contain targeted patch operations for individual items, not full list replacements. If you see full re-renders, check:",
+      "relevant_when": "When a user asks for planning work that should trigger liveview-streams.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Verify after implementing load_more:** Trigger the event and confirm in DevTools WS frames that only the new batch of items is appended, not the entire list. If DOM IDs collide across pages, items will overwrite each other — ensure your ID scheme is globally unique.",
+      "original_snippets": "**Verify after implementing load_more:** Trigger the event and confirm in DevTools WS frames that only the new batch of items is appended, not the entire list. If DOM IDs collide across pages, items will overwrite each other — ensure your ID scheme is globally unique.",
+      "relevant_when": "When a user asks for planning work that should trigger liveview-streams.",
+      "why_given": "new knowledge"
+    }
+  ]
+}

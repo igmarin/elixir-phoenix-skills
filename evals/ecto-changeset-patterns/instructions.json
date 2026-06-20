@@ -1,0 +1,42 @@
+{
+  "target_skill": "ecto-changeset-patterns",
+  "source_path": "skills/database/ecto-changeset-patterns/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "Never require foreign key fields in `cast_assoc` child changesets",
+      "original_snippets": "Never require foreign key fields in `cast_assoc` child changesets",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-changeset-patterns.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "Always pair `unsafe_validate_unique` with `unique_constraint`",
+      "original_snippets": "Always pair `unsafe_validate_unique` with `unique_constraint`",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-changeset-patterns.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "Use `update_change/3` for field transformations (trim, downcase, slugify)",
+      "original_snippets": "Use `update_change/3` for field transformations (trim, downcase, slugify)",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-changeset-patterns.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Define separate named changesets** for each operation (registration, update, password change, etc.)",
+      "original_snippets": "**Define separate named changesets** for each operation (registration, update, password change, etc.)",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-changeset-patterns.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Verify** by testing in `iex -S mix` or running your changeset tests. A quick iex smoke test:",
+      "original_snippets": "**Verify** by testing in `iex -S mix` or running your changeset tests. A quick iex smoke test:",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-changeset-patterns.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Always pair `unsafe_validate_unique` with `unique_constraint`:",
+      "original_snippets": "Always pair `unsafe_validate_unique` with `unique_constraint`:",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-changeset-patterns.",
+      "why_given": "preference"
+    }
+  ]
+}

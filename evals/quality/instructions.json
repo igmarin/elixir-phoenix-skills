@@ -1,0 +1,60 @@
+{
+  "target_skill": "quality",
+  "source_path": "skills/personas/quality/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "Run the following tools and address all violations:",
+      "original_snippets": "Run the following tools and address all violations:",
+      "relevant_when": "When a user asks for planning work that should trigger quality.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Write characterization test documenting current behavior.",
+      "original_snippets": "Write characterization test documenting current behavior.",
+      "relevant_when": "When a user asks for planning work that should trigger quality.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Verify PASSES** — `mix test test/path/to/file_test.exs`.",
+      "original_snippets": "**Verify PASSES** — `mix test test/path/to/file_test.exs`.",
+      "relevant_when": "When a user asks for planning work that should trigger quality.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Verify PASSES** — Run characterization test again.",
+      "original_snippets": "**Verify PASSES** — Run characterization test again.",
+      "relevant_when": "When a user asks for planning work that should trigger quality.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Regression Check** — `mix test` for full suite.",
+      "original_snippets": "**Regression Check** — `mix test` for full suite.",
+      "relevant_when": "When a user asks for planning work that should trigger quality.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "mix test   # All tests must pass before proceeding to Phase 3",
+      "original_snippets": "mix test   # All tests must pass before proceeding to Phase 3",
+      "relevant_when": "When a user asks for planning work that should trigger quality.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "Produce a `# Quality Report — [Date]` with three sections:",
+      "original_snippets": "Produce a `# Quality Report — [Date]` with three sections:",
+      "relevant_when": "When a user asks for planning work that should trigger quality.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Conventions Check**: list CRITICAL / WARNING / SUGGESTION violations with file path, line, and description.",
+      "original_snippets": "**Conventions Check**: list CRITICAL / WARNING / SUGGESTION violations with file path, line, and description.",
+      "relevant_when": "When a user asks for planning work that should trigger quality.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Credo violations after refactoring:** Run `mix format` for auto-fixable issues, then fix remaining manually with `mix credo --strict`.",
+      "original_snippets": "**Credo violations after refactoring:** Run `mix format` for auto-fixable issues, then fix remaining manually with `mix credo --strict`.",
+      "relevant_when": "When a user asks for planning work that should trigger quality.",
+      "why_given": "new knowledge"
+    }
+  ]
+}

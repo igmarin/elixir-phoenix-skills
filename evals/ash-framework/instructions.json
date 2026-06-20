@@ -1,0 +1,18 @@
+{
+  "target_skill": "ash-framework",
+  "source_path": "skills/frameworks/ash-framework/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "Define attributes, then define relationships and actions incrementally. See [Resource Definition](#resource-definition) below.",
+      "original_snippets": "Define attributes, then define relationships and actions incrementally. See [Resource Definition](#resource-definition) below.",
+      "relevant_when": "When a user asks for planning work that should trigger ash-framework.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Use `Ash.Changeset` and domain functions (e.g., `MyApp.Blog.create!`) to interact with resources. See [Using Actions](#using-actions) below.",
+      "original_snippets": "Use `Ash.Changeset` and domain functions (e.g., `MyApp.Blog.create!`) to interact with resources. See [Using Actions](#using-actions) below.",
+      "relevant_when": "When a user asks for planning work that should trigger ash-framework.",
+      "why_given": "new knowledge"
+    }
+  ]
+}

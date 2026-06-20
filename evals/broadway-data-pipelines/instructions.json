@@ -1,0 +1,24 @@
+{
+  "target_skill": "broadway-data-pipelines",
+  "source_path": "skills/infrastructure/broadway-data-pipelines/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "**Define the pipeline module** — implement `handle_message/3` and `handle_batch/4` callbacks",
+      "original_snippets": "**Define the pipeline module** — implement `handle_message/3` and `handle_batch/4` callbacks",
+      "relevant_when": "When a user asks for planning work that should trigger broadway-data-pipelines.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Verify producer connectivity** — confirm the producer connects on startup",
+      "original_snippets": "**Verify producer connectivity** — confirm the producer connects on startup",
+      "relevant_when": "When a user asks for planning work that should trigger broadway-data-pipelines.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Expands the minimal example with structured error handling, a dead-letter queue, and batch failure recovery. Use this variant when reliability and observability matter.",
+      "original_snippets": "Expands the minimal example with structured error handling, a dead-letter queue, and batch failure recovery. Use this variant when reliability and observability matter.",
+      "relevant_when": "When a user asks for planning work that should trigger broadway-data-pipelines.",
+      "why_given": "new knowledge"
+    }
+  ]
+}

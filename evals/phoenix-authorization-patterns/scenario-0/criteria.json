@@ -1,0 +1,31 @@
+{
+  "context": "Checks whether the final artifact follows the phoenix-authorization-patterns instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: **Always authorize on the server in event handlers** — never rely on UI-only checks",
+      "max_score": 20
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: **Verify resource ownership by comparing `current_scope.user.id` against the resource's `user_id`** — never trust client-sent user IDs",
+      "max_score": 20
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: **Use policy modules for complex authorization** — don't inline permission checks in LiveViews or controllers",
+      "max_score": 20
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: **Define policy module rules** — add clauses for every action (`view`, `edit`, `delete`, etc.) before wiring up any LiveView",
+      "max_score": 20
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: **Write unauthorized-path tests first** — confirm that a non-owner receives an error and that the mutation does not occur",
+      "max_score": 20
+    }
+  ]
+}

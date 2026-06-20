@@ -1,0 +1,13 @@
+{
+  "target_skill": "liveview",
+  "total_scenarios": 1,
+  "instructions_coverage": {
+    "total_instructions": 9,
+    "instructions_tested": 9,
+    "coverage_percentage": 100
+  },
+  "reason_distribution": {
+    "new knowledge": 5,
+    "preference": 4
+  }
+}

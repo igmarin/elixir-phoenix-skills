@@ -1,0 +1,56 @@
+{
+  "context": "Checks whether the final artifact follows the testing-essentials instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: Use this skill before writing ANY `_test.exs` file.",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: **Use `async: true` only when safe** — safe: pure functions, changesets, helpers; unsafe: DB contexts with shared rows, LiveView, `Application.put_env`, external services",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: **Define test data in fixtures** (`test/support/`) — never build it inline across multiple tests",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: **Use `has_element?/2` and `element/2` for LiveView assertions** — not `html =~ \"text\"` for structure checks",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: **Always test the unauthorized case** for any protected resource",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-6",
+      "description": "The submitted artifact follows this skill instruction: **Never hardcode dates** — use relative timestamps to prevent flaky tests",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-7",
+      "description": "The submitted artifact follows this skill instruction: **Check existing fixtures** — inspect `test/support/fixtures/` for relevant fixtures before creating new ones",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-8",
+      "description": "The submitted artifact follows this skill instruction: **Create fixture if needed** — add to the appropriate fixtures module (see Fixture Pattern below)",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-9",
+      "description": "The submitted artifact follows this skill instruction: **Verify compilation** — run `mix test` to confirm the fixture compiles before writing any tests",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-10",
+      "description": "The submitted artifact follows this skill instruction: **Write the failing test** — implement the test case; run `mix test path/to/file_test.exs` and confirm it fails with a meaningful message (not a compile error)",
+      "max_score": 10
+    }
+  ]
+}

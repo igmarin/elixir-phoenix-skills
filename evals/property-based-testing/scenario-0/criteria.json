@@ -1,0 +1,21 @@
+{
+  "context": "Checks whether the final artifact follows the property-based-testing instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: **Define properties, not examples** — state what should always be true, not specific inputs/outputs",
+      "max_score": 34
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: **Write property** — define an invariant using `check all` with appropriate generators",
+      "max_score": 33
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: **Run test** — `mix test test/my_test.exs`",
+      "max_score": 33
+    }
+  ]
+}

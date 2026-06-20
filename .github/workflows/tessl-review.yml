@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'skills/**'
+      - 'evals/**'
       - 'tessl.json'
       - '.tessl-plugin/**'
       - 'scripts/changed-tessl-skill-paths.rb'
@@ -54,6 +55,7 @@ jobs:
         if: steps.changed.outputs.has_changed_skills == 'true'
         uses: tesslio/setup-tessl@25ec223fc0da33b41b8044ff5ab2b85235f4f91e # v2
         with:
+          version: "0.85.0"
           token: ${{ secrets.TESSL_TOKEN }}
 
       - name: Review changed publishable skills

@@ -1,0 +1,21 @@
+# Tessl ignores
+evals/
+tmp/
+plans/
+/SKILL.md
+/CONTEXT.md
+
+# IDE and editor files
+.vscode/
+.cursor/
+.coderabbit.yml
+.reviewer.toml
+.codex/
+.devin/
+.gemini/
+
+# Misc
+*.log
+.mix/
+_build/
+deps/

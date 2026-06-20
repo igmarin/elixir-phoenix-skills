@@ -1,0 +1,111 @@
+{
+  "$schema": "https://skills.sh/schemas/skills.sh.schema.json",
+  "notGrouped": "bottom",
+  "groupings": [
+    {
+      "title": "Fundamentals",
+      "description": "Core Elixir and OTP skills for language essentials, process patterns, and type safety with Dialyzer.",
+      "skills": [
+        "elixir-essentials",
+        "otp-essentials",
+        "typespec-dialyzer"
+      ]
+    },
+    {
+      "title": "Phoenix",
+      "description": "Phoenix framework skills for LiveView, JSON APIs, channels, pub/sub, uploads, and routing.",
+      "skills": [
+        "phoenix-liveview-essentials",
+        "phoenix-scopes",
+        "liveview-streams",
+        "phoenix-channels-essentials",
+        "phoenix-json-api",
+        "phoenix-pubsub-patterns",
+        "phoenix-uploads"
+      ]
+    },
+    {
+      "title": "Database",
+      "description": "Ecto skills for queries, changesets, associations, and nested structures.",
+      "skills": [
+        "ecto-essentials",
+        "ecto-changeset-patterns",
+        "ecto-nested-associations"
+      ]
+    },
+    {
+      "title": "Testing",
+      "description": "Testing skills for Elixir including essentials, property-based testing, and performance profiling with Benchee.",
+      "skills": [
+        "testing-essentials",
+        "property-based-testing",
+        "benchee-profiling"
+      ]
+    },
+    {
+      "title": "Auth",
+      "description": "Authentication and authorization skills for Phoenix LiveView and custom auth implementations.",
+      "skills": [
+        "phoenix-liveview-auth",
+        "phoenix-auth-customization",
+        "phoenix-authorization-patterns"
+      ]
+    },
+    {
+      "title": "Infrastructure",
+      "description": "Background jobs, data pipelines, deployment, telemetry, and caching skills.",
+      "skills": [
+        "oban-essentials",
+        "broadway-data-pipelines",
+        "deployment-gotchas",
+        "telemetry-essentials",
+        "cachex-caching"
+      ]
+    },
+    {
+      "title": "Quality",
+      "description": "Code quality and static analysis skills with Credo configuration.",
+      "skills": [
+        "code-quality",
+        "credo-config"
+      ]
+    },
+    {
+      "title": "Security",
+      "description": "Security skills for Elixir and Phoenix applications.",
+      "skills": [
+        "security-essentials"
+      ]
+    },
+    {
+      "title": "Integrations",
+      "description": "HTTP client, email, and internationalization integration skills.",
+      "skills": [
+        "req-http-client",
+        "swoosh-emails",
+        "gettext-i18n"
+      ]
+    },
+    {
+      "title": "Tooling",
+      "description": "Mix tasks and code generator skills for Elixir projects.",
+      "skills": [
+        "mix-tasks-generators"
+      ]
+    },
+    {
+      "title": "Frameworks",
+      "description": "Ash Framework skills for data-driven Elixir applications.",
+      "skills": [
+        "ash-framework"
+      ]
+    },
+    {
+      "title": "Orchestration",
+      "description": "Skill routing and orchestration patterns for multi-skill workflows.",
+      "skills": [
+        "elixir-skill-router"
+      ]
+    }
+  ]
+}

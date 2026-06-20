@@ -4,13 +4,14 @@ on:
   push:
     branches: [main]
     paths:
-      - 'skills/**'
-      - 'docs/**'
-      - '.tessl-plugin/plugin.json'
-      - 'scripts/generate-tessl-evals.rb'
-      - 'scripts/stage-tessl-evals.rb'
-      - 'scripts/validate-tessl-evals.rb'
-      - '.github/workflows/tessl-publish.yml'
+      - "skills/**"
+      - "evals/**"
+      - "docs/**"
+      - ".tessl-plugin/plugin.json"
+      - "scripts/generate-tessl-evals.rb"
+      - "scripts/stage-tessl-evals.rb"
+      - "scripts/validate-tessl-evals.rb"
+      - ".github/workflows/tessl-publish.yml"
   workflow_dispatch:
 
 permissions:
@@ -41,6 +42,7 @@ jobs:
       - name: Set up Tessl
         uses: tesslio/setup-tessl@25ec223fc0da33b41b8044ff5ab2b85235f4f91e # v2
         with:
+          version: "0.85.0"
           token: ${{ secrets.TESSL_TOKEN }}
 
       - name: Compute automatic patch version

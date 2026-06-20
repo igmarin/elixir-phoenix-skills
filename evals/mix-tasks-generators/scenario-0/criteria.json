@@ -1,0 +1,36 @@
+{
+  "context": "Checks whether the final artifact follows the mix-tasks-generators instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: Always call `Mix.Task.run(\"app.start\")` in tasks that need the application started",
+      "max_score": 17
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: Create custom tasks for project-specific workflows; don't override standard Mix tasks",
+      "max_score": 17
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: mix my_app.migrate up      - Run migrations",
+      "max_score": 17
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: **Create the file** at `lib/mix/tasks/<namespace>.<task_name>.ex`",
+      "max_score": 17
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: **Verify registration** — run `mix help | grep my_app` to confirm the task is listed",
+      "max_score": 16
+    },
+    {
+      "name": "instruction-6",
+      "description": "The submitted artifact follows this skill instruction: **Write tests** using `Mix.Project.in_project/4` (see Testing section below)",
+      "max_score": 16
+    }
+  ]
+}
