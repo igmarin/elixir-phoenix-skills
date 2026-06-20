@@ -106,8 +106,6 @@ channel.join()
   .receive("error", resp => console.error("Unable to join", resp))
 ```
 
-> Where does `window.userToken` come from? Render it from the server into the page template, e.g. `<script>window.userToken = "<%= @user_token %>";</script>`, after generating the token in your controller or LiveView mount.
-
 ---
 
 ## Topic Authorization
@@ -231,10 +229,3 @@ defmodule MyAppWeb.RoomChannelTest do
   end
 end
 ```
-
-Key helpers from `Phoenix.ChannelTest`:
-- `connect/2` — establishes a socket connection, runs `connect/3`
-- `subscribe_and_join/3` — joins a topic and subscribes the test process to broadcasts
-- `push/3` — sends a message from the client to the channel
-- `assert_reply` — asserts a reply was sent back to the pushing client
-- `assert_broadcast` — asserts a message was broadcast to all subscribers

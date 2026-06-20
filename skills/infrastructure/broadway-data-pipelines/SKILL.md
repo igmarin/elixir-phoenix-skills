@@ -196,24 +196,46 @@ defmodule MyApp.MessagePipeline do
 end
 ```
 
-> **Telemetry:** Broadway emits telemetry events for message processing and batching. Attach handlers via `:telemetry.attach_many/4` to handle multiple event patterns with a single callback, and optionally visualise them with [`broadway_dashboard`](https://hexdocs.pm/broadway_dashboard/). See the [Broadway Telemetry guide](https://hexdocs.pm/broadway/Broadway.html#module-telemetry) for event names and metadata.
+---
+
+## Retry Strategies
+
+Broadway does not provide a built-in backoff/requeue mechanism at the message level. For retry logic:
+
+- **Short-term retries**: wrap `process/1` in a retry library (e.g., `Retry`) and let failures bubble to `handle_failed/2`.
+- **Long-term retries / exponential backoff**: send failed messages to a dead-letter queue and re-enqueue from there, or use producer-level redelivery (e.g., SQS visibility timeout, Kafka consumer group offsets).
 
 ```elixir
-:telemetry.attach_many(
-  "broadway-handler",
-  [
-    [:broadway, :message, :start],
-    [:broadway, :message, :stop],
-    [:broadway, :message, :failure]
-  ],
-  &MyApp.Telemetry.handle_event/4,
-  %{}
-)
+@impl true
+def handle_message(_, message, _context) do
+  attempt = Map.get(message.metadata, :retry_count, 0)
+
+  case process_with_retry(message.data) do
+    {:ok, result} ->
+      Broadway.Message.update_data(message, fn _ -> result end)
+
+    {:error, reason} when attempt < 3 ->
+      # Re-enqueue via DLQ or producer-specific mechanism; mark failed here
+      Broadway.Message.failed(message, {:retryable, reason})
+
+    {:error, reason} ->
+      Broadway.Message.failed(message, {:max_retries_exceeded, reason})
+  end
+end
+
+defp process_with_retry(data) do
+  # Your processing logic here
+  {:ok, data}
+rescue
+  e -> {:error, e}
+end
 ```
 
 ---
 
-## SQS Producer Configuration
+## Producer Configurations
+
+### SQS
 
 ```elixir
 Broadway.start_link(__MODULE__,
@@ -247,9 +269,7 @@ Broadway.start_link(__MODULE__,
 )
 ```
 
----
-
-## Kafka Producer Configuration
+### Kafka
 
 ```elixir
 Broadway.start_link(__MODULE__,
@@ -273,157 +293,38 @@ Broadway.start_link(__MODULE__,
 
 ---
 
-## Message Transformation
+## Telemetry
+
+Broadway emits telemetry events for message processing and batching. Attach handlers via `:telemetry.attach_many/4` in your application startup:
 
 ```elixir
-@impl true
-def handle_message(_, message, _context) do
-  message
-  |> Broadway.Message.update_data(&parse_json/1)
-  |> Broadway.Message.put_batcher(:default)
-rescue
-  e ->
-    Broadway.Message.failed(message, :invalid_json)
-end
-
-defp parse_json(%{} = data), do: data
-defp parse_json(data) when is_binary(data) do
-  case Jason.decode(data) do
-    {:ok, parsed} -> parsed
-    {:error, _} -> raise "Invalid JSON"
-  end
-end
-```
-
----
-
-## Rate Limiting
-
-```elixir
-defmodule MyApp.RateLimitedPipeline do
-  use Broadway
-
-  # Limit to 1000 messages per second
-  @rate_limit 1000
-
-  def start_link(_opts) do
-    Broadway.start_link(__MODULE__,
-      name: __MODULE__,
-      producer: [
-        module: {BroadwaySQS.Producer, queue_url: System.get_env("SQS_QUEUE_URL")}
-      ],
-      processors: [
-        default: [
-          concurrency: 10,
-          max_demand: 10
-        ]
-      ],
-      batchers: [
-        default: [concurrency: 5, batch_size: 100, batch_timeout: 2000]
-      ]
-    )
-  end
-
-  @impl true
-  def handle_message(_, message, _context) do
-    # Apply rate limiting
-    Process.sleep(1000 / @rate_limit)
-
-    message
-    |> Broadway.Message.update_data(&process_data/1)
-    |> Broadway.Message.put_batcher(:default)
-  end
-
-  defp process_data(data), do: data
-end
-```
-
----
-
-## Retry Strategies
-
-```elixir
-@impl true
-def handle_message(_, message, _context) do
-  attempt = Map.get(message.data, :retry_count, 0)
-
-  case process_with_retry(message.data, attempt) do
-    {:ok, result} ->
-      Broadway.Message.update_data(message, fn _ -> result end)
-
-    {:error, reason} when attempt < 3 ->
-      # Requeue with incremented retry count
-      Broadway.Message.update_data(message, fn data ->
-        Map.put(data, :retry_count, attempt + 1)
-      end)
-      |> Broadway.Message.put_backoff(attempt * 1000)
-
-    {:error, reason} ->
-      Broadway.Message.failed(message, {:max_retries_exceeded, reason})
-  end
-end
-
-defp process_with_retry(data, attempt) do
-  # Your processing logic here
-  {:ok, data}
-rescue
-  e ->
-    {:error, e}
-end
-```
-
----
-
-## Telemetry Events
-
-```elixir
-# Attach telemetry handler in your application startup
-:telemetry.attach(
+:telemetry.attach_many(
   "broadway-handler",
-  [:broadway, :message, :start],
-  [:broadway, :message, :stop],
-  [:broadway, :message, :failure],
-  fn event, measurements, metadata, _ ->
-    IO.puts("Event: #{event}")
-    IO.puts("Measurements: #{inspect(measurements)}")
-    IO.puts("Metadata: #{inspect(metadata)}")
-  end
+  [
+    [:broadway, :message, :start],
+    [:broadway, :message, :stop],
+    [:broadway, :message, :failure],
+    [:broadway, :batch, :start],
+    [:broadway, :batch, :stop]
+  ],
+  &MyApp.Telemetry.handle_event/4,
+  %{}
 )
 ```
 
-**Key telemetry events:**
-- `[:broadway, :processor, :start]` — processor started
-- `[:broadway, :processor, :stop]` — processor stopped
-- `[:broadway, :batch, :start]` — batch processing started
-- `[:broadway, :batch, :stop]` — batch processing completed
-- `[:broadway, :message, :failure]` — message processing failed
+Optionally visualise metrics with [`broadway_dashboard`](https://hexdocs.pm/broadway_dashboard/). See the [Broadway Telemetry guide](https://hexdocs.pm/broadway/Broadway.html#module-telemetry) for full event names and metadata shapes.
 
 ---
 
 ## Concurrency Tuning
 
 ```elixir
-# For CPU-bound processing
+# CPU-bound: fewer workers, lower demand
+# I/O-bound: more workers, higher demand
 processors: [
   default: [
-    concurrency: System.schedulers_online() * 2,
-    max_demand: 50
-  ]
-]
-
-# For I/O-bound processing
-processors: [
-  default: [
-    concurrency: System.schedulers_online() * 4,
-    max_demand: 100
-  ]
-]
-
-# For mixed workloads
-processors: [
-  default: [
-    concurrency: System.schedulers_online() * 2,
-    max_demand: 50
+    concurrency: System.schedulers_online() * 2,  # multiply by 4 for heavy I/O
+    max_demand: 50                                 # raise to 100 for I/O-bound
   ]
 ]
 
