@@ -4,17 +4,48 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  Use when considering, adopting, or working with Ash Framework for Elixir applications. Invoke
-  before starting a new project or major refactor. Guides defining Ash resources with attributes
-  and relationships, configuring actions and policies, using Ash extensions (AshPostgres,
+  MANDATORY when considering, adopting, or working with Ash Framework for Elixir applications.
+  Invoke before starting a new Ash project or major refactor. Guides defining Ash resources with
+  attributes and relationships, configuring actions and policies, using Ash extensions (AshPostgres,
   AshPhoenix, AshJsonApi), and migrating from Phoenix contexts to Ash DSL patterns.
-  Trigger words: Ash Framework, Ash resource, Ash action, resource-oriented, DSL, alternative to contexts.
+  Trigger words: Ash Framework, Ash resource, Ash action, resource-oriented, DSL, alternative to contexts,
+  Ash domain, Ash policy, Ash extension, ash_postgres, ash_phoenix, Ash.JsonApi, AshQuery,
+  AshChangeset, use Ash.Resource, use Ash.Domain.
 metadata:
   user-invocable: "true"
   version: 1.0.0
 ---
 
 # Ash Framework
+
+## RULES — Follow these with no exceptions
+
+1. **Use `use Ash.Resource` for domain resources** — never manually implement protocols
+2. **Define actions explicitly** — don't rely on `defaults [:read, :create]` without understanding what they expose
+3. **Add policies for authorization** — every resource with sensitive data must have explicit policy blocks
+4. **Use `Ash.Changeset.for_create/3` and `Ash.Changeset.for_update/3`** — not bare struct manipulation
+5. **Run `mix ash_postgres.generate_migrations` before manual migration** — let Ash generate the schema
+6. **Verify resource loads** — run `mix compile` and confirm no `Spark.Error.DslError` before proceeding
+
+---
+
+## End-to-End Workflow
+
+Follow this sequence when starting a new Ash project:
+
+1. **Add dependencies** — add `{:ash, "~> 3.0"}` and `{:ash_postgres, "~> 2.0"}` to `mix.exs`
+2. **Configure Repo** — change `use Ecto.Repo` to `use AshPostgres.Repo, otp_app: :my_app`
+3. **Define Domain module** — create a domain with `use Ash.Domain` and `resources do ... end`
+4. **Define Resource** — use `use Ash.Resource, domain: MyApp.Domain, data_layer: AshPostgres.DataLayer`
+5. **Configure postgres** — add `table` and `repo` in the `postgres do` block
+6. **Define attributes** — use `uuid_primary_key`, `attribute`, `timestamps()` in the `attributes do` block
+7. **Define relationships** — use `belongs_to`, `has_many`, `many_to_many` in `relationships do` block
+8. **Define actions** — use `actions do` with `defaults`, `create`, `update`, `read` blocks
+9. **Add policies** — use `policies do` block with `authorize_if` or `forbid_if` rules
+10. **Generate migrations** — run `mix ash_postgres.generate_migrations` then `mix ash_postgres.migrate`
+11. **Test with Ash API** — use `Domain.create!(resource, attributes)` to verify the resource works
+
+---
 
 ## Setup Workflow
 

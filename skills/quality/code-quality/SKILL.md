@@ -4,10 +4,12 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  Handles all code quality and refactoring work for Elixir. Use when analyzing or refactoring Elixir code.
-  Covers duplication detection, ABC complexity, unused private functions, template duplication, and Credo integration.
-  Provides thresholds and fix patterns for each quality issue.
-  Trigger words: code quality, duplication, complexity, unused functions, Credo, refactoring, analysis.
+  MANDATORY for all code quality and refactoring work for Elixir. Use when analyzing or refactoring
+  Elixir code. Covers duplication detection, ABC complexity, unused private functions, template
+  duplication, and Credo integration. Provides thresholds and fix patterns for each quality issue.
+  Trigger words: code quality, duplication, complexity, unused functions, Credo, refactoring, analysis,
+  mix credo, abc complexity, function length, module length, refactor, extract function, shared code,
+  code smell, technical debt, clean code.
 metadata:
   user-invocable: "true"
   version: 1.0.0
@@ -25,8 +27,10 @@ metadata:
 2. **Functions must stay below ABC complexity 30** — break complex functions into smaller helpers with single responsibilities
 3. **Unused private functions must be removed** — dead code identified after refactoring must be cleaned up
 4. **Duplicated templates must become components** — when 2+ HEEx files share >40% identical markup, extract to a function component
-5. **Address duplication before complexity** — extracting shared code first
+5. **Address duplication before complexity** — extracting shared code first reduces overall complexity
 6. **Prefer composition over inheritance** — extract shared functions into modules imported/used where needed
+7. **Run `mix credo --strict` before any PR** — never merge code with Credo violations
+8. **Run `mix sobelow` for security** — check for security issues after quality checks
 
 ---
 

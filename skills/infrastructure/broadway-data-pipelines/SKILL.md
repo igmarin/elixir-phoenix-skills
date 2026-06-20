@@ -4,15 +4,27 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  Use when building data processing pipelines or consuming message queues. Invoke before implementing
-  GenStage or Broadway consumers. Covers Broadway setup, producers, processors, batchers, and error handling.
-  Trigger words: Broadway, GenStage, data pipeline, message queue, consumer, producer, batcher, SQS, Kafka.
+  MANDATORY when building data processing pipelines or consuming message queues. Invoke before
+  implementing GenStage or Broadway consumers. Covers Broadway setup, producers, processors,
+  batchers, and error handling.
+  Trigger words: Broadway, GenStage, data pipeline, message queue, consumer, producer, batcher,
+  SQS, Kafka, RabbitMQ, broadway_sqs, broadway_kafka, handle_message, handle_batch, handle_failed,
+  Broadway.start_link, Broadway.Message, push_message, dead letter queue, DLQ.
 metadata:
   user-invocable: "true"
   version: 1.0.0
 ---
 
 # Broadway Data Pipelines
+
+## RULES — Follow these with no exceptions
+
+1. **Use `Broadway.Message.failed/2` for errors** — never raise in `handle_message/3`
+2. **Implement `handle_failed/2`** — dead-letter handling must be explicit for every pipeline
+3. **Use batchers for database inserts** — don't insert one-by-one; batch size of 100 is a good default
+4. **Configure `:status` in start_link** — set `:max_restarts`, `:max_seconds` for production resilience
+5. **Test with `Broadway.Test.push_message/2`** — verify each message type including failures
+6. **Wire telemetry** — attach handlers to Broadway's telemetry events for observability
 
 ---
 

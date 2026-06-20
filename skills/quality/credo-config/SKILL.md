@@ -4,16 +4,44 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  Use when setting up or customizing Credo for Elixir projects, configuring .credo.exs, or adding
-  Credo to CI pipelines. Generates .credo.exs configuration files, writes custom check modules,
-  configures strictness levels, and integrates Credo into CI pipelines.
-  Trigger words: Credo, .credo.exs, linting, code style, static analysis, custom checks.
+  MANDATORY for all code quality and linting work. Use when setting up or customizing Credo for
+  Elixir projects, configuring .credo.exs, or adding Credo to CI pipelines. Generates .credo.exs
+  configuration files, writes custom check modules, configures strictness levels, and integrates
+  Credo into CI pipelines.
+  Trigger words: Credo, .credo.exs, linting, code style, static analysis, custom checks, credo.config,
+  mix credo, code quality, lint, static analysis, format check.
 metadata:
   user-invocable: "true"
   version: 1.0.0
 ---
 
 # Credo Configuration
+
+## RULES — Follow these with no exceptions
+
+1. **Always run `mix credo gen.config` first** — never hand-craft .credo.exs from scratch
+2. **Use `--strict` in CI** — enables additional checks that are disabled by default
+3. **Add inline disables sparingly** — document why each exception is necessary
+4. **Custom checks belong in `lib/credo/checks/`** — never inline them in application code
+5. **Run Credo before every commit** — catch issues before they reach CI
+6. **Address all findings** — don't suppress without understanding why the check fires
+
+---
+
+## End-to-End Workflow
+
+Follow this sequence when setting up or customizing Credo:
+
+1. **Add dependency** — add `{:credo, "~> 1.7", only: [:dev, :test], runtime: false}` to `mix.exs`
+2. **Fetch dependencies** — run `mix deps.get`
+3. **Generate config** — run `mix credo gen.config` to create `.credo.exs`
+4. **Review generated config** — understand each check before disabling or modifying
+5. **Customize checks** — enable/disable checks based on project standards
+6. **Run Credo** — execute `mix credo` and verify clean output
+7. **Add to CI** — configure `mix credo --strict` in your pipeline
+8. **Create custom checks** — for project-specific patterns, add to `lib/credo/checks/`
+
+---
 
 ## Setup Workflow
 
@@ -52,9 +80,33 @@ mix credo
 
 Success: Credo exits 0 and prints a summary with issue counts per category. If issues are found, review them — fix violations, adjust check configuration, or add inline disable comments for intentional exceptions.
 
-### 6. Add to CI
+### 6. Run in Strict Mode
+
+```bash
+mix credo --strict
+```
+
+Strict mode enables additional checks disabled by default (mostly design-related). CI must use `--strict`.
+
+### 7. Add to CI
 
 See [CI Integration](#ci-integration) below.
+
+---
+
+## Understanding Credo Output
+
+```
+┃ Category        │  File  │  %  │  Issues
+┃                 │        │     │
+┃ Readability     │   12   │ 37% │  37
+┃ Design          │    8   │ 25% │  25
+┃ Refactor        │    5   │ 16% │  16
+┃ Consistency     │    4   │ 13% │  13
+┃ Warning         │    3   │  9% │   9
+```
+
+Readability issues are easiest to fix. Design issues often indicate architectural problems.
 
 ---
 
@@ -83,6 +135,21 @@ See [CI Integration](#ci-integration) below.
         disabled: [
           {Credo.Check.Consistency.MultiAliasImportRequireUse, []},
           {Credo.Check.Design.DuplicatedCode, []},
+        ]
+      }
+    },
+    %{
+      name: "strict",
+      strict: true,
+      files: %{
+        included: ["lib/", "src/", "test/", "web/", "apps/"],
+        excluded: [~r"/_build/", ~r"/deps/", ~r"/node_modules/"]
+      },
+      checks: %{
+        enabled: [
+          {Credo.Check.Design.TagTODO, [priority: :high]},
+          {Credo.Check.Design.LongClauseAC, [max_length: 5]},
+          {Credo.Check.Readability.Specs, []},
         ]
       }
     }
@@ -131,11 +198,32 @@ checks: %{
 
 ```yaml
 # .github/workflows/ci.yml
-- name: Credo
-  run: mix credo --strict
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  credo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: '1.15'
+          otp-version: '26.0'
+      - run: mix deps.get
+      - run: mix Credo --strict
 ```
 
-Strict mode enables additional checks disabled by default. CI fails on any issue.
+CI must use `--strict` to catch all issues. Exit code 0 means clean; non-zero means issues found.
+
+### Handling Failures in CI
+
+When Credo fails in CI, do NOT simply increase ignore thresholds. Instead:
+1. Run locally: `mix credo`
+2. Review each category starting with Readability
+3. Fix the root cause — refactor function, extract logic, shorten names
+4. Only disable a check if it's a false positive with documentation
 
 ### Mix Alias
 

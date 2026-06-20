@@ -23,14 +23,16 @@ Use this skill before writing ANY security-sensitive code.
 
 ## RULES — Follow these with no exceptions
 
-1. **Never use `String.to_atom/1` on user input** — exhausts the atom table and crashes the BEAM VM
-2. **Never interpolate strings into `fragment()` or `SQL.query()`** — always use `?` parameters for fragments and `$1` for raw SQL
-3. **Never redirect to user-controlled URLs** — validate against a whitelist or use verified routes (`~p"..."`)
-4. **Avoid `raw/1` in templates** — if HTML is required, sanitize first with HtmlSanitizeEx
-5. **Never log sensitive data** — passwords, tokens, secrets, API keys must never appear in Logger calls
-6. **Use `Plug.Crypto.secure_compare/2` for token comparison** — never `==`, which enables timing attacks
-7. **Run dependency audits after changes** — `mix deps.audit`, `mix hex.audit`, and `mix sobelow` catch known vulnerabilities
-8. **Add Sobelow to CI** — automate security scanning in your pipeline
+1. **Never use `String.to_atom/1` on user input** — always use `String.to_existing_atom/1` with fallback or case/cond for known values
+2. **Never interpolate strings into Ecto queries** — use parameterized queries with `^variable` syntax exclusively
+3. **Never redirect to user-controlled URLs** — validate against an explicit whitelist or use `~p"..."` verified routes only
+4. **Avoid `raw/1` in templates** — if HTML is required, use HtmlSanitizeEx with allowlist configuration
+5. **Never log sensitive data** — passwords, tokens, API keys, PII must never appear in any log output
+6. **Use `Plug.Crypto.secure_compare/2` for token comparison** — never use `==` or `===` for secrets
+7. **Run security audits after every change** — `mix deps.audit && mix hex.audit && mix sobelow` before any merge
+8. **Add Sobelow to CI** — `mix sobelow` must pass in CI, fail on any finding
+9. **Use parameterized queries in raw SQL** — `$1`, `$2` placeholders, never string interpolation
+10. **Validate all user input at boundaries** — not just params, but headers, query strings, and body data
 
 ---
 
@@ -38,12 +40,66 @@ Use this skill before writing ANY security-sensitive code.
 
 Apply this sequence whenever writing or reviewing security-sensitive code:
 
-1. **Write code** — implement the feature following the rules above
-2. **Run `mix sobelow`** — static analysis catches common security issues
-3. **Review findings** — address each reported issue
-4. **Fix issues** — apply the correct pattern from the sections below
-5. **Re-run until clean** — repeat steps 2–4 until `mix sobelow` reports no issues
-6. **Run full audit** — `mix deps.audit && mix hex.audit && mix sobelow` before merging
+1. **Identify attack surface** — list all user inputs, external data sources, and network boundaries
+2. **Apply RULES** — implement the feature following all rules above
+3. **Run `mix sobelow --router MyAppWeb.Router`** — static analysis on your router and controllers
+4. **Run `mix sobelow --private`** — check private functions for vulnerabilities
+5. **Review findings by severity** — HIGH severity first, then MEDIUM, then LOW
+6. **Fix each finding** — apply the correct pattern from the sections below
+7. **Re-run sobelow** — repeat until no issues reported
+8. **Run full audit** — `mix deps.audit && mix hex.audit && mix sobelow` before merging
+9. **Test manually** — verify with curl/introspection that expected inputs are rejected
+
+---
+
+## Common Vulnerable Patterns
+
+### Parameter Tampering
+
+❌ **Bad — trusting user input:**
+```elixir
+def index(conn, %{"status" => status}) do
+  users = Repo.all(from u in User, where: u.status == ^status)
+  render(conn, "index.html", users: users)
+end
+```
+
+✅ **Good — validate against allowed values:**
+```elixir
+@allowedStatuses ~w(active inactive pending)
+def index(conn, %{"status" => status}) do
+  if status in @allowedStatuses do
+    users = Repo.all(from u in User, where: u.status == ^status)
+    render(conn, "index.html", users: users)
+  else
+    put_status(conn, :bad_request)
+    |> json(%{error: "Invalid status"})
+  end
+end
+```
+
+### IDOR (Insecure Direct Object Reference)
+
+❌ **Bad — no authorization check:**
+```elixir
+def show(conn, %{"id" => id}) do
+  user = Repo.get!(User, id)
+  render(conn, "show.html", user: user)
+end
+```
+
+✅ **Good — verify ownership:**
+```elixir
+def show(conn, %{"id" => id}) do
+  current_user = conn.assigns.current_user
+
+  case Accounts.get_user_for_current_user(current_user, id) do
+    {:ok, user} -> render(conn, "show.html", user: user)
+    {:error, :not_found} -> put_status(conn, :not_found) |> json(%{error: "Not found"})
+    {:error, :unauthorized} -> put_status(conn, :forbidden) |> json(%{error: "Forbidden"})
+  end
+end
+```
 
 ---
 
@@ -70,17 +126,33 @@ end
 
 ❌ **Bad — string interpolation in fragment:**
 ```elixir
+# NEVER do this — user can inject SQL through field or value
 from(u in User, where: fragment("lower(#{field}) = ?", ^value))
+from(u in User, where: fragment("#{condition}", []))
 ```
 
-✅ **Good — parameterized fragment:**
+❌ **Bad — using unvalidated input in raw SQL:**
 ```elixir
-from(u in User, where: fragment("lower(?) = ?", field(u, ^field_name), ^value))
+# NEVER do this — even with ~s() sigil
+Ecto.Adapters.SQL.query(Repo, "SELECT * FROM users WHERE name = '#{name}'", [])
+```
+
+✅ **Good — parameterized fragment with field/1:**
+```elixir
+# Safe — field is an atom from schema, value is parameterized
+from(u in User, where: fragment("lower(?) = ?", field(u, :status), ^value))
 ```
 
 ✅ **Good — parameterized raw SQL:**
 ```elixir
 Ecto.Adapters.SQL.query(Repo, "SELECT * FROM users WHERE id = $1", [id])
+Ecto.Adapters.SQL.query(Repo, "SELECT * FROM users WHERE name = $1 AND status = $2", [name, status])
+```
+
+✅ **Good — Ecto query expressions always safe:**
+```elixir
+# Ecto query expressions are always parameterized
+from(u in User, where: u.status == ^status and u.name == ^name)
 ```
 
 ---
@@ -170,27 +242,49 @@ end
 ## Dependency Auditing
 
 ```bash
-# Check for known vulnerabilities
+# Check for known vulnerabilities in dependencies
 mix deps.audit
 
-# Verify package checksums
+# Verify package checksums against Hex
 mix hex.audit
 
-# Static security analysis
-mix sobelow
+# Static security analysis on your code
+mix sobelow --router MyAppWeb.Router
 
-# All three in sequence
-mix deps.audit && mix hex.audit && mix sobelow
+# Run all three before any merge
+mix deps.audit && mix hex.audit && mix sobelow --config
 ```
 
+**Sobelow categories:**
+| Category | What it catches | Severity |
+|----------|----------------|----------|
+| Config | Hardcoded secrets, insecure configurations | HIGH |
+| SQL | SQL injection vulnerabilities | HIGH |
+| Remote Code | Code execution via unsafe eval/apply | CRITICAL |
+| Cross-Site Scripting | XSS in raw templates | HIGH |
+| Function Clobbering | Override of built-in functions | MEDIUM |
+| Denial of Service | Atom exhaustion, unsafe recursion | HIGH |
+
 **Add to CI pipeline:**
+```yaml
+# .github/workflows/security.yml
+- name: Security Audit
+  run: |
+    mix deps.audit
+    mix hex.audit
+    mix sobelow --config
+```
+
 ```elixir
+# mix.exs
 defp aliases do
   [
     "security.check": ["deps.audit", "hex.audit", "sobelow --config"]
   ]
 end
 ```
+
+**Interpretation:** Any Sobelow finding of HIGH or CRITICAL severity MUST be fixed before merging. LOW findings should be tracked and addressed within 2 sprints.
 
 ---
 

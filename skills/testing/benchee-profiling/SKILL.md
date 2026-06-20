@@ -4,10 +4,13 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  Sets up Benchee benchmarks, measures execution time, compares function implementations, generates
-  profiling reports with :fprof and :eprof, and integrates benchmark regression checks into CI pipelines.
-  Use when profiling and benchmarking Elixir code, or before optimizing performance-critical code.
-  Trigger words: Benchee, benchmark, profiling, performance, optimization, speed, comparison.
+  MANDATORY when profiling and benchmarking Elixir code, or before optimizing performance-critical
+  code. Sets up Benchee benchmarks, measures execution time, compares function implementations,
+  generates profiling reports with :fprof and :eprof, and integrates benchmark regression checks
+  into CI pipelines.
+  Trigger words: Benchee, benchmark, profiling, performance, optimization, speed, comparison,
+  benchee.run, benchee.measure, fprof, eprof, profile, ips, runtime, memory_time, warmup,
+  batch_size, inputs, regression, baseline, performance comparison.
 metadata:
   user-invocable: "true"
   version: 1.0.0
@@ -22,6 +25,10 @@ Benchee is the standard benchmarking library for Elixir, providing accurate perf
 1. **Benchmark in production-like conditions** — use `MIX_ENV=prod` for realistic results
 2. **Compare alternatives** — always benchmark at least 2 approaches to justify optimization
 3. **Document performance regressions** — track benchmark results over time in `bench/baseline.json` with a >10% threshold
+4. **Profile before benchmarking** — use `:fprof` or `:eprof` to identify the actual bottleneck before writing benchmarks
+5. **Use multiple inputs** — test with small, medium, and large inputs to catch size-dependent behavior
+6. **Warm up before measuring** — run warmup phase to let JIT compilation settle
+7. **Run sufficient time** — use `time: 10` (10 seconds) for reliable measurements, not the default 5
 
 ---
 

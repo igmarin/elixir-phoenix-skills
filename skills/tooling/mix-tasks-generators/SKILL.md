@@ -4,13 +4,15 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  Use when creating custom Mix tasks or using Phoenix generators. Invoke before defining
+  MANDATORY when creating custom Mix tasks or using Phoenix generators. Invoke before defining
   custom Mix task modules with argument parsing and subcommands, scaffolding resources with
   phx.gen.live or phx.gen.context, generating authentication systems with phx.gen.auth,
   configuring dependencies and aliases in mix.exs, or writing tests for custom tasks.
   Covers Mix.Tasks module creation, generator patterns, and Mix project configuration.
   Trigger words: Mix task, custom task, phx.gen, generators, mix.exs, project configuration,
-  phx.gen.live, phx.gen.auth, scaffold, seed data, ecto.setup.
+  phx.gen.live, phx.gen.auth, scaffold, seed data, ecto.setup, mix help, Mix.Project,
+  OptionParser, @shortdoc, preferred_cli_env, alias, mix run, generator, phx.gen.html,
+  phx.gen.context, phx.gen.json, phx.gen.channel.
 metadata:
   user-invocable: "true"
   version: 1.0.0
@@ -18,10 +20,32 @@ metadata:
 
 # Mix Tasks & Generators
 
-## Key Rules
+## RULES — Follow these with no exceptions
 
-- Always call `Mix.Task.run("app.start")` in tasks that need the application started
-- Create custom tasks for project-specific workflows; don't override standard Mix tasks
+1. **Always call `Mix.Task.run("app.start")` first** — tasks that access the database or Repo need the app started
+2. **Create custom tasks for project-specific workflows** — don't override standard Mix tasks
+3. **Use `OptionParser.parse/2` for argument parsing** — never use raw `System.argv()` for complex arguments
+4. **Add `@shortdoc` to every task** — tasks appear in `mix help` using this attribute
+5. **Register `preferred_cli_env` in mix.exs** — set environment for custom tasks (dev/test/prod)
+6. **Use transactions for data modifications** — wrap `Repo.insert_all`, `Repo.delete_all` in `Repo.transaction()`
+7. **Test custom tasks with `Mix.Project.in_project/4`** — ensure tasks work correctly in isolation
+8. **Follow `Mix.Tasks.Namespace.TaskName` naming** — file path must match: `lib/mix/tasks/namespace.task_name.ex`
+
+---
+
+## End-to-End Workflow
+
+Follow this sequence when creating a custom Mix task:
+
+1. **Create file** — create `lib/mix/tasks/<namespace>.<task_name>.ex`
+2. **Define module** — use `defmodule Mix.Tasks.MyApp.TaskName do use Mix.Task`
+3. **Add `@shortdoc`** — one-line description for `mix help`
+4. **Implement `run/1`** — parse args with `OptionParser.parse/2` if needed
+5. **Start app** — call `Mix.Task.run("app.start")` if using Repo
+6. **Implement logic** — use transactions for data modifications
+7. **Add to mix.exs** — register `preferred_cli_env` if needed
+8. **Test** — use `Mix.Project.in_project/4` test helper
+9. **Verify** — run `mix help | grep task_name` to confirm registration
 
 ---
 

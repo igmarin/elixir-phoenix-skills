@@ -7,7 +7,9 @@ description: >
   MANDATORY for handling large collections in LiveView. Invoke before rendering lists with 100+ items.
   Covers Phoenix.LiveView.stream/4, stream_insert, stream_delete, DOM patching efficiency,
   and pagination with streams. Available in LiveView 0.19+.
-  Trigger words: stream, LiveView stream, large list, pagination, DOM patching, stream_insert, stream_delete.
+  Trigger words: stream, LiveView stream, large list, pagination, DOM patching, stream_insert,
+  stream_delete, phx-update="stream", stream_configure, stream_many, infinite scroll,
+  virtualized list, DOM ID, dom_id.
 metadata:
   user-invocable: "true"
   version: 1.0.0
@@ -26,6 +28,23 @@ Phoenix LiveView streams (0.19+) provide efficient rendering of large collection
 5. **Set DOM IDs with `id` attribute** — each streamed item needs a unique DOM ID
 6. **Use `stream_configure/3` for custom DOM IDs** — when default IDs don't match your needs
 7. **Combine with pagination or infinite scroll** — don't stream unlimited items
+8. **Always use `Repo.preload` before streaming** — preloading ensures data is loaded
+9. **Use `at:` option for ordered insertion** — control where new items appear in the stream
+
+---
+
+## End-to-End Workflow
+
+Follow this sequence when implementing LiveView streams:
+
+1. **Identify collection size** — use streams only for 100+ items; smaller lists use regular assigns
+2. **Define DOM ID strategy** — decide on `id` attribute format (e.g., `post-#{post.id}`)
+3. **Add `stream_configure/3`** in `mount/3` to set custom DOM ID generator
+4. **Initialize stream** — call `stream(socket, :name, collection)` in `mount/3`
+5. **Update template** — add `phx-update="stream"` container and `id={dom_id}` on items
+6. **Handle events** — use `stream_insert`/`stream_delete` for all mutations
+7. **Add handle_info** — handle Phoenix.PubSub broadcasts with stream updates
+8. **Verify WS frames** — confirm targeted DOM patches in browser DevTools
 
 ---
 
@@ -158,6 +177,64 @@ end
 
 ---
 
+## PubSub Integration with Streams
+
+Broadcast stream updates from background processes:
+
+```elixir
+# In your context/module
+def create_post(attrs) do
+  {:ok, post} = Repo.insert(Post.changeset(%Post{}, attrs))
+
+  # Broadcast to all connected clients
+  Phoenix.PubSub.broadcast(MyApp.PubSub, "posts", {:post_created, post})
+
+  {:ok, post}
+end
+
+# In the LiveView
+defmodule MyAppWeb.PostLive.Index do
+  use MyAppWeb, :live_view
+
+  @impl true
+  def mount(_params, _session, socket) do
+    if connected?(socket) do
+      Phoenix.PubSub.subscribe(MyApp.PubSub, "posts")
+    end
+
+    {:ok,
+     socket
+     |> stream_configure(:posts, dom_id: &"post-#{&1.id}")
+     |> stream(:posts, Blog.list_posts())}
+  end
+
+  @impl true
+  def handle_info({:post_created, post}, socket) do
+    # Insert at beginning when broadcast received
+    {:noreply, stream_insert(socket, :posts, post, at: 0)}
+  end
+end
+```
+
+---
+
+## Resetting and Replacing Streams
+
+When you need to reset a stream entirely (e.g., after filtering):
+
+```elixir
+def handle_event("filter", %{"status" => status}, socket) do
+  filtered_posts = Blog.list_posts_by_status(status)
+
+  {:noreply,
+   socket
+   |> stream(:posts, filtered_posts, reset: true)}
+  # The reset: true option clears existing items before inserting new ones
+end
+```
+
+---
+
 ## Debugging Checklist
 
 If stream patching is not working as expected, check for:
@@ -166,6 +243,8 @@ If stream patching is not working as expected, check for:
 - Missing `id={dom_id}` on each item element
 - Accidentally replacing the entire stream assign instead of using `stream_insert`/`stream_delete`
 - DOM ID collisions caused by non-unique item IDs
+- Using `stream_insert` without proper `dom_id` configuration
+- Forgetting to call `stream_configure` before `stream` when using custom IDs
 
 ---
 
