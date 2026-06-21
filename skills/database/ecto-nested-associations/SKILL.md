@@ -21,8 +21,6 @@ metadata:
 
 <!-- Adapted from j-morgan6/elixir-phoenix-guide (MIT License, Copyright (c) 2026 Joseph Morgan) -->
 
-Use this skill before writing ANY nested association or multi-table code.
-
 ## RULES — Follow these with no exceptions
 
 1. **Use `cast_assoc/3` for has_many/has_one** — never manually insert children in a separate step
@@ -82,7 +80,6 @@ defmodule MyApp.Blog.Comment do
     timestamps()
   end
 
-  # Do NOT validate :post_id — cast_assoc sets it automatically
   def changeset(comment, attrs) do
     comment
     |> cast(attrs, [:body])
@@ -140,7 +137,7 @@ end
 # Update — send the full list; omitted items are deleted
 def update_recipe(recipe, attrs) do
   recipe
-  |> Repo.preload(:ingredients)  # Must preload before cast_assoc
+  |> Repo.preload(:ingredients)
   |> Recipe.changeset(attrs)
   |> Repo.update()
 end
@@ -187,7 +184,6 @@ defmodule MyApp.Repo.Migrations.CreateComments do
   def change do
     create table(:comments) do
       add :body, :text
-      # Owned children — delete when parent is deleted
       add :post_id, references(:posts, on_delete: :delete_all)
 
       timestamps()
@@ -212,31 +208,17 @@ end
 
 ## Many-to-Many Associations
 
+Use a join schema with `cast_assoc` for full control over nested creation and updates:
+
 ```elixir
-# Schema for many-to-many with join_through (in schema block only)
+# Schema
 schema "posts" do
   field :title, :string
-  many_to_many :tags, MyApp.Blog.Tag, join_through: "post_tags", on_replace: :delete
+  many_to_many :tags, MyApp.Blog.Tag, join_through: MyApp.Blog.PostTag, on_replace: :delete
   timestamps()
 end
 
-# Creating with tags - use put_assoc in the context function
-def create_post(attrs) do
-  %Post{}
-  |> Post.changeset(attrs)
-  |> put_assoc(:tags, attrs["tags"])
-  |> Repo.insert()
-end
-
-# Changeset does NOT use many_to_many/3 (that is a schema macro, not changeset function)
-def changeset(post, attrs) do
-  post
-  |> cast(attrs, [:title])
-  |> validate_required([:title])
-end
-
-# For nested tag creation/update, use cast_assoc with a join schema
-# Define a PostTag join schema:
+# Join schema
 defmodule MyApp.Blog.PostTag do
   use Ecto.Schema
 
@@ -247,7 +229,7 @@ defmodule MyApp.Blog.PostTag do
   end
 end
 
-# Then use cast_assoc in the parent changeset:
+# Parent changeset — use cast_assoc with the join schema
 def changeset(post, attrs) do
   post
   |> cast(attrs, [:title])
@@ -260,49 +242,13 @@ end
 
 ## Nested Update with Partial Data
 
-When updating a nested association with only some fields:
+When updating a nested association with only some fields, preload the association first and rely on Ecto's internal ID matching — do not require `:id` in the child changeset:
 
 ```elixir
 def update_post(post, %{post: post_attrs, comments: comments_attrs}) do
   post
-  |> Repo.preload(:comments)  # CRITICAL: preload before cast_assoc
+  |> Repo.preload(:comments)
   |> Post.changeset(%{post_attrs | comments: comments_attrs})
   |> Repo.update()
 end
-
-# In the parent changeset:
-def changeset(post, attrs) do
-  post
-  |> cast(attrs, [:title, :body])
-  |> validate_required([:title])
-  |> cast_assoc(:comments, with: &Comment.changeset/2)
-end
-
-# In the child changeset - allow partial updates:
-def changeset(comment, attrs) do
-  comment
-  |> cast(attrs, [:body])
-  |> validate_required([:body])
-  # Don't require :id in the changeset - Ecto matches by ID internally
-end
-```
-
----
-
-## Handling Empty Nested Associations
-
-When user submits an empty list (intending to clear all children):
-
-```elixir
-def update_post(post, attrs) do
-  # attrs contains comments: [] — empty list means "remove all"
-  post
-  |> Repo.preload(:comments)
-  |> cast(attrs, [:title])
-  |> validate_required([:title])
-  |> cast_assoc(:comments, with: &Comment.changeset/2)
-  |> Repo.update()
-end
-
-# If user clears all comments, the `on_replace: :delete` handles removal automatically
 ```

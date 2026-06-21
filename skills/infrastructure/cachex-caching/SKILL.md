@@ -37,7 +37,7 @@ Follow this sequence when adding caching to a feature:
 4. **Add invalidation** — call `Cachex.del/2` after mutating data
 5. **Enable stats** — configure `stats: true` in cache options
 6. **Add cache warmer** — for expensive data, pre-populate on startup
-7. **Verify hit rate** — call `Cachex.stats/1` and confirm `hit_rate` is non-zero
+7. **Verify hit rate** — call `Cachex.stats/1` and confirm `hit_rate` is non-zero; see **Monitoring Cache Stats** for interpretation thresholds and remediation guidance
 8. **Monitor in production** — emit telemetry events for cache operations
 
 ---
@@ -47,7 +47,6 @@ Follow this sequence when adding caching to a feature:
 Cachex operations return `{:ok, result}` or `{:error, reason}`. Always handle errors gracefully:
 
 ```elixir
-# Never let cache failures crash your application
 def get_user(id) do
   case Cachex.fetch(:my_cache, "user:#{id}", fn _ ->
     {:commit, Repo.get(User, id)}
@@ -100,14 +99,11 @@ defmodule MyApp.Application do
 end
 ```
 
-Always name caches explicitly — use the atom name in all `Cachex.get/2`, `Cachex.put/3`, `Cachex.del/2` calls.
-
 ---
 
 ## Basic Operations
 
 ```elixir
-# Cache miss returns {:ok, nil}, not an error tuple
 case Cachex.get(:my_cache, "user:123") do
   {:ok, nil} -> :miss
   {:ok, value} -> {:hit, value}
@@ -231,8 +227,8 @@ end
 **Interpret hit rate:**
 - `> 80%` — excellent, cache is very effective
 - `60-80%` — good, normal for read-heavy workloads
-- `< 60%` — investigate, consider adjusting TTL or key strategy
-- `< 20%` — cache may be ineffective, evaluate if it's worth the overhead
+- `< 60%` — investigate TTL values and check for over-invalidation
+- `< 20%` — cache may be ineffective; revisit TTL strategy and key design before deploying to production
 
 ---
 
@@ -259,7 +255,6 @@ defmodule MyApp.Telemetry do
   end
 end
 
-# In your cache wrapper
 def get_user(id) do
   case Cachex.fetch(:my_cache, "user:#{id}", fn _ ->
     {:commit, Repo.get(User, id)}

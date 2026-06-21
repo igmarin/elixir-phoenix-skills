@@ -15,6 +15,8 @@ metadata:
 
 # Req HTTP Client
 
+**Sections:** [End-to-End Workflow](#end-to-end-workflow) · [Quick-Reference: Request Types](#quick-reference-request-types) · [Retries](#retries) · [Streaming Responses](#streaming-responses)
+
 ---
 
 ## End-to-End Workflow

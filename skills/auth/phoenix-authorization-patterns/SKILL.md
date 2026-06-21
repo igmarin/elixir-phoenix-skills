@@ -173,5 +173,5 @@ end
 ## Integration
 
 | Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
+|-------------|------------|----------|
 | phoenix-liveview-essentials | phoenix-authorization-patterns | security-essentials |

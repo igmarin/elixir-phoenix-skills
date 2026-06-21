@@ -4,10 +4,12 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  MANDATORY for ALL JSON API work. Invoke before writing API controllers, pipelines, or JSON responses.
-  Covers API pipeline setup, controller patterns, FallbackController, pagination, versioning,
-  Bearer token authentication, and error rendering.
-  Trigger words: JSON API, API controller, FallbackController, pagination, Bearer token, API versioning.
+  Handles Phoenix-specific JSON API construction end-to-end. Use when building or modifying Phoenix
+  API controllers, router pipelines, FallbackController error handling, paginated list endpoints,
+  URL-versioned API routes (/api/v1/), or Bearer token authentication plugs in an Elixir/Phoenix
+  application. Covers the full workflow from route definition to structured JSON error responses.
+  Trigger words: Phoenix JSON API, API pipeline, FallbackController, paginated API, Bearer token plug,
+  API versioning, Elixir API controller, action_fallback.
 metadata:
   user-invocable: "true"
   version: 1.0.0

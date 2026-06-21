@@ -22,7 +22,7 @@ Orchestrates code quality checks, safe refactoring, and documentation updates ac
 
 ## Complexity Thresholds
 
-Proceed to Phase 2 if any of these non-default thresholds are exceeded:
+Proceed to Phase 2 if any threshold is exceeded:
 
 | Metric | Threshold | Action |
 |--------|-----------|--------|
@@ -45,6 +45,8 @@ mix dialyzer                   # Type checking
 mix hex.audit                  # Dependency audit
 ```
 
+**HARD GATE — NEVER open a PR before all four checks above pass**, plus `mix test` (full suite green) and `@doc`/`@spec` annotations on all public APIs (completed in Phase 3). Fix any failure before proceeding.
+
 ---
 
 ### Phase 2: Refactoring (Optional)
@@ -54,54 +56,45 @@ mix hex.audit                  # Dependency audit
 **TDD Enforcement — Before any code change:**
 1. Write characterization test documenting current behavior.
 2. **Verify PASSES** — `mix test test/path/to/file_test.exs`.
-3. **Checkpoint** — Propose specific refactoring (e.g., "Extract `calculate_discount` to private function").
-4. **User Approval** — Wait for explicit confirmation.
-5. **Implement** — Make the structural change only.
-6. **Verify PASSES** — Run characterization test again.
-7. **Regression Check** — `mix test` for full suite.
+3. **Checkpoint** — Propose specific refactoring (e.g., extract a private helper, introduce a `with` chain, replace positional args with a keyword list).
+4. Apply the single proposed change.
+5. **Re-validate** — `mix test test/path/to/file_test.exs` must still be green.
+6. **Repeat** steps 3–5 for each additional violation; do not batch multiple extractions in one step.
 
-**HARD GATE — Test Verification:**
-- Characterization test EXISTS and PASSES before refactoring
-- Characterization test PASSES after refactoring (behavior preserved)
-- Full test suite PASSES (no regressions)
-- If test fails: Fix the refactoring, not the test
-
-```bash
-mix test   # All tests must pass before proceeding to Phase 3
-```
+**Error Recovery — If tests go red after a change:**
+- Revert the last change immediately.
+- Re-examine the characterization test to ensure it fully covers the behavior being touched.
+- Propose a smaller, safer extraction and repeat from step 3.
 
 ---
 
 ### Phase 3: Documentation
 
-Document public APIs:
-1. **Add `@moduledoc`** to every public module.
-2. **Add `@doc`** to every public function with description and examples.
-3. **Add `@spec`** to every public function.
+**Goal — All public API functions have `@doc` and `@spec` before merge.**
 
-**Output:** Updated @moduledoc and @doc comments, refreshed README sections.
-
----
-
-## HARD-GATE: Quality Before Merge
-
-**NEVER open PR before all Phase 1 checks pass** (`mix format --check-formatted`, `mix credo --strict`, `mix dialyzer`, `mix hex.audit`) **plus `mix test`** (full suite green) **and `@doc`/`@spec` annotations on all public APIs.**
-
-**If gate fails:** Fix the failing item before opening PR.
-
-## Output Format
-
-Produce a `# Quality Report — [Date]` with three sections:
-- **Conventions Check**: list CRITICAL / WARNING / SUGGESTION violations with file path, line, and description.
-- **Refactoring**: checked/unchecked required flag, summary of characterization tests added and functions extracted.
-- **Documentation**: @doc and @spec coverage percentages before and after.
+1. Identify every public function (no leading `_`, not `defp`) in the changed modules.
+2. For each function missing `@doc`:
+   - Write a concise description of purpose and return value.
+   - Add at least one `## Examples` block with a `iex>` doctest where practical.
+3. For each function missing `@spec`:
+   - Derive the typespec from usage and dialyzer hints.
+   - Add `@spec` immediately above the function head.
+4. Run `mix dialyzer` once more to confirm new typespecs are consistent.
+5. Run `mix test` to verify doctests pass.
 
 ---
 
-## Error Recovery
+## Final Pre-PR Checklist
 
-**Credo violations after refactoring:** Run `mix format` for auto-fixable issues, then fix remaining manually with `mix credo --strict`.
+Before opening a PR, confirm every item is green:
 
-**Characterization test fails after refactoring:** Revert the change, re-examine the extraction to ensure the contract is preserved, then attempt a smaller, more focused refactoring step.
+| Check | Command | Must Pass |
+|-------|---------|----------|
+| Formatting | `mix format --check-formatted` | ✅ |
+| Linting | `mix credo --strict` | ✅ |
+| Type checking | `mix dialyzer` | ✅ |
+| Dependency audit | `mix hex.audit` | ✅ |
+| Full test suite | `mix test` | ✅ |
+| Doc/spec coverage | All public APIs annotated | ✅ |
 
-**Dialyzer errors after refactoring:** Recompile with `mix compile --force`, then update `@spec` annotations to match the refactored code.
+**Do not open the PR until every row is ✅.**

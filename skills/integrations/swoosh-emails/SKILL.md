@@ -21,9 +21,8 @@ metadata:
 3. **Use Phoenix components for email templates** — reuse UI components in emails
 4. **Configure delivery per environment** — Local adapter in dev/test, real adapter in prod
 5. **Test emails with Swoosh.TestAssertions** — assert emails were sent with correct content
-6. **Never send emails synchronously in web requests** — use Oban or Task for async delivery
+6. **Never send emails synchronously in web requests** — use Oban for async delivery with retries and observability; use Task.start only for simple cases
 7. **Use `Swoosh.Preview` in development** — preview emails in the browser
-8. **Prefer Oban over Task.start** — retries and observability vs silent failures
 
 ---
 
@@ -64,44 +63,9 @@ MyApp.Mailer.deliver(Swoosh.Email.new(to: "test@example.com", from: "noreply@mya
 
 ## Defining Emails
 
-### Plain HTML Bodies
+Prefer Phoenix components for rich templates. Use plain `html_body/text_body` strings only for simple one-off emails.
 
-```elixir
-# lib/my_app/emails/user_email.ex
-defmodule MyApp.Emails.UserEmail do
-  import Swoosh.Email
-
-  def welcome(user) do
-    new()
-    |> to({user.name, user.email})
-    |> from({"MyApp", "noreply@myapp.com"})
-    |> subject("Welcome to MyApp!")
-    |> html_body("""
-      <h1>Welcome, #{user.name}!</h1>
-      <p>Thanks for signing up.</p>
-    """)
-    |> text_body("Welcome, #{user.name}! Thanks for signing up.")
-  end
-
-  def password_reset(user, token) do
-    reset_link = url(~p"/users/reset_password/#{token}")
-
-    new()
-    |> to({user.name, user.email})
-    |> from({"MyApp", "noreply@myapp.com"})
-    |> subject("Reset your password")
-    |> html_body("""
-      <h1>Reset your password</h1>
-      <p><a href=\"#{reset_link}\">Reset Password</a></p>
-    """)
-    |> text_body("Reset your password: #{reset_link}")
-  end
-end
-```
-
-### With Phoenix Components (Preferred for Rich Templates)
-
-Use `Phoenix.Component` and `Phoenix.Template` to render HEEx templates as email bodies, reusing UI components:
+### With Phoenix Components (Preferred)
 
 ```elixir
 # lib/my_app/emails/user_email.ex
@@ -111,7 +75,18 @@ defmodule MyApp.Emails.UserEmail do
   alias MyAppWeb.EmailComponents
 
   def welcome(user) do
-    html = render_html(user)
+    assigns = %{user: user}
+
+    html =
+      ~H"""
+      <EmailComponents.layout>
+        <h1>Welcome, <%= @user.name %>!</h1>
+        <p>Thanks for signing up.</p>
+        <EmailComponents.button href={url(~p"/dashboard")}>Get Started</EmailComponents.button>
+      </EmailComponents.layout>
+      """
+      |> Phoenix.HTML.Safe.to_iodata()
+      |> IO.iodata_to_binary()
 
     new()
     |> to({user.name, user.email})
@@ -121,21 +96,16 @@ defmodule MyApp.Emails.UserEmail do
     |> text_body("Welcome, #{user.name}! Thanks for signing up.")
   end
 
-  defp render_html(user) do
-    assigns = %{user: user}
-
-    ~H"""
-    <EmailComponents.layout>
-      <h1>Welcome, <%= @user.name %>!</h1>
-      <p>Thanks for signing up.</p>
-      <EmailComponents.button href={url(~p"/dashboard")}>Get Started</EmailComponents.button>
-    </EmailComponents.layout>
-    """
-    |> Phoenix.HTML.Safe.to_iodata()
-    |> IO.iodata_to_binary()
-  end
+  # Same pattern applies for password_reset, confirmation emails, etc.
+  # Build the html with ~H and EmailComponents, then pipe through new/to/from/subject/html_body/text_body.
 end
+```
 
+### Email Layout and Button Components
+
+Define reusable components in `lib/my_app_web/components/email_components.ex`. See `EMAIL_COMPONENTS.md` for a full example. A minimal layout and button:
+
+```elixir
 # lib/my_app_web/components/email_components.ex
 defmodule MyAppWeb.EmailComponents do
   use Phoenix.Component
@@ -186,18 +156,10 @@ config :swoosh, serve: true
 config :my_app, MyApp.Mailer,
   adapter: Swoosh.Adapters.Test
 
-# config/prod.exs (or runtime.exs)
+# config/runtime.exs (production)
 config :my_app, MyApp.Mailer,
   adapter: Swoosh.Adapters.Sendgrid,
   api_key: System.get_env("SENDGRID_API_KEY")
-
-# Or SMTP
-config :my_app, MyApp.Mailer,
-  adapter: Swoosh.Adapters.SMTP,
-  relay: "smtp.gmail.com",
-  username: System.get_env("SMTP_USERNAME"),
-  password: System.get_env("SMTP_PASSWORD"),
-  tls: :if_available
 ```
 
 ---
@@ -237,18 +199,13 @@ end
 ### With Task (Simple Cases Only)
 
 ```elixir
-defmodule MyApp.Accounts do
-  alias MyApp.Emails.UserEmail
-  alias MyApp.Mailer
+def register_user(attrs) do
+  with {:ok, user} <- create_user(attrs) do
+    Task.start(fn ->
+      user |> UserEmail.welcome() |> Mailer.deliver()
+    end)
 
-  def register_user(attrs) do
-    with {:ok, user} <- create_user(attrs) do
-      Task.start(fn ->
-        user |> UserEmail.welcome() |> Mailer.deliver()
-      end)
-
-      {:ok, user}
-    end
+    {:ok, user}
   end
 end
 ```

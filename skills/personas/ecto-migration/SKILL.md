@@ -55,8 +55,8 @@ Orchestrates safe Ecto migrations with idempotent cycles, rollback planning, and
 1. Generate migration: `mix ecto.gen.migration <descriptive_name>`.
 2. Implement `up/0` (or `change/0` for reversible migrations).
 3. Implement `down/0` for explicit rollback.
-4. Apply Ecto migration conventions (see ecto-essentials skill).
-5. For data transformations in migrations, follow changeset patterns (see ecto-changeset-patterns skill).
+4. Apply Ecto migration conventions (see `ecto-essentials` companion skill).
+5. For data transformations in migrations, follow changeset patterns (see `ecto-changeset-patterns` companion skill).
 
 **Idempotent cycle test:**
 ```bash
@@ -98,9 +98,9 @@ defmodule MyApp.Repo.Migrations.AddPublishedAtToPosts do
 end
 ```
 
-**Add NOT NULL column with expand-contract** (risky — three separate migrations following the strategy defined in Phase 1):
+**Add NOT NULL column with expand-contract** (risky — three separate migrations per Phase 1 strategy):
 ```elixir
-# Step 1: Add nullable column with default
+# Migration 1 of 3: add nullable column
 defmodule MyApp.Repo.Migrations.AddStatusToPosts do
   use Ecto.Migration
   def up do
@@ -115,7 +115,7 @@ defmodule MyApp.Repo.Migrations.AddStatusToPosts do
   end
 end
 
-# Step 2: Backfill existing rows (separate migration)
+# Migration 2 of 3: backfill existing rows
 defmodule MyApp.Repo.Migrations.BackfillPostStatus do
   use Ecto.Migration
   def up do
@@ -126,7 +126,7 @@ defmodule MyApp.Repo.Migrations.BackfillPostStatus do
   end
 end
 
-# Step 3: Enforce NOT NULL constraint
+# Migration 3 of 3: enforce NOT NULL constraint
 defmodule MyApp.Repo.Migrations.EnforcePostStatusNotNull do
   use Ecto.Migration
   def up do
@@ -184,7 +184,7 @@ MIX_ENV=test mix ecto.migrate
 **Steps:**
 1. Deploy code that handles both old and new schema (expand-contract pattern from Phase 1).
 2. Run the migration, then backfill if needed.
-3. Deploy cleanup code (remove old column references), then drop old columns in a later migration.
+3. Deploy cleanup code removing old column references, then drop old columns in a later migration.
 
 **HARD GATE — Rollback Ready:**
 - [ ] Exact rollback command documented

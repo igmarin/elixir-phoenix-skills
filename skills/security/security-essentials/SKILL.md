@@ -4,9 +4,10 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  MANDATORY for ALL security-sensitive code. Invoke before writing auth, token handling,
-  redirects, or user input processing. Covers atom exhaustion, SQL injection, open redirects,
-  XSS, sensitive data in logs, timing attacks, CSRF, and dependency auditing.
+  Provides security guidelines and patterns for Elixir/Phoenix applications. Use when writing
+  auth, token handling, redirects, or user input processing, or when any security concern
+  arises. Covers atom exhaustion, SQL injection, open redirects, XSS, sensitive data in logs,
+  timing attacks, CSRF, and dependency auditing.
   Trigger words: security, atom exhaustion, SQL injection, XSS, open redirect, timing attack, CSRF, Sobelow.
 metadata:
   user-invocable: "true"
@@ -21,18 +22,20 @@ metadata:
 
 Use this skill before writing ANY security-sensitive code.
 
-## RULES — Follow these with no exceptions
+## RULES — Quick Checklist
 
-1. **Never use `String.to_atom/1` on user input** — always use `String.to_existing_atom/1` with fallback or case/cond for known values
-2. **Never interpolate strings into Ecto queries** — use parameterized queries with `^variable` syntax exclusively
-3. **Never redirect to user-controlled URLs** — validate against an explicit whitelist or use `~p"..."` verified routes only
-4. **Avoid `raw/1` in templates** — if HTML is required, use HtmlSanitizeEx with allowlist configuration
-5. **Never log sensitive data** — passwords, tokens, API keys, PII must never appear in any log output
-6. **Use `Plug.Crypto.secure_compare/2` for token comparison** — never use `==` or `===` for secrets
-7. **Run security audits after every change** — `mix deps.audit && mix hex.audit && mix sobelow` before any merge
-8. **Add Sobelow to CI** — `mix sobelow` must pass in CI, fail on any finding
-9. **Use parameterized queries in raw SQL** — `$1`, `$2` placeholders, never string interpolation
-10. **Validate all user input at boundaries** — not just params, but headers, query strings, and body data
+Apply every item before merging. See the named sections below for patterns and examples.
+
+1. **Atom exhaustion** — never `String.to_atom/1` on user input; use `String.to_existing_atom/1` or an explicit case → [Atom Table Exhaustion](#atom-table-exhaustion)
+2. **SQL injection** — never interpolate strings into Ecto queries; use `^variable` or `$1`/`$2` placeholders → [SQL Injection](#sql-injection)
+3. **Open redirects** — never redirect to user-controlled URLs; use `~p"..."` or a whitelist → [Open Redirects](#open-redirects)
+4. **XSS** — avoid `raw/1`; sanitize with HtmlSanitizeEx if HTML is required → [Cross-Site Scripting (XSS)](#cross-site-scripting-xss)
+5. **Sensitive data in logs** — passwords, tokens, API keys, and PII must never appear in logs → [Sensitive Data in Logs](#sensitive-data-in-logs)
+6. **Timing attacks** — use `Plug.Crypto.secure_compare/2` for token comparison; never `==` → [Timing Attacks](#timing-attacks)
+7. **CSRF** — never disable Phoenix's built-in CSRF protection → [CSRF Protection](#csrf-protection)
+8. **Parameter tampering / IDOR** — validate all user input at boundaries; verify ownership → [Common Vulnerable Patterns](#common-vulnerable-patterns)
+9. **Dependency auditing** — run `mix deps.audit && mix hex.audit && mix sobelow` before any merge → [Dependency Auditing](#dependency-auditing)
+10. **Sobelow in CI** — `mix sobelow` must pass in CI; fail on any HIGH or CRITICAL finding
 
 ---
 
@@ -257,14 +260,14 @@ mix deps.audit && mix hex.audit && mix sobelow --config
 
 **Sobelow categories:**
 
-| Category | What it catches | Severity |
-|----------|----------------|----------|
-| Config | Hardcoded secrets, insecure configurations | HIGH |
-| SQL | SQL injection vulnerabilities | HIGH |
-| Remote Code | Code execution via unsafe eval/apply | CRITICAL |
-| Cross-Site Scripting | XSS in raw templates | HIGH |
-| Function Clobbering | Override of built-in functions | MEDIUM |
-| Denial of Service | Atom exhaustion, unsafe recursion | HIGH |
+| Category | Severity |
+|----------|----------|
+| Config (hardcoded secrets, insecure config) | HIGH |
+| SQL injection | HIGH |
+| Remote Code (unsafe eval/apply) | CRITICAL |
+| Cross-Site Scripting | HIGH |
+| Function Clobbering | MEDIUM |
+| Denial of Service (atom exhaustion) | HIGH |
 
 **Add to CI pipeline:**
 ```yaml
@@ -291,7 +294,7 @@ end
 
 ## CSRF Protection
 
-Phoenix includes CSRF protection by default. Don't disable it.
+Never disable Phoenix's built-in CSRF protection.
 
 ```elixir
 # Phoenix forms automatically include CSRF tokens
