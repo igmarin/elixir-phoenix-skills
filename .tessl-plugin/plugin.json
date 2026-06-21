@@ -30,6 +30,7 @@
     "skills/infrastructure/cachex-caching/SKILL.md",
     "skills/quality/code-quality/SKILL.md",
     "skills/quality/credo-config/SKILL.md",
+    "skills/quality/apply-phoenix-liveview-conventions/SKILL.md",
     "skills/security/security-essentials/SKILL.md",
     "skills/integrations/req-http-client/SKILL.md",
     "skills/integrations/swoosh-emails/SKILL.md",

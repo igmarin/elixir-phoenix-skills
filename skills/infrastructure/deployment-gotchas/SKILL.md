@@ -17,8 +17,6 @@ metadata:
 
 # Deployment Gotchas
 
-<!-- Adapted from j-morgan6/elixir-phoenix-guide (MIT License, Copyright (c) 2026 Joseph Morgan) -->
-
 Use this skill before modifying ANY deployment or release configuration.
 
 ## RULES — Follow these with no exceptions

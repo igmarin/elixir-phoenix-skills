@@ -19,8 +19,6 @@ metadata:
 
 # Ecto Nested Associations
 
-<!-- Adapted from j-morgan6/elixir-phoenix-guide (MIT License, Copyright (c) 2026 Joseph Morgan) -->
-
 ## RULES — Follow these with no exceptions
 
 1. **Use `cast_assoc/3` for has_many/has_one** — never manually insert children in a separate step

@@ -17,8 +17,6 @@ metadata:
 
 # OTP Essentials
 
-<!-- Adapted from j-morgan6/elixir-phoenix-guide (MIT License, Copyright (c) 2026 Joseph Morgan) -->
-
 Use this skill before writing ANY GenServer, Supervisor, Task, or Agent module.
 
 ## RULES — Follow these with no exceptions

@@ -83,6 +83,9 @@
     "credo-config": {
       "path": "skills/quality/credo-config/SKILL.md"
     },
+    "apply-phoenix-liveview-conventions": {
+      "path": "skills/quality/apply-phoenix-liveview-conventions/SKILL.md"
+    },
     "security-essentials": {
       "path": "skills/security/security-essentials/SKILL.md"
     },

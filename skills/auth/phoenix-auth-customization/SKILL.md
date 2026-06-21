@@ -17,8 +17,6 @@ metadata:
 
 # Phoenix Auth Customization
 
-<!-- Adapted from j-morgan6/elixir-phoenix-guide (MIT License, Copyright (c) 2026 Joseph Morgan) -->
-
 Use this skill when extending `phx.gen.auth` with custom fields.
 
 ## RULES — Follow these with no exceptions

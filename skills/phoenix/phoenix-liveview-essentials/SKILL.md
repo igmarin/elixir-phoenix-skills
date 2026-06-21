@@ -17,8 +17,6 @@ metadata:
 
 # Phoenix LiveView Essentials
 
-<!-- Adapted from j-morgan6/elixir-phoenix-guide (MIT License, Copyright (c) 2026 Joseph Morgan) -->
-
 Use this skill before writing ANY LiveView module or `.heex` template.
 
 ## RULES — Follow these with no exceptions
@@ -288,4 +286,15 @@ end
 
 ---
 
-See `agents/liveview-checklist.md` for a step-by-step LiveView development checklist. Related skills: `liveview-streams`, `phoenix-pubsub-patterns`, `phoenix-liveview-auth`, `phoenix-scopes`, `testing-essentials`.
+See `../../agents/liveview-checklist.md` for a step-by-step LiveView development checklist. Related skills: `liveview-streams`, `phoenix-pubsub-patterns`, `phoenix-liveview-auth`, `phoenix-scopes`, `testing-essentials`.
+
+---
+
+## When Not to Use
+
+- **Do not invoke this skill** for static HTML pages without LiveView — use standard Phoenix controller/view patterns instead
+- **Do not use this skill** for channel/websocket work — use `phoenix-channels-essentials` instead
+- **Do not invoke this skill** for large collection rendering (100+ items) — use `liveview-streams` instead for DOM efficiency
+- **Do not use this skill** for file upload patterns — use `phoenix-uploads` instead
+- **Do not invoke this skill** if you are working with authentication — use `phoenix-liveview-auth` and `phoenix-scopes` instead
+- **Do not use this skill** for simple form handling without LiveView — standard Phoenix controller patterns are more appropriate

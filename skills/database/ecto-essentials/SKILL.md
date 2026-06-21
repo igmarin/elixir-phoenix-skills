@@ -17,8 +17,6 @@ metadata:
 
 # Ecto Essentials
 
-<!-- Adapted from j-morgan6/elixir-phoenix-guide (MIT License, Copyright (c) 2026 Joseph Morgan) -->
-
 Use this skill before modifying ANY schema, query, or migration.
 
 ## RULES — Follow these with no exceptions
@@ -230,6 +228,15 @@ All standard CRUD functions (`list_*`, `get_*!`, `update_*`, `delete_*`) follow 
 
 ## Related Skills
 
-- **Prerequisite:** [elixir-essentials](../elixir-essentials/SKILL.md) — core Elixir patterns before working with Ecto
+- **Prerequisite:** [elixir-essentials](../../fundamentals/elixir-essentials/SKILL.md) — core Elixir patterns before working with Ecto
 - **Next — changeset deep-dive:** [ecto-changeset-patterns](../ecto-changeset-patterns/SKILL.md) — advanced validations, custom constraints, and error formatting
 - **Next — testing:** [testing-essentials](../testing-essentials/SKILL.md) — testing Ecto contexts and migrations
+
+---
+
+## When Not to Use
+
+- **Do not invoke this skill** for simple read-only schema inspection or introspection (use `mix ecto.schema` directly instead)
+- **Do not use this skill** for raw SQL queries that bypass Ecto entirely — write raw SQL in a dedicated repo method, not inline in contexts
+- **Do not invoke this skill** for multi-table complex transactions — use `ecto-changeset-patterns` for `Ecto.Multi` and nested association patterns
+- **Do not use this skill** for database migration planning — use `ecto-migration` persona instead for migration orchestration
