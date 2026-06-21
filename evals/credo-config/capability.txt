@@ -1,1 +1,0 @@
-credo-config workflow adherence
