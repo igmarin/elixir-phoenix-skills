@@ -20,6 +20,24 @@ metadata:
 
 Use this skill when writing new LiveView modules or modifying existing LiveView code to ensure consistent, idiomatic Phoenix patterns.
 
+**Precondition:** Invoke `phoenix-liveview-essentials` before this skill for the full callback lifecycle reference.
+
+---
+
+## Quick Reference
+
+| Pattern | Convention |
+|---------|------------|
+| `@impl true` | Before every callback (mount, handle_event, handle_info, handle_params) |
+| Assigns in mount | Static defaults in mount; URL-dependent in handle_params |
+| Side effects | Guard with `if connected?(socket)` — only run when WebSocket connected |
+| Return value | `{:noreply, socket}` from handle_event/handle_info |
+| Error handling | Assign errors to socket with `put_flash`; never raise |
+| Components | Use `def` (exported), not `defp` |
+| Multi-step errors | Use `with` instead of nested case |
+
+---
+
 ## RULES — Follow these with no exceptions
 
 1. **Always use `@impl true`** before every callback (mount, handle_event, handle_info, handle_params, render)
@@ -44,6 +62,20 @@ LiveView renders twice per page load:
 
 **Always initialize assigns to safe defaults in Phase 1** so the static HTML never raises a `KeyError` before WebSocket connects.
 
+---
+
+## Mount Callback
+
+❌ **Bad — missing `@impl true` and unsafe assign access:**
+```elixir
+def mount(_params, _session, socket) do
+  socket = assign(socket, :user, current_user)
+  Phoenix.PubSub.subscribe(MyApp.PubSub, "notifications:#{@user.id}")
+  {:ok, socket}
+end
+```
+
+✅ **Good — `@impl true`, safe defaults, guarded side effects:**
 ```elixir
 @impl true
 def mount(_params, _session, socket) do
@@ -51,25 +83,10 @@ def mount(_params, _session, socket) do
     socket
     |> assign(:user, nil)
     |> assign(:loading, false)
-    |> assign(:data, [])
+    |> assign(:notifications, [])
 
-  {:ok, socket}
-end
-```
-
----
-
-## Mount Callback
-
-```elixir
-@impl true
-def mount(_params, _session, socket) do
-  # Static defaults here
-  socket = assign(socket, page_title: "LiveView")
-
-  # Guard side effects — only run when WebSocket is connected
   if connected?(socket) do
-    Phoenix.PubSub.subscribe(MyApp.PubSub, "some-topic")
+    Phoenix.PubSub.subscribe(MyApp.PubSub, "notifications")
   end
 
   {:ok, socket}
@@ -82,31 +99,47 @@ end
 
 ## Handle Event
 
+❌ **Bad — no `@impl true`, returning incorrect tuple, raising on error:**
+```elixir
+def handle_event("delete", %{"id" => id}, socket) do
+  case Posts.delete_post(id) do
+    {:ok, _} -> {:reply, %{ok: true}, socket}
+    {:error, _} -> raise "Delete failed"
+  end
+end
+```
+
+✅ **Good — `@impl true`, `{:noreply, socket}`, assign errors to socket:**
 ```elixir
 @impl true
-def handle_event("save", %{"post" => params}, socket) do
-  case Posts.create_post(params) do
-    {:ok, post} ->
-      socket =
-        socket
-        |> put_flash(:info, "Saved!")
-        |> assign(:post, post)
+def handle_event("delete", %{"id" => id}, socket) do
+  case Posts.delete_post(id) do
+    {:ok, _post} ->
+      {:noreply, assign(socket, :posts, Posts.list_posts())}
 
-      {:noreply, socket}
-
-    {:error, %Ecto.Changeset{} = changeset} ->
-      socket =
-        socket
-        |> put_flash(:error, "Please correct the errors")
-        |> assign(:changeset, changeset)
-
-      {:noreply, socket}
+    {:error, _reason} ->
+      {:noreply, put_flash(socket, :error, "Could not delete post")}
   end
 end
 ```
 
 ### With for Multi-Step Error Handling
 
+❌ **Bad — nested case for 2+ fallible operations:**
+```elixir
+def handle_event("process", %{"id" => id}, socket) do
+  case Items.get_item(id) do
+    {:ok, item} ->
+      case Items.process(item) do
+        {:ok, result} -> {:noreply, assign(socket, :result, result)}
+        {:error, reason} -> {:noreply, put_flash(socket, :error, "Failed")}
+      end
+    {:error, :not_found} -> {:noreply, put_flash(socket, :error, "Not found")}
+  end
+end
+```
+
+✅ **Good — `with` for 2+ sequential fallible operations:**
 ```elixir
 @impl true
 def handle_event("process", %{"id" => id}, socket) do
@@ -118,7 +151,7 @@ def handle_event("process", %{"id" => id}, socket) do
       {:noreply, put_flash(socket, :error, "Item not found")}
 
     {:error, reason} ->
-      {:noreply, put_flash(socket, :error, "Processing failed")}
+      {:noreply, put_flash(socket, :error, "Processing failed: #{inspect(reason)}")}
   end
 end
 ```
@@ -127,6 +160,15 @@ end
 
 ## Handle Info
 
+❌ **Bad — no `@impl true`, mutating socket directly:**
+```elixir
+def handle_info({:item_updated, item}, socket) do
+  socket.assigns.items = [item | socket.assigns.items]
+  {:reply, %{items: socket.assigns.items}, socket}
+end
+```
+
+✅ **Good — `@impl true`, use `update` for immutable assign changes:**
 ```elixir
 @impl true
 def handle_info({:item_updated, item}, socket) do
@@ -143,8 +185,16 @@ end
 
 ## Handle Params
 
-Called in **both** render phases. Place URL-dependent assigns here.
+❌ **Bad — no `@impl true`, side effects not guarded:**
+```elixir
+def handle_params(%{"id" => id}, _uri, socket) do
+  post = Posts.get_post!(id)
+  Phoenix.PubSub.subscribe(MyApp.PubSub, "post:#{id}")
+  {:reply, %{post: post}, assign(socket, :post, post)}
+end
+```
 
+✅ **Good — `@impl true`, guard `connected?` for subscriptions, return `{:noreply, socket}`:**
 ```elixir
 @impl true
 def handle_params(%{"id" => id}, _uri, socket) do
@@ -169,6 +219,22 @@ end
 
 ### Function Components (exported, reusable)
 
+❌ **Bad — using `defp` (private), not exported:**
+```elixir
+defmodule MyAppWeb.Components do
+  use Phoenix.Component
+
+  defp card(assigns) do
+    ~H"""
+    <div class="card">
+      <h3><%= @title %></h3>
+    </div>
+    """
+  end
+end
+```
+
+✅ **Good — `def` (exported), reusable across templates:**
 ```elixir
 defmodule MyAppWeb.Components do
   use Phoenix.Component
@@ -198,6 +264,20 @@ end
 
 ### Slot Patterns for Children
 
+❌ **Bad — hardcoded children instead of slots:**
+```elixir
+def modal(assigns) do
+  ~H"""
+  <div class="modal">
+    <header><%= @title %></header>
+    <div>Are you sure?</div>
+    <button phx-click="cancel">Cancel</button>
+  </div>
+  """
+end
+```
+
+✅ **Good — use `render_slot` for flexible content:**
 ```elixir
 def modal(assigns) do
   ~H"""
@@ -224,6 +304,19 @@ end
 
 ## Form Binding
 
+❌ **Bad — no `@impl true`, no validation handler, no error handling:**
+```elixir
+def mount(_params, _session, socket) do
+  {:ok, assign(socket, changeset: Post.changeset(%Post{}, %{}))}
+end
+
+def handle_event("save", %{"post" => params}, socket) do
+  Posts.create_post(params)
+  {:reply, %{ok: true}, socket}
+end
+```
+
+✅ **Good — `@impl true`, separate validate event, assign changeset on error:**
 ```elixir
 @impl true
 def mount(_params, _session, socket) do
@@ -267,6 +360,15 @@ end
 
 ## Socket Assigns — Best Practices
 
+❌ **Bad — mutating socket.assigns directly:**
+```elixir
+def handle_info({:count_update, n}, socket) do
+  socket.assigns[:count] = n
+  {:noreply, socket}
+end
+```
+
+✅ **Good — use `assign`/`update` for immutable changes:**
 ```elixir
 # Single assign
 socket = assign(socket, :count, 0)
@@ -280,6 +382,7 @@ socket = update(socket, :count, &(&1 + 1))
 
 **In render/1** — direct access is safe when initialized in mount:
 ```elixir
+@impl true
 def render(assigns) do
   ~H"""<p>Count: <%= @count %></p>"""
 end
@@ -301,7 +404,19 @@ end
 
 ### Assign Errors to Socket (never raise)
 
+❌ **Bad — raising on expected error:**
 ```elixir
+def handle_event("submit", %{"data" => data}, socket) do
+  case process_data(data) do
+    {:ok, result} -> {:noreply, assign(socket, :result, result)}
+    {:error, :invalid} -> raise "Invalid data"
+  end
+end
+```
+
+✅ **Good — assign error to socket with `put_flash`:**
+```elixir
+@impl true
 def handle_event("submit", %{"data" => data}, socket) do
   case process_data(data) do
     {:ok, result} ->

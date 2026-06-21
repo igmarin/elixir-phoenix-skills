@@ -20,7 +20,7 @@ This repo is one of 6 in a composable AI skill ecosystem:
 |------|------|
 | [`ruby-core-skills`](https://github.com/igmarin/ruby-core-skills) | 15 shared Ruby skills + process discipline |
 | [`rails-agent-skills`](https://github.com/igmarin/rails-agent-skills) | 28 atomic skills + 9 personas |
-| [**`elixir-phoenix-skills`**](https://github.com/igmarin/elixir-phoenix-skills) | 32 atomic skills + 7 personas + 1 orchestrator |
+| [**`elixir-phoenix-skills`**](https://github.com/igmarin/elixir-phoenix-skills) | 33 atomic skills + 7 personas + 1 orchestrator |
 | [`hanakai-yaku`](https://github.com/igmarin/hanakai-yaku) | 35 Hanami/dry-rb skills + 10 personas |
 | [`agnostic-planning-skills`](https://github.com/igmarin/agnostic-planning-skills) | 10 planning skills + 4 personas |
 | [`agent-mcp-runtime`](https://github.com/igmarin/agent-mcp-runtime) | Rust CLI runtime (pack resolution, MCP) |
@@ -62,7 +62,7 @@ npx skills add igmarin/elixir-phoenix-skills
 
 ## Skill Catalog
 
-The library contains **40 skills total** — 32 atomic skills, 7 personas, and 1 orchestrator — organized by category.
+The library contains **41 skills total** — 33 atomic skills, 7 personas, and 1 orchestrator — organized by category.
 
 ### Atomic Skills
 
@@ -74,7 +74,7 @@ The library contains **40 skills total** — 32 atomic skills, 7 personas, and 1
 | **Testing** | `testing-essentials`, `property-based-testing`, `benchee-profiling` | `skills/testing/` |
 | **Auth** | `phoenix-liveview-auth`, `phoenix-auth-customization`, `phoenix-authorization-patterns` | `skills/auth/` |
 | **Infrastructure** | `oban-essentials`, `broadway-data-pipelines`, `deployment-gotchas`, `telemetry-essentials`, `cachex-caching` | `skills/infrastructure/` |
-| **Quality** | `code-quality`, `credo-config` | `skills/quality/` |
+| **Quality** | `code-quality`, `credo-config`, `apply-phoenix-liveview-conventions` | `skills/quality/` |
 | **Security** | `security-essentials` | `skills/security/` |
 | **Integrations** | `req-http-client`, `swoosh-emails`, `gettext-i18n` | `skills/integrations/` |
 | **Tooling** | `mix-tasks-generators` | `skills/tooling/` |
