@@ -55,30 +55,30 @@ The eight most-used skills are listed here. For the full catalog of all availabl
 
 ### Skill Priority
 
-When multiple skills could apply, state this priority rule immediately after the routing statement:
+**Canonical priority rule** — apply this whenever multiple skills could apply:
 
 ```text
 Priority: TDD → Planning → Implementation → Quality → Review.
 ```
 
+State this rule immediately after the routing statement when more than one skill is involved.
+
 **Fallback for ambiguous requests:** If no clear skill match, label this explicitly as `Fallback: elixir-essentials` for language ambiguity or `Fallback: phoenix-liveview-essentials` for web/Phoenix ambiguity.
 
 ### Decomposition Examples
 
-The following examples show how a complex user request is broken into ordered sub-tasks with explicit skill assignments.
+These examples show the routing statement format and skill-chain ordering. Apply the canonical priority rule from **Skill Priority** above when sequencing sub-tasks.
 
 **Example 1 — "I need to add user notifications to my Phoenix app. Users should receive an email when a job completes, and I want a live counter on the dashboard."**
 
-Decomposition:
-1. **Scope check** — request touches background jobs (Oban), email delivery, LiveView UI, and the data layer.
-2. **Sub-tasks in priority order**:
-   - `skills/testing/testing-essentials` — write failing tests for job completion callback and email dispatch first (TDD gate).
-   - `skills/infrastructure/oban-essentials` — implement the job and its on-completion hook.
-   - `skills/fundamentals/elixir-essentials` — implement the mailer module.
-   - `skills/database/ecto-essentials` — add the `notifications` schema and migration.
-   - `skills/phoenix/phoenix-liveview-essentials` — wire the live counter into the dashboard LiveView.
-   - `skills/quality/code-quality` — quality gate before PR.
-3. **Routing statement**:
+Sub-tasks in priority order (touches background jobs, email delivery, LiveView UI, and the data layer):
+- `skills/testing/testing-essentials` — write failing tests for job completion callback and email dispatch first (TDD gate).
+- `skills/infrastructure/oban-essentials` — implement the job and its on-completion hook.
+- `skills/fundamentals/elixir-essentials` — implement the mailer module.
+- `skills/database/ecto-essentials` — add the `notifications` schema and migration.
+- `skills/phoenix/phoenix-liveview-essentials` — wire the live counter into the dashboard LiveView.
+- `skills/quality/code-quality` — quality gate before PR.
+
 ```text
 Next skill: skills/testing/testing-essentials
 
@@ -87,42 +87,27 @@ This request spans jobs, email, data, and LiveView. Starting with failing tests 
 Priority: TDD → oban-essentials → elixir-essentials → ecto-essentials → phoenix-liveview-essentials → code-quality.
 ```
 
-**Example 2 — "I'm not sure where to start — I need to refactor this GenServer so it doesn't crash under load, and also review the authentication logic for security issues."**
+**Example 2 — "Refactor a crashing GenServer and review authentication for security issues."**
 
-Decomposition:
-1. **Scope check** — request touches OTP concurrency, security review, and general refactoring.
-2. **Sub-tasks in priority order**:
-   - `skills/security/security-essentials` — audit authentication logic first (security always precedes refactoring).
-   - `skills/testing/testing-essentials` — write a failing test that reproduces the crash scenario (TDD gate for the bug fix).
-   - `skills/fundamentals/otp-essentials` — refactor the GenServer with the reproduction test in place.
-   - `skills/quality/code-quality` — final quality pass.
-3. **Routing statement**:
+Sub-tasks: `security-essentials` (audit auth first) → `testing-essentials` (reproduce crash) → `otp-essentials` (fix GenServer) → `code-quality` (final pass).
+
 ```text
 Next skill: skills/security/security-essentials
 
-Authentication touches security boundaries, so we audit that first before addressing the GenServer crash.
+Authentication touches security boundaries; audit that first before addressing the GenServer crash.
 
-Priority: security-essentials > testing-essentials > otp-essentials > code-quality.
+Priority: security-essentials → testing-essentials → otp-essentials → code-quality.
 ```
 
-### Typical Workflows
+### Common Skill Chains
 
-Sub-skills are invoked by stating their name as the next skill to apply (see **Output Style**) before proceeding with that skill's instructions.
-
-**TDD Feature Loop** *(primary daily workflow)*:
-skills/testing/testing-essentials → RED → skills/fundamentals/elixir-essentials → skills/quality/credo-config → skills/fundamentals/typespec-dialyzer → PR
-
-**Bug fix:**
-skills/testing/testing-essentials → **[GATE: reproduction test fails]** → skills/fundamentals/elixir-essentials → fix → verify passes
-
-**Multi-concern review:**
-skills/security/security-essentials *(if input/secrets touched)* → skills/quality/code-quality *(general code review)*
-
-**New Phoenix feature:**
-skills/phoenix/phoenix-liveview-essentials → skills/database/ecto-essentials → skills/testing/testing-essentials → skills/quality/code-quality
-
-**Background job:**
-skills/infrastructure/oban-essentials → skills/testing/testing-essentials → skills/quality/code-quality
+| Scenario | Skill chain |
+|----------|--------------|
+| **TDD Feature Loop** *(primary)* | testing-essentials → RED → elixir-essentials → credo-config → typespec-dialyzer → PR |
+| **Bug fix** | testing-essentials → **[GATE: reproduction test fails]** → elixir-essentials → verify passes |
+| **Multi-concern review** | security-essentials *(if input/secrets touched)* → code-quality |
+| **New Phoenix feature** | phoenix-liveview-essentials → ecto-essentials → testing-essentials → code-quality |
+| **Background job** | oban-essentials → testing-essentials → code-quality |
 
 ## Output Style
 
@@ -153,12 +138,3 @@ Priority: security-essentials > code-quality; Chain: security-essentials then co
 **Use `elixir-essentials` alone** if you only need Elixir language guidance without orchestration.
 
 **Use `testing-essentials` alone** if the test approach is already decided and you just need to write the spec.
-
----
-
-## Integration
-
-| Predecessor | This Persona | Successor |
-|-------------|---------------|-----------|
-| None (always first) | elixir-skill-router | elixir-essentials |
-| None (always first) | elixir-skill-router | phoenix-liveview-essentials |

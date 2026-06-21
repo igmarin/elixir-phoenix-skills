@@ -23,7 +23,7 @@ Orchestrates the full Elixir TDD cycle. Write the test first, watch it fail for 
 ## Agent Phases
 
 ### Phase 1: Context & Test Design
-1. **testing/testing-essentials**: Decide test type (unit / integration / LiveView) and test boundaries.
+1. **Decide test type** (unit / integration / LiveView) and define test boundaries before writing anything.
 2. **Write the minimal failing test** — see Example below.
 3. **Run**: `mix test test/path/to/file_test.exs` — confirm it FAILS.
 

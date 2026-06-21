@@ -32,54 +32,29 @@ Use this skill before modifying ANY schema, query, or migration.
 
 ## Schema Definition
 
-Define schemas with proper types and associations.
+Define schemas with proper types and associations. The example below shows a child schema with `belongs_to`; a parent schema uses `has_many` in the same pattern (see `Folder` in the migration section for reference).
 
 ```elixir
-# Parent schema
-defmodule MyApp.Media.Folder do
-  use Ecto.Schema
-  import Ecto.Changeset
-
-  schema "folders" do
-    field :name, :string
-    has_many :images, MyApp.Media.Image
-
-    timestamps()
-  end
-
-  def changeset(folder, attrs) do
-    folder
-    |> cast(attrs, [:name])
-    |> validate_required([:name])
-    |> unique_constraint(:name)
-  end
-end
-
-# Child schema
 defmodule MyApp.Media.Image do
   use Ecto.Schema
   import Ecto.Changeset
 
   schema "images" do
     field :title, :string
-    field :description, :string
     field :filename, :string
-    field :file_path, :string
     field :content_type, :string
-    field :file_size, :integer
 
-    belongs_to :folder, MyApp.Media.Folder
+    belongs_to :folder, MyApp.Media.Folder  # parent uses has_many :images, MyApp.Media.Image
 
     timestamps()
   end
 
   def changeset(image, attrs) do
     image
-    |> cast(attrs, [:title, :description, :filename, :file_path, :content_type, :file_size, :folder_id])
-    |> validate_required([:title, :filename, :file_path, :content_type, :file_size])
+    |> cast(attrs, [:title, :filename, :content_type, :folder_id])
+    |> validate_required([:title, :filename, :content_type])
     |> validate_length(:title, min: 1, max: 255)
     |> validate_inclusion(:content_type, ["image/jpeg", "image/png", "image/gif"])
-    |> validate_number(:file_size, greater_than: 0, less_than: 10_000_000)
     |> foreign_key_constraint(:folder_id)
   end
 end
@@ -101,7 +76,7 @@ def search_images(query_string) do
   search = "%#{query_string}%"
 
   Image
-  |> where([i], ilike(i.title, ^search) or ilike(i.description, ^search))
+  |> where([i], ilike(i.title, ^search))
   |> Repo.all()
 end
 ```
@@ -182,14 +157,12 @@ end
 
 ## Dynamic Queries
 
-Build queries incrementally using `Enum.reduce` over a filters map:
-
 ```elixir
 def list_images(filters) do
   Enum.reduce(filters, Image, fn
     {:folder_id, id}, q -> where(q, [i], i.folder_id == ^id)
     {:search, term}, q -> where(q, [i], ilike(i.title, ^"%#{term}%"))
-    {:min_size, size}, q -> where(q, [i], i.file_size >= ^size)
+    {:content_type, ct}, q -> where(q, [i], i.content_type == ^ct)
     _, q -> q
   end)
   |> Repo.all()
@@ -207,11 +180,8 @@ defmodule MyApp.Repo.Migrations.CreateImages do
   def change do
     create table(:images) do
       add :title, :string, null: false
-      add :description, :text
       add :filename, :string, null: false
-      add :file_path, :string, null: false
       add :content_type, :string, null: false
-      add :file_size, :integer, null: false
       add :folder_id, references(:folders, on_delete: :nilify_all)
 
       timestamps()
@@ -258,9 +228,8 @@ All standard CRUD functions (`list_*`, `get_*!`, `update_*`, `delete_*`) follow 
 
 ---
 
-## Integration
+## Related Skills
 
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| elixir-essentials | ecto-essentials | ecto-changeset-patterns |
-| elixir-essentials | ecto-essentials | testing-essentials |
+- **Prerequisite:** [elixir-essentials](../elixir-essentials/SKILL.md) — core Elixir patterns before working with Ecto
+- **Next — changeset deep-dive:** [ecto-changeset-patterns](../ecto-changeset-patterns/SKILL.md) — advanced validations, custom constraints, and error formatting
+- **Next — testing:** [testing-essentials](../testing-essentials/SKILL.md) — testing Ecto contexts and migrations

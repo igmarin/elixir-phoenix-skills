@@ -23,14 +23,13 @@ metadata:
 
 ## RULES — Follow these with no exceptions
 
-1. **Duplicated functions must be extracted** — when 2+ modules share >70% identical function implementations, create a shared module
-2. **Functions must stay below ABC complexity 30** — break complex functions into smaller helpers with single responsibilities
-3. **Unused private functions must be removed** — dead code identified after refactoring must be cleaned up
+1. **Duplicated functions must be extracted** — when 2+ modules share >70% similar implementations, create a shared module
+2. **Functions must stay below ABC complexity 30** — break complex functions into smaller helpers
+3. **Remove unused private functions after refactoring**
 4. **Duplicated templates must become components** — when 2+ HEEx files share >40% identical markup, extract to a function component
 5. **Address duplication before complexity** — extracting shared code first reduces overall complexity
-6. **Prefer composition over inheritance** — extract shared functions into modules imported/used where needed
-7. **Run `mix credo --strict` before any PR** — never merge code with Credo violations
-8. **Run `mix sobelow` for security** — check for security issues after quality checks
+6. **Run `mix credo --strict` before any PR**
+7. **Run `mix sobelow` for security** — check after quality checks
 
 ---
 
@@ -48,14 +47,7 @@ metadata:
 
 ### Code Duplication
 
-**Example output:**
-```
-  Duplication Detected
-   Function `format_time/1` (85% similar)
-     lib/app_web/live/cycle_time.ex:45
-     lib/app_web/live/lead_time.ex:52
-   Suggestion: Extract to a shared module
-```
+Duplication is identified through manual review — look for similar function bodies across modules (>70% similarity). Credo does not automatically detect cross-module duplication; use judgment when comparing implementations.
 
 **How to fix:**
 ```elixir
@@ -94,7 +86,7 @@ end
 
 ### Unused Private Functions
 
-Remove any private functions that are no longer called after refactoring.
+After refactoring, scan for any private functions no longer referenced and remove them.
 
 ### Template Duplication
 
@@ -143,15 +135,4 @@ mix sobelow --config
 ```bash
 # All three in sequence
 mix deps.audit && mix hex.audit && mix sobelow
-```
-
-**Add to CI pipeline:**
-```elixir
-# In mix.exs aliases
-defp aliases do
-  [
-    "security.check": ["deps.audit", "hex.audit", "sobelow --config"],
-    "quality": ["format --check-formatted", "credo --strict", "sobelow --config"]
-  ]
-end
 ```

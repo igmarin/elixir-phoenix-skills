@@ -23,14 +23,12 @@ Orchestrates robust background job implementation with TDD discipline, proper re
 
 ## Phase 1: Job Design
 
-**Objective:** Define job responsibilities, idempotency strategy, and error classification before writing code.
-
 **Steps:**
 1. **Job Purpose** — Define trigger conditions, input parameters, expected output/side effects, and criticality.
 2. **Idempotency** — Design job to be safely re-runnable: use unique job keys, status checks, or sentinel timestamps.
 3. **Error Classification** — Classify all anticipated errors:
-   - Transient (network timeouts, rate limits, DB connection errors) → retry
-   - Permanent (invalid data, record not found, validation failures) → discard
+   - Transient (network timeouts, rate limits, DB connection errors) → return `{:error, reason}`
+   - Permanent (invalid data, record not found, validation failures) → return `:discard`
    - Configuration (missing credentials) → alert
 4. **Queue & Timeout** — Assign queue priority and set execution timeout.
 
@@ -45,8 +43,6 @@ Orchestrates robust background job implementation with TDD discipline, proper re
 ---
 
 ## Phase 2: TDD Implementation
-
-**Objective:** Implement job logic under TDD discipline.
 
 **Steps:**
 1. Choose unit test approach (test the `perform/1` function directly).
@@ -95,13 +91,11 @@ end
 
 ## Phase 3: Retry/Discard Configuration
 
-**Objective:** Harden job for production with correct retry backoff, discard rules, timeouts, and monitoring hooks.
-
 **Steps:**
 1. Configure `max_attempts` for retry with exponential backoff.
-2. Apply `discard_on` or explicit handling for permanent errors.
+2. Apply `discard_on` or explicit handling for permanent errors (see error classification in Phase 1).
 3. Set execution timeout at the job level.
-4. Wire telemetry events for monitoring (see **infrastructure/telemetry-essentials**).
+4. Wire telemetry events for monitoring.
 
 **Key implementation pattern:**
 ```elixir
@@ -139,17 +133,16 @@ end
 
 ## Phase 4: Failure Scenario Testing & Monitoring
 
-**Objective:** Verify retry/discard behaviour under injected failures and confirm observability.
-
 **Steps:**
-1. Assert transient errors return `{:error, ...}` so Oban re-enqueues the job.
-2. Assert permanent errors return `:discard` so Oban does not retry.
-3. Verify telemetry events fire on success and failure paths.
-4. Confirm monitoring dashboard or alert is configured for queue depth.
+1. For each error classified in Phase 1, assert the correct return value:
+   - Transient → `{:error, ...}`
+   - Permanent → `:discard`
+2. Verify telemetry events fire on success and failure paths.
+3. Confirm monitoring dashboard or alert is configured for queue depth.
 
 **HARD GATE — Failure Scenarios Tested:**
-- [ ] Transient error path → `{:error, ...}` (Oban retries)
-- [ ] Permanent error path → `:discard` (not re-enqueued)
+- [ ] All transient error paths verified → `{:error, ...}`
+- [ ] All permanent error paths verified → `:discard`
 - [ ] Telemetry/logging assertions pass
 - [ ] Performance acceptable under expected load
 
@@ -183,5 +176,3 @@ When completing a background job implementation, output MUST follow this structu
 - Telemetry events: <list>
 - Queue depth alerts: <configured threshold>
 ```
-
-**Use `oban-essentials` alone** if the job design is already decided and you only need to implement the worker module.

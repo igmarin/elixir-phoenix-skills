@@ -19,17 +19,14 @@ metadata:
 
 <!-- Adapted from j-morgan6/elixir-phoenix-guide (MIT License, Copyright (c) 2026 Joseph Morgan) -->
 
-Use this skill before writing ANY `_test.exs` file.
-
 ## RULES — Follow these with no exceptions
 
 1. **Follow the project's existing test setup patterns** — don't inline DataCase/ConnCase boilerplate that the project already abstracts away
-2. **Test both happy path AND error/invalid cases** for every function
-3. **Use `async: true` only when safe** — safe: pure functions, changesets, helpers; unsafe: DB contexts with shared rows, LiveView, `Application.put_env`, external services
-4. **Define test data in fixtures** (`test/support/`) — never build it inline across multiple tests
-5. **Use `has_element?/2` and `element/2` for LiveView assertions** — not `html =~ "text"` for structure checks
-6. **Always test the unauthorized case** for any protected resource
-7. **Never hardcode dates** — use relative timestamps to prevent flaky tests
+2. **Use `async: true` only when safe** — avoid for DB contexts with shared rows, LiveView, `Application.put_env`, and external services
+3. **Define test data in fixtures** (`test/support/`) — never build it inline across multiple tests
+4. **Use `has_element?/2` and `element/2` for LiveView assertions** — not `html =~ "text"` for structure checks
+5. **Always test the unauthorized case** for any protected resource
+6. **Never hardcode dates** — use relative timestamps to prevent flaky tests
 
 ---
 
@@ -173,7 +170,7 @@ end
 
 ## Setup Chaining
 
-Use `setup [:func1, :func2]` to compose reusable setup functions; order matters as later functions receive assigns from earlier ones.
+Use `setup [:func1, :func2]` to compose reusable setup functions; later functions receive assigns from earlier ones.
 
 ```elixir
 defmodule MyAppWeb.PostLiveTest do
@@ -199,7 +196,7 @@ end
 
 ## Timestamp Testing
 
-❌ **Bad — breaks after 2026:**
+❌ **Bad — hardcoded date will eventually be in the past:**
 ```elixir
 assert post.published_at == ~U[2026-01-15 12:00:00Z]
 ```
@@ -223,9 +220,9 @@ assert Blog.list_published_posts() == [old_post]
 
 ## Troubleshooting Common Failures
 
-- **Sandbox ownership errors** (`ownership timeout` or `DBConnection.OwnershipError`): a test tagged `async: true` is sharing DB state — flip to `async: false`.
-- **LiveView sandbox errors** (`cannot find ownership process`): LiveView tests must use `async: false`; ensure `ConnCase` tags the test accordingly.
-- **`Application.put_env` leaking between tests**: always restore in an `on_exit` callback, and use `async: false` for the affected suite.
+- **Sandbox ownership errors** (`ownership timeout` or `DBConnection.OwnershipError`): flip the test to `async: false`.
+- **LiveView sandbox errors** (`cannot find ownership process`): LiveView tests must use `async: false`.
+- **`Application.put_env` leaking between tests**: restore in an `on_exit` callback and use `async: false`.
 - **Flaky timestamp assertions**: replace hardcoded datetimes with `DateTime.diff/3` comparisons (see Timestamp Testing above).
 - **Unexpected redirect in LiveView**: confirm the test user has the required role/session via `register_and_log_in_user` setup.
 

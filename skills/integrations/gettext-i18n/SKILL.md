@@ -28,11 +28,10 @@ Gettext is the standard internationalization library for Elixir/Phoenix applicat
 
 ---
 
-## RULES — Follow these with no exceptions
+## Key Rules
 
-1. **Set locale per request** — use `Gettext.put_locale/2` in plugs or LiveView mount
-2. **Don't translate error messages meant for logs** — only translate user-facing text
-3. **Use domain-specific contexts** — `dgettext("errors", "Not found")` for different domains
+- **Only translate user-facing text** — do not translate error messages intended for logs
+- **Use domain-specific contexts** — `dgettext("errors", "Not found")` keeps error strings in a separate `.po` file from default content
 
 ---
 
@@ -108,16 +107,6 @@ end
 
 ---
 
-## Domain-Specific Translations
-
-```elixir
-gettext("Save")                              # Default domain
-dgettext("errors", "Not found")             # Errors domain
-dgettext("emails", "Welcome email subject") # Emails domain
-```
-
----
-
 ## Translation Files
 
 ### Directory Structure
@@ -178,48 +167,19 @@ defmodule MyAppWeb.Plugs.SetLocale do
 
   def call(conn, _opts) do
     locale =
-      locale_from_params(conn) ||
-      locale_from_session(conn) ||
-      locale_from_header(conn) ||
+      get_locale_from_params(conn) ||
+      get_locale_from_session(conn) ||
       "en"
 
     Gettext.put_locale(MyAppWeb.Gettext, locale)
     conn
   end
 
-  defp locale_from_params(conn) do
-    conn.params["locale"]
-    |> validate_locale()
-  end
+  defp get_locale_from_params(conn), do: validate(conn.params["locale"])
+  defp get_locale_from_session(conn), do: validate(get_session(conn, "locale"))
 
-  defp locale_from_session(conn) do
-    conn
-    |> get_session("locale")
-    |> validate_locale()
-  end
-
-  defp locale_from_header(conn) do
-    conn
-    |> get_req_header("accept-language")
-    |> List.first()
-    |> parse_accept_language()
-    |> validate_locale()
-  end
-
-  defp parse_accept_language(nil), do: nil
-
-  defp parse_accept_language(header) do
-    # Take the first (highest-priority) locale tag, e.g. "es-MX,es;q=0.9" -> "es"
-    header
-    |> String.split(",")
-    |> List.first()
-    |> String.split("-")
-    |> List.first()
-    |> String.trim()
-  end
-
-  defp validate_locale(locale) when locale in @supported_locales, do: locale
-  defp validate_locale(_), do: nil
+  defp validate(locale) when locale in @supported_locales, do: locale
+  defp validate(_), do: nil
 end
 ```
 

@@ -59,6 +59,15 @@ cp .env.example .env 2>/dev/null || true
 
 **Proceed only after environment check passes.**
 
+**Shared action versions** (used in every job below — match your `.tool-versions`):
+
+| Action | Pinned SHA |
+|--------|------------|
+| `actions/checkout` | `34e114876b0b11c390a56381ad16ebd13914f8d5` |
+| `erlef/setup-beam` | `5304e04ea2b355f03681464e683d92e3b2f18451` |
+| `elixir-version` | `"1.17.x"` |
+| `otp-version` | `"27.x"` |
+
 1. **Configure CI pipeline** — write to `.github/workflows/ci.yml`.
 
 ```yaml
@@ -66,7 +75,7 @@ steps:
   - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
   - uses: erlef/setup-beam@5304e04ea2b355f03681464e683d92e3b2f18451
     with:
-      elixir-version: "1.17.x"   # adjust to match .tool-versions
+      elixir-version: "1.17.x"
       otp-version: "27.x"
   - run: mix deps.get
   - run: mix compile --warnings-as-errors
@@ -78,7 +87,7 @@ steps:
 
 2. **Configure CD pipeline** — write to `.github/workflows/cd.yml`.
 
-   Fill in `DEPLOY_CLI` (e.g., `flyctl`, `gigalixir`, custom Docker) and the appropriate secret names. Each job must use the same `checkout` + `setup-beam` actions (same SHAs and versions) as the CI job above.
+   Fill in `DEPLOY_CLI` (e.g., `flyctl`, `gigalixir`, custom Docker) and the appropriate secret names. Use the same action SHAs and versions from the shared table above.
 
 ```yaml
 jobs:
@@ -126,33 +135,14 @@ act push
 
 ## Output Style
 
-When completing project setup, output MUST include:
+When completing project setup, output a **Setup Report** with the following required fields:
 
-```markdown
-# Setup Report — [Project Name]
+- **Environment**: Elixir version (matched against `.tool-versions`), Erlang/OTP version, database version and connection status, env vars source.
+- **Dependencies**: results of `mix deps.get`, `mix ecto.create`, `mix ecto.migrate`, `mix test --seed 0` (with counts).
+- **CI/CD**: paths to generated workflow files, SHA-pinning confirmation, pipeline step order.
+- **Validation**: Phoenix server start status (port), full test suite result, `SETUP_CHECKLIST.md` written confirmation.
 
-## Environment
-- Elixir: <version> (matches .tool-versions: ✓/✗)
-- Erlang/OTP: <version>
-- Database: <PostgreSQL version, connection status>
-- Env vars: <loaded from environment configuration file>
-
-## Dependencies
-- mix deps.get: ✓ (<n> dependencies)
-- mix ecto.create: ✓ / mix ecto.migrate: ✓ (<n> migrations)
-- mix test --seed 0: ✓ (<n> examples detected)
-
-## CI/CD
-- CI: .github/workflows/ci.yml ✓
-- CD: .github/workflows/cd.yml ✓
-- Actions pinned to SHA: ✓
-- Pipeline: format → compile → credo → test → dialyzer → deploy
-
-## Validation
-- Phoenix server starts: ✓ (port 4000)
-- Full test suite: ✓ (<n> tests, 0 failures)
-- SETUP_CHECKLIST.md: ✓ written
-```
+Use ✓/✗ symbols and include counts (e.g., number of deps, migrations, tests) for each item.
 
 ---
 

@@ -174,12 +174,10 @@ config :ash, :policies, log_policy_breakdowns: :error
 
 ### AshPhoenix LiveView Integration
 
-Add `{:ash_phoenix, "~> 2.0"}` to deps. `AshPhoenix.Form` bridges Ash changesets to Phoenix form components.
-
-Key pattern — build an `AshPhoenix.Form`, convert with `to_form/1`, and handle submit:
+Add `{:ash_phoenix, "~> 2.0"}` to deps.
 
 ```elixir
-# mount
+# mount — build form from changeset
 form =
   post
   |> Ash.Changeset.for_update(:update, %{})
@@ -199,7 +197,7 @@ See the [AshPhoenix docs](https://hexdocs.pm/ash_phoenix) for full LiveView and 
 
 ### AshJsonApi Integration
 
-Add `{:ash_json_api, "~> 1.0"}` to deps. Expose resources as a JSON:API endpoint by adding the extension and router plug:
+Add `{:ash_json_api, "~> 1.0"}` to deps.
 
 ```elixir
 # In your resource
@@ -252,17 +250,10 @@ MyApp.Blog.Post
 
 ---
 
-## Custom Validations
+## Ash-Specific Pitfalls
 
-❌ **Bad — no validations, relying only on database constraints:**
-```elixir
-create :create do
-  accept [:title, :body, :author_id]
-  # No validations - bugs will reach the database
-end
-```
+### Custom Validations — use the action layer, not DB constraints
 
-✅ **Good — validations in the action layer:**
 ```elixir
 create :create do
   accept [:title, :body, :author_id]
@@ -270,27 +261,37 @@ create :create do
   validate str_length(:title, min: 1, max: 255) do
     message "Title must be between 1 and 255 characters"
   end
+end
+```
 
-  validate changing(:body) do
-    if Map.get(attributes, :status) == :published do
-      message "Published posts cannot have body changed"
+For multi-field or conditional validation logic, implement a custom `Ash.Resource.Validation` module:
+
+```elixir
+defmodule MyApp.Validations.TitleNotBlank do
+  use Ash.Resource.Validation
+
+  @impl true
+  def validate(changeset, _opts, _context) do
+    case Ash.Changeset.get_attribute(changeset, :title) do
+      nil -> {:error, field: :title, message: "can't be blank"}
+      "" -> {:error, field: :title, message: "can't be blank"}
+      _ -> :ok
     end
   end
 end
 ```
 
----
+### Filtering — use `^` for safe interpolation, never string interpolation
 
-## Not Found Handling
-
-❌ **Bad — ignoring not found, will raise unhelpful error:**
 ```elixir
-# Directly chaining bang function without checking
-post = MyApp.Blog.Post |> Ash.get!(id)
-# Raises Ash.Error.Query.NotFound with no context
+# NEVER: Ash.Query.filter("status == '#{params["status"]}'"})  -- injection risk
+MyApp.Blog.Post
+|> Ash.Query.filter(status == ^status and author_id == ^current_user.id)
+|> Ash.Query.sort([inserted_at: :desc])
 ```
 
-✅ **Good — explicit handling of both cases:**
+### Not Found — match on `Ash.Error.Query.NotFound` explicitly
+
 ```elixir
 case MyApp.Blog.Post |> Ash.get(id) do
   {:ok, post} -> {:ok, post}
@@ -299,38 +300,29 @@ case MyApp.Blog.Post |> Ash.get(id) do
 end
 ```
 
----
+### Error Handling — match Ash error types specifically
 
-## Sorting and Filtering
-
-❌ **Bad — string interpolation in filters (injection risk):**
 ```elixir
-# NEVER do this - user input directly interpolated
-MyApp.Blog.Post
-|> Ash.Query.filter("status == '#{params["status"]}'")
+case MyApp.Blog.Post
+     |> Ash.Changeset.for_create(params)
+     |> MyApp.Blog.create() do
+  {:ok, post} ->
+    {:ok, post}
+  {:error, %Ash.Error.InvalidInput{fields: fields}} ->
+    {:error, :validation, fields}
+  {:error, %Ash.Error.Forbidden{}} ->
+    {:error, :unauthorized}
+  {:error, %Ash.Error.Changeset{errors: errors}} ->
+    {:error, :invalid_changeset, errors}
+  {:error, error} ->
+    Logger.error("Unexpected error: #{inspect(error)}")
+    {:error, :internal_error}
+end
 ```
 
-✅ **Good — parameterized filters with safe values:**
+### Pagination — use keyset pagination for large result sets
+
 ```elixir
-# Use ^ for safe interpolation of trusted values
-MyApp.Blog.Post
-|> Ash.Query.filter(status == ^status and author_id == ^current_user.id)
-|> Ash.Query.sort([inserted_at: :desc])
-```
-
----
-
-## Pagination
-
-❌ **Bad — no pagination on large queries:**
-```elixir
-# Returns ALL records - memory explosion for large tables
-MyApp.Blog.Post |> MyApp.Blog.read!()
-```
-
-✅ **Good — always paginate large result sets:**
-```elixir
-# Keyset pagination (cursor-based, more efficient)
 MyApp.Blog.Post
 |> Ash.Query.page(limit: 20, after: last_inserted_at)
 |> MyApp.Blog.read!()
@@ -338,52 +330,10 @@ MyApp.Blog.Post
 
 ---
 
-## Error Handling Patterns
-
-❌ **Bad — catching all errors with generic handler:**
-```elixir
-# Too broad, loses information
-case MyApp.Blog.create(params) do
-  {:ok, post} -> {:ok, post}
-  {:error, _} -> {:error, :failed}
-end
-```
-
-✅ **Good — specific error handling with typed matches:**
-```elixir
-case MyApp.Blog.Post
-     |> Ash.Changeset.for_create(params)
-     |> MyApp.Blog.create() do
-  {:ok, post} ->
-    {:ok, post}
-
-  {:error, %Ash.Error.InvalidInput{fields: fields}} ->
-    {:error, :validation, fields}
-
-  {:error, %Ash.Error.Forbidden{}} ->
-    {:error, :unauthorized}
-
-  {:error, %Ash.Error.Changeset{errors: errors}} ->
-    {:error, :invalid_changeset, errors}
-
-  {:error, error} ->
-    Logger.error("Unexpected error: #{inspect(error)}")
-    {:error, :internal_error}
-end
-```
-
----
-
 ## Migrations from Ecto to Ash
 
-❌ **Bad — changing DB schema before creating Ash resource:**
-```elixir
-# Wrong order - Ash won't find the table
-alter table(:posts) do add :new_field, :string end
-# Then create Ash resource - will fail
-```
+**Always create the Ash resource first, then let Ash generate migrations** — never alter the DB schema before defining the resource.
 
-✅ **Good — create Ash resource first, let Ash generate migrations:**
 ```elixir
 # Step 1: Create Ash resource matching existing schema
 defmodule MyApp.Blog.Post do

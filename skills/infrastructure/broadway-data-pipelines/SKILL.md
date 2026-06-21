@@ -59,9 +59,7 @@ end
 
 ---
 
-## Minimal Pipeline
-
-A simple starting point. Handles a message and inserts a batch into the database.
+## Production-Ready Pipeline
 
 ```elixir
 defmodule MyApp.MessagePipeline do
@@ -84,32 +82,50 @@ defmodule MyApp.MessagePipeline do
 
   @impl true
   def handle_message(_, message, _context) do
-    message
-    |> Broadway.Message.update_data(&process_data/1)
-    |> Broadway.Message.put_batcher(:default)
-  rescue
-    exception ->
-      Broadway.Message.failed(message, exception)
+    case process(message.data) do
+      {:ok, result} ->
+        message
+        |> Broadway.Message.update_data(fn _ -> result end)
+        |> Broadway.Message.put_batcher(:default)
+
+      {:error, reason} ->
+        Broadway.Message.failed(message, reason)
+    end
   end
 
   @impl true
-  def handle_batch(:default, messages, _, _) do
-    data = Enum.map(messages, & &1.data)
-    MyApp.Repo.insert_all(MyApp.Record, data)
+  def handle_failed(messages, _context) do
+    Enum.each(messages, fn message ->
+      Logger.error("Message failed: #{inspect(message.data)}")
+      DeadLetterQueue.send(message.data, message.status.reason)
+    end)
     messages
   end
 
-  defp process_data(%{"body" => body} = data) do
+  @impl true
+  def handle_batch(:default, messages, _batch_info, _context) do
+    data = Enum.map(messages, & &1.data)
+    case MyApp.Repo.insert_all(MyApp.Record, data) do
+      {_count, _} ->
+        messages
+
+      {:error, reason} ->
+        Logger.error("Batch failed: #{inspect(reason)}")
+        Enum.map(messages, &Broadway.Message.failed(&1, reason))
+    end
+  end
+
+  defp process(%{"body" => body} = data) do
     sanitized = %{data | "body" => String.slice(body || "", 0, 10_000)}
-    Map.put(sanitized, :processed_at, DateTime.utc_now())
+    {:ok, Map.put(sanitized, :processed_at, DateTime.utc_now())}
   end
-  defp process_data(data) when is_map(data) do
-    Map.put(data, :processed_at, DateTime.utc_now())
+  defp process(data) when is_map(data) do
+    {:ok, Map.put(data, :processed_at, DateTime.utc_now())}
   end
-  defp process_data(data) when is_binary(data) do
+  defp process(data) when is_binary(data) do
     case Jason.decode(data) do
-      {:ok, parsed} -> process_data(parsed)
-      {:error, _} -> raise "Invalid JSON"
+      {:ok, parsed} -> process(parsed)
+      {:error, _} -> {:error, :invalid_json}
     end
   end
 end
@@ -154,80 +170,28 @@ end
 
 ---
 
-## Production-Ready Pipeline
-
-Expands the minimal example with structured error handling, a dead-letter queue, and batch failure recovery. Use this variant when reliability and observability matter.
-
-```elixir
-defmodule MyApp.MessagePipeline do
-  use Broadway
-
-  @impl true
-  def handle_message(_, message, _context) do
-    case process(message.data) do
-      {:ok, result} ->
-        Broadway.Message.update_data(message, fn _ -> result end)
-
-      {:error, reason} ->
-        Broadway.Message.failed(message, reason)
-    end
-  end
-
-  @impl true
-  def handle_failed(messages, _context) do
-    Enum.each(messages, fn message ->
-      Logger.error("Message failed: #{inspect(message.data)}")
-      DeadLetterQueue.send(message.data, message.status.reason)
-    end)
-    messages
-  end
-
-  @impl true
-  def handle_batch(:default, messages, _batch_info, _context) do
-    case batch_insert(messages) do
-      :ok ->
-        messages
-
-      {:error, reason} ->
-        Logger.error("Batch failed: #{inspect(reason)}")
-        Enum.map(messages, &Broadway.Message.failed(&1, reason))
-    end
-  end
-end
-```
-
----
-
 ## Retry Strategies
 
 Broadway does not provide a built-in backoff/requeue mechanism at the message level. For retry logic:
 
 - **Short-term retries**: wrap `process/1` in a retry library (e.g., `Retry`) and let failures bubble to `handle_failed/2`.
-- **Long-term retries / exponential backoff**: send failed messages to a dead-letter queue and re-enqueue from there, or use producer-level redelivery (e.g., SQS visibility timeout, Kafka consumer group offsets).
+- **Long-term retries / exponential backoff**: send failed messages to a dead-letter queue and re-enqueue from there, or use producer-level redelivery mechanisms.
 
 ```elixir
 @impl true
 def handle_message(_, message, _context) do
   attempt = Map.get(message.metadata, :retry_count, 0)
 
-  case process_with_retry(message.data) do
+  case process(message.data) do
     {:ok, result} ->
       Broadway.Message.update_data(message, fn _ -> result end)
 
     {:error, reason} when attempt < 3 ->
-      # Re-enqueue via DLQ or producer-specific mechanism; mark failed here
       Broadway.Message.failed(message, {:retryable, reason})
 
     {:error, reason} ->
       Broadway.Message.failed(message, {:max_retries_exceeded, reason})
   end
-end
-
-defp process_with_retry(data) do
-  # Your processing logic here
-  {:ok, data}
-rescue
-  e -> {:error, e}
 end
 ```
 

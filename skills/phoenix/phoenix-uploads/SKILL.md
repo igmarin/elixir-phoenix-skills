@@ -57,8 +57,6 @@ allow_upload(:upload_name,
 )
 ```
 
-> **Note:** Avoid `auto_upload: true` with form submission patterns — it is only appropriate when files must upload immediately on selection via a `handle_progress/3` callback.
-
 ---
 
 ## Complete Upload Pattern
@@ -141,12 +139,3 @@ def static_paths do
   ~w(assets fonts images favicon.ico robots.txt uploads)
 end
 ```
-
----
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| phoenix-liveview-essentials | phoenix-uploads | testing-essentials |
-| phoenix-liveview-essentials | phoenix-uploads | security-essentials |
