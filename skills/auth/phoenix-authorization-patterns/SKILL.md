@@ -4,10 +4,11 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  MANDATORY for ALL authorization and access control work. Invoke before writing permission checks,
-  policy modules, or role-based access. Covers server-side authorization, owner-only patterns,
-  scoped queries, policy modules, controller authorization, and testing.
-  Trigger words: authorization, access control, permission, policy, role, owner, scoped query, IDOR.
+  Handles all authorization and access control work in Phoenix and LiveView applications. Covers
+  server-side authorization, owner-only patterns, scoped queries, policy modules, controller
+  authorization, and authorization testing. Use when writing permission checks, policy modules,
+  or role-based access controls, or when addressing authorization, access control, permission,
+  policy, role, owner, scoped query, or IDOR concerns.
 metadata:
   user-invocable: "true"
   version: 1.0.0
@@ -171,5 +172,5 @@ end
 ## Integration
 
 | Predecessor | This Skill | Successor |
-|-------------|------------|----------|
+|-------------|------------|-----------|
 | phoenix-liveview-essentials | phoenix-authorization-patterns | security-essentials |
