@@ -10,6 +10,7 @@ Skills for maintaining high engineering standards, code quality, and architectur
 - **[apply-phoenix-controller-conventions](apply-phoenix-controller-conventions/)** — Enforces consistent Phoenix controller patterns: RESTful routing, plug pipeline, action methods, strong parameters, content negotiation, and fallback controllers.
 - **[code-review](code-review/)** — Systematic Elixir/Phoenix PR review with severity levels, BEAM-specific checks, and structured findings output.
 - **[refactor-code](refactor-code/)** — Safe Elixir code restructuring with characterization tests, stable behavior statements, and one-boundary-at-a-time extraction.
+- **[respond-to-review](respond-to-review/)** — Evaluating and implementing code review feedback with classification, verification, and pushback with evidence.
 
 ## Quality Persona
 
@@ -31,3 +32,4 @@ Use these skills when you see:
 - "before PR", "quality sweep", "production readiness"
 - "code review", "PR review", "review my code", "code audit", "review diff"
 - "refactor", "extract function", "restructure", "reduce duplication", "split module"
+- "respond to review", "PR feedback", "code review comments", "address review feedback"

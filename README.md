@@ -2,7 +2,7 @@
 
 ![Elixir Phoenix Skills](https://github.com/user-attachments/assets/ac5da537-5062-4a67-a8a3-114129bc101a)
 
-A curated library of **public Elixir/Phoenix agent skills** — 36 atomic skills, 7 personas, and 1 entry-point orchestrator that teach AI tools how to write idiomatic Elixir code, test Phoenix applications, and follow production-minded conventions.
+A curated library of **public Elixir/Phoenix agent skills** — 37 atomic skills, 7 personas, and 1 entry-point orchestrator that teach AI tools how to write idiomatic Elixir code, test Phoenix applications, and follow production-minded conventions.
 
 The project is built around core Elixir principles:
 
@@ -20,7 +20,7 @@ This repo is one of 6 in a composable AI skill ecosystem:
 |------|------|
 | [`ruby-core-skills`](https://github.com/igmarin/ruby-core-skills) | 15 shared Ruby skills + process discipline |
 | [`rails-agent-skills`](https://github.com/igmarin/rails-agent-skills) | 28 atomic skills + 9 personas |
-| [**`elixir-phoenix-skills`**](https://github.com/igmarin/elixir-phoenix-skills) | 36 atomic skills + 7 personas + 1 orchestrator |
+| [**`elixir-phoenix-skills`**](https://github.com/igmarin/elixir-phoenix-skills) | 37 atomic skills + 7 personas + 1 orchestrator |
 | [`hanakai-yaku`](https://github.com/igmarin/hanakai-yaku) | 35 Hanami/dry-rb skills + 10 personas |
 | [`agnostic-planning-skills`](https://github.com/igmarin/agnostic-planning-skills) | 10 planning skills + 4 personas |
 | [`agent-mcp-runtime`](https://github.com/igmarin/agent-mcp-runtime) | Rust CLI runtime (pack resolution, MCP) |
@@ -62,7 +62,7 @@ npx skills add igmarin/elixir-phoenix-skills
 
 ## Skill Catalog
 
-The library contains **44 skills total** — 36 atomic skills, 7 personas, and 1 orchestrator — organized by category.
+The library contains **44 skills total** — 37 atomic skills, 7 personas, and 1 orchestrator — organized by category.
 
 ### Atomic Skills
 
@@ -74,7 +74,7 @@ The library contains **44 skills total** — 36 atomic skills, 7 personas, and 1
 | **Testing** | `testing-essentials`, `property-based-testing`, `benchee-profiling` | `skills/testing/` |
 | **Auth** | `phoenix-liveview-auth`, `phoenix-auth-customization`, `phoenix-authorization-patterns` | `skills/auth/` |
 | **Infrastructure** | `oban-essentials`, `broadway-data-pipelines`, `deployment-gotchas`, `telemetry-essentials`, `cachex-caching` | `skills/infrastructure/` |
-| **Quality** | `code-quality`, `credo-config`, `apply-phoenix-liveview-conventions`, `apply-phoenix-controller-conventions`, `code-review`, `refactor-code` | `skills/quality/` |
+| **Quality** | `code-quality`, `credo-config`, `apply-phoenix-liveview-conventions`, `apply-phoenix-controller-conventions`, `code-review`, `refactor-code`, `respond-to-review` | `skills/quality/` |
 | **Security** | `security-essentials` | `skills/security/` |
 | **Integrations** | `req-http-client`, `swoosh-emails`, `gettext-i18n` | `skills/integrations/` |
 | **Tooling** | `mix-tasks-generators` | `skills/tooling/` |
