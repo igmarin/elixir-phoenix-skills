@@ -1,5 +1,4 @@
 # Tessl ignores
-evals/
 tmp/
 plans/
 /SKILL.md
