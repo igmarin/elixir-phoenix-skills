@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent separates schema changes from data backfill across two distinct migrations, enforces unique constraints in both the migration and the changeset, includes a database index on the FK column, and documents the migrate→rollback→migrate validation workflow.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Separate migrations",
+      "description": "There are exactly two distinct migration files: one that adds the slug column and one that backfills slug values for existing rows — they are NOT combined into a single migration file",
+      "max_score": 20
+    },
+    {
+      "name": "unique_index in migration",
+      "description": "The schema-change migration calls `create unique_index(:articles, [:slug])` (or equivalent) to enforce uniqueness at the database level",
+      "max_score": 10
+    },
+    {
+      "name": "unique_constraint in changeset",
+      "description": "The updated Article changeset includes `unique_constraint(:slug)` so that the Ecto layer also validates uniqueness and surfaces the error on the changeset",
+      "max_score": 10
+    },
+    {
+      "name": "slug field in schema",
+      "description": "The Article Ecto schema has `field :slug, :string` declared in the schema block",
+      "max_score": 8
+    },
+    {
+      "name": "slug in cast/validate",
+      "description": "The changeset casts `:slug` via `cast/3` and validates it with `validate_required` or appropriate validators",
+      "max_score": 7
+    },
+    {
+      "name": "FK index present",
+      "description": "The migration(s) or schema include an index on `author_id` (e.g. `create index(:articles, [:author_id])`) — either added in the new migration or confirmed to already exist",
+      "max_score": 10
+    },
+    {
+      "name": "Backfill uses SQL/Repo",
+      "description": "The backfill migration contains logic to populate slug values for existing rows (e.g. via `Repo.update_all`, `execute/1` with SQL, or Elixir iteration) rather than leaving the column empty",
+      "max_score": 10
+    },
+    {
+      "name": "Migration reversibility",
+      "description": "Both migration files implement a `down/0` function (or use `alter table` inside `change/0` with reversible operations) so they can be rolled back",
+      "max_score": 8
+    },
+    {
+      "name": "Validation workflow documented",
+      "description": "MIGRATION_NOTES.md documents the three-step validation workflow for each migration: (1) mix ecto.migrate, (2) mix ecto.rollback, (3) mix ecto.migrate again",
+      "max_score": 10
+    },
+    {
+      "name": "Both migrations covered in notes",
+      "description": "MIGRATION_NOTES.md covers the validation workflow for BOTH the schema-change migration AND the backfill migration, not just one of them",
+      "max_score": 7
+    }
+  ]
+}

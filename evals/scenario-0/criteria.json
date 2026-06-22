@@ -1,0 +1,76 @@
+{
+  "context": "Tests whether the agent correctly implements a Phoenix Blog context with a Comment schema and migration, following Ecto best practices: dual-layer constraints (DB + changeset), FK indexes, CRUD naming conventions, and a documented migration validation workflow. The web layer must not call Repo directly.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Schema timestamps",
+      "description": "The Comment schema includes a `timestamps()` call inside the schema block",
+      "max_score": 5
+    },
+    {
+      "name": "belongs_to association",
+      "description": "The Comment schema declares `belongs_to :post` (or equivalent) to associate with the Post schema",
+      "max_score": 8
+    },
+    {
+      "name": "Changeset cast and validate_required",
+      "description": "The changeset/2 function uses `cast/3` followed by `validate_required/2`",
+      "max_score": 8
+    },
+    {
+      "name": "validate_length on body",
+      "description": "The changeset/2 function uses `validate_length` on the body field (with a max value)",
+      "max_score": 6
+    },
+    {
+      "name": "validate_inclusion on status",
+      "description": "The changeset/2 function uses `validate_inclusion` (or equivalent) to restrict the status field to allowed values",
+      "max_score": 8
+    },
+    {
+      "name": "foreign_key_constraint in changeset",
+      "description": "The changeset/2 function calls `foreign_key_constraint(:post_id)` (or equivalent FK field name)",
+      "max_score": 7
+    },
+    {
+      "name": "DB foreign key constraint",
+      "description": "The migration adds a database-level foreign key constraint (e.g. `references(:posts, on_delete: ...)` or explicit `add_foreign_key`)",
+      "max_score": 8
+    },
+    {
+      "name": "DB check constraint on status",
+      "description": "The migration includes a `check_constraint` or equivalent DB-level constraint restricting the status column values",
+      "max_score": 8
+    },
+    {
+      "name": "FK index present",
+      "description": "The migration creates an index on the foreign key column (`post_id`) — e.g. via `create index(:comments, [:post_id])`",
+      "max_score": 8
+    },
+    {
+      "name": "Context CRUD naming",
+      "description": "The Blog context module defines functions named `list_comments`, `get_comment!`, `update_comment`, and `delete_comment` (all four naming conventions present)",
+      "max_score": 8
+    },
+    {
+      "name": "Repo not in web layer",
+      "description": "No call to `Repo` (or `MyApp.Repo`) appears in any controller, LiveView, or router file — all Repo calls are inside the context module",
+      "max_score": 5
+    },
+    {
+      "name": "Migration reversible",
+      "description": "The migration uses `create table` with a matching implicit or explicit `drop_table` path (i.e. uses `change/0` instead of only `up/0`, or defines both `up/0` and `down/0`)",
+      "max_score": 7
+    },
+    {
+      "name": "Migration validation workflow",
+      "description": "MIGRATION_NOTES.md documents all three steps: `mix ecto.migrate`, `mix ecto.rollback`, `mix ecto.migrate` (in that order)",
+      "max_score": 10
+    },
+    {
+      "name": "No combined schema+data migration",
+      "description": "The migration file does NOT contain both DDL changes (create/alter table) and data backfill DML (INSERT/UPDATE statements) in the same file",
+      "max_score": 4
+    }
+  ]
+}
