@@ -7,9 +7,6 @@ on:
       - "skills/**"
       - "docs/**"
       - ".tessl-plugin/plugin.json"
-      - "scripts/generate-tessl-evals.rb"
-      - "scripts/stage-tessl-evals.rb"
-      - "scripts/validate-tessl-evals.rb"
       - ".github/workflows/tessl-publish.yml"
   workflow_dispatch:
 
@@ -30,19 +27,45 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Generate and validate Tessl eval source
-        run: |
-          ruby scripts/generate-tessl-evals.rb
-          ruby scripts/validate-tessl-evals.rb
-
-      - name: Stage Tessl evals
-        run: ruby scripts/stage-tessl-evals.rb
-
       - name: Set up Tessl
         uses: tesslio/setup-tessl@25ec223fc0da33b41b8044ff5ab2b85235f4f91e # v2
         with:
           version: "0.85.0"
           token: ${{ secrets.TESSL_TOKEN }}
+
+      - name: Generate Tessl eval scenarios
+        id: generate_scenarios
+        run: |
+          echo "Starting scenario generation..."
+          generation_output=$(tessl scenario generate .)
+          generation_id=$(echo "$generation_output" | grep -oP 'Scenario generation started: \K[0-9a-f-]+')
+          echo "generation_id=$generation_id" >> "$GITHUB_OUTPUT"
+          echo "Generation ID: $generation_id"
+
+      - name: Wait for scenario generation to complete
+        run: |
+          generation_id="${{ steps.generate_scenarios.outputs.generation_id }}"
+          max_attempts=60
+          attempt=0
+          
+          while [ $attempt -lt $max_attempts ]; do
+            status=$(tessl scenario view "$generation_id" 2>&1 | grep -oP 'Status:\s*\K[^[:space:]]+' || echo "Unknown")
+            echo "Attempt $((attempt + 1)): Status is $status"
+            
+            if [ "$status" = "Completed" ]; then
+              echo "Scenario generation completed successfully"
+              exit 0
+            elif [ "$status" = "Failed" ]; then
+              echo "::error::Scenario generation failed"
+              exit 1
+            fi
+            
+            attempt=$((attempt + 1))
+            sleep 10
+          done
+          
+          echo "::error::Scenario generation timed out after $max_attempts attempts"
+          exit 1
 
       - name: Compute automatic patch version
         id: version
@@ -110,7 +133,7 @@ jobs:
           fi
 
       - name: Publish plugin
-        run: tessl plugin publish . --skip-evals
+        run: tessl plugin publish .
 
       - name: Create matching Git tag
         env:
