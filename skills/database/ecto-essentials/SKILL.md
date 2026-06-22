@@ -230,7 +230,7 @@ All standard CRUD functions (`list_*`, `get_*!`, `update_*`, `delete_*`) follow 
 
 - **Prerequisite:** [elixir-essentials](../../fundamentals/elixir-essentials/SKILL.md) — core Elixir patterns before working with Ecto
 - **Next — changeset deep-dive:** [ecto-changeset-patterns](../ecto-changeset-patterns/SKILL.md) — advanced validations, custom constraints, and error formatting
-- **Next — testing:** [testing-essentials](../testing-essentials/SKILL.md) — testing Ecto contexts and migrations
+- **Next — testing:** [testing-essentials](../../testing/testing-essentials/SKILL.md) — testing Ecto contexts and migrations
 
 ---
 

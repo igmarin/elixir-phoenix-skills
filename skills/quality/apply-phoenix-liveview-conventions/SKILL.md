@@ -441,7 +441,7 @@ put_flash(socket, :warning, "Warning message")
 
 ---
 
-## Common Mistakes
+## Common Pitfalls
 
 | ❌ Wrong | ✅ Correct |
 |----------|-----------|

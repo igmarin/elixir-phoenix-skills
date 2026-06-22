@@ -286,7 +286,7 @@ end
 
 ---
 
-See `../../agents/liveview-checklist.md` for a step-by-step LiveView development checklist. Related skills: `liveview-streams`, `phoenix-pubsub-patterns`, `phoenix-liveview-auth`, `phoenix-scopes`, `testing-essentials`.
+See `../../../agents/liveview-checklist.md` for a step-by-step LiveView development checklist. Related skills: `liveview-streams`, `phoenix-pubsub-patterns`, `phoenix-liveview-auth`, `phoenix-scopes`, `testing-essentials`.
 
 ---
 

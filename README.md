@@ -2,7 +2,7 @@
 
 ![Elixir Phoenix Skills](https://github.com/user-attachments/assets/ac5da537-5062-4a67-a8a3-114129bc101a)
 
-A curated library of **public Elixir/Phoenix agent skills** — 32 atomic skills, 7 personas, and 1 entry-point orchestrator that teach AI tools how to write idiomatic Elixir code, test Phoenix applications, and follow production-minded conventions.
+A curated library of **public Elixir/Phoenix agent skills** — 33 atomic skills, 7 personas, and 1 entry-point orchestrator that teach AI tools how to write idiomatic Elixir code, test Phoenix applications, and follow production-minded conventions.
 
 The project is built around core Elixir principles:
 
