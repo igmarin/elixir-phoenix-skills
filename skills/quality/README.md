@@ -11,6 +11,7 @@ Skills for maintaining high engineering standards, code quality, and architectur
 - **[code-review](code-review/)** — Systematic Elixir/Phoenix PR review with severity levels, BEAM-specific checks, and structured findings output.
 - **[refactor-code](refactor-code/)** — Safe Elixir code restructuring with characterization tests, stable behavior statements, and one-boundary-at-a-time extraction.
 - **[respond-to-review](respond-to-review/)** — Evaluating and implementing code review feedback with classification, verification, and pushback with evidence.
+- **[apply-ecto-conventions](apply-ecto-conventions/)** — Enforces consistent Ecto patterns: Repo query conventions, changeset composition, preloading strategies, context boundaries, and Ecto.Multi transactions.
 
 ## Quality Persona
 
@@ -33,3 +34,4 @@ Use these skills when you see:
 - "code review", "PR review", "review my code", "code audit", "review diff"
 - "refactor", "extract function", "restructure", "reduce duplication", "split module"
 - "respond to review", "PR feedback", "code review comments", "address review feedback"
+- "ecto conventions", "repo pattern", "changeset", "preload", "ecto query"
