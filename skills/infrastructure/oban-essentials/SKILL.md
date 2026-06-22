@@ -17,8 +17,6 @@ metadata:
 
 # Oban Essentials
 
-<!-- Adapted from j-morgan6/elixir-phoenix-guide (MIT License, Copyright (c) 2026 Joseph Morgan) -->
-
 Use this skill before writing ANY Oban worker or enqueuing jobs.
 
 ## End-to-End Workflow

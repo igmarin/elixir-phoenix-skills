@@ -19,8 +19,6 @@ metadata:
 
 # Code Quality
 
-<!-- Adapted from j-morgan6/elixir-phoenix-guide (MIT License, Copyright (c) 2026 Joseph Morgan) -->
-
 ## RULES — Follow these with no exceptions
 
 1. **Duplicated functions must be extracted** — when 2+ modules share >70% similar implementations, create a shared module

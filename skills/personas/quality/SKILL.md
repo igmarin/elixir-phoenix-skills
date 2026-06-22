@@ -13,7 +13,7 @@ metadata:
   hard_gates: "Conventions Check, Refactoring Test Gate, Quality Before Merge"
   dependencies:
     - source: self
-      skills: [code-quality, credo-config, typespec-dialyzer, security-essentials]
+      skills: [code-quality, credo-config, apply-phoenix-liveview-conventions, apply-phoenix-controller-conventions, apply-ecto-conventions, code-review, refactor-code, respond-to-review, typespec-dialyzer, security-essentials]
   keywords: elixir, quality, conventions, refactoring, documentation, credo, review
 ---
 # Quality Persona

@@ -19,8 +19,6 @@ metadata:
 
 # Phoenix JSON API
 
-<!-- Adapted from j-morgan6/elixir-phoenix-guide (MIT License, Copyright (c) 2026 Joseph Morgan) -->
-
 ## RULES — Follow these with no exceptions
 
 1. **Use the `:api` pipeline** — don't mix HTML and JSON pipelines; API routes skip CSRF and sessions

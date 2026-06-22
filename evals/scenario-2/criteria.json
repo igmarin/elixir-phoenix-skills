@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent implements atomic multi-step database operations using Ecto.Multi with named steps, uses Repo.transaction for atomicity, implements idiomatic Ecto upserts with on_conflict/conflict_target, and uses Ecto.build_assoc to create associated records from a parent struct. The scenario covers four key skill instructions that agents often implement incorrectly by using alternatives (manual transactions, get-then-update, manual foreign key assignment).",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Ecto.Multi used",
+      "description": "The subscribe_user function (or equivalent) uses Ecto.Multi.new() to build a multi-step operation, not just a bare Repo.transaction with function argument",
+      "max_score": 12
+    },
+    {
+      "name": "Named Multi steps",
+      "description": "The Ecto.Multi pipeline names each step using atoms (e.g. Ecto.Multi.insert(:subscription, ...) and Ecto.Multi.insert(:billing_record, ...))",
+      "max_score": 10
+    },
+    {
+      "name": "Multi error tuple pattern",
+      "description": "Error result from Repo.transaction() is pattern-matched as {:error, step_name, changeset, _changes} (with a named step atom and four elements), not just {:error, changeset}",
+      "max_score": 12
+    },
+    {
+      "name": "Repo.transaction called",
+      "description": "The Ecto.Multi pipeline is executed via Repo.transaction/1",
+      "max_score": 8
+    },
+    {
+      "name": "on_conflict option used",
+      "description": "The upsert_plan function (or equivalent) calls Repo.insert with an on_conflict: option specifying which fields to replace on conflict",
+      "max_score": 10
+    },
+    {
+      "name": "conflict_target option used",
+      "description": "The upsert_plan function (or equivalent) includes a conflict_target: option pointing to the :code field (or equivalent unique key)",
+      "max_score": 10
+    },
+    {
+      "name": "Ecto.build_assoc used",
+      "description": "The event-creation function calls Ecto.build_assoc(subscription, :subscription_events) (or the correct association name) to build the associated record from the parent struct",
+      "max_score": 12
+    },
+    {
+      "name": "Schema associations",
+      "description": "Subscription schema includes has_many :subscription_events and/or has_many :billing_records; child schemas include belongs_to :subscription",
+      "max_score": 8
+    },
+    {
+      "name": "Changeset validations",
+      "description": "At least one schema module uses both cast/3 and validate_required/2 in its changeset function",
+      "max_score": 8
+    },
+    {
+      "name": "timestamps() present",
+      "description": "All schema modules include timestamps() in their schema block",
+      "max_score": 10
+    }
+  ]
+}

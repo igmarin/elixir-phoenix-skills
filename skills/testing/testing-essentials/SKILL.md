@@ -17,8 +17,6 @@ metadata:
 
 # Testing Essentials
 
-<!-- Adapted from j-morgan6/elixir-phoenix-guide (MIT License, Copyright (c) 2026 Joseph Morgan) -->
-
 ## RULES — Follow these with no exceptions
 
 1. **Follow the project's existing test setup patterns** — don't inline DataCase/ConnCase boilerplate that the project already abstracts away
@@ -237,3 +235,13 @@ See `agents/testing-guide.md` for comprehensive examples covering async tests, M
 | Predecessor | This Skill | Successor |
 |-------------|------------|-----------|
 | elixir-essentials | testing-essentials | None (standalone) |
+
+---
+
+## When Not to Use
+
+- **Do not invoke this skill** for unit tests of pure functions that have no side effects, DB calls, or external dependencies — write plain ExUnit tests without DataCase/ConnCase
+- **Do not invoke this skill** for property-based testing — use `property-based-testing` instead
+- **Do not invoke this skill** for benchmarking/profiling — use `benchee-profiling` instead
+- **Do not use this skill** when you need to mock external services — use `property-based-testing` skill's Mox patterns instead
+- **Do not invoke this skill** for testing LiveView streams — use `phoenix/liveview-streams` skill instead

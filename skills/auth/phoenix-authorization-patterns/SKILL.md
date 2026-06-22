@@ -17,8 +17,6 @@ metadata:
 
 # Phoenix Authorization Patterns
 
-<!-- Adapted from j-morgan6/elixir-phoenix-guide (MIT License, Copyright (c) 2026 Joseph Morgan) -->
-
 ## RULES — Follow these with no exceptions
 
 1. **Always authorize on the server in event handlers** — never rely on UI-only checks

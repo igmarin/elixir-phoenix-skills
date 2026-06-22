@@ -135,6 +135,13 @@ Priority: security-essentials > code-quality; Chain: security-essentials then co
 
 ---
 
+## When Not to Use
+
+- **Do not invoke this skill** for simple, single-concern requests that clearly map to one skill (e.g., "write a test for this function" → use `testing-essentials` directly)
+- **Do not invoke this skill** if the request is a direct question about Elixir syntax or Phoenix patterns — route to the specific skill instead
+- **Do not invoke this skill** if you already know all the skills needed and just need implementation guidance — use the specific skill directly
+- **Do not route through this skill** when the user explicitly names a target skill (e.g., "use the oban-essentials skill")
+
 **Use `elixir-essentials` alone** if you only need Elixir language guidance without orchestration.
 
 **Use `testing-essentials` alone** if the test approach is already decided and you just need to write the spec.

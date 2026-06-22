@@ -18,8 +18,6 @@ metadata:
 
 # Phoenix LiveView Authentication
 
-<!-- Adapted from j-morgan6/elixir-phoenix-guide (MIT License, Copyright (c) 2026 Joseph Morgan) -->
-
 Use this skill before writing ANY `on_mount` hook or LiveView auth code.
 
 > **Requires** `phoenix-scopes` for Scope struct setup. See `phoenix-authorization-patterns` for access control after authentication, and `phoenix-liveview-essentials` before writing any LiveView module.

@@ -17,8 +17,6 @@ metadata:
 
 # Phoenix Channels Essentials
 
-<!-- Adapted from j-morgan6/elixir-phoenix-guide (MIT License, Copyright (c) 2026 Joseph Morgan) -->
-
 ## RULES
 
 1. **Always authenticate in `connect/3`** — tokens must be verified; channels bypass the Plug pipeline

@@ -1,7 +1,7 @@
 {
   "name": "igmarin/elixir-phoenix-skills",
-  "version": "2.2.8",
-  "description": "Curated library of 32 atomic skills, 7 personas, and 1 orchestrator for Elixir and Phoenix development. Organized by category: fundamentals, phoenix, database, testing, auth, infrastructure, quality, security, integrations, tooling, frameworks, personas, and orchestration. Covers core Elixir patterns, Phoenix LiveView, Ecto, OTP, Oban, testing, security, deployment, real-time, and modern tooling (Req, Swoosh, Cachex, Broadway, Ash).",
+  "version": "2.8.0",
+  "description": "Curated library of 38 atomic skills, 7 personas, and 1 orchestrator for Elixir and Phoenix development. Organized by category: fundamentals, phoenix, database, testing, auth, infrastructure, quality, security, integrations, tooling, frameworks, personas, and orchestration. Covers core Elixir patterns, Phoenix LiveView, Ecto, OTP, Oban, testing, security, deployment, real-time, and modern tooling (Req, Swoosh, Cachex, Broadway, Ash).",
   "private": false,
   "skills": [
     "skills/fundamentals/elixir-essentials/SKILL.md",
@@ -30,6 +30,12 @@
     "skills/infrastructure/cachex-caching/SKILL.md",
     "skills/quality/code-quality/SKILL.md",
     "skills/quality/credo-config/SKILL.md",
+    "skills/quality/apply-phoenix-liveview-conventions/SKILL.md",
+    "skills/quality/apply-phoenix-controller-conventions/SKILL.md",
+    "skills/quality/code-review/SKILL.md",
+    "skills/quality/refactor-code/SKILL.md",
+    "skills/quality/respond-to-review/SKILL.md",
+    "skills/quality/apply-ecto-conventions/SKILL.md",
     "skills/security/security-essentials/SKILL.md",
     "skills/integrations/req-http-client/SKILL.md",
     "skills/integrations/swoosh-emails/SKILL.md",

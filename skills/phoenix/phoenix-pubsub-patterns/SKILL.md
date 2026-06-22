@@ -17,8 +17,6 @@ metadata:
 
 # Phoenix PubSub Patterns
 
-<!-- Adapted from j-morgan6/elixir-phoenix-guide (MIT License, Copyright (c) 2026 Joseph Morgan) -->
-
 Use this skill before writing ANY PubSub or real-time broadcast code.
 
 ## Implementation Workflow
