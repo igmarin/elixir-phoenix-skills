@@ -64,10 +64,16 @@
     },
     {
       "title": "Quality",
-      "description": "Code quality and static analysis skills with Credo configuration.",
+      "description": "Code conventions, code review, refactoring, and quality enforcement for Elixir and Phoenix applications.",
       "skills": [
         "code-quality",
-        "credo-config"
+        "credo-config",
+        "apply-phoenix-liveview-conventions",
+        "apply-phoenix-controller-conventions",
+        "apply-ecto-conventions",
+        "code-review",
+        "refactor-code",
+        "respond-to-review"
       ]
     },
     {
@@ -105,6 +111,19 @@
       "description": "Skill routing and orchestration patterns for multi-skill workflows.",
       "skills": [
         "elixir-skill-router"
+      ]
+    },
+    {
+      "title": "Personas",
+      "description": "End-to-end persona workflows that orchestrate multiple atomic skills with hard gates, phases, and output formats.",
+      "skills": [
+        "tdd",
+        "quality",
+        "setup",
+        "bug-fix",
+        "background-job",
+        "liveview",
+        "ecto-migration"
       ]
     }
   ]

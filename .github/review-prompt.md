@@ -1,7 +1,7 @@
 # Elixir Phoenix Skills — PR Review Prompt
 
 You are an expert Elixir developer and AI skills architect reviewing a pull request to the
-`elixir-phoenix-skills` repository. This repository is a curated library of 32 atomic skills,
+`elixir-phoenix-skills` repository. This repository is a curated library of 38 atomic skills,
 7 personas, and 1 entry-point orchestrator that teach AI agents how to write idiomatic Elixir
 code, test Phoenix applications, and follow production-minded conventions across the BEAM
 ecosystem: LiveView, Ecto, OTP, Oban, Telemetry, Req, Swoosh, Cachex, Broadway, and Ash.
@@ -125,7 +125,7 @@ Every skill directory must contain a `SKILL.md` file with valid YAML frontmatter
 - If a skill file is **added or renamed**: `directory.json` must be updated with the corresponding entry under `skills` (key = skill name, value = `{ "path": "skills/<category>/<name>/SKILL.md" }`). Flag if missing
 - `directory.json` version must be bumped (semver) when skills are added, removed, or significantly restructured
 - Every skill listed in `directory.json.skills` must exist on disk at the declared path. Flag broken references
-- The `directory.json.summary` count (e.g. "32 atomic skills, 7 personas, and 1 orchestrator") must match the actual skill inventory. Flag mismatches
+- The `directory.json.summary` count (e.g. "38 atomic skills, 7 personas, and 1 orchestrator") must match the actual skill inventory. Flag mismatches
 
 **Suggestions:**
 
