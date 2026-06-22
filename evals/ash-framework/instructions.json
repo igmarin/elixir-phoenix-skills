@@ -1,0 +1,78 @@
+{
+  "target_skill": "ash-framework",
+  "source_path": "skills/frameworks/ash-framework/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "**Use `use Ash.Resource` for domain resources** — never manually implement protocols",
+      "original_snippets": "**Use `use Ash.Resource` for domain resources** — never manually implement protocols",
+      "relevant_when": "When a user asks for planning work that should trigger ash-framework.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Define actions explicitly** — don't rely on `defaults [:read, :create]` without understanding what they expose",
+      "original_snippets": "**Define actions explicitly** — don't rely on `defaults [:read, :create]` without understanding what they expose",
+      "relevant_when": "When a user asks for planning work that should trigger ash-framework.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Add policies for authorization** — every resource with sensitive data must have explicit policy blocks",
+      "original_snippets": "**Add policies for authorization** — every resource with sensitive data must have explicit policy blocks",
+      "relevant_when": "When a user asks for planning work that should trigger ash-framework.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "**Use `Ash.Changeset.for_create/3` and `Ash.Changeset.for_update/3`** — not bare struct manipulation",
+      "original_snippets": "**Use `Ash.Changeset.for_create/3` and `Ash.Changeset.for_update/3`** — not bare struct manipulation",
+      "relevant_when": "When a user asks for planning work that should trigger ash-framework.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Run `mix ash_postgres.generate_migrations` before manual migration** — let Ash generate the schema",
+      "original_snippets": "**Run `mix ash_postgres.generate_migrations` before manual migration** — let Ash generate the schema",
+      "relevant_when": "When a user asks for planning work that should trigger ash-framework.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Verify resource loads** — run `mix compile` and confirm no `Spark.Error.DslError` before proceeding",
+      "original_snippets": "**Verify resource loads** — run `mix compile` and confirm no `Spark.Error.DslError` before proceeding",
+      "relevant_when": "When a user asks for planning work that should trigger ash-framework.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Define Domain module** — create a domain with `use Ash.Domain` and `resources do ... end`",
+      "original_snippets": "**Define Domain module** — create a domain with `use Ash.Domain` and `resources do ... end`",
+      "relevant_when": "When a user asks for planning work that should trigger ash-framework.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Define Resource** — use `use Ash.Resource, domain: MyApp.Domain, data_layer: AshPostgres.DataLayer`",
+      "original_snippets": "**Define Resource** — use `use Ash.Resource, domain: MyApp.Domain, data_layer: AshPostgres.DataLayer`",
+      "relevant_when": "When a user asks for planning work that should trigger ash-framework.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Define attributes** — use `uuid_primary_key`, `attribute`, `timestamps()` in the `attributes do` block",
+      "original_snippets": "**Define attributes** — use `uuid_primary_key`, `attribute`, `timestamps()` in the `attributes do` block",
+      "relevant_when": "When a user asks for planning work that should trigger ash-framework.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Define relationships** — use `belongs_to`, `has_many`, `many_to_many` in `relationships do` block",
+      "original_snippets": "**Define relationships** — use `belongs_to`, `has_many`, `many_to_many` in `relationships do` block",
+      "relevant_when": "When a user asks for planning work that should trigger ash-framework.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Define actions** — use `actions do` with `defaults`, `create`, `update`, `read` blocks",
+      "original_snippets": "**Define actions** — use `actions do` with `defaults`, `create`, `update`, `read` blocks",
+      "relevant_when": "When a user asks for planning work that should trigger ash-framework.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Generate migrations** — run `mix ash_postgres.generate_migrations` then `mix ash_postgres.migrate`",
+      "original_snippets": "**Generate migrations** — run `mix ash_postgres.generate_migrations` then `mix ash_postgres.migrate`",
+      "relevant_when": "When a user asks for planning work that should trigger ash-framework.",
+      "why_given": "new knowledge"
+    }
+  ]
+}

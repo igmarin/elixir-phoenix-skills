@@ -1,0 +1,60 @@
+{
+  "target_skill": "quality",
+  "source_path": "skills/personas/quality/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "Run the following tools and address all violations:",
+      "original_snippets": "Run the following tools and address all violations:",
+      "relevant_when": "When a user asks for planning work that should trigger quality.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Write characterization test documenting current behavior.",
+      "original_snippets": "Write characterization test documenting current behavior.",
+      "relevant_when": "When a user asks for planning work that should trigger quality.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Verify PASSES** — `mix test test/path/to/file_test.exs`.",
+      "original_snippets": "**Verify PASSES** — `mix test test/path/to/file_test.exs`.",
+      "relevant_when": "When a user asks for planning work that should trigger quality.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Re-validate** — `mix test test/path/to/file_test.exs` must still be green.",
+      "original_snippets": "**Re-validate** — `mix test test/path/to/file_test.exs` must still be green.",
+      "relevant_when": "When a user asks for planning work that should trigger quality.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "Identify every public function (no leading `_`, not `defp`) in the changed modules.",
+      "original_snippets": "Identify every public function (no leading `_`, not `defp`) in the changed modules.",
+      "relevant_when": "When a user asks for planning work that should trigger quality.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Write a concise description of purpose and return value.",
+      "original_snippets": "Write a concise description of purpose and return value.",
+      "relevant_when": "When a user asks for planning work that should trigger quality.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Run `mix dialyzer` once more to confirm new typespecs are consistent.",
+      "original_snippets": "Run `mix dialyzer` once more to confirm new typespecs are consistent.",
+      "relevant_when": "When a user asks for planning work that should trigger quality.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Run `mix test` to verify doctests pass.",
+      "original_snippets": "Run `mix test` to verify doctests pass.",
+      "relevant_when": "When a user asks for planning work that should trigger quality.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Do not open the PR until every row is ✅.**",
+      "original_snippets": "**Do not open the PR until every row is ✅.**",
+      "relevant_when": "When a user asks for planning work that should trigger quality.",
+      "why_given": "preference"
+    }
+  ]
+}

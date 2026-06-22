@@ -1,0 +1,60 @@
+{
+  "target_skill": "tdd",
+  "source_path": "skills/personas/tdd/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "Orchestrates the full Elixir TDD cycle. Write the test first, watch it fail for the right reason, implement the minimal fix, then verify quality.",
+      "original_snippets": "Orchestrates the full Elixir TDD cycle. Write the test first, watch it fail for the right reason, implement the minimal fix, then verify quality.",
+      "relevant_when": "When a user asks for planning work that should trigger tdd.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Write the minimal failing test** — see Example below.",
+      "original_snippets": "**Write the minimal failing test** — see Example below.",
+      "relevant_when": "When a user asks for planning work that should trigger tdd.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Run**: `mix test test/path/to/file_test.exs` — confirm it FAILS.",
+      "original_snippets": "**Run**: `mix test test/path/to/file_test.exs` — confirm it FAILS.",
+      "relevant_when": "When a user asks for planning work that should trigger tdd.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**On approval**: Write the implementation.",
+      "original_snippets": "**On approval**: Write the implementation.",
+      "relevant_when": "When a user asks for planning work that should trigger tdd.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Run**: `mix test test/path/to/file_test.exs` — confirm the target test now PASSES.",
+      "original_snippets": "**Run**: `mix test test/path/to/file_test.exs` — confirm the target test now PASSES.",
+      "relevant_when": "When a user asks for planning work that should trigger tdd.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Run full quality suite** in order:",
+      "original_snippets": "**Run full quality suite** in order:",
+      "relevant_when": "When a user asks for planning work that should trigger tdd.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**All four commands must be green.** If any fail:",
+      "original_snippets": "**All four commands must be green.** If any fail:",
+      "relevant_when": "When a user asks for planning work that should trigger tdd.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "**HARD GATE — Quality Check**",
+      "original_snippets": "**HARD GATE — Quality Check**",
+      "relevant_when": "When a user asks for planning work that should trigger tdd.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Produce the PR** with a description that references the failing test, the minimal implementation, and the quality suite result.",
+      "original_snippets": "**Produce the PR** with a description that references the failing test, the minimal implementation, and the quality suite result.",
+      "relevant_when": "When a user asks for planning work that should trigger tdd.",
+      "why_given": "new knowledge"
+    }
+  ]
+}

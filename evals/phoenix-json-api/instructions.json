@@ -1,0 +1,42 @@
+{
+  "target_skill": "phoenix-json-api",
+  "source_path": "skills/phoenix/phoenix-json-api/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "**Use the `:api` pipeline** — don't mix HTML and JSON pipelines; API routes skip CSRF and sessions",
+      "original_snippets": "**Use the `:api` pipeline** — don't mix HTML and JSON pipelines; API routes skip CSRF and sessions",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-json-api.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Render errors as structured JSON** — `{:error, changeset}` must become `{\"errors\": {...}}`",
+      "original_snippets": "**Render errors as structured JSON** — `{:error, changeset}` must become `{\"errors\": {...}}`",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-json-api.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "**Use `FallbackController` for consistent error handling** — every action returns `{:ok, result}` or `{:error, reason}`",
+      "original_snippets": "**Use `FallbackController` for consistent error handling** — every action returns `{:ok, result}` or `{:error, reason}`",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-json-api.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Define the route** in the `:api` (or `:api_auth`) pipeline scope with a versioned URL prefix",
+      "original_snippets": "**Define the route** in the `:api` (or `:api_auth`) pipeline scope with a versioned URL prefix",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-json-api.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Create the controller** with `action_fallback MyAppWeb.FallbackController` and return `{:ok, _}` / `{:error, _}` from every action",
+      "original_snippets": "**Create the controller** with `action_fallback MyAppWeb.FallbackController` and return `{:ok, _}` / `{:error, _}` from every action",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-json-api.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Verify error responses** — confirm that invalid input and missing resources return structured JSON (e.g., `{\"errors\": {...}}`) before proceeding",
+      "original_snippets": "**Verify error responses** — confirm that invalid input and missing resources return structured JSON (e.g., `{\"errors\": {...}}`) before proceeding",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-json-api.",
+      "why_given": "new knowledge"
+    }
+  ]
+}

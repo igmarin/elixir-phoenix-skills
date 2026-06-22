@@ -1,0 +1,12 @@
+{
+  "target_skill": "liveview-streams",
+  "total_scenarios": 1,
+  "instructions_coverage": {
+    "total_instructions": 11,
+    "instructions_tested": 10,
+    "coverage_percentage": 91
+  },
+  "reason_distribution": {
+    "new knowledge": 11
+  }
+}

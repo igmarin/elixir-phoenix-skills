@@ -1,0 +1,46 @@
+{
+  "context": "Checks whether the final artifact follows the background-job instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: **Job Purpose** — Define trigger conditions, input parameters, expected output/side effects, and criticality.",
+      "max_score": 13
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: **Error Classification** — Classify all anticipated errors:",
+      "max_score": 13
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: **Queue & Timeout** — Assign queue priority and set execution timeout.",
+      "max_score": 13
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: Write failing tests covering: successful execution, idempotency (run twice = same result), transient error raises, permanent error discards.",
+      "max_score": 13
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: Run full test suite: `mix test` — confirm no regressions.",
+      "max_score": 12
+    },
+    {
+      "name": "instruction-6",
+      "description": "The submitted artifact follows this skill instruction: Verify telemetry events fire on success and failure paths.",
+      "max_score": 12
+    },
+    {
+      "name": "instruction-7",
+      "description": "The submitted artifact follows this skill instruction: **Never deploy until all four phase gates above are green.**",
+      "max_score": 12
+    },
+    {
+      "name": "instruction-8",
+      "description": "The submitted artifact follows this skill instruction: When completing a background job implementation, output MUST follow this structure:",
+      "max_score": 12
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "target_skill": "mix-tasks-generators",
+  "source_path": "skills/tooling/mix-tasks-generators/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "**Always call `Mix.Task.run(\"app.start\")` first** — tasks that access the database or Repo need the app started",
+      "original_snippets": "**Always call `Mix.Task.run(\"app.start\")` first** — tasks that access the database or Repo need the app started",
+      "relevant_when": "When a user asks for planning work that should trigger mix-tasks-generators.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "**Create custom tasks for project-specific workflows** — don't override standard Mix tasks",
+      "original_snippets": "**Create custom tasks for project-specific workflows** — don't override standard Mix tasks",
+      "relevant_when": "When a user asks for planning work that should trigger mix-tasks-generators.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Use transactions for data modifications** — wrap `Repo.insert_all`, `Repo.delete_all` in `Repo.transaction()`",
+      "original_snippets": "**Use transactions for data modifications** — wrap `Repo.insert_all`, `Repo.delete_all` in `Repo.transaction()`",
+      "relevant_when": "When a user asks for planning work that should trigger mix-tasks-generators.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Follow `Mix.Tasks.Namespace.TaskName` naming** — file path must match: `lib/mix/tasks/namespace.task_name.ex`",
+      "original_snippets": "**Follow `Mix.Tasks.Namespace.TaskName` naming** — file path must match: `lib/mix/tasks/namespace.task_name.ex`",
+      "relevant_when": "When a user asks for planning work that should trigger mix-tasks-generators.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "**Create file** — create `lib/mix/tasks/<namespace>.<task_name>.ex`",
+      "original_snippets": "**Create file** — create `lib/mix/tasks/<namespace>.<task_name>.ex`",
+      "relevant_when": "When a user asks for planning work that should trigger mix-tasks-generators.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Define module** — use `defmodule Mix.Tasks.MyApp.TaskName do use Mix.Task`",
+      "original_snippets": "**Define module** — use `defmodule Mix.Tasks.MyApp.TaskName do use Mix.Task`",
+      "relevant_when": "When a user asks for planning work that should trigger mix-tasks-generators.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Verify** — run `mix help | grep task_name` to confirm registration",
+      "original_snippets": "**Verify** — run `mix help | grep task_name` to confirm registration",
+      "relevant_when": "When a user asks for planning work that should trigger mix-tasks-generators.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "mix my_app.migrate up      - Run migrations",
+      "original_snippets": "mix my_app.migrate up      - Run migrations",
+      "relevant_when": "When a user asks for planning work that should trigger mix-tasks-generators.",
+      "why_given": "new knowledge"
+    }
+  ]
+}
