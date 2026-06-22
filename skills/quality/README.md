@@ -8,6 +8,7 @@ Skills for maintaining high engineering standards, code quality, and architectur
 - **[credo-config](credo-config/)** — MANDATORY for Credo setup and customization. Covers `.credo.exs` configuration, custom checks, strict mode, and CI integration.
 - **[apply-phoenix-liveview-conventions](apply-phoenix-liveview-conventions/)** — Enforces consistent LiveView patterns: mount/handle_event/handle_info callbacks, HEEx components, form binding, socket assigns, and error handling.
 - **[apply-phoenix-controller-conventions](apply-phoenix-controller-conventions/)** — Enforces consistent Phoenix controller patterns: RESTful routing, plug pipeline, action methods, strong parameters, content negotiation, and fallback controllers.
+- **[code-review](code-review/)** — Systematic Elixir/Phoenix PR review with severity levels, BEAM-specific checks, and structured findings output.
 
 ## Quality Persona
 
@@ -27,3 +28,4 @@ Use these skills when you see:
 - "phoenix conventions", "liveview conventions", "follow phoenix patterns"
 - "linter", "static analysis", "credo config", "mix credo"
 - "before PR", "quality sweep", "production readiness"
+- "code review", "PR review", "review my code", "code audit", "review diff"
