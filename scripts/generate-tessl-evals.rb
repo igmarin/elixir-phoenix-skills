@@ -200,6 +200,7 @@ skills = Dir.glob("**/SKILL.md", base: SKILLS_DIR).each_with_object({}) do |path
   hash[name] = { "path" => "skills/#{path}" }
 end
 
+FileUtils.rm_rf(Dir.glob(File.join(OUTPUT_ROOT, "*")))
 FileUtils.mkdir_p(OUTPUT_ROOT)
 
 skills.each do |skill_name, spec|
