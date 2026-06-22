@@ -1,9 +1,9 @@
 {
   "name": "igmarin/elixir-phoenix-skills",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "license": "MIT",
   "depends_on": [],
-  "summary": "Curated library of 33 atomic skills, 7 personas, and 1 orchestrator for Elixir and Phoenix development. Organized by category: fundamentals, phoenix, database, testing, auth, infrastructure, quality, security, integrations, tooling, frameworks, personas, and orchestration. Covers core Elixir patterns, Phoenix LiveView, Ecto, OTP, Oban, testing, security, deployment, real-time, and modern tooling (Req, Swoosh, Cachex, Broadway, Ash).",
+  "summary": "Curated library of 34 atomic skills, 7 personas, and 1 orchestrator for Elixir and Phoenix development. Organized by category: fundamentals, phoenix, database, testing, auth, infrastructure, quality, security, integrations, tooling, frameworks, personas, and orchestration. Covers core Elixir patterns, Phoenix LiveView, Ecto, OTP, Oban, testing, security, deployment, real-time, and modern tooling (Req, Swoosh, Cachex, Broadway, Ash).",
   "skills": {
     "elixir-essentials": {
       "path": "skills/fundamentals/elixir-essentials/SKILL.md"
@@ -85,6 +85,9 @@
     },
     "apply-phoenix-liveview-conventions": {
       "path": "skills/quality/apply-phoenix-liveview-conventions/SKILL.md"
+    },
+    "apply-phoenix-controller-conventions": {
+      "path": "skills/quality/apply-phoenix-controller-conventions/SKILL.md"
     },
     "security-essentials": {
       "path": "skills/security/security-essentials/SKILL.md"

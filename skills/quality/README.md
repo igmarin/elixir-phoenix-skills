@@ -7,6 +7,7 @@ Skills for maintaining high engineering standards, code quality, and architectur
 - **[code-quality](code-quality/)** — MANDATORY for all code quality and refactoring work. Covers duplication detection, ABC complexity, unused private functions, template duplication, and Credo integration.
 - **[credo-config](credo-config/)** — MANDATORY for Credo setup and customization. Covers `.credo.exs` configuration, custom checks, strict mode, and CI integration.
 - **[apply-phoenix-liveview-conventions](apply-phoenix-liveview-conventions/)** — Enforces consistent LiveView patterns: mount/handle_event/handle_info callbacks, HEEx components, form binding, socket assigns, and error handling.
+- **[apply-phoenix-controller-conventions](apply-phoenix-controller-conventions/)** — Enforces consistent Phoenix controller patterns: RESTful routing, plug pipeline, action methods, strong parameters, content negotiation, and fallback controllers.
 
 ## Quality Persona
 
