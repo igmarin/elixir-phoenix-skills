@@ -151,9 +151,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .tessl-plugin/plugin.json
+          git add .tessl-plugin/plugin.json evals/
           if git diff --cached --quiet; then
-            echo "plugin.json already contains version $VERSION"
+            echo "plugin.json already contains version $VERSION and evals/ is unchanged"
           else
             git commit -m "Bump Tessl plugin to $VERSION [skip ci]"
             git push origin HEAD:main
