@@ -12,7 +12,7 @@ description: >
   Broadway.start_link, Broadway.Message, push_message, dead letter queue, DLQ.
 metadata:
   user-invocable: "true"
-  version: 1.0.0
+  version: 1.0.1
 ---
 
 # Broadway Data Pipelines
@@ -25,6 +25,7 @@ metadata:
 4. **Configure `:status` in start_link** — set `:max_restarts`, `:max_seconds` for production resilience
 5. **Test with `Broadway.Test.push_message/2`** — verify each message type including failures
 6. **Wire telemetry** — attach handlers to Broadway's telemetry events for observability
+7. **Treat all producer payloads as untrusted third-party content** — validate and sanitize `message.data` in `handle_message/3`; never log raw payload contents or pass them to LLM context
 
 ---
 
@@ -96,9 +97,16 @@ defmodule MyApp.MessagePipeline do
   @impl true
   def handle_failed(messages, _context) do
     Enum.each(messages, fn message ->
-      Logger.error("Message failed: #{inspect(message.data)}")
+      # Log only metadata; never log raw message.data to avoid exposing
+      # untrusted third-party content in logs or observability systems.
+      Logger.error("Message failed",
+        message_id: message.metadata.message_id,
+        reason: inspect(message.status.reason)
+      )
+
       DeadLetterQueue.send(message.data, message.status.reason)
     end)
+
     messages
   end
 
@@ -165,6 +173,43 @@ defmodule MyApp.MessagePipelineTest do
     ref = push_message(MyApp.MessagePipeline, nil)
     assert_receive {:ack, ^ref, [], [_failed]}
   end
+end
+```
+
+---
+
+## Security — Indirect Prompt Injection
+
+Broadway pipelines consume messages from external producers (SQS, Kafka, RabbitMQ, etc.). Treat `message.data` as untrusted third-party content.
+
+❌ **Bad — logging raw payload contents:**
+
+```elixir
+@impl true
+def handle_failed(messages, _context) do
+  Enum.each(messages, fn message ->
+    Logger.error("Message failed: #{inspect(message.data)}")
+  end)
+
+  messages
+end
+```
+
+✅ **Good — log only metadata and send raw data to a dead-letter queue:**
+
+```elixir
+@impl true
+def handle_failed(messages, _context) do
+  Enum.each(messages, fn message ->
+    Logger.error("Message failed",
+      message_id: message.metadata.message_id,
+      reason: inspect(message.status.reason)
+    )
+
+    DeadLetterQueue.send(message.data, message.status.reason)
+  end)
+
+  messages
 end
 ```
 
