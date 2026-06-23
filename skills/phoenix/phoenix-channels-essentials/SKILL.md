@@ -10,7 +10,7 @@ description: >-
   handle_in, topic, real-time, WebSocket.
 metadata:
   user-invocable: "true"
-  version: 1.0.1
+  version: 1.0.2
   adapted-from: j-morgan6/elixir-phoenix-guide
   original-author: Joseph Morgan
 ---
@@ -25,7 +25,7 @@ metadata:
 4. **Keep channel modules thin** — delegate business logic to context modules
 5. **Use Presence for tracking connected users** — don't roll your own presence tracking
 6. **Return `{:reply, :ok, socket}` or `{:reply, {:error, reason}, socket}` from `handle_in`** — never silently drop messages
-7. **Treat all client payloads as untrusted third-party content** — validate and sanitize in `handle_in/3`; never log raw payloads or pass them to LLM context
+7. **Treat all client payloads as untrusted third-party content** — validate against a strict schema in `handle_in/3`; reject unknown fields, unexpected types, and empty payloads; never log raw payloads or pass them to LLM context
 
 ---
 
@@ -135,18 +135,17 @@ end
 
 ## handle_in Patterns
 
-Route client messages to context functions and always return an explicit reply:
+Route client messages to context functions and always return an explicit reply. Validate every payload against a strict schema before broadcasting:
 
 ```elixir
 @impl true
-def handle_in("new_message", %{"body" => body}, socket) do
+def handle_in("new_message", %{"body" => body}, socket) when is_binary(body) do
   # Client payloads are untrusted third-party content.
   sanitized_body =
-    (body || "")
+    body
     |> String.slice(0, 10_000)
     |> String.trim()
 
-  # Reject empty or oversized payloads instead of silently broadcasting them.
   if sanitized_body == "" do
     {:reply, {:error, %{reason: "empty_body"}}, socket}
   else
@@ -160,6 +159,11 @@ def handle_in("new_message", %{"body" => body}, socket) do
   end
 end
 
+# Reject payloads with wrong shape, unexpected keys, or non-string body.
+def handle_in("new_message", _payload, socket) do
+  {:reply, {:error, %{reason: "invalid_message"}}, socket}
+end
+
 @impl true
 def handle_in("typing", _payload, socket) do
   broadcast!(socket, "user_typing", %{user_id: socket.assigns.user_id})
@@ -171,37 +175,11 @@ end
 
 ## Security — Indirect Prompt Injection
 
-Phoenix Channels receive outsider-authored payloads in `handle_in/3`. Treat them as untrusted third-party content.
+Phoenix Channels receive outsider-authored payloads in `handle_in/3`. Treat them as untrusted third-party content and validate the shape before any processing or broadcasting.
 
-❌ **Bad — logging or broadcasting raw payloads:**
-
-```elixir
-@impl true
-def handle_in("new_message", %{"body" => body}, socket) do
-  Logger.info("Received: #{body}")
-  broadcast!(socket, "new_message", %{body: body})
-  {:reply, :ok, socket}
-end
-```
-
-✅ **Good — validate, sanitize, and avoid logging raw content:**
-
-```elixir
-@impl true
-def handle_in("new_message", %{"body" => body}, socket) do
-  sanitized =
-    (body || "")
-    |> String.slice(0, 10_000)
-    |> String.trim()
-
-  if sanitized == "" do
-    {:reply, {:error, %{reason: "empty_body"}}, socket}
-  else
-    broadcast!(socket, "new_message", %{body: sanitized, user_id: socket.assigns.user_id})
-    {:reply, :ok, socket}
-  end
-end
-```
+- Match payloads with guards (`when is_binary(body)`) and reject unknown shapes.
+- Sanitize string fields (length, trimming) and reject empty values.
+- Never log raw payload contents or broadcast them without validation.
 
 ---
 

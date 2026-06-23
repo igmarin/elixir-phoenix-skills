@@ -12,7 +12,7 @@ description: >
   Broadway.start_link, Broadway.Message, push_message, dead letter queue, DLQ.
 metadata:
   user-invocable: "true"
-  version: 1.0.1
+  version: 1.0.2
 ---
 
 # Broadway Data Pipelines
@@ -25,7 +25,7 @@ metadata:
 4. **Configure `:status` in start_link** — set `:max_restarts`, `:max_seconds` for production resilience
 5. **Test with `Broadway.Test.push_message/2`** — verify each message type including failures
 6. **Wire telemetry** — attach handlers to Broadway's telemetry events for observability
-7. **Treat all producer payloads as untrusted third-party content** — validate and sanitize `message.data` in `handle_message/3`; never log raw payload contents or pass them to LLM context
+7. **Treat all producer payloads as untrusted third-party content** — validate `message.data` against a strict schema in `handle_message/3`; reject malformed, oversized, or unexpected payloads; never log raw payload contents or pass them to LLM context
 
 ---
 
@@ -83,10 +83,10 @@ defmodule MyApp.MessagePipeline do
 
   @impl true
   def handle_message(_, message, _context) do
-    case process(message.data) do
-      {:ok, result} ->
+    case validate(message.data) do
+      {:ok, sanitized} ->
         message
-        |> Broadway.Message.update_data(fn _ -> result end)
+        |> Broadway.Message.update_data(fn _ -> sanitized end)
         |> Broadway.Message.put_batcher(:default)
 
       {:error, reason} ->
@@ -113,6 +113,7 @@ defmodule MyApp.MessagePipeline do
   @impl true
   def handle_batch(:default, messages, _batch_info, _context) do
     data = Enum.map(messages, & &1.data)
+
     case MyApp.Repo.insert_all(MyApp.Record, data) do
       {_count, _} ->
         messages
@@ -123,18 +124,31 @@ defmodule MyApp.MessagePipeline do
     end
   end
 
-  defp process(%{"body" => body} = data) do
-    sanitized = %{data | "body" => String.slice(body || "", 0, 10_000)}
-    {:ok, Map.put(sanitized, :processed_at, DateTime.utc_now())}
+  # Validate and sanitize the payload against a strict schema.
+  # Reject messages with unknown keys, non-string values, or oversized strings.
+  defp validate(%{"body" => body} = data) when is_binary(body) do
+    sanitized_body = String.slice(body, 0, 10_000)
+
+    if sanitized_body == "" do
+      {:error, :empty_body}
+    else
+      {:ok,
+       data
+       |> Map.take(["body"])
+       |> Map.put("body", sanitized_body)
+       |> Map.put(:processed_at, DateTime.utc_now())}
+    end
   end
-  defp process(data) when is_map(data) do
-    {:ok, Map.put(data, :processed_at, DateTime.utc_now())}
-  end
-  defp process(data) when is_binary(data) do
+
+  defp validate(data) when is_binary(data) do
     case Jason.decode(data) do
-      {:ok, parsed} -> process(parsed)
+      {:ok, parsed} -> validate(parsed)
       {:error, _} -> {:error, :invalid_json}
     end
+  end
+
+  defp validate(_data) do
+    {:error, :invalid_message}
   end
 end
 ```
@@ -182,36 +196,9 @@ end
 
 Broadway pipelines consume messages from external producers (SQS, Kafka, RabbitMQ, etc.). Treat `message.data` as untrusted third-party content.
 
-❌ **Bad — logging raw payload contents:**
-
-```elixir
-@impl true
-def handle_failed(messages, _context) do
-  Enum.each(messages, fn message ->
-    Logger.error("Message failed: #{inspect(message.data)}")
-  end)
-
-  messages
-end
-```
-
-✅ **Good — log only metadata and send raw data to a dead-letter queue:**
-
-```elixir
-@impl true
-def handle_failed(messages, _context) do
-  Enum.each(messages, fn message ->
-    Logger.error("Message failed",
-      message_id: message.metadata.message_id,
-      reason: inspect(message.status.reason)
-    )
-
-    DeadLetterQueue.send(message.data, message.status.reason)
-  end)
-
-  messages
-end
-```
+- Validate every message against a strict schema in `handle_message/3` before processing.
+- Never log raw `message.data` contents; log only metadata such as message IDs and failure reasons.
+- Send raw failed messages to a dead-letter queue only; do not reflect them to producers, clients, or LLM contexts.
 
 ---
 
