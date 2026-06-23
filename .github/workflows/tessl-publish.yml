@@ -40,6 +40,8 @@ jobs:
           generation_output=$(tessl scenario generate --json .)
           echo "Raw generation output:"
           echo "$generation_output"
+          # Tessl prints progress lines (e.g., "- Packing and uploading plugin...")
+          # before the JSON payload, so strip those before parsing.
           generation_id=$(echo "$generation_output" | ruby -rjson -e '
             json = STDIN.read.lines.reject { |line| line.start_with?("-") }.join
             puts JSON.parse(json)["generationId"]
@@ -59,6 +61,7 @@ jobs:
 
           while [ $attempt -lt $max_attempts ]; do
             status_output=$(tessl scenario view --json "$generation_id" 2>&1)
+            # Strip Tessl progress lines ("- Fetching generation...") before parsing JSON.
             status=$(echo "$status_output" | ruby -rjson -e '
               json = STDIN.read.lines.reject { |line| line.start_with?("-") }.join
               puts JSON.parse(json).dig("data", "attributes", "status")
@@ -147,7 +150,10 @@ jobs:
           fi
 
       - name: Publish plugin
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
+          plugin_name="$(ruby -rjson -e 'puts JSON.parse(File.read(".tessl-plugin/plugin.json")).fetch("name")')"
           max_attempts=3
           attempt=0
 
@@ -156,6 +162,15 @@ jobs:
               echo "Plugin published successfully"
               exit 0
             fi
+
+            # The CLI may time out after the server has already accepted the
+            # publish. Verify the registry before retrying to avoid duplicate
+            # publishes or wasted retries.
+            if tessl plugin info "$plugin_name@$VERSION" >/dev/null 2>&1; then
+              echo "Version $plugin_name@$VERSION is already published; treating as success"
+              exit 0
+            fi
+
             attempt=$((attempt + 1))
             if [ $attempt -lt $max_attempts ]; then
               echo "Publish attempt $attempt failed; retrying in 30 seconds..."
