@@ -1,1 +1,3 @@
-{ "description": "Benchmark suite organization with I/O separation and regression detection" }
+{
+  "description": "Bug fix skill-chain routing with TDD gate"
+}

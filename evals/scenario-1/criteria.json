@@ -1,61 +1,31 @@
 {
-  "context": "Tests whether the agent follows the profile-first performance investigation workflow: profiling with :fprof or :eprof before benchmarking, verifying the bottleneck is confirmed in the profiling output, writing a comparative benchmark with multiple input sizes, validating improvement by handling noise, and saving a baseline with a regression threshold.",
+  "context": "Tests whether the agent correctly handles an ambiguous, open-ended Elixir improvement request by: routing to elixir-essentials as a fallback, placing the routing statement as the very first substantive line, explicitly labeling it as a fallback, and refraining from producing any implementation code.",
   "type": "weighted_checklist",
   "checklist": [
     {
-      "name": "Uses :fprof or :eprof",
-      "description": "The investigation plan includes profiling code that calls :fprof or :eprof (either atom appears in the profiling section)",
+      "name": "Routing statement first",
+      "description": "The first substantive line of routing_response.md is a routing statement in the format 'Next skill: skills/[category]/[name]' — it appears before any explanation or analysis",
+      "max_score": 20
+    },
+    {
+      "name": "Explicit fallback label",
+      "description": "The response explicitly contains the text 'Fallback: elixir-essentials' (exact phrase) somewhere in the file",
+      "max_score": 25
+    },
+    {
+      "name": "Correct fallback target",
+      "description": "The routing target is skills/fundamentals/elixir-essentials (not a more specific skill like phoenix-liveview-essentials, oban-essentials, etc.)",
+      "max_score": 20
+    },
+    {
+      "name": "No implementation code",
+      "description": "The file does NOT contain any Elixir code blocks, code snippets, or concrete code examples (no ```elixir blocks, no def/defmodule constructs)",
+      "max_score": 20
+    },
+    {
+      "name": "English output",
+      "description": "The entire routing_response.md file is written in English",
       "max_score": 15
-    },
-    {
-      "name": "Profile before benchmark",
-      "description": "The plan's profiling step is presented as the FIRST step — the plan does not jump directly to writing a Benchee benchmark without profiling first",
-      "max_score": 10
-    },
-    {
-      "name": "Bottleneck confirmation step",
-      "description": "The plan explicitly describes verifying that the profiling output names the expected slow function before proceeding to write benchmarks",
-      "max_score": 10
-    },
-    {
-      "name": "Multiple input sizes",
-      "description": "The benchmark template includes an `inputs:` map (or equivalent) with at least 3 differently-sized inputs (e.g., small, medium, large)",
-      "max_score": 10
-    },
-    {
-      "name": "Noise threshold handling",
-      "description": "The plan describes running additional benchmark iterations (at least 3 more) when results are within a small percentage difference, to rule out variance",
-      "max_score": 10
-    },
-    {
-      "name": "Saves to bench/baseline.json",
-      "description": "The plan explicitly mentions saving benchmark results to bench/baseline.json",
-      "max_score": 10
-    },
-    {
-      "name": "Regression threshold stated",
-      "description": "The plan states a numeric regression threshold of greater than 10% for detecting performance regressions",
-      "max_score": 10
-    },
-    {
-      "name": "Warmup configured",
-      "description": "The benchmark template includes a warmup: option in the Benchee.run/2 configuration",
-      "max_score": 5
-    },
-    {
-      "name": "Benchmark run time configured",
-      "description": "The benchmark template includes a time: option set to 10 (seconds) in the Benchee.run/2 configuration",
-      "max_score": 5
-    },
-    {
-      "name": "Compares two implementations",
-      "description": "The benchmark template benchmarks both slow_path/1 and fast_path/1 (or at least two named alternative implementations) in a single Benchee.run/2 call",
-      "max_score": 10
-    },
-    {
-      "name": "Console formatter with comparison",
-      "description": "The benchmark template includes the Benchee.Formatters.Console formatter with comparison: true",
-      "max_score": 5
     }
   ]
 }

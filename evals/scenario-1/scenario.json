@@ -1,4 +1,1 @@
-{
-  "description": "Profile-first performance investigation workflow",
-  "include": ["./inputs"]
-}
+{ "description": "Ambiguous Elixir request fallback routing" }

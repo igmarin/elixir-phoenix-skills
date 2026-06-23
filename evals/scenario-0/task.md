@@ -1,24 +1,17 @@
-# String Concatenation Performance Analysis
+# Real-Time Order Dashboard with Threshold Alerts
 
 ## Problem/Feature Description
 
-The data-processing team at a mid-sized SaaS company has noticed their reporting pipeline is slower than expected when generating large CSV-like outputs from lists of values. The pipeline assembles thousands of rows by joining field values into delimited strings, and on production loads the job takes longer than the acceptable window.
+Your team is building a Phoenix e-commerce platform. The product owner has raised a new ticket with three interconnected requirements: first, the operations dashboard should gain a live widget that displays the current total order count and updates in real time as new orders come in; second, orders need to be persisted to a database table that can be queried for analytics; and third, whenever the order count crosses 100 the system should automatically send an email alert to the admin team.
 
-Before rewriting any production code, the engineering lead wants a rigorous benchmark comparing the main idiomatic approaches for building a long string from a list of values in Elixir. Specifically, the team is considering three patterns:
-
-1. Repeated string concatenation using `<>` inside a `Enum.reduce` loop
-2. `Enum.join/2` (the stdlib convenience function)
-3. Building an iolist with `Enum.intersperse/2` and converting with `IO.iodata_to_binary/1`
-
-The team needs the benchmark to be credible enough to guide a production optimization decision, which means it must account for how performance scales with different list sizes, measure both speed and memory, and produce a clear side-by-side comparison of the alternatives.
+The engineering lead wants a clear breakdown of how to approach this before any code is written. The concern is that this ticket touches multiple parts of the stack — the LiveView front-end, the Ecto data layer, and an email integration — and it is easy for the work to get tangled if not properly sequenced. You have been asked to analyse the request, identify the distinct technical concerns, determine the right order to tackle them, and document a concrete plan that the development team can follow.
 
 ## Output Specification
 
-Write a self-contained Elixir script at `bench/string_ops_benchmark.exs` that benchmarks the string concatenation approaches described above. The script should:
+Write your full triage and routing plan to a file called `routing_response.md`. The file should cover:
 
-- Compare at least two of the listed approaches (the third is optional but welcome)
-- Be runnable from the project root with a single shell command; include a brief comment near the top of the file explaining the exact command used to run it
-- Produce a console report showing the relative performance of the alternatives
-- Leave no large intermediate files on disk after it finishes
+- An ordered list of the technical sub-tasks the team needs to complete, each mapped to the appropriate area of the stack
+- The recommended sequence in which to tackle the sub-tasks and the reasoning behind that order
+- Any dependencies between sub-tasks (e.g. which steps must be finished before others can start)
 
-The script is the primary deliverable — the grader will read its source to assess how well it follows benchmarking best practices.
+The goal at this stage is a clear, actionable plan that the team can hand to developers as a brief — focus on the planning document, not on producing code.
