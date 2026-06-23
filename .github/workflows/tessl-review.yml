@@ -4,12 +4,9 @@ on:
   pull_request:
     paths:
       - 'skills/**'
-      - 'evals/**'
       - 'tessl.json'
       - '.tessl-plugin/**'
       - 'scripts/changed-tessl-skill-paths.rb'
-      - 'scripts/generate-tessl-evals.rb'
-      - 'scripts/validate-tessl-evals.rb'
       - '.github/workflows/tessl-review.yml'
 
 permissions:
@@ -30,10 +27,56 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Generate and validate Tessl eval source
+      - name: Set up Tessl
+        uses: tesslio/setup-tessl@25ec223fc0da33b41b8044ff5ab2b85235f4f91e # v2
+        with:
+          version: "0.87.0"
+          token: ${{ secrets.TESSL_TOKEN }}
+
+      - name: Generate and validate Tessl eval scenarios
         run: |
-          ruby scripts/generate-tessl-evals.rb
-          ruby scripts/validate-tessl-evals.rb
+          echo "Starting scenario generation..."
+          generation_output=$(tessl scenario generate --json .)
+          echo "Raw generation output:"
+          echo "$generation_output"
+          # Tessl prints progress lines (e.g., "- Packing and uploading plugin...")
+          # before the JSON payload, so strip those before parsing.
+          generation_id=$(echo "$generation_output" | ruby -rjson -e '
+            json = STDIN.read.lines.reject { |line| line.start_with?("-") }.join
+            puts JSON.parse(json)["generationId"]
+          ')
+          if [ -z "$generation_id" ]; then
+            echo "::error::Unable to extract scenario generation ID"
+            exit 1
+          fi
+          echo "Generation ID: $generation_id"
+
+          max_attempts=60
+          attempt=0
+          while [ $attempt -lt $max_attempts ]; do
+            status_output=$(tessl scenario view --json "$generation_id" 2>&1)
+            # Strip Tessl progress lines ("- Fetching generation...") before parsing JSON.
+            status=$(echo "$status_output" | ruby -rjson -e '
+              json = STDIN.read.lines.reject { |line| line.start_with?("-") }.join
+              puts JSON.parse(json).dig("data", "attributes", "status")
+            ')
+            echo "Attempt $((attempt + 1)): Status is $status"
+
+            if [ "$status" = "completed" ]; then
+              echo "Scenario generation completed successfully"
+              exit 0
+            elif [ "$status" = "failed" ]; then
+              echo "::error::Scenario generation failed"
+              echo "$status_output"
+              exit 1
+            fi
+
+            attempt=$((attempt + 1))
+            sleep 10
+          done
+
+          echo "::error::Scenario generation timed out after $max_attempts attempts"
+          exit 1
 
       - name: Find changed publishable skills
         id: changed
@@ -50,13 +93,6 @@ jobs:
             cat changed-skill-paths.txt
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
-
-      - name: Set up Tessl
-        if: steps.changed.outputs.has_changed_skills == 'true'
-        uses: tesslio/setup-tessl@25ec223fc0da33b41b8044ff5ab2b85235f4f91e # v2
-        with:
-          version: "0.85.0"
-          token: ${{ secrets.TESSL_TOKEN }}
 
       - name: Review changed publishable skills
         if: steps.changed.outputs.has_changed_skills == 'true'
