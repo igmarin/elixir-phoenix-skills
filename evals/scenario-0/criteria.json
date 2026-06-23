@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent writes a Benchee benchmark that follows key best-practice instructions: running in production-like conditions, comparing multiple approaches, using multi-sized inputs, configuring proper warmup and time, measuring memory and reductions, and enabling comparison output.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "MIX_ENV=prod comment",
+      "description": "The script includes a comment or instruction indicating it should be run with MIX_ENV=prod (e.g. 'MIX_ENV=prod mix run bench/string_ops_benchmark.exs')",
+      "max_score": 10
+    },
+    {
+      "name": "At least 2 approaches",
+      "description": "Benchee.run/2 defines at least 2 distinct implementations being compared",
+      "max_score": 10
+    },
+    {
+      "name": "Small input defined",
+      "description": "The inputs: map includes a key whose value is a list or string of small size (e.g. 100 elements or fewer)",
+      "max_score": 8
+    },
+    {
+      "name": "Medium input defined",
+      "description": "The inputs: map includes a key whose value is a list or string of medium size (e.g. around 1_000–10_000 elements)",
+      "max_score": 8
+    },
+    {
+      "name": "Large input defined",
+      "description": "The inputs: map includes a key whose value is a list or string of large size (e.g. 50_000+ elements)",
+      "max_score": 8
+    },
+    {
+      "name": "warmup: 2",
+      "description": "Benchee.run/2 options include warmup: 2 (or a value >= 2)",
+      "max_score": 10
+    },
+    {
+      "name": "time: 10",
+      "description": "Benchee.run/2 options include time: 10 (or a value >= 10)",
+      "max_score": 10
+    },
+    {
+      "name": "memory_time configured",
+      "description": "Benchee.run/2 options include memory_time: 2 (or any positive value)",
+      "max_score": 8
+    },
+    {
+      "name": "reduction_time configured",
+      "description": "Benchee.run/2 options include reduction_time: 2 (or any positive value)",
+      "max_score": 8
+    },
+    {
+      "name": "Console comparison: true",
+      "description": "The formatters list includes {Benchee.Formatters.Console, comparison: true} or comparison: true inside the Console formatter options",
+      "max_score": 10
+    },
+    {
+      "name": "File named correctly",
+      "description": "The benchmark script is saved as bench/string_ops_benchmark.exs (correct directory and filename)",
+      "max_score": 10
+    }
+  ]
+}

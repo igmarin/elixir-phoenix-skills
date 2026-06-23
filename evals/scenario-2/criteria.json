@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly sets up a Benchee benchmark suite for an Elixir project: separating compute and I/O benchmarks into distinct files, organizing the bench/ directory with the expected file naming, implementing regression detection against bench/baseline.json with a >10% threshold (checking previous runs before erroring), and adding Benchee as a dev-only dependency at version ~> 1.3.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Separate I/O benchmark file",
+      "description": "File I/O benchmarks are in a separate file from compute (JSON) benchmarks — not combined in one Benchee.run call or one file",
+      "max_score": 12
+    },
+    {
+      "name": "No I/O in compute benchmark",
+      "description": "The JSON/compute benchmark file does NOT contain disk read/write or network operations inside the benchmarked functions",
+      "max_score": 10
+    },
+    {
+      "name": "suite.exs excludes I/O",
+      "description": "bench/suite.exs loads or runs only the compute benchmark(s) and does NOT reference or require the file I/O benchmark",
+      "max_score": 10
+    },
+    {
+      "name": "bench/ directory structure",
+      "description": "Files are placed under a bench/ directory and include at least: a compute benchmark .exs, an I/O benchmark .exs, suite.exs, and baseline.json",
+      "max_score": 8
+    },
+    {
+      "name": "baseline.json present",
+      "description": "bench/baseline.json exists as a file (even if it contains a placeholder structure)",
+      "max_score": 8
+    },
+    {
+      "name": "Regression script reads baseline",
+      "description": "The regression/compare script reads bench/baseline.json (e.g. File.read!, Jason.decode, or similar) to retrieve stored baseline values",
+      "max_score": 10
+    },
+    {
+      "name": "10% regression threshold",
+      "description": "The regression script computes percentage change and uses a threshold of 10% (or 0.10) before raising an error or exiting non-zero",
+      "max_score": 10
+    },
+    {
+      "name": "Multiple baseline run check",
+      "description": "The regression script checks against the previous 3 baseline runs (or equivalent historical data) before raising an error — not just a single prior result",
+      "max_score": 8
+    },
+    {
+      "name": "Writes updated baseline",
+      "description": "The regression/compare script writes updated results back to bench/baseline.json after running",
+      "max_score": 8
+    },
+    {
+      "name": "Benchee dev-only dependency",
+      "description": "The mix.exs snippet or dependency file specifies Benchee with only: :dev",
+      "max_score": 8
+    },
+    {
+      "name": "Benchee version ~> 1.3",
+      "description": "The Benchee dependency uses version constraint ~> 1.3 (not a different version or an exact pin)",
+      "max_score": 8
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "description": "Profile-first performance investigation workflow",
+  "include": ["./inputs"]
+}
