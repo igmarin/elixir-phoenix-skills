@@ -84,6 +84,12 @@ jobs:
           echo "::error::Scenario generation timed out after $max_attempts attempts"
           exit 1
 
+      - name: Download Tessl eval scenarios
+        run: |
+          generation_id="${{ steps.generate_scenarios.outputs.generation_id }}"
+          echo "Downloading scenarios from generation $generation_id..."
+          tessl scenario download "$generation_id" --output evals --strategy replace
+
       - name: Compute automatic patch version
         id: version
         run: |

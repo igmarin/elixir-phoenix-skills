@@ -34,6 +34,7 @@ jobs:
           token: ${{ secrets.TESSL_TOKEN }}
 
       - name: Generate and validate Tessl eval scenarios
+        id: generate_scenarios
         run: |
           echo "Starting scenario generation..."
           generation_output=$(tessl scenario generate --json .)
@@ -49,6 +50,7 @@ jobs:
             echo "::error::Unable to extract scenario generation ID"
             exit 1
           fi
+          echo "generation_id=$generation_id" >> "$GITHUB_OUTPUT"
           echo "Generation ID: $generation_id"
 
           max_attempts=60
@@ -77,6 +79,12 @@ jobs:
 
           echo "::error::Scenario generation timed out after $max_attempts attempts"
           exit 1
+
+      - name: Download Tessl eval scenarios
+        run: |
+          generation_id="${{ steps.generate_scenarios.outputs.generation_id }}"
+          echo "Downloading scenarios from generation $generation_id..."
+          tessl scenario download "$generation_id" --output evals --strategy replace
 
       - name: Find changed publishable skills
         id: changed
