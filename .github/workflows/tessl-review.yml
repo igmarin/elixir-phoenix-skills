@@ -81,8 +81,10 @@ jobs:
           exit 1
 
       - name: Download Tessl eval scenarios
+        env:
+          GENERATION_ID: ${{ steps.generate_scenarios.outputs.generation_id }}
         run: |
-          generation_id="${{ steps.generate_scenarios.outputs.generation_id }}"
+          generation_id="$GENERATION_ID"
           echo "Downloading scenarios from generation $generation_id..."
           tessl scenario download "$generation_id" --output evals --strategy replace
 

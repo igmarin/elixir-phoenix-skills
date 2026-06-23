@@ -54,8 +54,10 @@ jobs:
           echo "Generation ID: $generation_id"
 
       - name: Wait for scenario generation to complete
+        env:
+          GENERATION_ID: ${{ steps.generate_scenarios.outputs.generation_id }}
         run: |
-          generation_id="${{ steps.generate_scenarios.outputs.generation_id }}"
+          generation_id="$GENERATION_ID"
           max_attempts=60
           attempt=0
 
@@ -85,8 +87,10 @@ jobs:
           exit 1
 
       - name: Download Tessl eval scenarios
+        env:
+          GENERATION_ID: ${{ steps.generate_scenarios.outputs.generation_id }}
         run: |
-          generation_id="${{ steps.generate_scenarios.outputs.generation_id }}"
+          generation_id="$GENERATION_ID"
           echo "Downloading scenarios from generation $generation_id..."
           tessl scenario download "$generation_id" --output evals --strategy replace
 
