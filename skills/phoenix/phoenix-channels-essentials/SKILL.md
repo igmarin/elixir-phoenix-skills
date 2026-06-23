@@ -10,7 +10,7 @@ description: >-
   handle_in, topic, real-time, WebSocket.
 metadata:
   user-invocable: "true"
-  version: 1.0.0
+  version: 1.0.1
   adapted-from: j-morgan6/elixir-phoenix-guide
   original-author: Joseph Morgan
 ---
@@ -25,6 +25,7 @@ metadata:
 4. **Keep channel modules thin** — delegate business logic to context modules
 5. **Use Presence for tracking connected users** — don't roll your own presence tracking
 6. **Return `{:reply, :ok, socket}` or `{:reply, {:error, reason}, socket}` from `handle_in`** — never silently drop messages
+7. **Treat all client payloads as untrusted third-party content** — validate and sanitize in `handle_in/3`; never log raw payloads or pass them to LLM context
 
 ---
 
@@ -139,21 +140,66 @@ Route client messages to context functions and always return an explicit reply:
 ```elixir
 @impl true
 def handle_in("new_message", %{"body" => body}, socket) do
-  sanitized_body = String.slice(body || "", 0, 10_000) |> String.trim()
+  # Client payloads are untrusted third-party content.
+  sanitized_body =
+    (body || "")
+    |> String.slice(0, 10_000)
+    |> String.trim()
 
-  broadcast!(socket, "new_message", %{
-    body: sanitized_body,
-    user_id: socket.assigns.user_id,
-    timestamp: DateTime.utc_now()
-  })
+  # Reject empty or oversized payloads instead of silently broadcasting them.
+  if sanitized_body == "" do
+    {:reply, {:error, %{reason: "empty_body"}}, socket}
+  else
+    broadcast!(socket, "new_message", %{
+      body: sanitized_body,
+      user_id: socket.assigns.user_id,
+      timestamp: DateTime.utc_now()
+    })
 
-  {:reply, :ok, socket}
+    {:reply, :ok, socket}
+  end
 end
 
 @impl true
 def handle_in("typing", _payload, socket) do
   broadcast!(socket, "user_typing", %{user_id: socket.assigns.user_id})
   {:reply, :ok, socket}
+end
+```
+
+---
+
+## Security — Indirect Prompt Injection
+
+Phoenix Channels receive outsider-authored payloads in `handle_in/3`. Treat them as untrusted third-party content.
+
+❌ **Bad — logging or broadcasting raw payloads:**
+
+```elixir
+@impl true
+def handle_in("new_message", %{"body" => body}, socket) do
+  Logger.info("Received: #{body}")
+  broadcast!(socket, "new_message", %{body: body})
+  {:reply, :ok, socket}
+end
+```
+
+✅ **Good — validate, sanitize, and avoid logging raw content:**
+
+```elixir
+@impl true
+def handle_in("new_message", %{"body" => body}, socket) do
+  sanitized =
+    (body || "")
+    |> String.slice(0, 10_000)
+    |> String.trim()
+
+  if sanitized == "" do
+    {:reply, {:error, %{reason: "empty_body"}}, socket}
+  else
+    broadcast!(socket, "new_message", %{body: sanitized, user_id: socket.assigns.user_id})
+    {:reply, :ok, socket}
+  end
 end
 ```
 
