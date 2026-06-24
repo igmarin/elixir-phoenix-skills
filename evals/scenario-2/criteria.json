@@ -1,61 +1,56 @@
 {
-  "context": "Tests whether the agent correctly sets up a Benchee benchmark suite for an Elixir project: separating compute and I/O benchmarks into distinct files, organizing the bench/ directory with the expected file naming, implementing regression detection against bench/baseline.json with a >10% threshold (checking previous runs before erroring), and adding Benchee as a dev-only dependency at version ~> 1.3.",
+  "context": "Tests whether the agent uses the elixir-skill-router's bug-fix skill chain correctly: routing to testing-essentials first, enforcing the GATE that a reproduction test must fail before implementation, sequencing elixir-essentials after the gate, and never producing Elixir implementation code itself.",
   "type": "weighted_checklist",
   "checklist": [
     {
-      "name": "Separate I/O benchmark file",
-      "description": "File I/O benchmarks are in a separate file from compute (JSON) benchmarks — not combined in one Benchee.run call or one file",
-      "max_score": 12
+      "name": "First line routing",
+      "description": "The very first substantive line of routing_response.md is exactly 'Next skill: skills/testing/testing-essentials' (or equivalent canonical path format pointing to testing-essentials)",
+      "max_score": 15
     },
     {
-      "name": "No I/O in compute benchmark",
-      "description": "The JSON/compute benchmark file does NOT contain disk read/write or network operations inside the benchmarked functions",
+      "name": "testing-essentials first",
+      "description": "The response routes to testing-essentials as the first skill in the chain (before any other skill)",
       "max_score": 10
     },
     {
-      "name": "suite.exs excludes I/O",
-      "description": "bench/suite.exs loads or runs only the compute benchmark(s) and does NOT reference or require the file I/O benchmark",
+      "name": "Explicit GATE condition",
+      "description": "The response explicitly states a gate or blocking condition that must be met before moving to the implementation step — the reproduction test must exist and fail (not just 'write a test')",
+      "max_score": 15
+    },
+    {
+      "name": "Test must fail (not pass)",
+      "description": "The gate condition specifies that the reproduction test must FAIL (i.e., confirm the bug is reproducible) — not simply exist or pass",
       "max_score": 10
     },
     {
-      "name": "bench/ directory structure",
-      "description": "Files are placed under a bench/ directory and include at least: a compute benchmark .exs, an I/O benchmark .exs, suite.exs, and baseline.json",
-      "max_score": 8
-    },
-    {
-      "name": "baseline.json present",
-      "description": "bench/baseline.json exists as a file (even if it contains a placeholder structure)",
-      "max_score": 8
-    },
-    {
-      "name": "Regression script reads baseline",
-      "description": "The regression/compare script reads bench/baseline.json (e.g. File.read!, Jason.decode, or similar) to retrieve stored baseline values",
+      "name": "elixir-essentials in chain",
+      "description": "The skill chain includes elixir-essentials as the implementation step after the testing gate",
       "max_score": 10
     },
     {
-      "name": "10% regression threshold",
-      "description": "The regression script computes percentage change and uses a threshold of 10% (or 0.10) before raising an error or exiting non-zero",
+      "name": "elixir-essentials after gate",
+      "description": "elixir-essentials appears after testing-essentials (and after the gate) in the ordered chain, not before it",
       "max_score": 10
     },
     {
-      "name": "Multiple baseline run check",
-      "description": "The regression script checks against the previous 3 baseline runs (or equivalent historical data) before raising an error — not just a single prior result",
-      "max_score": 8
+      "name": "Verify/confirm step",
+      "description": "The chain ends with a verification or confirmation step (e.g., verify the fix passes, re-run tests, or 'verify passes')",
+      "max_score": 5
     },
     {
-      "name": "Writes updated baseline",
-      "description": "The regression/compare script writes updated results back to bench/baseline.json after running",
-      "max_score": 8
+      "name": "No Elixir implementation code",
+      "description": "routing_response.md does NOT contain any Elixir source code (no .ex/.exs snippets, no def/defmodule/defp blocks, no pattern match or case/with blocks written as implementation)",
+      "max_score": 15
     },
     {
-      "name": "Benchee dev-only dependency",
-      "description": "The mix.exs snippet or dependency file specifies Benchee with only: :dev",
-      "max_score": 8
+      "name": "Triage not direct fix",
+      "description": "The response frames itself as a routing plan or triage, not as a direct code solution — it delegates to skills rather than implementing the fix",
+      "max_score": 5
     },
     {
-      "name": "Benchee version ~> 1.3",
-      "description": "The Benchee dependency uses version constraint ~> 1.3 (not a different version or an exact pin)",
-      "max_score": 8
+      "name": "Priority rule stated",
+      "description": "The response includes a priority or chain statement (e.g., 'Priority: TDD → ...' or 'Chain: testing-essentials then elixir-essentials') when more than one skill is referenced",
+      "max_score": 5
     }
   ]
 }

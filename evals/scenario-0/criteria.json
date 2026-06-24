@@ -1,61 +1,56 @@
 {
-  "context": "Tests whether the agent writes a Benchee benchmark that follows key best-practice instructions: running in production-like conditions, comparing multiple approaches, using multi-sized inputs, configuring proper warmup and time, measuring memory and reductions, and enabling comparison output.",
+  "context": "Tests whether the agent, given the elixir-skill-router skill, correctly triages a multi-concern Phoenix feature request by emitting the routing statement as the very first line, states the canonical priority rule immediately after, uses the correct skill chain for a new Phoenix feature, and produces no Elixir implementation code.",
   "type": "weighted_checklist",
   "checklist": [
     {
-      "name": "MIX_ENV=prod comment",
-      "description": "The script includes a comment or instruction indicating it should be run with MIX_ENV=prod (e.g. 'MIX_ENV=prod mix run bench/string_ops_benchmark.exs')",
+      "name": "Routing statement first line",
+      "description": "The very first substantive line of routing_response.md is a routing statement matching the pattern 'Next skill: skills/[category]/[name]' — no preamble, analysis, or prose precedes it",
+      "max_score": 15
+    },
+    {
+      "name": "Priority rule stated",
+      "description": "A priority/chain statement is present immediately after the routing statement, in the format 'Priority: A > B; Chain: A then B' (or equivalent concise form listing the same skills in order)",
+      "max_score": 12
+    },
+    {
+      "name": "Testing before implementation",
+      "description": "In the stated skill chain, testing-essentials appears before any implementation skill (such as elixir-essentials, phoenix-liveview-essentials, ecto-essentials)",
+      "max_score": 12
+    },
+    {
+      "name": "Phoenix feature chain",
+      "description": "The chain includes at minimum phoenix-liveview-essentials and ecto-essentials (reflecting the canonical new-Phoenix-feature chain)",
       "max_score": 10
     },
     {
-      "name": "At least 2 approaches",
-      "description": "Benchee.run/2 defines at least 2 distinct implementations being compared",
-      "max_score": 10
-    },
-    {
-      "name": "Small input defined",
-      "description": "The inputs: map includes a key whose value is a list or string of small size (e.g. 100 elements or fewer)",
+      "name": "Code-quality in chain",
+      "description": "The chain includes code-quality as the last step (or among the last steps) in the skill sequence",
       "max_score": 8
     },
     {
-      "name": "Medium input defined",
-      "description": "The inputs: map includes a key whose value is a list or string of medium size (e.g. around 1_000–10_000 elements)",
-      "max_score": 8
+      "name": "No implementation code",
+      "description": "routing_response.md contains NO Elixir source code — no 'def ', 'defmodule', 'schema', migration DSL, or other Elixir implementation code",
+      "max_score": 15
     },
     {
-      "name": "Large input defined",
-      "description": "The inputs: map includes a key whose value is a list or string of large size (e.g. 50_000+ elements)",
-      "max_score": 8
-    },
-    {
-      "name": "warmup: 2",
-      "description": "Benchee.run/2 options include warmup: 2 (or a value >= 2)",
+      "name": "Decomposed sub-tasks",
+      "description": "The response decomposes the request into at least 3 distinct ordered sub-tasks or steps (not just a routing line), showing triage rather than a single-line answer",
       "max_score": 10
     },
     {
-      "name": "time: 10",
-      "description": "Benchee.run/2 options include time: 10 (or a value >= 10)",
-      "max_score": 10
-    },
-    {
-      "name": "memory_time configured",
-      "description": "Benchee.run/2 options include memory_time: 2 (or any positive value)",
+      "name": "LiveView concern addressed",
+      "description": "The routing plan explicitly addresses the real-time / LiveView concern as a named sub-task or skill step",
       "max_score": 8
     },
     {
-      "name": "reduction_time configured",
-      "description": "Benchee.run/2 options include reduction_time: 2 (or any positive value)",
-      "max_score": 8
+      "name": "Database concern addressed",
+      "description": "The routing plan explicitly addresses the database / Ecto concern as a named sub-task or skill step",
+      "max_score": 5
     },
     {
-      "name": "Console comparison: true",
-      "description": "The formatters list includes {Benchee.Formatters.Console, comparison: true} or comparison: true inside the Console formatter options",
-      "max_score": 10
-    },
-    {
-      "name": "File named correctly",
-      "description": "The benchmark script is saved as bench/string_ops_benchmark.exs (correct directory and filename)",
-      "max_score": 10
+      "name": "Notification concern addressed",
+      "description": "The routing plan explicitly addresses the email/notification concern as a named sub-task or skill step (e.g. swoosh-emails or notification handling)",
+      "max_score": 5
     }
   ]
 }

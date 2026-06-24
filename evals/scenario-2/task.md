@@ -1,22 +1,21 @@
-# Setting Up a Performance Benchmark Suite for an Elixir Data Processing Library
+# Phoenix Registration Bug: Duplicate Email Crash
 
-## Problem/Feature Description
+## Problem Description
 
-Your team maintains an Elixir library that's used in production for high-throughput data pipelines. The library handles two distinct workloads: JSON serialization and deserialization of structured records (a compute-intensive task), and reading/writing configuration files from disk (an I/O-bound task). Over the past few months, a handful of unnoticed performance regressions have crept in during routine refactors — changes that looked harmless but quietly degraded throughput by 15-20%.
+A production Phoenix application has a user registration endpoint that is crashing in certain scenarios. The development team has received multiple user complaints that the registration page returns a 500 error instead of a helpful message when someone attempts to sign up with an email address that is already in the database.
 
-The team has decided to add a proper benchmarking setup using Benchee to catch future regressions before they ship. There's currently no `bench/` directory in the project at all. You need to scaffold the entire benchmark suite from scratch, including the project dependency, benchmark scripts for each workload type, an orchestration script, and a regression-detection script.
+The error appears to originate somewhere inside the registration controller action. The team suspects there is an unhandled error path when the database constraint is violated, but nobody has been able to pinpoint the root cause yet. Fixing it needs to be done carefully without introducing regressions to the happy path, and the team has a policy of always verifying bugs are reproducible through tests before touching production code.
 
-The project's `mix.exs` doesn't yet include Benchee. The team wants the benchmarks organized clearly so future contributors can easily add new scenarios, and they need automated regression detection that can be run in CI to guard against slowdowns.
+Your role is that of a senior Elixir/Phoenix developer acting as a triage and routing expert. You should not write the implementation fix yourself — instead, produce a structured triage response that maps out how the bug fix should proceed, which tools or skills to invoke, in what order, and what conditions must be satisfied before moving on to each next step.
 
 ## Output Specification
 
-Create the following files:
+Write your full triage and routing response to a file named `routing_response.md` in your working directory.
 
-- `bench/json_benchmark.exs` — Benchee benchmark script for JSON encoding/decoding operations. Include at least two competing approaches or input variations.
-- `bench/file_io_benchmark.exs` — Benchee benchmark script for file read/write operations.
-- `bench/suite.exs` — Orchestration script that runs the JSON/compute benchmarks.
-- `bench/compare_with_baseline.exs` — Regression-detection script that compares current benchmark results against a stored baseline and reports whether performance has changed significantly.
-- `bench/baseline.json` — A starter baseline file for the regression script to reference.
-- `mix_deps_snippet.exs` — A code snippet showing the Benchee dependency entry to add to `mix.exs`.
+The response should include:
+- The first skill that should be invoked to begin addressing this bug, stated clearly at the very top of the response
+- The ordered sequence of skills or steps needed to resolve the bug from start to finish
+- Any blocking conditions or dependencies between steps
+- A brief rationale for each step in the chain
 
-All files should contain working Elixir code (even if illustrative). Do not leave any files larger than a few KB.
+Do not write any Elixir source code or implementation in `routing_response.md`. The goal is a well-structured routing plan, not a code solution.
