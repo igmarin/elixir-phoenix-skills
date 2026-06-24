@@ -22,6 +22,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
+          ref: refs/heads/main
           fetch-depth: 0
 
       - name: Set up Tessl
@@ -56,7 +57,12 @@ jobs:
           max_attempts=60
           attempt=0
           while [ $attempt -lt $max_attempts ]; do
-            status_output=$(tessl scenario view --json "$generation_id" 2>&1)
+            if ! status_output=$(tessl scenario view --json "$generation_id" 2>&1); then
+              attempt=$((attempt + 1))
+              echo "Attempt $attempt: tessl scenario view failed; retrying in 10s..."
+              sleep 10
+              continue
+            fi
             status=$(echo "$status_output" | ruby -rjson -e '
               json = STDIN.read.lines.reject { |line| line.start_with?("-") }.join
               puts JSON.parse(json).dig("data", "attributes", "status")
