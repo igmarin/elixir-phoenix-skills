@@ -90,6 +90,35 @@ jobs:
           echo "Downloading scenarios for generation $generation_id..."
           tessl scenario download "$generation_id" --output evals --strategy replace
 
+      - name: Validate downloaded scenarios
+        run: |
+          if [ ! -d evals ] || [ -z "$(ls -A evals/ 2>/dev/null)" ]; then
+            echo "::error::evals/ directory is empty or missing after download"
+            exit 1
+          fi
+          scenario_count=$(find evals -mindepth 1 -maxdepth 1 -type d | wc -l)
+          echo "Found $scenario_count scenario directories"
+          if [ "$scenario_count" -eq 0 ]; then
+            echo "::error::No scenario directories found in evals/"
+            exit 1
+          fi
+          # Verify each scenario has the required files and valid JSON
+          for scenario_dir in evals/scenario-*/; do
+            for required in scenario.json criteria.json task.md; do
+              if [ ! -f "$scenario_dir$required" ]; then
+                echo "::error::Missing $required in $scenario_dir"
+                exit 1
+              fi
+            done
+            for json_file in scenario.json criteria.json; do
+              if ! ruby -rjson -e "JSON.parse(File.read('${scenario_dir}${json_file}'))" 2>/dev/null; then
+                echo "::error::Invalid JSON in ${scenario_dir}${json_file}"
+                exit 1
+              fi
+            done
+          done
+          echo "All scenarios validated successfully"
+
       - name: Commit updated scenarios
         env:
           GENERATION_ID: ${{ steps.generate.outputs.generation_id }}
