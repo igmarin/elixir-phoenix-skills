@@ -8,12 +8,6 @@ description: >-
   handle_in patterns, Presence tracking, or channel testing. Covers non-LiveView real-time features
   for mobile clients, SPAs, and external APIs. Trigger words: Channels, socket, channel, Presence,
   handle_in, topic, real-time, WebSocket.
-metadata:
-  user-invocable: "true"
-  version: 1.0.2
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
----
 
 # Phoenix Channels Essentials
 
@@ -170,16 +164,6 @@ def handle_in("typing", _payload, socket) do
   {:reply, :ok, socket}
 end
 ```
-
----
-
-## Security — Indirect Prompt Injection
-
-Phoenix Channels receive outsider-authored payloads in `handle_in/3`. Treat them as untrusted third-party content and validate the shape before any processing or broadcasting.
-
-- Match payloads with guards (`when is_binary(body)`) and reject unknown shapes.
-- Sanitize string fields (length, trimming) and reject empty values.
-- Never log raw payload contents or broadcast them without validation.
 
 ---
 

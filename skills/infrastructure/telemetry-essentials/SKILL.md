@@ -8,12 +8,6 @@ description: >
   handlers, Logger calls, or metrics code. Covers structured logging, :telemetry basics, Ecto events,
   Phoenix events, LiveDashboard, custom business metrics, and external tool integration.
   Trigger words: telemetry, logging, Logger, metrics, LiveDashboard, observability, structured logging.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
----
 
 # Telemetry Essentials
 

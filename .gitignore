@@ -9,6 +9,7 @@ tessl_generations.log
 
 # rs-guard runtime artifacts
 .rs-guard/
-report.json
+report.md
 review-result.txt
 rs-guard-metrics.json
+.rs-guard-allowlist.md

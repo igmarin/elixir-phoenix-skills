@@ -5,17 +5,6 @@ tags: [personas]
 license: MIT
 description: >
   Orchestrates LiveView feature development with hard gates: define mount/3 contract and assigns shape → write failing LiveView test using live_isolated or live/2 → implement mount, handle_event, and render with streams for collections → verify full LiveView lifecycle (mount→render→event→update) → quality gate (no assigns bloat, streams for >10 items, bracket access in templates); phases context→test design→implementation→quality. Use when building a new LiveView, adding features to an existing LiveView, or refactoring LiveView code. Trigger: create LiveView, new LiveView page, add LiveView feature, LiveView component, LiveView event, handle_event, mount.
-metadata:
-  version: 1.0.0
-  user-invocable: "true"
-  entry_point: "Invoke when building new LiveView pages, adding LiveView features, or refactoring LiveView code"
-  phases: "Phase 1: Context & Contract, Phase 2: Test Design, Phase 3: Implementation, Phase 4: Quality Gate"
-  hard_gates: "Contract Defined, Test Fails, Implementation Complete, Quality Gate Passes"
-  dependencies:
-    - source: self
-      skills: [phoenix-liveview-essentials, liveview-streams, phoenix-scopes, testing-essentials]
-  keywords: elixir, phoenix, liveview, live_view, component, handle_event, mount, stream
----
 # LiveView Persona
 
 ### Phase 1: Context & Contract
@@ -69,10 +58,9 @@ end
 
 ### Phase 3: Implementation
 
-1. Implement `mount/3`: assign all documented keys, use `stream/3` for collections >10 items.
+1. Implement `mount/3`: assign all documented keys; use `stream/3` for collections (see stream rule in Phase 4 Quality Gate).
 2. Implement `handle_event/3` for each listed event; update socket with `assign/2` or `stream_insert/3`.
-3. Implement `render/1` (or `.html.heex` template): use bracket access (`@items[id]`) in templates, not dot access.
-4. For large collections always use streams — never assign a full list to socket assigns.
+3. Implement `render/1` (or `.html.heex` template): use dot access (`@key`) for assigns guaranteed by `mount/3`; bracket access (`assigns[:key]`) only for keys that may be absent.
 
 **Minimal LiveView module:**
 
@@ -123,7 +111,7 @@ end
 **HARD GATE — Implementation Complete:**
 - [ ] `mount/3` sets all documented assigns and streams
 - [ ] All listed events implemented
-- [ ] Template uses bracket access for stream items; `phx-update="stream"` on stream containers
+- [ ] Stream containers use `phx-update="stream"`
 - [ ] `mix test` passes
 
 ---
@@ -132,35 +120,33 @@ end
 
 Run these checks before considering the LiveView done.
 
-**Assigns bloat check** — bad vs. good:
+**Stream rule — use streams for any collection that may exceed 10 items:**
 
 ```elixir
-# ❌ Assigns bloat — storing a full list
-assign(socket, :items, Catalog.list_items())   # grows unbounded
+# ❌ assigns bloat
+assign(socket, :items, Catalog.list_items())
 
-# ✅ Correct — use a stream for collections
-stream(socket, :items, Catalog.list_items())   # server memory stays flat
+# ✅ correct
+stream(socket, :items, Catalog.list_items())
 ```
 
-**Bracket access in templates** — bad vs. good:
+**Template access rule — dot access for guaranteed assigns, bracket access for optional keys:**
 
 ```heex
-<%# ❌ Dot access fails when key may be absent %>
+<%# ✅ dot access — guaranteed by mount/3 %>
 <%= @user.name %>
 
-<%# ✅ Bracket access is safe %>
+<%# ✅ bracket access — optional keys %>
 <%= @user[:name] %>
 ```
 
-**Stream usage threshold:** any collection that may exceed 10 items must use `stream/3` + `phx-update="stream"`.
-
 **Quality gate checklist:**
-- [ ] No raw list assigns for collections >10 items — all use streams
-- [ ] Templates use bracket access (`assigns[:key]`) for optional or stream-derived keys
-- [ ] No business logic in `render/1` — all data preparation done in `mount/3` or event handlers
-- [ ] `handle_event` clauses return `{:noreply, socket}` (or `{:reply, map, socket}`) — no bare socket returns
+- [ ] No raw list assigns for collections >10 items — all use streams with `phx-update="stream"`
+- [ ] Dot access for guaranteed assigns; bracket access only for optional keys
+- [ ] No business logic in `render/1` — all data preparation in `mount/3` or event handlers
+- [ ] `handle_event` clauses return `{:noreply, socket}` (or `{:reply, map, socket}`)
 - [ ] LiveView has a focused purpose — if assigns exceeds ~8 keys, consider extracting a component
-- [ ] Run `mix test` one final time; all tests green
+- [ ] `mix test` passes with no compiler warnings
 
 **HARD GATE — Quality Gate Passes:**
 - [ ] All checklist items above confirmed

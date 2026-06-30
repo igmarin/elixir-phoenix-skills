@@ -13,10 +13,6 @@ description: >
   phx.gen.live, phx.gen.auth, scaffold, seed data, ecto.setup, mix help, Mix.Project,
   OptionParser, @shortdoc, preferred_cli_env, alias, mix run, generator, phx.gen.html,
   phx.gen.context, phx.gen.json, phx.gen.channel.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
----
 
 # Mix Tasks & Generators
 
@@ -106,6 +102,8 @@ end
 ```
 
 ### Task with Arguments and Validation
+
+> Demonstrates `OptionParser` with required flags, error reporting, dry-run support, and before/after count verification.
 
 ```elixir
 defmodule Mix.Tasks.MyApp.ImportUsers do
@@ -299,21 +297,3 @@ end
 | **Cleanup** (`my_app.cleanup`) | Parse `--dry-run` flag → query expired records → report count → conditionally `Repo.delete_all/1` |
 
 All follow the same skeleton: parse opts → `app.start` → transact → report.
-
----
-
-## Task Output Formatting
-
-```elixir
-Mix.shell().info("Starting task...")
-Mix.shell().info("✓ Success")
-Mix.shell().error("✗ Failed")
-
-# Progress reporting for long operations
-records
-|> Enum.with_index()
-|> Enum.each(fn {record, index} ->
-  process_record(record)
-  if rem(index, 100) == 0, do: Mix.shell().info("  Processed #{index + 1}/#{total} records")
-end)
-```

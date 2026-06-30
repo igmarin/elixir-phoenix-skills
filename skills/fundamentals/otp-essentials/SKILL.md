@@ -8,12 +8,6 @@ description: >
   Covers GenServer public API patterns, fast init with handle_continue, call vs cast, handle_info,
   supervision strategies, DynamicSupervisor, Tasks, Agent, Registry, ETS, and process linking.
   Trigger words: GenServer, Supervisor, OTP, Task, Agent, Registry, ETS, process, supervision.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
----
 
 # OTP Essentials
 
@@ -23,14 +17,13 @@ Use this skill before writing ANY GenServer, Supervisor, Task, or Agent module.
 
 1. **Always use `@impl true`** before GenServer/Agent callbacks (init, handle_call, handle_cast, handle_info, terminate)
 2. **Keep `init/1` fast** — no blocking calls, no DB queries; use `handle_continue` for expensive setup
-3. **Use `GenServer.call` for request/response, `GenServer.cast` for fire-and-forget** — never cast when you need a result
-4. **Always define a public API wrapping GenServer calls** — callers should never use `GenServer.call(pid, ...)` directly
-5. **Use `Task.async`/`Task.await` with bounded timeouts** — never `Task.async` without a corresponding `Task.await` or `Task.yield`
-6. **Name processes via Registry, not atoms** — atom table is finite and never garbage collected
-7. **Supervisors own process lifecycle** — never start unsupervised long-running processes
-8. **Handle `:DOWN` messages** from monitored processes — don't let them go unhandled
-9. **Use `Task.Supervisor`** for fire-and-forget supervised work
-10. **Prefer ETS over a bottleneck GenServer** for shared read-heavy state — one GenServer serializes all access
+3. **Always define a public API wrapping GenServer calls** — callers should never use `GenServer.call(pid, ...)` directly
+4. **Use `Task.async`/`Task.await` with bounded timeouts** — never `Task.async` without a corresponding `Task.await` or `Task.yield`
+5. **Name processes via Registry, not atoms** — the atom table is finite and never garbage collected
+6. **Supervisors own process lifecycle** — never start unsupervised long-running processes
+7. **Handle `:DOWN` messages** from monitored processes — don't let them go unhandled
+8. **Use `Task.Supervisor`** for fire-and-forget supervised work
+9. **Prefer ETS over a bottleneck GenServer** for shared read-heavy state — one GenServer serializes all access
 
 ---
 
@@ -38,7 +31,7 @@ Use this skill before writing ANY GenServer, Supervisor, Task, or Agent module.
 
 ### Public API Pattern
 
-Always wrap GenServer calls behind a public module API. Callers should not know they're talking to a GenServer.
+Always wrap GenServer calls behind a public module API.
 
 ❌ **Bad — leaks GenServer implementation:**
 ```elixir

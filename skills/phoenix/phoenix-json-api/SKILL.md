@@ -10,12 +10,6 @@ description: >
   application. Covers the full workflow from route definition to structured JSON error responses.
   Trigger words: Phoenix JSON API, API pipeline, FallbackController, paginated API, Bearer token plug,
   API versioning, Elixir API controller, action_fallback.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
----
 
 # Phoenix JSON API
 

@@ -8,12 +8,6 @@ description: >
   broadcast, or handle_info for real-time updates. Covers subscription patterns, broadcasting from
   contexts, topic naming, scoped broadcasting, immutable assign updates, and testing.
   Trigger words: PubSub, subscribe, broadcast, handle_info, real-time, topic, presence.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
----
 
 # Phoenix PubSub Patterns
 

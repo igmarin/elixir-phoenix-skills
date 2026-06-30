@@ -12,10 +12,6 @@ description: >
   Trigger words: phoenix controller conventions, controller patterns, phoenix
   router, plug pipeline, before_action, fallback controller, strong params,
   phoenix routes, action fallback.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
----
 
 # Apply Phoenix Controller Conventions
 
@@ -42,9 +38,9 @@ Use this skill when writing new Phoenix controller modules or modifying existing
 ## RULES — Follow these with no exceptions
 
 1. **Keep controllers thin** — never put business logic in controllers; delegate to context modules
-2. **Use `before_action` for authentication and resource loading** — chain with `:skip` opt-out pattern
+2. **Use `plug` guards for authentication and resource loading** — chain with `when action not in [...]` opt-out pattern
 3. **Always validate and authorize** every action that touches access-controlled resources
-4. **Use `FallbackController` for JSON API error handling** — never inline `error/2` or catch-all `case` clauses in actions
+4. **Use `FallbackController` for JSON API error handling** — never inline catch-all `case` clauses in actions
 5. **Match content pipeline to format** — API pipeline (no session, no CSRF) for JSON; browser pipeline for HTML
 6. **Use `conn.assigns` for passing data between plugs and actions** — never use `Process` dictionaries
 7. **Never interpolate user input into redirect paths** — use `~p"..."` paths for verified routes
@@ -53,16 +49,7 @@ Use this skill when writing new Phoenix controller modules or modifying existing
 
 ## Routing Conventions
 
-❌ **Bad — deep nesting, no scoping:**
-```elixir
-scope "/" do
-  get "/users/:user_id/posts/:post_id/comments", CommentController, :show
-  get "/users/:user_id/posts", PostController, :index
-  get "/users", UserController, :index
-end
-```
-
-✅ **Good — RESTful resources with shallow nesting:**
+✅ **RESTful resources with shallow nesting:**
 ```elixir
 scope "/", MyAppWeb do
   pipe_through :browser
@@ -75,34 +62,13 @@ scope "/", MyAppWeb do
 end
 ```
 
-**Checkpoint:** Run `mix phx.routes` to verify routes resolve correctly.
+**Checkpoint:** Run `mix phx.routes` to verify routes resolve correctly and there are no unintended deep-nesting paths.
 
 ---
 
 ## Plug Pipeline Ordering
 
-❌ **Bad — auth plug after action, before_action leaking across unrelated actions:**
-```elixir
-defmodule MyAppWeb.UserController do
-  use MyAppWeb, :controller
-
-  def index(conn, _params) do
-    users = Accounts.list_users()
-    render(conn, :index, users: users)
-  end
-
-  def edit(conn, %{"id" => id}) do
-    user = Accounts.get_user!(id)
-    render(conn, :edit, user: user)
-  end
-
-  def update(conn, %{"id" => id}) do
-    # No auth check...
-  end
-end
-```
-
-✅ **Good — before_action with :skip opt-out, auth at controller level:**
+✅ **`plug` guards with opt-out, auth at controller level:**
 ```elixir
 defmodule MyAppWeb.UserController do
   use MyAppWeb, :controller
@@ -115,17 +81,14 @@ defmodule MyAppWeb.UserController do
     render(conn, :index, users: users)
   end
 
-  def edit(conn, %{"id" => id}) do
-    user = conn.assigns.current_user
-    render(conn, :edit, user: user)
+  def edit(conn, _params) do
+    render(conn, :edit, user: conn.assigns.user)
   end
 
-  def update(conn, %{"id" => id}) do
-    user = conn.assigns.current_user
-
-    case Accounts.update_user(user, %{}) do
+  def update(conn, %{"user" => user_params}) do
+    case Accounts.update_user(conn.assigns.user, user_params) do
       {:ok, user} -> redirect(conn, to: ~p"/users/#{user}")
-      {:error, changeset} -> render(conn, :edit, user: user, changeset: changeset)
+      {:error, changeset} -> render(conn, :edit, user: conn.assigns.user, changeset: changeset)
     end
   end
 
@@ -147,30 +110,13 @@ defmodule MyAppWeb.UserController do
 end
 ```
 
+**Checkpoint:** Confirm plug ordering with `mix phx.routes` and verify that exempt actions (e.g., `:index`, `:show`) do not trigger auth plugs in integration tests.
+
 ---
 
 ## Action Patterns
 
-❌ **Bad — business logic in controller, inline error handling, no fallback:**
-```elixir
-def create(conn, %{"user" => user_params}) do
-  changeset = User.changeset(%User{}, user_params)
-
-  case MyApp.Repo.insert(changeset) do
-    {:ok, user} ->
-      token = MyApp.Accounts.generate_token()
-      MyApp.Accounts.send_welcome_email(user.email, token)
-      conn
-      |> put_flash(:info, "User created")
-      |> redirect(to: ~p"/users/#{user}")
-
-    {:error, changeset} ->
-      render(conn, :new, changeset: changeset)
-  end
-end
-```
-
-✅ **Good — thin controller, delegate to context, let it crash or use fallback:**
+✅ **Thin controller delegating to context:**
 ```elixir
 def create(conn, %{"user" => user_params}) do
   case Accounts.register_user(user_params) do
@@ -185,7 +131,7 @@ def create(conn, %{"user" => user_params}) do
 end
 ```
 
-For JSON API endpoints, use a FallbackController instead:
+For JSON API endpoints, use `with` + `FallbackController` instead of `case`:
 
 ```elixir
 def create(conn, %{"user" => user_params}) do
@@ -201,34 +147,13 @@ end
 
 ## Strong Parameters / Params Validation
 
-❌ **Bad — mass assignment, no params validation:**
+Validation belongs in the context, not the controller. The controller passes params through unchanged (see the `update/2` example in [Plug Pipeline Ordering](#plug-pipeline-ordering)), while the context enforces permitted fields:
+
 ```elixir
-def update(conn, %{"user" => user_params}) do
-  user = Accounts.get_user!(conn.params["id"])
-  Accounts.update_user(user, user_params)  # User could send any field
-end
-```
-
-✅ **Good — cast params in context or changeset:**
-```elixir
-def update(conn, %{"user" => user_params}) do
-  user = Accounts.get_user!(conn.params["id"])
-
-  case Accounts.update_user(user, user_params) do
-    {:ok, user} ->
-      redirect(conn, to: ~p"/users/#{user}")
-
-    {:error, changeset} ->
-      render(conn, :edit, changeset: changeset)
-  end
-end
-```
-
-The context module validates fields:
-```elixir
+# Context — enforce permitted fields via changeset
 def update_user(user, attrs) do
   user
-  |> User.changeset(attrs)  # cast/2 only permits expected fields
+  |> User.changeset(attrs)  # cast/2 only permits declared fields
   |> Repo.update()
 end
 ```
@@ -237,61 +162,33 @@ end
 
 ## Content Negotiation
 
-❌ **Bad — browser pipeline for JSON endpoint, inline JSON generation:**
-```elixir
-# Router
-scope "/api", MyAppWeb do
-  pipe_through :browser
-
-  resources "/users", Api.UserController
-end
-
-# Controller
-def index(conn, _params) do
-  users = Accounts.list_users()
-  json(conn, %{data: users})
-end
-```
-
-✅ **Good — API pipeline, proper rendering:**
+✅ **API pipeline for JSON, browser pipeline for HTML:**
 ```elixir
 # Router
 scope "/api", MyAppWeb do
   pipe_through :api
-
   resources "/users", Api.UserController, only: [:index, :show]
 end
 
-# Controller
+# Phoenix API pipeline (router.ex)
+pipeline :api do
+  plug :accepts, ["json"]
+end
+
+# Controller — use render/3, not json/2, so views handle serialisation
 def index(conn, _params) do
   users = Accounts.list_users()
   render(conn, :index, users: users)
 end
 ```
 
-```elixir
-# Phoenix API pipeline (in router.ex)
-pipeline :api do
-  plug :accepts, ["json"]
-end
-```
+**Checkpoint:** Confirm the correct pipeline is applied by inspecting `mix phx.routes` output and checking that API routes lack `:fetch_session` and `:protect_from_forgery` plugs.
 
 ---
 
 ## FallbackController for JSON APIs
 
-❌ **Bad — inline error handling in every action:**
-```elixir
-def show(conn, %{"id" => id}) do
-  case Accounts.get_user(id) do
-    {:ok, user} -> render(conn, :show, user: user)
-    {:error, :not_found} -> put_status(conn, :not_found) |> json(%{error: "Not found"})
-    {:error, _} -> put_status(conn, :internal_server_error) |> json(%{error: "Server error"})
-  end
-end
-```
-
-✅ **Good — action_fallback + FallbackController:**
+✅ **`action_fallback` + centralised `FallbackController`:**
 ```elixir
 defmodule MyAppWeb.UserController do
   use MyAppWeb, :controller
@@ -321,19 +218,13 @@ defmodule MyAppWeb.FallbackController do
 end
 ```
 
+**Checkpoint:** Run `mix test test/controllers/` after wiring up `FallbackController` to confirm each expected error tuple (`{:error, :not_found}`, `{:error, :unauthorized}`) is matched and returns the correct HTTP status.
+
 ---
 
 ## Error Handling — Browser
 
-❌ **Bad — raising on expected errors:**
-```elixir
-def show(conn, %{"id" => id}) do
-  user = Accounts.get_user!(id)  # Raises if not found
-  render(conn, :show, user: user)
-end
-```
-
-✅ **Good — pattern match and render:**
+✅ **Pattern match on expected errors; redirect with flash:**
 ```elixir
 def show(conn, %{"id" => id}) do
   case Accounts.get_user(id) do
@@ -349,18 +240,22 @@ def show(conn, %{"id" => id}) do
 end
 ```
 
+Avoid `get_user!/1` (raises) for user-triggered lookups; reserve bang variants for developer errors where a crash is the correct signal.
+
+**Checkpoint:** Verify error paths in browser tests by asserting flash messages and redirect targets.
+
 ---
 
 ## Common Pitfalls
 
 | ❌ Wrong | ✅ Correct |
-|----------|-----------|
-| Business logic in controller (e.g., `Repo.insert` inline) | Delegate to context module (`Accounts.create_user`) |
-| `before_action` without `:skip` on login/exempt actions | Use `plug :auth when action not in [:index, :show]` |
-| `redirect(to: user_provided_url)` | Use `~p"..."` verified path or `url` helpers |
-| JSON error handling in each action | Use `action_fallback FallbackController` |
-| `json(conn, ...)` in browser pipeline | Use `pipe_through :api` for JSON endpoints |
-| Process dictionaries for passing data between plugs | Use `conn.assigns` |
+|----------|----------|
+| Business logic in controller (`Repo.insert` inline) | Delegate to context module (`Accounts.create_user`) |
+| Auth plug without action guard on public actions | Use `plug :auth when action not in [:index, :show]` |
+| `redirect(to: user_provided_url)` | Use `~p"..."` verified path helpers |
+| JSON error handling duplicated in each action | Use `action_fallback FallbackController` |
+| `pipe_through :browser` for JSON endpoints | Use `pipe_through :api` for JSON scopes |
+| `Process` dictionary for inter-plug data | Use `conn.assigns` |
 
 ---
 

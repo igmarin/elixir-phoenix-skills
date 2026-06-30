@@ -8,12 +8,6 @@ description: >
   Covers DataCase/ConnCase setup, fixture patterns, LiveView tests, changeset tests,
   async safety, setup chaining, timestamp testing, and TDD workflow.
   Trigger words: test, mix test, DataCase, ConnCase, fixture, LiveView test, assert, ExUnit.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
----
 
 # Testing Essentials
 
@@ -168,7 +162,7 @@ end
 
 ## Setup Chaining
 
-Use `setup [:func1, :func2]` to compose reusable setup functions; later functions receive assigns from earlier ones.
+Use `setup [:func1, :func2]` to compose reusable setup functions:
 
 ```elixir
 defmodule MyAppWeb.PostLiveTest do
@@ -218,30 +212,16 @@ assert Blog.list_published_posts() == [old_post]
 
 ## Troubleshooting Common Failures
 
-- **Sandbox ownership errors** (`ownership timeout` or `DBConnection.OwnershipError`): flip the test to `async: false`.
-- **LiveView sandbox errors** (`cannot find ownership process`): LiveView tests must use `async: false`.
-- **`Application.put_env` leaking between tests**: restore in an `on_exit` callback and use `async: false`.
-- **Flaky timestamp assertions**: replace hardcoded datetimes with `DateTime.diff/3` comparisons (see Timestamp Testing above).
-- **Unexpected redirect in LiveView**: confirm the test user has the required role/session via `register_and_log_in_user` setup.
-
----
-
-See `agents/testing-guide.md` for comprehensive examples covering async tests, Mox mocking, file upload testing, and Ecto query testing.
-
----
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| elixir-essentials | testing-essentials | None (standalone) |
+| Symptom | Fix |
+|---|---|
+| `ownership timeout` / `DBConnection.OwnershipError` | Set `async: false` |
+| LiveView `cannot find ownership process` | Set `async: false` (LiveView tests must not be async) |
+| `Application.put_env` leaking between tests | Use `async: false`; restore original value in `on_exit` callback |
+| Flaky timestamp assertions | Replace hardcoded datetimes with `DateTime.diff/3` (see Timestamp Testing above) |
+| Unexpected redirect in LiveView | Confirm test user has required role/session via `register_and_log_in_user` setup |
 
 ---
 
 ## When Not to Use
 
-- **Do not invoke this skill** for unit tests of pure functions that have no side effects, DB calls, or external dependencies — write plain ExUnit tests without DataCase/ConnCase
-- **Do not invoke this skill** for property-based testing — use `property-based-testing` instead
-- **Do not invoke this skill** for benchmarking/profiling — use `benchee-profiling` instead
-- **Do not use this skill** when you need to mock external services — use `property-based-testing` skill's Mox patterns instead
-- **Do not invoke this skill** for testing LiveView streams — use `phoenix/liveview-streams` skill instead
+Do not invoke this skill for: pure-function unit tests with no DB/external side effects (use plain ExUnit), property-based testing (`property-based-testing` skill), benchmarking (`benchee-profiling` skill), Mox patterns for external services, or LiveView streams (`phoenix/liveview-streams` skill).

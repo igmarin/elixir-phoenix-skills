@@ -8,12 +8,6 @@ description: >
   Covers worker definition, enqueuing, return values, queue configuration, idempotency,
   unique jobs, scheduled/recurring jobs, pruning, testing with Oban.Testing, and arg best practices.
   Trigger words: Oban, worker, job, queue, enqueue, perform, cron, idempotent, background job.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
----
 
 # Oban Essentials
 

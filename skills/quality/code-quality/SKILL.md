@@ -10,12 +10,6 @@ description: >
   Trigger words: code quality, duplication, complexity, unused functions, Credo, refactoring, analysis,
   mix credo, abc complexity, function length, module length, refactor, extract function, shared code,
   code smell, technical debt, clean code.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
----
 
 # Code Quality
 
@@ -44,8 +38,6 @@ metadata:
 ## What Gets Detected
 
 ### Code Duplication
-
-Duplication is identified through manual review — look for similar function bodies across modules (>70% similarity). Credo does not automatically detect cross-module duplication; use judgment when comparing implementations.
 
 **How to fix:**
 ```elixir
@@ -84,7 +76,7 @@ end
 
 ### Unused Private Functions
 
-After refactoring, scan for any private functions no longer referenced and remove them.
+Remove any private functions no longer referenced after refactoring.
 
 ### Template Duplication
 

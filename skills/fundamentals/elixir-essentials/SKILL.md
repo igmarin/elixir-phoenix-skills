@@ -8,12 +8,6 @@ description: >
   Covers pattern matching, pipe operator, with statements, error handling with tagged tuples,
   guards, list comprehensions, naming conventions, and the "let it crash" philosophy.
   Trigger words: elixir, pattern matching, pipe, with, error handling, tagged tuples, guards.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
----
 
 # Elixir Essentials
 
@@ -185,8 +179,6 @@ end
 def get_username(%User{name: name}), do: name
 ```
 
-If the user is nil or missing a name, it's a bug that should crash and be fixed.
-
 ## Integration
 
 Successor skills to apply after this one:
@@ -199,8 +191,7 @@ Successor skills to apply after this one:
 
 ## When Not to Use
 
-- **Do not invoke this skill** when working inside a Phoenix application context — use the relevant Phoenix/LiveView skill instead
-- **Do not use this skill** for OTP patterns (GenServer, Supervisor, Agent) — use `otp-essentials` instead
-- **Do not invoke this skill** for database operations — use `ecto-essentials` instead
-- **Do not use this skill** if you are already following the patterns (pattern matching, pipe operator, `with` statements) — this skill is for enforcing fundamentals, not advanced idioms
-- **Do not invoke this skill** for type specification or Dialyzer integration — use `typespec-dialyzer` instead
+- Phoenix/LiveView application context — use the relevant Phoenix/LiveView skill instead
+- OTP patterns (GenServer, Supervisor, Agent) — use `otp-essentials` instead
+- Database operations — use `ecto-essentials` instead
+- Type specifications or Dialyzer integration — use `typespec-dialyzer` instead

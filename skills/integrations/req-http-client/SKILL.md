@@ -8,10 +8,6 @@ description: >
   Covers Req setup, request patterns, error handling, retries, timeouts, and testing with Req.Test.
   Req is the modern HTTP client for Elixir, replacing HTTPoison and Tesla.
   Trigger words: Req, HTTP client, HTTP request, API integration, external API, HTTPoison replacement.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
----
 
 # Req HTTP Client
 
@@ -114,7 +110,7 @@ Checkpoint: confirm a `{:ok, body}` tuple is returned; check logs for retry warn
 
 ```elixir
 # Automatic retries for transient failures
-Req.get!("https://api.example.com/data",
+Req.get!("https://api.your-app.test/data",
   retry: :transient,           # Retry on 5xx and network errors
   retry_delay: &(&1 * 1000),   # Exponential backoff: 1s, 2s, 4s, ...
   max_retries: 3,              # Max 3 retries
@@ -122,7 +118,7 @@ Req.get!("https://api.example.com/data",
 )
 
 # Custom retry logic (e.g. also retry on 429)
-Req.get!("https://api.example.com/data",
+Req.get!("https://api.your-app.test/data",
   retry: fn response ->
     case response do
       %{status: 429} -> true
@@ -140,12 +136,12 @@ Req.get!("https://api.example.com/data",
 
 ```elixir
 # Stream large responses to a file
-Req.get!("https://api.example.com/large-file",
+Req.get!("https://api.your-app.test/large-file",
   into: File.stream!("download.txt")
 )
 
 # Stream with a callback
-Req.get!("https://api.example.com/stream",
+Req.get!("https://api.your-app.test/stream",
   into: fn {:data, data}, {req, resp} ->
     IO.puts("Received #{byte_size(data)} bytes")
     {:cont, {req, resp}}

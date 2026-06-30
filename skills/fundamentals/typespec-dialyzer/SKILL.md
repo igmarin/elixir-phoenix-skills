@@ -8,10 +8,6 @@ description: >
   Covers @spec, @type, Dialyxir setup, typespec best practices, and CI integration.
   Supports incremental adoption and catching type errors before production.
   Trigger words: typespec, @spec, @type, Dialyzer, Dialyxir, type safety, type checking.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
----
 
 # TypeSpec & Dialyzer
 

@@ -1,0 +1,3 @@
+{
+  "description": "Oban async welcome email worker with idempotency"
+}

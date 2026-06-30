@@ -8,12 +8,6 @@ description: >
   Covers runtime.exs vs config.exs, release migrations, PHX_HOST/PHX_SERVER, asset deployment,
   secret management, health endpoints, and production log levels.
   Trigger words: deployment, release, runtime.exs, config, migration, PHX_HOST, Docker, health check, secrets.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
----
 
 # Deployment Gotchas
 

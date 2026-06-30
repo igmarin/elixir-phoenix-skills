@@ -8,12 +8,6 @@ description: >
   Covers manual uploads, upload configuration, file validation, safe filenames, static paths,
   and template patterns.
   Trigger words: upload, file upload, allow_upload, consume_uploaded_entries, static_paths, file serving.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
----
 
 # Phoenix File Uploads
 

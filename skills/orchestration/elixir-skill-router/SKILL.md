@@ -14,24 +14,12 @@ description: >
   Trigger words: where do I start, help me plan, break this down, best approach, not sure how,
   multi-step, complex task, complex Phoenix, what should I do first, orchestrate, triage,
   route to skill, skill routing, entry point, skill router.
-metadata:
-  version: 1.0.0
-  user-invocable: "true"
-  entry_point: "Invoke when the scope is unclear, the best approach is uncertain, or the request spans multiple Elixir/Phoenix concerns"
-  keywords: elixir, phoenix, tdd, testing, code-review, orchestration, entry-point, routing
-  dependencies:
-    - source: self
-      skills:
-        [elixir-essentials, phoenix-liveview-essentials, testing-essentials,
-         code-quality, security-essentials]
----
 # Elixir Skill Router
 
 ## HARD-GATE
 
 ```text
 Non-negotiable: no implementation code until a test exists, runs, and fails for the right reason (feature missing, not config/syntax).
-For all routing format requirements, see Output Style below.
 ```
 
 ## Core Process
@@ -40,7 +28,7 @@ Triages and decomposes any Elixir/Phoenix request into ordered sub-tasks, then d
 
 ### Core Skills Catalog
 
-The eight most-used skills are listed here. For the full catalog of all available skills, see `directory.json` at the repository root.
+The eight most-used skills are listed here. For the full catalog, see `directory.json` at the repository root. If unavailable, fall back to the catalog below and use `elixir-essentials` or `phoenix-liveview-essentials` for any skill not listed.
 
 | Skill | Use when... | Notes |
 | ----- | ----------- | ----- |
@@ -67,29 +55,17 @@ State this rule immediately after the routing statement when more than one skill
 
 ### Decomposition Examples
 
-These examples show the routing statement format and skill-chain ordering. Apply the canonical priority rule from **Skill Priority** above when sequencing sub-tasks.
-
-**Example 1 — "I need to add user notifications to my Phoenix app. Users should receive an email when a job completes, and I want a live counter on the dashboard."**
-
-Sub-tasks in priority order (touches background jobs, email delivery, LiveView UI, and the data layer):
-- `skills/testing/testing-essentials` — write failing tests for job completion callback and email dispatch first (TDD gate).
-- `skills/infrastructure/oban-essentials` — implement the job and its on-completion hook.
-- `skills/fundamentals/elixir-essentials` — implement the mailer module.
-- `skills/database/ecto-essentials` — add the `notifications` schema and migration.
-- `skills/phoenix/phoenix-liveview-essentials` — wire the live counter into the dashboard LiveView.
-- `skills/quality/code-quality` — quality gate before PR.
+**Example 1 — "Add user notifications: email on job completion + live dashboard counter."**
 
 ```text
 Next skill: skills/testing/testing-essentials
 
-This request spans jobs, email, data, and LiveView. Starting with failing tests for the job completion callback.
+This spans jobs, email, data, and LiveView. Starting with failing tests for the job completion callback.
 
 Priority: TDD → oban-essentials → elixir-essentials → ecto-essentials → phoenix-liveview-essentials → code-quality.
 ```
 
 **Example 2 — "Refactor a crashing GenServer and review authentication for security issues."**
-
-Sub-tasks: `security-essentials` (audit auth first) → `testing-essentials` (reproduce crash) → `otp-essentials` (fix GenServer) → `code-quality` (final pass).
 
 ```text
 Next skill: skills/security/security-essentials
@@ -111,7 +87,7 @@ Priority: security-essentials → testing-essentials → otp-essentials → code
 
 ## Output Style
 
-**Routing statement (required on every response):** The routing statement MUST be the first substantive line of every response, before any analysis or implementation.
+The routing statement MUST be the first substantive line of every response, before any analysis or implementation.
 
 For a single skill:
 
@@ -126,7 +102,7 @@ When multiple skills apply, immediately follow the routing line with one concise
 ```text
 Next skill: skills/security/security-essentials
 
-This pull request contains custom input validation, so we will perform a security review first followed by code quality review.
+This pull request contains custom input validation, so we will perform a security review first.
 
 Priority: security-essentials > code-quality; Chain: security-essentials then code-quality.
 ```
@@ -137,11 +113,6 @@ Priority: security-essentials > code-quality; Chain: security-essentials then co
 
 ## When Not to Use
 
-- **Do not invoke this skill** for simple, single-concern requests that clearly map to one skill (e.g., "write a test for this function" → use `testing-essentials` directly)
-- **Do not invoke this skill** if the request is a direct question about Elixir syntax or Phoenix patterns — route to the specific skill instead
-- **Do not invoke this skill** if you already know all the skills needed and just need implementation guidance — use the specific skill directly
-- **Do not route through this skill** when the user explicitly names a target skill (e.g., "use the oban-essentials skill")
-
-**Use `elixir-essentials` alone** if you only need Elixir language guidance without orchestration.
-
-**Use `testing-essentials` alone** if the test approach is already decided and you just need to write the spec.
+- Simple, single-concern requests that clearly map to one skill (e.g., "write a test for this function" → use `testing-essentials` directly)
+- Direct questions about Elixir syntax or Phoenix patterns — route to the specific skill instead
+- Cases where the user explicitly names a target skill (e.g., "use the oban-essentials skill")

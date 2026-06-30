@@ -8,10 +8,6 @@ description: >
   custom StreamData generators, writes ExUnitProperties tests, configures shrinking strategies, and
   creates property-based test patterns for data transformations, algorithms, and state machines.
   Trigger words: property-based testing, StreamData, ExUnitProperties, generators, fuzzing, shrinking.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
----
 
 # Property-Based Testing
 
@@ -112,11 +108,14 @@ end
 
 ## Testing Invariants
 
+Key invariants to test for collections: ordering, element preservation, and idempotence.
+
 ```elixir
 defmodule MyApp.SortingTest do
   use ExUnit.Case, async: true
   use ExUnitProperties
 
+  # Invariant: sorted list is ordered
   property "sorted list is ordered" do
     check all list <- list_of(integer()) do
       sorted = Enum.sort(list)
@@ -127,6 +126,7 @@ defmodule MyApp.SortingTest do
     end
   end
 
+  # Invariant: sorting preserves all elements
   property "sorted list contains same elements" do
     check all list <- list_of(integer()) do
       assert Enum.sort(list) |> Enum.frequencies() == Enum.frequencies(list)
@@ -139,10 +139,12 @@ end
 
 ## Shrinking
 
+StreamData automatically shrinks failing inputs to the smallest example that still fails. The
+property below *intentionally* fails to illustrate shrinking output:
+
 ```elixir
 property "no list contains its own length as element" do
   check all list <- list_of(integer()) do
-    # This will fail and shrink to a minimal example
     refute list |> Enum.member?(length(list))
   end
 end

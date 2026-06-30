@@ -1,31 +1,61 @@
 {
-  "context": "Tests whether the agent correctly handles an ambiguous, open-ended Elixir improvement request by: routing to elixir-essentials as a fallback, placing the routing statement as the very first substantive line, explicitly labeling it as a fallback, and refraining from producing any implementation code.",
+  "context": "Tests whether the agent follows Phoenix/ExUnit testing conventions: using fixtures for shared test data, DataCase/ConnCase setup modules, LiveView structural assertions, authorization coverage, and safe timestamp handling.",
   "type": "weighted_checklist",
   "checklist": [
     {
-      "name": "Routing statement first",
-      "description": "The first substantive line of routing_response.md is a routing statement in the format 'Next skill: skills/[category]/[name]' — it appears before any explanation or analysis",
-      "max_score": 20
+      "name": "Fixture file exists",
+      "description": "A fixture module is created under test/support/fixtures/ (e.g., blog_fixtures.ex) with at least one function for creating blog test data",
+      "max_score": 10
     },
     {
-      "name": "Explicit fallback label",
-      "description": "The response explicitly contains the text 'Fallback: elixir-essentials' (exact phrase) somewhere in the file",
-      "max_score": 25
+      "name": "No inline data duplication",
+      "description": "Test data (posts, users) is NOT built inline with the same attribute map repeated in two or more separate test cases — it is referenced via the fixture module instead",
+      "max_score": 10
     },
     {
-      "name": "Correct fallback target",
-      "description": "The routing target is skills/fundamentals/elixir-essentials (not a more specific skill like phoenix-liveview-essentials, oban-essentials, etc.)",
-      "max_score": 20
+      "name": "Context tests use DataCase",
+      "description": "The Blog context test module uses DataCase (not ConnCase or no case at all) in its `use` or `ExUnit.Case` call",
+      "max_score": 10
     },
     {
-      "name": "No implementation code",
-      "description": "The file does NOT contain any Elixir code blocks, code snippets, or concrete code examples (no ```elixir blocks, no def/defmodule constructs)",
-      "max_score": 20
+      "name": "LiveView tests use ConnCase",
+      "description": "The PostLive.Index test module uses ConnCase in its `use` or `ExUnit.Case` call",
+      "max_score": 10
     },
     {
-      "name": "English output",
-      "description": "The entire routing_response.md file is written in English",
-      "max_score": 15
+      "name": "has_element?/2 used in LiveView tests",
+      "description": "At least one LiveView structural assertion uses has_element?/2 (e.g., assert has_element?(view, \"#post-123\")) rather than html =~ \"some text\" for structure checks",
+      "max_score": 10
+    },
+    {
+      "name": "No html =~ for structure checks",
+      "description": "Does NOT use html =~ \"...\" as an assertion for checking the presence of HTML elements or structure (string contains checks on rendered HTML); plain text content checks with =~ are acceptable but structural/element checks must use has_element?/2",
+      "max_score": 8
+    },
+    {
+      "name": "Unauthorized case tested",
+      "description": "At least one test case covers an unauthenticated or unauthorized user attempting to access the LiveView index page or a protected action (e.g., delete), asserting a redirect or error response",
+      "max_score": 10
+    },
+    {
+      "name": "No hardcoded dates",
+      "description": "No hardcoded date/datetime literals (e.g., ~U[2024-01-01 00:00:00Z] or \"2024-01-01\") are used in timestamp assertions — relative checks like DateTime.diff(...) or DateTime.utc_now() comparisons are used instead",
+      "max_score": 10
+    },
+    {
+      "name": "LiveView async: false",
+      "description": "The LiveView test module does NOT use async: true — it either omits the async option or sets async: false",
+      "max_score": 10
+    },
+    {
+      "name": "Context async: true",
+      "description": "The Blog context test module uses async: true (acceptable for DB-sandbox context tests that don't share rows or use Application.put_env)",
+      "max_score": 6
+    },
+    {
+      "name": "Fixture module function names",
+      "description": "The fixture module in test/support/fixtures/ defines at least one public function (e.g., post_fixture/1 or blog_fixture/1) rather than bare module attributes or inline maps",
+      "max_score": 6
     }
   ]
 }

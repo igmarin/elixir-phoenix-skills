@@ -10,12 +10,6 @@ description: >
   Trigger words: cast_assoc, cast_embed, Ecto.Multi, nested, association, cascade, on_delete,
   on_replace, has_many, has_one, belongs_to, many_to_many, preload, nested_changeset,
   multi-table transaction, atomic create, atomic update.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
----
 
 # Ecto Nested Associations
 
@@ -25,7 +19,7 @@ metadata:
 2. **Use `Ecto.Multi` for operations spanning multiple unrelated tables** — do NOT use `Ecto.Multi` for nested associations
 3. **Set `on_delete` explicitly in migrations** — `:delete_all` for owned children, `:nothing` for independent entities
 4. **Always create indexes on foreign key columns**
-5. **Use `on_replace: :delete` in `cast_assoc` for list management** — allows removing items by omitting them
+5. **Use `on_replace: :delete` in `cast_assoc` for list management**
 6. **Preload associations before updating them** — `cast_assoc` compares against currently loaded data
 7. **Do NOT require foreign keys in child changesets** — `cast_assoc` sets them automatically
 8. **Use `Repo.transaction/1` with `Ecto.Multi`** — wrap multi-table operations for atomicity
@@ -33,8 +27,6 @@ metadata:
 ---
 
 ## End-to-End Workflow
-
-Follow this sequence for ANY nested association or multi-table operation:
 
 1. **Identify ownership** — determine if children are owned (cascade delete) or independent
 2. **Define schema** — add `has_many`/`belongs_to` with appropriate `on_replace` strategy
@@ -97,8 +89,6 @@ Blog.create_post(%{
 
 ### Handling cast_assoc Failures
 
-Nested changeset errors are embedded inside the parent changeset. Pattern-match on both outcomes:
-
 ```elixir
 case Repo.insert(Post.changeset(%Post{}, attrs)) do
   {:ok, post} ->
@@ -157,8 +147,6 @@ end
 ```
 
 ### Handling Ecto.Multi Results
-
-Always pattern-match on both success and error tuples from `Repo.transaction/1`:
 
 ```elixir
 case create_order_with_payment(order_attrs, payment_attrs) do

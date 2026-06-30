@@ -8,12 +8,6 @@ description: >
   or custom registration fields. Covers migrations, schema updates, fixture updates, form changes,
   and confirmation patterns.
   Trigger words: phx.gen.auth, custom fields, registration, username, profile, auth customization.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
----
 
 # Phoenix Auth Customization
 
@@ -139,3 +133,25 @@ mix test
   </:actions>
 </.simple_form>
 ```
+
+---
+
+## Additional Patterns
+
+### Profile Fields
+
+For optional fields like `display_name` or `avatar_url`, follow the same migration → schema → fixture sequence as above. Differences from required fields:
+
+- Omit `null: false` in the migration column definition.
+- Omit `validate_required` for that field in the changeset.
+
+### Confirmation Patterns
+
+`phx.gen.auth` generates a `confirmed_at` field and an email-confirmation flow automatically.
+
+- **In tests**: set `confirmed_at: DateTime.utc_now(:second)` in fixtures (Rule 4) so tests are not blocked by the confirmation gate.
+- **In production**: users must click the confirmation link before `confirmed_at` is populated. Guard LiveViews with `require_authenticated_user` and check `confirmed_at` explicitly where needed.
+
+### Extending Other Changesets
+
+`email_changeset` and `password_changeset` follow the same cast-then-validate pattern as `registration_changeset`. Never add a parallel changeset; extend the existing one.

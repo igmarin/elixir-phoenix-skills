@@ -8,12 +8,6 @@ description: >
   cast_assoc, or conditional validation. Covers separate changesets per operation, cast_assoc pitfalls,
   composition, conditional validation with opts, field transformations, and uniqueness validation.
   Trigger words: changeset, cast_assoc, validation, separate changesets, conditional validation, update_change.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
----
 
 # Ecto Changeset Patterns
 

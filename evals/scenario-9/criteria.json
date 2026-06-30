@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements a Broadway pipeline with safe error handling using Broadway.Message.failed/2, an explicit handle_failed/2 dead-letter callback, strict payload validation in handle_message/3, structured logging, supervisor ownership, and @impl true before callbacks.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "No raise in handle_message",
+      "description": "handle_message/3 does NOT use raise/1 or throw/1 to signal errors — error paths call Broadway.Message.failed/2 instead",
+      "max_score": 14
+    },
+    {
+      "name": "Broadway.Message.failed/2 used",
+      "description": "Broadway.Message.failed/2 is called (with the message and a reason) in handle_message/3 when validation fails",
+      "max_score": 12
+    },
+    {
+      "name": "handle_failed/2 implemented",
+      "description": "The module defines a handle_failed/2 callback (not left out or using a default no-op)",
+      "max_score": 12
+    },
+    {
+      "name": "Payload schema validation",
+      "description": "handle_message/3 checks that the payload has the required fields (event_type, source_id, timestamp or equivalent) and rejects messages missing or with wrong-type fields",
+      "max_score": 10
+    },
+    {
+      "name": "No raw payload logged",
+      "description": "Logger calls in handle_failed/2 (or anywhere in the pipeline) do NOT log the raw message data/payload directly",
+      "max_score": 8
+    },
+    {
+      "name": "Structured logging in handle_failed",
+      "description": "Logger calls in handle_failed/2 use keyword-list metadata format (e.g. Logger.error(\"msg\", key: val)) rather than string interpolation",
+      "max_score": 8
+    },
+    {
+      "name": "Pipeline in supervision tree",
+      "description": "application.ex (or an equivalent supervisor) includes the Broadway pipeline module in its children list",
+      "max_score": 10
+    },
+    {
+      "name": "@impl true before callbacks",
+      "description": "@impl true appears before each Broadway callback (handle_message/3, handle_batch/4, handle_failed/2)",
+      "max_score": 10
+    },
+    {
+      "name": "Test uses push_message",
+      "description": "The test file uses Broadway.Test.push_message/2 (or Broadway.test_message/2) to inject messages into the pipeline",
+      "max_score": 8
+    },
+    {
+      "name": "Malformed message test",
+      "description": "At least one test case sends a malformed/invalid payload and asserts that it is failed (not that it raises or crashes)",
+      "max_score": 8
+    }
+  ]
+}

@@ -1,21 +1,22 @@
-# Phoenix Registration Bug: Duplicate Email Crash
+# Add a Caching Layer to the User Accounts Context
 
 ## Problem Description
 
-A production Phoenix application has a user registration endpoint that is crashing in certain scenarios. The development team has received multiple user complaints that the registration page returns a 500 error instead of a helpful message when someone attempts to sign up with an email address that is already in the database.
+The platform team has identified that the `MyApp.Accounts.get_user/1` function is called hundreds of times per request cycle — from authorization checks, activity feeds, and notification rendering — all hitting Postgres directly. Under normal load this isn't a problem, but traffic spikes are causing read replica lag and slowing the request pipeline measurably.
 
-The error appears to originate somewhere inside the registration controller action. The team suspects there is an unhandled error path when the database constraint is violated, but nobody has been able to pinpoint the root cause yet. Fixing it needs to be done carefully without introducing regressions to the happy path, and the team has a policy of always verifying bugs are reproducible through tests before touching production code.
+The solution is a Cachex-based caching layer that wraps `get_user/1`: on a cache hit the user record is returned immediately; on a miss, the database is queried, the result is stored in the cache, and subsequent callers get the cached value. The cache must also be invalidated when a user record changes, so `update_user/2` should remove the stale entry.
 
-Your role is that of a senior Elixir/Phoenix developer acting as a triage and routing expert. You should not write the implementation fix yourself — instead, produce a structured triage response that maps out how the bug fix should proceed, which tools or skills to invoke, in what order, and what conditions must be satisfied before moving on to each next step.
+The engineering lead has two additional concerns. First, the team needs to be able to measure whether the cache is actually helping (hit rate, miss rate) before deciding to roll it out. Second, long-lived stale data is a support headache — any cached entry should expire on its own after a reasonable interval so that even in edge cases where invalidation is missed, the data eventually refreshes.
+
+The starter code for the project is in the `inputs/` directory. You do not need to run or compile the project.
 
 ## Output Specification
 
-Write your full triage and routing response to a file named `routing_response.md` in your working directory.
+Produce the following files (you may modify existing files or add new ones as you see fit):
 
-The response should include:
-- The first skill that should be invoked to begin addressing this bug, stated clearly at the very top of the response
-- The ordered sequence of skills or steps needed to resolve the bug from start to finish
-- Any blocking conditions or dependencies between steps
-- A brief rationale for each step in the chain
+- An updated or new Elixir source file implementing the caching logic for `get_user/1` and `update_user/2`
+- An updated `lib/my_app/application.ex` that starts Cachex as part of the application
+- An updated `mix.exs` with the Cachex dependency added
+- A `DESIGN.md` explaining: the TTL value you chose and why, and how to read the cache stats
 
-Do not write any Elixir source code or implementation in `routing_response.md`. The goal is a well-structured routing plan, not a code solution.
+All output files should be written to the working directory. You do not need to run `mix deps.get` or compile the project.

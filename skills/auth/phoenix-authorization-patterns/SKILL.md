@@ -9,12 +9,6 @@ description: >
   authorization, and authorization testing. Use when writing permission checks, policy modules,
   or role-based access controls, or when addressing authorization, access control, permission,
   policy, role, owner, scoped query, or IDOR concerns.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
----
 
 # Phoenix Authorization Patterns
 
