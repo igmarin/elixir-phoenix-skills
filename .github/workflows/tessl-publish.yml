@@ -34,8 +34,8 @@ jobs:
           version: "0.88.2"
           token: ${{ secrets.TESSL_TOKEN }}
 
-      - name: Validate all skills before publishing
-        run: ruby scripts/validate-tessl-skills.rb
+      - name: Validate plugin before publishing
+        run: tessl skill lint .
 
       - name: Review all skills before publishing
         run: |
