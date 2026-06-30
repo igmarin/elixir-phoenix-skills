@@ -11,8 +11,9 @@ description: >
   test (MUST fail for the right reason) → minimal fix with user approval → full suite verification.
   Use when fixing reported bugs, addressing production issues, resolving test failures, or
   implementing fixes for code review findings. Trigger: bug report, production issue, failing test,
----
   fix bug, resolve issue, address critical finding.
+---
+
 # Bug Fix Persona
 
 > **Scope note:** This skill targets Elixir/Phoenix projects. Examples use `mix test` and Elixir syntax throughout.

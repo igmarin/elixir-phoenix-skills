@@ -4,8 +4,9 @@ type: persona
 tags: [personas]
 license: MIT
 description: >
----
   Orchestrates safe database migrations with hard gates: plan migration assessing lock behavior, rollback strategy, and performance impact → write and test migration with migrate/rollback/re-migrate idempotent cycle → never combine schema change and data backfill in one migration → use expand-contract for column changes (add nullable→backfill→enforce NOT NULL in separate migrations) → verify full test suite passes; phases planning→implementation→verification→deployment. Use when adding tables, columns, indexes, or modifying database schema. Trigger: database migration, schema change, add column, create table, modify index, ecto migration, Ecto.Migration.
+---
+
 # Ecto Migration Persona
 
 Orchestrates safe Ecto migrations with idempotent cycles, rollback planning, and production deployment safety.

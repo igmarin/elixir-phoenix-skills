@@ -7,6 +7,7 @@ on:
       - 'tessl.json'
       - '.tessl-plugin/**'
       - 'scripts/changed-tessl-skill-paths.rb'
+      - 'scripts/validate-tessl-skills.rb'
       - '.github/workflows/tessl-review.yml'
       - '.github/workflows/tessl-publish.yml'
 
@@ -50,15 +51,15 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Review changed publishable skills
+      - name: Validate changed publishable skills
         if: steps.changed.outputs.has_changed_skills == 'true'
         run: |
           while IFS= read -r skill_path; do
             [ -z "$skill_path" ] && continue
-            echo "Reviewing $skill_path"
-            tessl review run "$skill_path" --threshold 80
+            echo "Validating $skill_path"
+            ruby scripts/validate-tessl-skills.rb "$skill_path"
           done < changed-skill-paths.txt
 
       - name: No publishable skills changed
         if: steps.changed.outputs.has_changed_skills != 'true'
-        run: echo "No publishable Tessl skills changed; skipping Tessl review."
+        run: echo "No publishable Tessl skills changed; skipping Tessl validation."

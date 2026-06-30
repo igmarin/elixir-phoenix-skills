@@ -1,0 +1,14 @@
+#!/bin/sh
+# Run fast Tessl skill validation on all staged SKILL.md files.
+
+staged_skills=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^skills/.*/SKILL\.md$' || true)
+
+if [ -z "$staged_skills" ]; then
+  exit 0
+fi
+
+for skill_path in $staged_skills; do
+  dir=$(dirname "$skill_path")
+  echo "Validating $dir"
+  ruby scripts/validate-tessl-skills.rb "$dir" || exit 1
+done

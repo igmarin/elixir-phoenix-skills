@@ -34,6 +34,17 @@ jobs:
           version: "0.88.2"
           token: ${{ secrets.TESSL_TOKEN }}
 
+      - name: Validate all skills before publishing
+        run: ruby scripts/validate-tessl-skills.rb
+
+      - name: Review all skills before publishing
+        run: |
+          while IFS= read -r skill_path; do
+            [ -z "$skill_path" ] && continue
+            echo "Reviewing $skill_path"
+            tessl review run "$skill_path" --threshold 80
+          done < <(find skills -mindepth 2 -name SKILL.md -exec dirname {} \;)
+
       - name: Compute automatic patch version
         id: version
         run: |
