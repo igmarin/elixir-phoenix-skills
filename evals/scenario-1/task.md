@@ -1,20 +1,17 @@
-# Elixir Project Improvement Consultation
+# Blog Module Test Suite
 
-## Problem Description
+## Problem/Feature Description
 
-A small startup has been building a backend service in Elixir for about six months. The lead developer has been learning Elixir on the job and feels the codebase has grown organically — some modules are getting long, some patterns feel inconsistent, and performance occasionally seems sluggish in production. They're not sure what the biggest risk area is or where to focus first.
+Your team has been building a Phoenix blog feature for `MyApp`. The core context module (`MyApp.Blog`) and its associated Ecto schema (`MyApp.Blog.Post`) have been written by another developer and are stored in the `inputs/` directory. There's also a LiveView index page (`MyAppWeb.PostLive.Index`) that lists posts belonging to the currently authenticated user and allows them to delete posts.
 
-The team has a working product but wants to take a step back and think strategically. They reach out for guidance: they want to know where to begin improving things, but they haven't diagnosed a specific problem and have no particular area they want to prioritize. The request is intentionally open-ended — they're not asking about a specific bug, a specific feature, or a specific Elixir subsystem.
+Before this code can be merged, it needs a comprehensive ExUnit test suite. You've been handed the stub implementation files and asked to write tests covering the Blog context functions (`create_post/1`, `update_post/2`, `delete_post/1`, `list_posts/1`) and the `PostLive.Index` LiveView page. The codebase is a standard Phoenix project — `DataCase` and `ConnCase` are already defined in `test/support/` and you may use `MyApp.Repo` and the standard sandbox setup without implementing them yourself.
 
-Your task is to act as a technical advisor and produce a structured routing response that identifies the right area of expertise to engage first, given the ambiguity of this request. Write your routing response to a file named `routing_response.md`.
+The team cares that the test suite is maintainable and production-ready: tests should not be flaky and the suite should cover both the happy path and edge cases, including scenarios where a user is not logged in or does not own the resource they are trying to act on.
 
 ## Output Specification
 
-Produce a single file named `routing_response.md` that contains your routing response. The response should:
+Write ExUnit test files covering the `MyApp.Blog` context and the `MyAppWeb.PostLive.Index` LiveView. Also write any supporting test helper files you need.
 
-- Identify which area of expertise is most relevant for this vague, open-ended improvement request
-- Explain briefly why this area was selected given the nature of the request
-- Indicate what the next steps or focus areas might be
-- Be written entirely in English
+Name each output file according to standard Phoenix project conventions. Do not include `mix.exs`, config files, or migration files.
 
-Do not produce any Elixir implementation code, code snippets, or concrete code changes in the file.
+The test files should be written as if they belong to a real Phoenix project. Reference the source modules in `inputs/` (e.g., `MyApp.Blog`, `MyApp.Blog.Post`, `MyAppWeb.PostLive.Index`) as the subjects under test.

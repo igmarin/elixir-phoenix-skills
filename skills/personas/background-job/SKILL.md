@@ -5,20 +5,6 @@ tags: [personas]
 license: MIT
 description: >
   Orchestrates robust Oban background job implementation with hard gates: design job with idempotency strategy and error classification (transient→retry, permanent→discard) → TDD implementation where test MUST fail before code → configure retry/discard strategies → test failure scenarios covering idempotency/retry/error handling → production monitoring; phases design→TDD→retry config→failure testing→monitoring. Use when adding async processing, implementing background jobs, or configuring job queues. Trigger: background job, async processing, oban, job queue, worker.
-metadata:
-  version: 1.0.0
-  user-invocable: "true"
-  entry_point: "Invoke when implementing background jobs with proper retry/discard strategies and monitoring"
-  phases: "Phase 1: Job Design, Phase 2: TDD Implementation, Phase 3: Retry/Discard Configuration, Phase 4: Testing & Monitoring"
-  hard_gates: "Job Design Complete, Tests Pass, Retry Strategy Configured, Failure Scenarios Tested"
-  dependencies:
-    - source: self
-      skills: [oban-essentials, testing-essentials, telemetry-essentials]
-  keywords: elixir, oban, background-job, async, retry, monitoring, worker
----
-
-Orchestrates robust background job implementation with TDD discipline, proper retry/discard strategies, comprehensive failure scenario testing, and production monitoring for Oban jobs.
-
 ---
 
 ## Phase 1: Job Design
@@ -33,29 +19,23 @@ Orchestrates robust background job implementation with TDD discipline, proper re
 4. **Queue & Timeout** — Assign queue priority and set execution timeout.
 
 **HARD GATE — Job Design Complete:**
-- [ ] Purpose, trigger, input/output defined
-- [ ] Idempotency strategy specified
-- [ ] All errors classified as transient/permanent
-- [ ] Queue and timeout values chosen
+- [ ] Idempotency strategy is documented with a specific mechanism (unique key / status check / sentinel timestamp)
+- [ ] Every anticipated error is assigned to exactly one category (transient or permanent) with rationale
+- [ ] Queue name, priority, and timeout value are recorded and justified
 
-**If gate fails:** Clarify requirements before implementation.
-
----
 
 ## Phase 2: TDD Implementation
 
 **Steps:**
-1. Choose unit test approach (test the `perform/1` function directly).
-2. Write failing tests covering: successful execution, idempotency (run twice = same result), transient error raises, permanent error discards.
-3. Confirm tests **FAIL** for the right reason (job not yet implemented).
-4. Propose implementation approach and wait for explicit user approval.
-5. Implement job; confirm tests **PASS**.
-6. Run full test suite: `mix test` — confirm no regressions.
+1. Write failing tests covering: successful execution, idempotency (run twice = same result), transient error raises, permanent error discards.
+2. Confirm tests **FAIL** for the right reason (job not yet implemented).
+3. Propose implementation approach and wait for explicit user approval.
+4. Implement job; confirm tests **PASS**.
+5. Run full test suite: `mix test` — confirm no regressions.
 
 **HARD GATE — Tests Pass:**
-- [ ] RED confirmed (tests failed before implementation)
-- [ ] GREEN confirmed (all tests pass, including idempotency scenario)
-- [ ] Full suite green
+- [ ] RED confirmed: test output shows failures attributable to missing implementation, not misconfiguration
+- [ ] GREEN confirmed: all tests pass including idempotency scenario; `mix test` exits clean with no regressions
 
 **Example job test skeleton** (for `SendWelcomeEmail` worker):
 ```elixir
@@ -87,15 +67,14 @@ defmodule MyApp.Workers.SendWelcomeEmailTest do
 end
 ```
 
----
 
 ## Phase 3: Retry/Discard Configuration
 
 **Steps:**
 1. Configure `max_attempts` for retry with exponential backoff.
-2. Apply `discard_on` or explicit handling for permanent errors (see error classification in Phase 1).
+2. Apply `discard_on` or explicit handling for permanent errors (per the error classification in Phase 1).
 3. Set execution timeout at the job level.
-4. Wire telemetry events for monitoring.
+4. Wire telemetry events for monitoring (see `telemetry-essentials` for patterns).
 
 **Key implementation pattern:**
 ```elixir
@@ -123,56 +102,39 @@ end
 ```
 
 **HARD GATE — Retry Strategy Configured:**
-- [ ] `max_attempts` set with appropriate backoff
-- [ ] Permanent errors return `:discard`; transient errors return `{:error, reason}`
-- [ ] Timeout and telemetry/observability configured
+- [ ] `max_attempts`, backoff, and timeout are set to values derived from the Phase 1 error classification
+- [ ] Every permanent error maps to `:discard` in code; every transient error maps to `{:error, reason}`
+- [ ] Telemetry events are attached and verifiable in tests
 
-**If gate fails:** Job is not production-ready.
-
----
 
 ## Phase 4: Failure Scenario Testing & Monitoring
 
 **Steps:**
-1. For each error classified in Phase 1, assert the correct return value:
-   - Transient → `{:error, ...}`
-   - Permanent → `:discard`
+1. For each error classified in Phase 1, assert the correct return value (transient → `{:error, ...}`, permanent → `:discard`).
 2. Verify telemetry events fire on success and failure paths.
-3. Confirm monitoring dashboard or alert is configured for queue depth.
+3. Confirm monitoring dashboard or alert is configured for queue depth (see `telemetry-essentials` for alerting patterns).
 
 **HARD GATE — Failure Scenarios Tested:**
-- [ ] All transient error paths verified → `{:error, ...}`
-- [ ] All permanent error paths verified → `:discard`
-- [ ] Telemetry/logging assertions pass
-- [ ] Performance acceptable under expected load
-
-**If gate fails:** Address failure scenarios before deploying.
+- [ ] Every error path from Phase 1 has a corresponding test assertion with the correct return value
+- [ ] Telemetry/logging assertions pass for both success and failure paths
+- [ ] Queue depth alert threshold is set and its value is documented
 
 **Never deploy until all four phase gates above are green.**
 
----
 
 ## Output Style
 
-When completing a background job implementation, output MUST follow this structure:
+When completing a background job implementation, produce a concise summary report:
 
 ```
 # Background Job Report — [Job Name]
-## Design
 - Worker module: <path>
 - Idempotency strategy: <unique constraint / status check / conditional guard>
 - Error classification: transient (<list>) / permanent (<list>)
-## TDD
 - RED: <failure message confirming job behavior missing>
 - GREEN: <test passes after implementation>
-## Retry Configuration
 - max_attempts: <n>, Queue: <name>, Uniqueness: <period/fields>
 - Discard conditions: <list>
-## Failure Scenarios Tested
-- Transient error → retries: ✓
-- Permanent error → discards: ✓
-- Idempotency → no duplicate side effects: ✓
-## Monitoring
 - Telemetry events: <list>
 - Queue depth alerts: <configured threshold>
 ```

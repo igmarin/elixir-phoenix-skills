@@ -9,12 +9,8 @@ description: >
   URL-versioned API routes (/api/v1/), or Bearer token authentication plugs in an Elixir/Phoenix
   application. Covers the full workflow from route definition to structured JSON error responses.
   Trigger words: Phoenix JSON API, API pipeline, FallbackController, paginated API, Bearer token plug,
+
   API versioning, Elixir API controller, action_fallback.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
 ---
 
 # Phoenix JSON API
@@ -26,7 +22,6 @@ metadata:
 3. **Version APIs via URL prefix (`/api/v1/`)** — not headers; URL versioning is visible and cacheable
 4. **Use `FallbackController` for consistent error handling** — every action returns `{:ok, result}` or `{:error, reason}`
 
----
 
 ## Build Workflow
 
@@ -38,7 +33,6 @@ Follow these steps in order when constructing a new API endpoint:
 4. **Add the auth plug** (`ApiAuth`) to protected scopes; confirm that missing/invalid tokens yield `401` with a JSON body
 5. **Paginate list endpoints** — ensure `index` accepts `page`/`per_page` params and never returns an unbounded collection
 
----
 
 ## API Pipeline Setup
 
@@ -71,7 +65,6 @@ defmodule MyAppWeb.Router do
 end
 ```
 
----
 
 ## Controller Pattern
 
@@ -118,7 +111,6 @@ defmodule MyAppWeb.API.V1.PostController do
 end
 ```
 
----
 
 ## FallbackController
 
@@ -154,7 +146,6 @@ defmodule MyAppWeb.FallbackController do
 end
 ```
 
----
 
 ## Bearer Token Authentication
 
@@ -180,7 +171,6 @@ defmodule MyAppWeb.Plugs.ApiAuth do
 end
 ```
 
----
 
 ## Integration
 

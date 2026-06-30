@@ -4,7 +4,7 @@
 |--------|-----------|--------|
 | Function Length | > 20 lines | Extract function or private helper |
 | Parameter Count | > 4 | Use keyword list or map |
-| Module Length | > 400 lines | Extract context or sub-module |
+| Module Length | > 400 lines | Extract bounded context or sub-module |
 | Nesting Depth | > 3 levels | Extract function or use `with` |
 | Duplication | > 3 similar blocks | Extract shared module/function |
 | Pipe Chain | > 5 pipes | Extract into named function |

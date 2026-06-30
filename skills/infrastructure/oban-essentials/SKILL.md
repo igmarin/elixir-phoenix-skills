@@ -8,11 +8,7 @@ description: >
   Covers worker definition, enqueuing, return values, queue configuration, idempotency,
   unique jobs, scheduled/recurring jobs, pruning, testing with Oban.Testing, and arg best practices.
   Trigger words: Oban, worker, job, queue, enqueue, perform, cron, idempotent, background job.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
+
 ---
 
 # Oban Essentials
@@ -28,7 +24,6 @@ When setting up a new Oban worker, follow these steps in order:
 3. **Enqueue from context** — call `Oban.insert/1` inside a context function, not a LiveView
 4. **Write tests** — use `Oban.Testing` with `assert_enqueued` and `perform_job`, covering all return paths
 
----
 
 ## RULES — Quick Reference
 
@@ -38,7 +33,6 @@ When setting up a new Oban worker, follow these steps in order:
 4. Use `Oban.insert/1` (not `Oban.insert!/1`) and handle the error tuple — see [Enqueuing Jobs](#enqueuing-jobs)
 5. **Enqueue from contexts, not LiveViews** — keep the web layer thin — see [Enqueuing from Contexts](#enqueuing-from-contexts)
 
----
 
 ## Worker Definition
 
@@ -63,7 +57,6 @@ defmodule MyApp.Workers.SendWelcomeEmail do
 end
 ```
 
----
 
 ## Enqueuing Jobs
 
@@ -108,7 +101,6 @@ def handle_event("register", params, socket) do
 end
 ```
 
----
 
 ## Return Values
 
@@ -131,7 +123,6 @@ def perform(%Oban.Job{args: args}) do
 end
 ```
 
----
 
 ## Queue Configuration
 
@@ -150,7 +141,6 @@ config :my_app, Oban,
   testing: :inline    # Jobs execute immediately in the test process
 ```
 
----
 
 ## Idempotency
 
@@ -181,7 +171,6 @@ def perform(%Oban.Job{args: %{"user_id" => user_id}}) do
 end
 ```
 
----
 
 ## Unique Jobs
 
@@ -196,7 +185,6 @@ use Oban.Worker,
   ]
 ```
 
----
 
 ## Scheduled and Recurring Jobs
 
@@ -218,7 +206,6 @@ config :my_app, Oban,
   ]
 ```
 
----
 
 ## Testing
 
@@ -257,7 +244,6 @@ defmodule MyApp.Workers.SendWelcomeEmailTest do
 end
 ```
 
----
 
 ## Job Args Best Practices
 

@@ -4,15 +4,10 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  MANDATORY for ALL database work. Invoke before modifying schemas, queries, or migrations.
+  MANDATORY for ALL Elixir database work. Invoke before modifying schemas, queries, or migrations.
   Covers schema definition, changesets, query composition, preloading, transactions,
   associations, migrations, upserts, dynamic queries, and the context pattern.
-  Trigger words: Ecto, schema, changeset, migration, Repo, query, preload, association, belongs_to, has_many.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
+  Trigger words: Ecto, schema, changeset, migration, Repo, query, preload, association, belongs_to, has_many, Elixir database.
 ---
 
 # Ecto Essentials
@@ -26,11 +21,8 @@ Use this skill before modifying ANY schema, query, or migration.
 3. **Parameterize all user input in queries** — never interpolate values into SQL fragments, always use `^`
 4. **Never combine schema changes and data backfill** in the same migration
 
----
 
 ## Schema Definition
-
-Define schemas with proper types and associations. The example below shows a child schema with `belongs_to`; a parent schema uses `has_many` in the same pattern (see `Folder` in the migration section for reference).
 
 ```elixir
 defmodule MyApp.Media.Image do
@@ -42,7 +34,7 @@ defmodule MyApp.Media.Image do
     field :filename, :string
     field :content_type, :string
 
-    belongs_to :folder, MyApp.Media.Folder  # parent uses has_many :images, MyApp.Media.Image
+    belongs_to :folder, MyApp.Media.Folder
 
     timestamps()
   end
@@ -81,13 +73,13 @@ end
 
 ## Preloading Associations
 
-❌ **Bad — N+1 queries:**
+❌ **N+1 — avoid:**
 ```elixir
 images = Repo.all(Image)
 Enum.each(images, fn image -> image.folder.name end)
 ```
 
-✅ **Good — single query with preload:**
+✅ **Single query with preload:**
 ```elixir
 images =
   Image
@@ -169,8 +161,6 @@ end
 
 ## Migrations
 
-Write clear, reversible migrations. After writing a migration, always validate it with the steps below.
-
 ```elixir
 defmodule MyApp.Repo.Migrations.CreateImages do
   use Ecto.Migration
@@ -198,7 +188,7 @@ end
 
 ### Unique Constraints
 
-Add unique constraints in migration AND schema changeset (already shown in the Folder schema above).
+Add unique constraints in migration AND schema changeset.
 
 ```elixir
 # Migration
@@ -224,7 +214,6 @@ end
 
 All standard CRUD functions (`list_*`, `get_*!`, `update_*`, `delete_*`) follow the same pattern.
 
----
 
 ## Related Skills
 
@@ -232,11 +221,10 @@ All standard CRUD functions (`list_*`, `get_*!`, `update_*`, `delete_*`) follow 
 - **Next — changeset deep-dive:** [ecto-changeset-patterns](../ecto-changeset-patterns/SKILL.md) — advanced validations, custom constraints, and error formatting
 - **Next — testing:** [testing-essentials](../../testing/testing-essentials/SKILL.md) — testing Ecto contexts and migrations
 
----
 
 ## When Not to Use
 
-- **Do not invoke this skill** for simple read-only schema inspection or introspection (use `mix ecto.schema` directly instead)
-- **Do not use this skill** for raw SQL queries that bypass Ecto entirely — write raw SQL in a dedicated repo method, not inline in contexts
-- **Do not invoke this skill** for multi-table complex transactions — use `ecto-changeset-patterns` for `Ecto.Multi` and nested association patterns
-- **Do not use this skill** for database migration planning — use `ecto-migration` persona instead for migration orchestration
+- Simple read-only schema inspection — use `mix ecto.schema` directly
+- Raw SQL queries that bypass Ecto entirely — write these in a dedicated repo method, not inline in contexts
+- Advanced nested association patterns — use `ecto-changeset-patterns` instead
+- Migration orchestration planning — use `ecto-migration` persona instead

@@ -1,55 +1,50 @@
 {
-  "context": "Tests whether the agent uses the elixir-skill-router's bug-fix skill chain correctly: routing to testing-essentials first, enforcing the GATE that a reproduction test must fail before implementation, sequencing elixir-essentials after the gate, and never producing Elixir implementation code itself.",
+  "context": "Tests whether the agent correctly adds a Cachex caching layer to a Phoenix Accounts context, using the atomic fetch pattern, explicit TTLs, stats configuration, supervisor ownership, structured logging, and the `with` construct for sequential fallible operations.",
   "type": "weighted_checklist",
   "checklist": [
     {
-      "name": "First line routing",
-      "description": "The very first substantive line of routing_response.md is exactly 'Next skill: skills/testing/testing-essentials' (or equivalent canonical path format pointing to testing-essentials)",
+      "name": "Cachex.fetch/3 used",
+      "description": "Uses Cachex.fetch/3 for the cache-aside lookup in get_user — NOT a separate Cachex.get + Cachex.put pair",
+      "max_score": 20
+    },
+    {
+      "name": "TTL set on cache entry",
+      "description": "Every Cachex.fetch/3 commit (or any Cachex.put call) explicitly sets a TTL — no entry is cached without one",
       "max_score": 15
     },
     {
-      "name": "testing-essentials first",
-      "description": "The response routes to testing-essentials as the first skill in the chain (before any other skill)",
-      "max_score": 10
-    },
-    {
-      "name": "Explicit GATE condition",
-      "description": "The response explicitly states a gate or blocking condition that must be met before moving to the implementation step — the reproduction test must exist and fail (not just 'write a test')",
+      "name": "stats: true in config",
+      "description": "The Cachex child spec includes `stats: true` (or equivalent option) so hit/miss metrics can be collected",
       "max_score": 15
     },
     {
-      "name": "Test must fail (not pass)",
-      "description": "The gate condition specifies that the reproduction test must FAIL (i.e., confirm the bug is reproducible) — not simply exist or pass",
+      "name": "Cachex in supervision tree",
+      "description": "Cachex is started as a supervised child in application.ex (or a dedicated supervisor), NOT started ad-hoc via Cachex.start_link outside a supervisor",
       "max_score": 10
     },
     {
-      "name": "elixir-essentials in chain",
-      "description": "The skill chain includes elixir-essentials as the implementation step after the testing gate",
+      "name": "Cache invalidation on update",
+      "description": "update_user/2 (or equivalent) calls Cachex.del/2 (or Cachex.put with updated value) to remove or refresh the stale cache entry after a successful update",
       "max_score": 10
     },
     {
-      "name": "elixir-essentials after gate",
-      "description": "elixir-essentials appears after testing-essentials (and after the gate) in the ordered chain, not before it",
+      "name": "Structured logging",
+      "description": "Logger calls use keyword-list metadata — e.g. Logger.info(\"...\", user_id: id) — NOT string interpolation like Logger.info(\"user #{id} ...\")",
       "max_score": 10
     },
     {
-      "name": "Verify/confirm step",
-      "description": "The chain ends with a verification or confirmation step (e.g., verify the fix passes, re-run tests, or 'verify passes')",
+      "name": "with for sequential operations",
+      "description": "When 2 or more sequential fallible operations are chained (e.g. cache miss then DB fetch, or validate then update), a `with` expression is used instead of nested case statements",
+      "max_score": 10
+    },
+    {
+      "name": "cachex dep in mix.exs",
+      "description": "The Cachex package (`:cachex`) is present in the deps list in mix.exs",
       "max_score": 5
     },
     {
-      "name": "No Elixir implementation code",
-      "description": "routing_response.md does NOT contain any Elixir source code (no .ex/.exs snippets, no def/defmodule/defp blocks, no pattern match or case/with blocks written as implementation)",
-      "max_score": 15
-    },
-    {
-      "name": "Triage not direct fix",
-      "description": "The response frames itself as a routing plan or triage, not as a direct code solution — it delegates to skills rather than implementing the fix",
-      "max_score": 5
-    },
-    {
-      "name": "Priority rule stated",
-      "description": "The response includes a priority or chain statement (e.g., 'Priority: TDD → ...' or 'Chain: testing-essentials then elixir-essentials') when more than one skill is referenced",
+      "name": "DESIGN.md present",
+      "description": "A DESIGN.md file exists and contains an explanation of the TTL value chosen and how to read or access cache stats",
       "max_score": 5
     }
   ]

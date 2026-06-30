@@ -1,0 +1,11 @@
+#!/bin/sh
+# Validate the Tessl plugin structure before committing any skill changes.
+
+staged_skills=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^skills/.*/SKILL\.md$' || true)
+
+if [ -z "$staged_skills" ]; then
+  exit 0
+fi
+
+echo "Running Tessl skill lint..."
+tessl skill lint . || exit 1

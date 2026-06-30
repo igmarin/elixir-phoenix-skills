@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly configures a Phoenix application for production deployment following Elixir/Phoenix best practices: using runtime.exs with System.get_env!/1 for secrets, implementing release-based migrations, adding a database-querying health endpoint, setting the correct log level, using Docker multi-stage builds, and attaching telemetry handlers in Application.start/2.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "runtime.exs uses System.get_env!/1",
+      "description": "config/runtime.exs calls System.get_env!/1 (with the bang/! suffix) — not System.get_env/1 — for at least one secret or URL (e.g., DATABASE_URL, SECRET_KEY_BASE)",
+      "max_score": 12
+    },
+    {
+      "name": "Secrets in runtime.exs only",
+      "description": "DATABASE_URL and SECRET_KEY_BASE are configured in config/runtime.exs, NOT hardcoded in config/config.exs or config/prod.exs",
+      "max_score": 10
+    },
+    {
+      "name": "Release module with Ecto.Migrator",
+      "description": "lib/pay_core/release.ex (or similar) defines a migrate/0 function that uses Ecto.Migrator.with_repo/3 or Ecto.Migrator.run/4 to run migrations",
+      "max_score": 12
+    },
+    {
+      "name": "No mix ecto.migrate in deployment",
+      "description": "DEPLOYMENT.md and any scripts reference bin/pay_core eval or bin/migrate (release commands) for running migrations — NOT mix ecto.migrate",
+      "max_score": 8
+    },
+    {
+      "name": "Health endpoint queries database",
+      "description": "The health controller performs an actual database query (e.g., Ecto.Adapters.SQL.query, Repo.query, or equivalent) rather than simply returning a static 200 response",
+      "max_score": 12
+    },
+    {
+      "name": "Health endpoint returns JSON",
+      "description": "The health controller action returns a JSON response (uses json/2 or render with JSON format) indicating the database connection status",
+      "max_score": 6
+    },
+    {
+      "name": "Logger level :info in production",
+      "description": "config :logger, level: :info appears in config/runtime.exs or config/prod.exs — the level is :info, NOT :debug",
+      "max_score": 10
+    },
+    {
+      "name": "Docker multi-stage build",
+      "description": "Dockerfile contains at least two FROM instructions — a build stage (with Elixir/Mix) and a separate runtime stage (e.g., Alpine or Debian slim without Elixir toolchain)",
+      "max_score": 12
+    },
+    {
+      "name": "Telemetry in Application.start/2",
+      "description": "lib/pay_core/application.ex attaches telemetry handlers inside the start/2 callback — not inside a GenServer init/1 or at module level",
+      "max_score": 10
+    },
+    {
+      "name": "No debug-level log config",
+      "description": "No production configuration file sets the logger level to :debug (the level must be :info or higher, never :debug)",
+      "max_score": 8
+    }
+  ]
+}

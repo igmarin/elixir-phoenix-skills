@@ -7,24 +7,19 @@ description: >
   Use when sending emails from Phoenix applications. Invoke before implementing email functionality.
   Covers Swoosh setup, email templates, delivery configuration, testing, and production adapters.
   Trigger words: email, Swoosh, mailer, email templates, SMTP, SendGrid, email testing.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
+
 ---
 
 # Swoosh Emails
 
 ## RULES — Follow these with no exceptions
 
-1. **Use Swoosh for all email sending**
-2. **Define emails in separate modules** — `MyApp.Emails.UserEmail`, not inline in contexts
-3. **Use Phoenix components for email templates** — reuse UI components in emails
-4. **Configure delivery per environment** — Local adapter in dev/test, real adapter in prod
-5. **Test emails with Swoosh.TestAssertions** — assert emails were sent with correct content
-6. **Never send emails synchronously in web requests** — use Oban for async delivery with retries and observability; use Task.start only for simple cases
-7. **Use `Swoosh.Preview` in development** — preview emails in the browser
+1. **Define emails in separate modules** — `MyApp.Emails.UserEmail`, not inline in contexts
+2. **Use Phoenix components for email templates** — reuse UI components in emails
+3. **Configure delivery per environment** — Local adapter in dev/test, real adapter in prod
+4. **Test emails with Swoosh.TestAssertions** — assert emails were sent with correct content
+5. **Never send emails synchronously in web requests** — use Oban for async delivery; Task.start only for simple cases
 
----
 
 ## Setup
 
@@ -59,13 +54,10 @@ MyApp.Mailer.deliver(Swoosh.Email.new(to: "test@example.com", from: "noreply@mya
 # => {:error, ...} — Finch missing from supervision tree or adapter misconfigured
 ```
 
----
 
 ## Defining Emails
 
-Prefer Phoenix components for rich templates. Use plain `html_body/text_body` strings only for simple one-off emails.
-
-### With Phoenix Components (Preferred)
+### With Phoenix Components
 
 ```elixir
 # lib/my_app/emails/user_email.ex
@@ -95,15 +87,10 @@ defmodule MyApp.Emails.UserEmail do
     |> html_body(html)
     |> text_body("Welcome, #{user.name}! Thanks for signing up.")
   end
-
-  # Same pattern applies for password_reset, confirmation emails, etc.
-  # Build the html with ~H and EmailComponents, then pipe through new/to/from/subject/html_body/text_body.
 end
 ```
 
 ### Email Layout and Button Components
-
-Define reusable components in `lib/my_app_web/components/email_components.ex`. See `EMAIL_COMPONENTS.md` for a full example. A minimal layout and button:
 
 ```elixir
 # lib/my_app_web/components/email_components.ex
@@ -130,7 +117,6 @@ defmodule MyAppWeb.EmailComponents do
 end
 ```
 
----
 
 ## Mailer Module
 
@@ -141,7 +127,6 @@ defmodule MyApp.Mailer do
 end
 ```
 
----
 
 ## Configuration
 
@@ -162,13 +147,13 @@ config :my_app, MyApp.Mailer,
   api_key: System.get_env("SENDGRID_API_KEY")
 ```
 
----
 
 ## Sending Emails
 
-### With Oban (Recommended for Production)
+### With Oban
 
 ```elixir
+# lib/my_app/workers/send_welcome_email.ex
 defmodule MyApp.Workers.SendWelcomeEmail do
   use Oban.Worker, queue: :mailers, max_attempts: 3
 
@@ -210,7 +195,6 @@ def register_user(attrs) do
 end
 ```
 
----
 
 ## Testing Emails
 
@@ -241,7 +225,6 @@ defmodule MyApp.AccountsTest do
 end
 ```
 
----
 
 ## Email Preview in Development
 

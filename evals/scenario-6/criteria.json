@@ -1,0 +1,51 @@
+{
+  "context": "Tests whether the agent builds a Phoenix LiveView with PubSub correctly: guarding subscriptions behind connected?(socket), initializing all assigns in mount, placing broadcast logic in the context module (not the LiveView), using @impl true on all callbacks, with for multi-step operations, and returning the correct tuples from each callback type.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "connected? guard",
+      "description": "The Phoenix.PubSub.subscribe call in the LiveView's mount/3 is wrapped in an `if connected?(socket)` or equivalent guard — not called unconditionally",
+      "max_score": 15
+    },
+    {
+      "name": "All assigns in mount",
+      "description": "All assigns accessed in the template (e.g. tasks, any form/changeset assign) are initialized in mount/3, not first set in a handle_event or handle_info callback",
+      "max_score": 10
+    },
+    {
+      "name": "No Repo in LiveView",
+      "description": "The LiveView module (index.ex) does NOT contain any `Repo.` calls — all data access goes through context functions (e.g. Tasks.list_tasks/0)",
+      "max_score": 15
+    },
+    {
+      "name": "Broadcast in context",
+      "description": "The Phoenix.PubSub.broadcast call(s) are in the Tasks context module (tasks.ex), not in the LiveView module",
+      "max_score": 15
+    },
+    {
+      "name": "@impl true on callbacks",
+      "description": "Every LiveView callback (mount/3, handle_event/3, handle_info/2, and render/1 if present) is preceded by `@impl true`",
+      "max_score": 10
+    },
+    {
+      "name": "mount returns {:ok, socket}",
+      "description": "The mount/3 function returns `{:ok, socket}` (not {:noreply, socket} or a bare socket)",
+      "max_score": 10
+    },
+    {
+      "name": "handle_event returns {:noreply, socket}",
+      "description": "All handle_event/3 callbacks return `{:noreply, socket}` (not {:ok, socket})",
+      "max_score": 10
+    },
+    {
+      "name": "with for multi-step ops",
+      "description": "When create_task/1 or another fallible context function chains 2 or more sequential operations (e.g. validate then insert then broadcast), it uses a `with` expression rather than nested `case` statements",
+      "max_score": 10
+    },
+    {
+      "name": "handle_info updates assigns",
+      "description": "The LiveView has a handle_info/2 clause that matches on the PubSub broadcast message and updates the tasks assign (e.g. via assign or update) without crashing on unexpected message shapes",
+      "max_score": 5
+    }
+  ]
+}

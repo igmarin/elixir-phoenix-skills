@@ -1,56 +1,56 @@
 {
-  "context": "Tests whether the agent, given the elixir-skill-router skill, correctly triages a multi-concern Phoenix feature request by emitting the routing statement as the very first line, states the canonical priority rule immediately after, uses the correct skill chain for a new Phoenix feature, and produces no Elixir implementation code.",
+  "context": "Tests whether the agent applies OTP best practices when building a GenServer-backed rate limiter: using ETS for concurrent reads while the GenServer handles writes, exposing a public API, keeping init/1 fast with handle_continue, annotating callbacks with @impl true, using Registry for process naming, and writing structured log calls.",
   "type": "weighted_checklist",
   "checklist": [
     {
-      "name": "Routing statement first line",
-      "description": "The very first substantive line of routing_response.md is a routing statement matching the pattern 'Next skill: skills/[category]/[name]' — no preamble, analysis, or prose precedes it",
-      "max_score": 15
-    },
-    {
-      "name": "Priority rule stated",
-      "description": "A priority/chain statement is present immediately after the routing statement, in the format 'Priority: A > B; Chain: A then B' (or equivalent concise form listing the same skills in order)",
+      "name": "ETS table created",
+      "description": "A named ETS table is created (e.g. :ets.new/2) somewhere in the rate limiter module — not relying solely on GenServer state for storage",
       "max_score": 12
     },
     {
-      "name": "Testing before implementation",
-      "description": "In the stated skill chain, testing-essentials appears before any implementation skill (such as elixir-essentials, phoenix-liveview-essentials, ecto-essentials)",
+      "name": "Reads bypass GenServer",
+      "description": "At least one public read function (e.g. check_limit/1, allowed?/2) calls :ets.lookup or :ets.match directly rather than routing through GenServer.call",
       "max_score": 12
     },
     {
-      "name": "Phoenix feature chain",
-      "description": "The chain includes at minimum phoenix-liveview-essentials and ecto-essentials (reflecting the canonical new-Phoenix-feature chain)",
-      "max_score": 10
-    },
-    {
-      "name": "Code-quality in chain",
-      "description": "The chain includes code-quality as the last step (or among the last steps) in the skill sequence",
+      "name": "GenServer owns writes",
+      "description": "Counter increment or window-reset operations go through the GenServer (via handle_call or handle_cast), not direct :ets.update_counter calls from the public API",
       "max_score": 8
     },
     {
-      "name": "No implementation code",
-      "description": "routing_response.md contains NO Elixir source code — no 'def ', 'defmodule', 'schema', migration DSL, or other Elixir implementation code",
-      "max_score": 15
-    },
-    {
-      "name": "Decomposed sub-tasks",
-      "description": "The response decomposes the request into at least 3 distinct ordered sub-tasks or steps (not just a routing line), showing triage rather than a single-line answer",
+      "name": "Public API functions",
+      "description": "All public entry points are named functions in the module (e.g. start_link/1, check_limit/1, increment/1) — callers are never expected to use GenServer.call/cast directly",
       "max_score": 10
     },
     {
-      "name": "LiveView concern addressed",
-      "description": "The routing plan explicitly addresses the real-time / LiveView concern as a named sub-task or skill step",
+      "name": "No direct GenServer.call in public API",
+      "description": "The module does NOT expose raw GenServer.call(pid, ...) or GenServer.cast(pid, ...) calls in its public interface — all calls are wrapped",
       "max_score": 8
     },
     {
-      "name": "Database concern addressed",
-      "description": "The routing plan explicitly addresses the database / Ecto concern as a named sub-task or skill step",
-      "max_score": 5
+      "name": "@impl true on callbacks",
+      "description": "Every GenServer callback (init/1, handle_call/3, handle_cast/3, handle_continue/2, handle_info/2, and/or terminate/2) is preceded by @impl true",
+      "max_score": 10
     },
     {
-      "name": "Notification concern addressed",
-      "description": "The routing plan explicitly addresses the email/notification concern as a named sub-task or skill step (e.g. swoosh-emails or notification handling)",
-      "max_score": 5
+      "name": "Fast init with handle_continue",
+      "description": "init/1 returns quickly (e.g. {:ok, state} or {:ok, state, {:continue, :setup}}) without performing any blocking work; expensive setup (e.g. loading data, initialising ETS) is deferred to handle_continue/2",
+      "max_score": 10
+    },
+    {
+      "name": "Registry-based naming",
+      "description": "Processes are registered using Registry (e.g. via {:via, Registry, {MyApp.Registry, key}}) rather than plain atoms passed to name: in start_link",
+      "max_score": 12
+    },
+    {
+      "name": "Structured logging",
+      "description": "All Logger calls use keyword-list metadata (e.g. Logger.info(\"rate_limit_exceeded\", tenant_id: id, count: n)) — no string interpolation inside the log message string",
+      "max_score": 10
+    },
+    {
+      "name": "Design doc explains ETS rationale",
+      "description": "IMPLEMENTATION.md explicitly states why ETS is used for reads (e.g. concurrent access, avoid bottleneck, bypass GenServer serialisation) rather than just describing what was built",
+      "max_score": 8
     }
   ]
 }

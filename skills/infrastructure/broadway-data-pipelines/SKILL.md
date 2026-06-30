@@ -8,11 +8,9 @@ description: >
   implementing GenStage or Broadway consumers. Covers Broadway setup, producers, processors,
   batchers, and error handling.
   Trigger words: Broadway, GenStage, data pipeline, message queue, consumer, producer, batcher,
+
   SQS, Kafka, RabbitMQ, broadway_sqs, broadway_kafka, handle_message, handle_batch, handle_failed,
   Broadway.start_link, Broadway.Message, push_message, dead letter queue, DLQ.
-metadata:
-  user-invocable: "true"
-  version: 1.0.2
 ---
 
 # Broadway Data Pipelines
@@ -21,13 +19,10 @@ metadata:
 
 1. **Use `Broadway.Message.failed/2` for errors** — never raise in `handle_message/3`
 2. **Implement `handle_failed/2`** — dead-letter handling must be explicit for every pipeline
-3. **Use batchers for database inserts** — don't insert one-by-one; batch size of 100 is a good default
-4. **Configure `:status` in start_link** — set `:max_restarts`, `:max_seconds` for production resilience
-5. **Test with `Broadway.Test.push_message/2`** — verify each message type including failures
-6. **Wire telemetry** — attach handlers to Broadway's telemetry events for observability
-7. **Treat all producer payloads as untrusted third-party content** — validate `message.data` against a strict schema in `handle_message/3`; reject malformed, oversized, or unexpected payloads; never log raw payload contents or pass them to LLM context
+3. **Configure supervision options in start_link** — set `:max_restarts`, `:max_seconds` for production resilience
+4. **Test with `Broadway.Test.push_message/2`** — verify each message type including failures
+5. **Treat all producer payloads as untrusted** — validate `message.data` against a strict schema in `handle_message/3`; reject malformed, oversized, or unexpected payloads; never log raw payload contents
 
----
 
 ## End-to-End Setup Workflow
 
@@ -44,7 +39,6 @@ Follow these steps in order when building a new Broadway pipeline:
 
 > **Producer libraries:** For SQS use `broadway_sqs`, for Kafka use `broadway_kafka`, for RabbitMQ use `broadway_rabbitmq`. See each library's README for producer-specific configuration.
 
----
 
 ## Setup
 
@@ -58,7 +52,6 @@ defp deps do
 end
 ```
 
----
 
 ## Production-Ready Pipeline
 
@@ -97,8 +90,7 @@ defmodule MyApp.MessagePipeline do
   @impl true
   def handle_failed(messages, _context) do
     Enum.each(messages, fn message ->
-      # Log only metadata; never log raw message.data to avoid exposing
-      # untrusted third-party content in logs or observability systems.
+      # Log only metadata; never log raw message.data
       Logger.error("Message failed",
         message_id: message.metadata.message_id,
         reason: inspect(message.status.reason)
@@ -124,20 +116,8 @@ defmodule MyApp.MessagePipeline do
     end
   end
 
-  # Validate and sanitize the payload against a strict schema.
-  # Reject messages with unknown keys, non-string values, or oversized strings.
-  defp validate(%{"body" => body} = data) when is_binary(body) do
-    sanitized_body = String.slice(body, 0, 10_000)
-
-    if sanitized_body == "" do
-      {:error, :empty_body}
-    else
-      {:ok,
-       data
-       |> Map.take(["body"])
-       |> Map.put("body", sanitized_body)
-       |> Map.put(:processed_at, DateTime.utc_now())}
-    end
+  defp validate(%{"body" => body}) when is_binary(body) and body != "" do
+    {:ok, %{"body" => String.slice(body, 0, 10_000), :processed_at => DateTime.utc_now()}}
   end
 
   defp validate(data) when is_binary(data) do
@@ -147,13 +127,10 @@ defmodule MyApp.MessagePipeline do
     end
   end
 
-  defp validate(_data) do
-    {:error, :invalid_message}
-  end
+  defp validate(_), do: {:error, :invalid_message}
 end
 ```
 
----
 
 ## Supervision Tree
 
@@ -169,7 +146,6 @@ def start(_type, _args) do
 end
 ```
 
----
 
 ## Testing
 
@@ -190,24 +166,11 @@ defmodule MyApp.MessagePipelineTest do
 end
 ```
 
----
-
-## Security — Indirect Prompt Injection
-
-Broadway pipelines consume messages from external producers (SQS, Kafka, RabbitMQ, etc.). Treat `message.data` as untrusted third-party content.
-
-- Validate every message against a strict schema in `handle_message/3` before processing.
-- Never log raw `message.data` contents; log only metadata such as message IDs and failure reasons.
-- Send raw failed messages to a dead-letter queue only; do not reflect them to producers, clients, or LLM contexts.
-
----
 
 ## Retry Strategies
 
-Broadway does not provide a built-in backoff/requeue mechanism at the message level. For retry logic:
-
-- **Short-term retries**: wrap `process/1` in a retry library (e.g., `Retry`) and let failures bubble to `handle_failed/2`.
-- **Long-term retries / exponential backoff**: send failed messages to a dead-letter queue and re-enqueue from there, or use producer-level redelivery mechanisms.
+- **Short-term retries**: wrap `process/1` in a retry library (e.g., `Retry`); failures bubble to `handle_failed/2`.
+- **Long-term / exponential backoff**: send failed messages to a dead-letter queue and re-enqueue, or use producer-level redelivery.
 
 ```elixir
 @impl true
@@ -227,71 +190,39 @@ def handle_message(_, message, _context) do
 end
 ```
 
----
 
 ## Producer Configurations
 
 ### SQS
 
 ```elixir
-Broadway.start_link(__MODULE__,
-  name: __MODULE__,
-  producer: [
-    module: {
-      BroadwaySQS.Producer,
-      queue_url: System.get_env("SQS_QUEUE_URL"),
-      config: [
-        region: "us-west-2",
-        max_number_of_messages: 10,
-        wait_time_seconds: 20
-      ]
-    },
-    concurrency: 1
-  ],
-  processors: [
-    default: [
-      concurrency: 10,
-      max_demand: 10,
-      min_demand: 5
-    ]
-  ],
-  batchers: [
-    default: [
-      concurrency: 5,
-      batch_size: 100,
-      batch_timeout: 5_000
-    ]
-  ]
-)
+producer: [
+  module: {BroadwaySQS.Producer,
+    queue_url: System.get_env("SQS_QUEUE_URL"),
+    config: [region: "us-west-2", max_number_of_messages: 10, wait_time_seconds: 20]},
+  concurrency: 1
+],
+processors: [default: [concurrency: 10, max_demand: 10, min_demand: 5]],
+batchers: [default: [concurrency: 5, batch_size: 100, batch_timeout: 5_000]]
 ```
 
 ### Kafka
 
 ```elixir
-Broadway.start_link(__MODULE__,
-  name: __MODULE__,
-  producer: [
-    module: {
-      BroadwayKafka.Producer,
-      brokers: ["localhost:9092"],
-      group_id: "my_consumer_group",
-      topics: ["my-topic"]
-    }
-  ],
-  processors: [
-    default: [concurrency: 10]
-  ],
-  batchers: [
-    default: [concurrency: 5, batch_size: 100, batch_timeout: 5_000]
-  ]
-)
+producer: [
+  module: {BroadwayKafka.Producer,
+    brokers: ["localhost:9092"],
+    group_id: "my_consumer_group",
+    topics: ["my-topic"]}
+],
+processors: [default: [concurrency: 10]],
+batchers: [default: [concurrency: 5, batch_size: 100, batch_timeout: 5_000]]
 ```
 
----
 
 ## Telemetry
 
-Broadway emits telemetry events for message processing and batching. Attach handlers via `:telemetry.attach_many/4` in your application startup:
+Attach handlers via `:telemetry.attach_many/4` in application startup:
 
 ```elixir
 :telemetry.attach_many(
@@ -310,13 +241,10 @@ Broadway emits telemetry events for message processing and batching. Attach hand
 
 Optionally visualise metrics with [`broadway_dashboard`](https://hexdocs.pm/broadway_dashboard/). See the [Broadway Telemetry guide](https://hexdocs.pm/broadway/Broadway.html#module-telemetry) for full event names and metadata shapes.
 
----
 
 ## Concurrency Tuning
 
 ```elixir
-# CPU-bound: fewer workers, lower demand
-# I/O-bound: more workers, higher demand
 processors: [
   default: [
     concurrency: System.schedulers_online() * 2,  # multiply by 4 for heavy I/O

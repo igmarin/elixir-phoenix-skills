@@ -1,1 +1,1 @@
-{ "description": "Multi-concern Phoenix feature routing and triage" }
+{ "description": "OTP GenServer with ETS reads and public API" }

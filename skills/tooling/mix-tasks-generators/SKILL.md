@@ -13,9 +13,6 @@ description: >
   phx.gen.live, phx.gen.auth, scaffold, seed data, ecto.setup, mix help, Mix.Project,
   OptionParser, @shortdoc, preferred_cli_env, alias, mix run, generator, phx.gen.html,
   phx.gen.context, phx.gen.json, phx.gen.channel.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
 ---
 
 # Mix Tasks & Generators
@@ -29,7 +26,6 @@ metadata:
 5. **Test custom tasks with `Mix.Project.in_project/4`** — ensure tasks work correctly in isolation
 6. **Follow `Mix.Tasks.Namespace.TaskName` naming** — file path must match: `lib/mix/tasks/namespace.task_name.ex`
 
----
 
 ## End-to-End Workflow
 
@@ -45,7 +41,6 @@ Follow this sequence when creating a custom Mix task:
 8. **Test** — use `Mix.Project.in_project/4` test helper
 9. **Verify** — run `mix help | grep task_name` to confirm registration
 
----
 
 ## Phoenix Generators
 
@@ -75,7 +70,6 @@ mix phx.gen.auth Accounts User users --web Admin
 mix phx.gen.context Blog Post posts --table posts --app MyApp
 ```
 
----
 
 ## Custom Mix Tasks
 
@@ -106,6 +100,8 @@ end
 ```
 
 ### Task with Arguments and Validation
+
+> Demonstrates `OptionParser` with required flags, error reporting, dry-run support, and before/after count verification.
 
 ```elixir
 defmodule Mix.Tasks.MyApp.ImportUsers do
@@ -184,7 +180,6 @@ defmodule Mix.Tasks.MyApp.Migrate do
 end
 ```
 
----
 
 ## Custom Generators
 
@@ -221,7 +216,6 @@ end
 # Creates: lib/my_app/services/send_email.ex
 ```
 
----
 
 ## Mix Project Configuration
 
@@ -259,7 +253,6 @@ def project do
 end
 ```
 
----
 
 ## Testing Custom Tasks
 
@@ -288,7 +281,6 @@ defmodule Mix.Tasks.MyApp.SeedDataTest do
 end
 ```
 
----
 
 ## Common Task Patterns
 
@@ -299,21 +291,3 @@ end
 | **Cleanup** (`my_app.cleanup`) | Parse `--dry-run` flag → query expired records → report count → conditionally `Repo.delete_all/1` |
 
 All follow the same skeleton: parse opts → `app.start` → transact → report.
-
----
-
-## Task Output Formatting
-
-```elixir
-Mix.shell().info("Starting task...")
-Mix.shell().info("✓ Success")
-Mix.shell().error("✗ Failed")
-
-# Progress reporting for long operations
-records
-|> Enum.with_index()
-|> Enum.each(fn {record, index} ->
-  process_record(record)
-  if rem(index, 100) == 0, do: Mix.shell().info("  Processed #{index + 1}/#{total} records")
-end)
-```

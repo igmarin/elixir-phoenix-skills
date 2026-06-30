@@ -12,14 +12,9 @@ description: >
   scope-based auth, roles, permissions, or migrating from current_user to the new scope-based model.
   Trigger words: Scope, current_scope, scopes, phoenix scopes, role, roles, permission, permissions,
   authorization, authorize, can?, authenticated?, anonymous, on_mount, require_scope.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
 ---
 
 # Phoenix Scopes
-
-Phoenix 1.8 introduced `Scope` as the new authentication primitive, replacing direct `current_user` access.
 
 ## RULES — Follow these with no exceptions
 
@@ -27,7 +22,6 @@ Phoenix 1.8 introduced `Scope` as the new authentication primitive, replacing di
 2. **Test both authenticated and unauthenticated states** — scope-based auth has two distinct code paths
 3. **Define `anonymous/0` for the unauthenticated case** — return a Scope with `user: nil`
 
----
 
 ## Scope Struct Definition
 
@@ -57,7 +51,6 @@ defmodule MyApp.Scope do
 end
 ```
 
----
 
 ## Using Scopes in LiveViews
 
@@ -90,7 +83,6 @@ defmodule MyAppWeb.DashboardLive do
 end
 ```
 
----
 
 ## Safe Template Access
 
@@ -103,7 +95,6 @@ end
 <% end %>
 ```
 
----
 
 ## Migration Workflow (current_user → Scopes)
 
@@ -138,44 +129,8 @@ def on_mount(:require_authenticated_user, _params, session, socket) do
 end
 ```
 
----
 
 ## Testing Scopes
-
-Always test both authenticated and unauthenticated paths.
-
-### Unit Tests for Scope Predicates
-
-```elixir
-defmodule MyApp.ScopeTest do
-  use ExUnit.Case, async: true
-
-  describe "authenticated?/1" do
-    test "returns true for scope with user" do
-      scope = %MyApp.Scope{user: build(:user)}
-      assert Scope.authenticated?(scope) == true
-    end
-
-    test "returns false for anonymous scope" do
-      assert Scope.authenticated?(Scope.anonymous()) == false
-    end
-  end
-
-  describe "can?/2" do
-    test "returns true when permission is present" do
-      scope = %MyApp.Scope{permissions: [:read, :write]}
-      assert Scope.can?(scope, :read) == true
-    end
-
-    test "returns false when permission is absent or scope is anonymous" do
-      assert Scope.can?(%MyApp.Scope{permissions: [:read]}, :delete) == false
-      assert Scope.can?(Scope.anonymous(), :read) == false
-    end
-  end
-end
-```
-
-### LiveView Tests
 
 ```elixir
 describe "DashboardLive" do

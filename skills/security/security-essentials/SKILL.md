@@ -9,11 +9,7 @@ description: >
   arises. Covers atom exhaustion, SQL injection, open redirects, XSS, sensitive data in logs,
   timing attacks, CSRF, and dependency auditing.
   Trigger words: security, atom exhaustion, SQL injection, XSS, open redirect, timing attack, CSRF, Sobelow.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
+
 ---
 
 # Security Essentials
@@ -24,18 +20,17 @@ Use this skill before writing ANY security-sensitive code.
 
 Apply every item before merging. See the named sections below for patterns and examples.
 
-1. **Atom exhaustion** — never `String.to_atom/1` on user input; use `String.to_existing_atom/1` or an explicit case → [Atom Table Exhaustion](#atom-table-exhaustion)
-2. **SQL injection** — never interpolate strings into Ecto queries; use `^variable` or `$1`/`$2` placeholders → [SQL Injection](#sql-injection)
-3. **Open redirects** — never redirect to user-controlled URLs; use `~p"..."` or a whitelist → [Open Redirects](#open-redirects)
-4. **XSS** — avoid `raw/1`; sanitize with HtmlSanitizeEx if HTML is required → [Cross-Site Scripting (XSS)](#cross-site-scripting-xss)
-5. **Sensitive data in logs** — passwords, tokens, API keys, and PII must never appear in logs → [Sensitive Data in Logs](#sensitive-data-in-logs)
-6. **Timing attacks** — use `Plug.Crypto.secure_compare/2` for token comparison; never `==` → [Timing Attacks](#timing-attacks)
-7. **CSRF** — never disable Phoenix's built-in CSRF protection → [CSRF Protection](#csrf-protection)
-8. **Parameter tampering / IDOR** — validate all user input at boundaries; verify ownership → [Common Vulnerable Patterns](#common-vulnerable-patterns)
-9. **Dependency auditing** — run `mix deps.audit && mix hex.audit && mix sobelow` before any merge → [Dependency Auditing](#dependency-auditing)
+1. **Atom exhaustion** → [Atom Table Exhaustion](#atom-table-exhaustion)
+2. **SQL injection** → [SQL Injection](#sql-injection)
+3. **Open redirects** → [Open Redirects](#open-redirects)
+4. **XSS** → [Cross-Site Scripting (XSS)](#cross-site-scripting-xss)
+5. **Sensitive data in logs** → [Sensitive Data in Logs](#sensitive-data-in-logs)
+6. **Timing attacks** → [Timing Attacks](#timing-attacks)
+7. **CSRF** → [CSRF Protection](#csrf-protection)
+8. **Parameter tampering / IDOR** → [Common Vulnerable Patterns](#common-vulnerable-patterns)
+9. **Dependency auditing** → [Dependency Auditing](#dependency-auditing)
 10. **Sobelow in CI** — `mix sobelow` must pass in CI; fail on any HIGH or CRITICAL finding
 
----
 
 ## Security Review Process
 
@@ -51,7 +46,6 @@ Apply this sequence whenever writing or reviewing security-sensitive code:
 8. **Run full audit** — `mix deps.audit && mix hex.audit && mix sobelow` before merging
 9. **Test manually** — verify with curl/introspection that expected inputs are rejected
 
----
 
 ## Common Vulnerable Patterns
 
@@ -102,7 +96,6 @@ def show(conn, %{"id" => id}) do
 end
 ```
 
----
 
 ## Atom Table Exhaustion
 
@@ -121,9 +114,10 @@ case params["role"] do
 end
 ```
 
----
 
 ## SQL Injection
+
+Never interpolate strings into Ecto queries; use `^variable` or `$1`/`$2` placeholders.
 
 ❌ **Bad — string interpolation in fragment:**
 ```elixir
@@ -156,9 +150,10 @@ Ecto.Adapters.SQL.query(Repo, "SELECT * FROM users WHERE name = $1 AND status = 
 from(u in User, where: u.status == ^status and u.name == ^name)
 ```
 
----
 
 ## Open Redirects
+
+Never redirect to user-controlled URLs; use `~p"..."` or a whitelist.
 
 ❌ **Bad — user controls redirect destination:**
 ```elixir
@@ -185,9 +180,10 @@ def create(conn, %{"redirect_to" => redirect_to} = params) do
 end
 ```
 
----
 
 ## Cross-Site Scripting (XSS)
+
+Avoid `raw/1`; sanitize with HtmlSanitizeEx if HTML is required.
 
 ❌ **Bad — bypasses escaping:**
 ```elixir
@@ -204,7 +200,6 @@ end
 <%= raw(HtmlSanitizeEx.html5(@user_bio)) %>
 ```
 
----
 
 ## Sensitive Data in Logs
 
@@ -220,9 +215,10 @@ Logger.info("User login", email: email, user_id: user.id)
 Logger.debug("API call", endpoint: url, status: resp.status)
 ```
 
----
 
 ## Timing Attacks
+
+Use `Plug.Crypto.secure_compare/2` for token comparison; never `==`.
 
 ❌ **Bad — timing-unsafe:**
 ```elixir
@@ -238,7 +234,6 @@ def verify_token(provided_token, stored_token) do
 end
 ```
 
----
 
 ## Dependency Auditing
 
@@ -259,7 +254,7 @@ mix deps.audit && mix hex.audit && mix sobelow --config
 **Sobelow categories:**
 
 | Category | Severity |
-|----------|----------|
+|----------|---------|
 | Config (hardcoded secrets, insecure config) | HIGH |
 | SQL injection | HIGH |
 | Remote Code (unsafe eval/apply) | CRITICAL |
@@ -288,7 +283,6 @@ end
 
 **Interpretation:** Any Sobelow finding of HIGH or CRITICAL severity MUST be fixed before merging. LOW findings should be tracked and addressed within 2 sprints.
 
----
 
 ## CSRF Protection
 
@@ -304,11 +298,3 @@ pipeline :api do
   # No :protect_from_forgery — APIs use Bearer tokens instead
 end
 ```
-
----
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| elixir-essentials | security-essentials | None (standalone) |

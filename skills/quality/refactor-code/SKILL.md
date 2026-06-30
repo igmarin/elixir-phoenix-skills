@@ -11,10 +11,7 @@ description: >
   include a Stable behavior statement and Verification evidence showing actual
   command output under the Observed output label.
   Trigger words: refactor, restructure, extract function, extract module, reduce
-  duplication, split module, flatten with, reduce pipe chain, extract context.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
+  duplication, split module, flatten with, reduce pipe chain, extract bounded context.
 ---
 
 # Refactor Code
@@ -57,7 +54,7 @@ Include in your output:
 
 ### 2. Add characterization tests
 
-**Write this before touching any production file.** No refactoring step begins until this test exists and passes on the current (un-refactored) code. If the characterization test fails, do not continue — stop and fix the test or the behavior mismatch.
+**Write this before touching any production file.** No refactoring step begins until this test exists and passes on the current (un-refactored) code. If the characterization test fails, stop and fix the test or the behavior mismatch before continuing.
 
 ```elixir
 # test/my_app/accounts_test.exs
@@ -78,25 +75,25 @@ defmodule MyApp.AccountsRefactorTest do
 end
 ```
 
-Run it: `mix test test/my_app/accounts_test.exs` — it must pass on the **current** code.
+Run it: `mix test test/my_app/accounts_test.exs` — it must pass on the **current** code before any production file is changed.
 
 ### 3. Choose the smallest safe slice
 
-Good first moves include: extracting duplicated logic into a private helper, flattening a nested `case` into `with`, reducing a long pipe chain into named functions, or wrapping a context boundary. One boundary at a time — characterization tests first, verification after each step.
+Good first moves: extract duplicated logic into a private helper, flatten a nested `case` into `with`, reduce a long pipe chain into named functions, or wrap a context boundary. One boundary at a time.
 
-### 4. Execute extraction/refactor (One step at a time)
+### 4. Execute extraction/refactor (one step at a time)
+
+Apply the appropriate pattern below. Each shows a representative before/after; adapt to your context.
 
 #### Extract Private Function (ABC complexity reduction)
 
-**Before:**
 ```elixir
+# Before: one large public function
 def calculate_trend_line(data) do
   # 50 lines of assignments, branches, conditions
 end
-```
 
-**After:**
-```elixir
+# After: delegate to named private helpers
 def calculate_trend_line(data) do
   sums = calculate_regression_sums(data)
   slope = calculate_slope(sums)
@@ -112,26 +109,20 @@ defp build_trend_points(data, slope, intercept), do: # ...
 
 #### Flatten Nested Case into With
 
-**Before:**
 ```elixir
+# Before
 def process_order(order_id) do
   case find_order(order_id) do
     {:ok, order} ->
       case validate_order(order) do
-        {:ok, valid_order} ->
-          case charge_order(valid_order) do
-            {:ok, charge} -> {:ok, charge}
-            error -> error
-          end
+        {:ok, valid_order} -> charge_order(valid_order)
         error -> error
       end
     error -> error
   end
 end
-```
 
-**After:**
-```elixir
+# After
 def process_order(order_id) do
   with {:ok, order} <- find_order(order_id),
        {:ok, valid_order} <- validate_order(order),
@@ -143,26 +134,19 @@ end
 
 #### Reduce Pipe Chain into Named Functions
 
-**Before:**
 ```elixir
+# Before
 def process_data(data) do
   data
   |> Enum.filter(&active?/1)
   |> Enum.map(&transform/1)
-  |> Enum.sort()
   |> Enum.group_by(& &1.category)
   |> Enum.map(fn {cat, items} -> {cat, Enum.count(items)} end)
 end
-```
 
-**After:**
-```elixir
+# After
 def process_data(data) do
-  data
-  |> filter_active()
-  |> transform_all()
-  |> group_by_category()
-  |> count_per_category()
+  data |> filter_active() |> transform_all() |> group_by_category() |> count_per_category()
 end
 
 defp filter_active(data), do: Enum.filter(data, &active?/1)
@@ -171,20 +155,17 @@ defp group_by_category(data), do: Enum.group_by(data, & &1.category)
 defp count_per_category(groups), do: Enum.map(groups, fn {cat, items} -> {cat, Enum.count(items)} end)
 ```
 
-#### Extract Context Boundary
+#### Extract Context Module Boundary
 
-**Before:**
 ```elixir
+# Before: Accounts calls mailer directly
 defmodule MyApp.Accounts do
   def send_welcome_email(user) do
-    email = MyApp.Mailers.UserEmail.welcome(user)
-    MyApp.Mailer.deliver(email)
+    MyApp.Mailer.deliver(MyApp.Mailers.UserEmail.welcome(user))
   end
 end
-```
 
-**After:**
-```elixir
+# After: delegate through a Mail context
 defmodule MyApp.Accounts do
   alias MyApp.Mail
 
@@ -199,28 +180,13 @@ end
 
 ### 5. Verification Protocol
 
-Run verification after every refactoring step:
+This is the single authoritative source for all verification rules.
 
-1. Run the relevant test file: `mix test test/path/to/file_test.exs`
-2. Read the output — check exit code, count failures
-3. If tests fail: STOP, undo the step, investigate
-4. If tests pass: proceed to next step
-5. At the end, run full suite: `mix test`
-6. Only claim completion with evidence from the last test run
-
-**Evidence labelling rules:** Label actual run output as **Observed output** only. Never use labels such as "Expected output", "Required output", or "Planned output" as substitutes for actual observed run output. If you have not run the tests, you have no observed output to report.
-
-Report test run output at EACH step — not only at the end. At least two separate **Observed output** entries at different sequence points are required.
-
-## Common Pitfalls
-
-| ❌ Wrong | ✅ Correct |
-|----------|-----------|
-| Refactoring without characterization tests | Capture current behavior with tests first |
-| Changing behavior during refactoring | Only change structure, not output |
-| Multiple logical changes in one step | One extraction per commit |
-| Mixing refactoring with new features | Complete refactor first, add feature in separate step |
-| Skipping full suite regression check | `mix test` must pass at end |
+- Run `mix test test/path/to/file_test.exs` **after every refactoring step** and check exit code and failure count.
+- If tests fail: **STOP, undo the step, investigate.**
+- At the end, run the full suite: `mix test`.
+- **Evidence labelling:** Label actual run output as **Observed output** only. Never use labels such as "Expected output", "Required output", or "Planned output" as substitutes for actual observed run output.
+- Report test run output at EACH step — not only at the end. At least two separate **Observed output** entries at different sequence points are required.
 
 ## Integration
 

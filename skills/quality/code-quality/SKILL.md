@@ -8,13 +8,9 @@ description: >
   Elixir code. Covers duplication detection, ABC complexity, unused private functions, template
   duplication, and Credo integration. Provides thresholds and fix patterns for each quality issue.
   Trigger words: code quality, duplication, complexity, unused functions, Credo, refactoring, analysis,
+
   mix credo, abc complexity, function length, module length, refactor, extract function, shared code,
   code smell, technical debt, clean code.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
 ---
 
 # Code Quality
@@ -29,7 +25,6 @@ metadata:
 6. **Run `mix credo --strict` before any PR**
 7. **Run `mix sobelow` for security** — check after quality checks
 
----
 
 ## End-to-End Workflow
 
@@ -39,13 +34,10 @@ metadata:
 4. **Security check** — run `mix sobelow` before committing
 5. **Commit** — only after both Credo and Sobelow pass cleanly
 
----
 
 ## What Gets Detected
 
 ### Code Duplication
-
-Duplication is identified through manual review — look for similar function bodies across modules (>70% similarity). Credo does not automatically detect cross-module duplication; use judgment when comparing implementations.
 
 **How to fix:**
 ```elixir
@@ -84,7 +76,7 @@ end
 
 ### Unused Private Functions
 
-After refactoring, scan for any private functions no longer referenced and remove them.
+Remove any private functions no longer referenced after refactoring.
 
 ### Template Duplication
 
@@ -104,7 +96,6 @@ defmodule AppWeb.Live.Components do
 end
 ```
 
----
 
 ## Running Analysis
 

@@ -9,11 +9,9 @@ description: >
   attributes and relationships, configuring actions and policies, using Ash extensions (AshPostgres,
   AshPhoenix, AshJsonApi), and migrating from Phoenix contexts to Ash DSL patterns.
   Trigger words: Ash Framework, Ash resource, Ash action, resource-oriented, DSL, alternative to contexts,
+
   Ash domain, Ash policy, Ash extension, ash_postgres, ash_phoenix, Ash.JsonApi, AshQuery,
   AshChangeset, use Ash.Resource, use Ash.Domain.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
 ---
 
 # Ash Framework
@@ -27,7 +25,6 @@ metadata:
 5. **Run `mix ash_postgres.generate_migrations` before manual migration** — let Ash generate the schema
 6. **Verify resource loads** — run `mix compile` and confirm no `Spark.Error.DslError` before proceeding
 
----
 
 ## End-to-End Workflow
 
@@ -45,7 +42,6 @@ Follow this sequence when starting a new Ash project:
 10. **Generate migrations** — run `mix ash_postgres.generate_migrations` then `mix ash_postgres.migrate`
 11. **Test with Ash API** — use `Domain.create!(resource, attributes)` to verify the resource works
 
----
 
 ## Core Concepts
 
@@ -110,7 +106,6 @@ defmodule MyApp.Blog.Post do
 end
 ```
 
----
 
 ### Using Actions
 
@@ -138,7 +133,6 @@ post
 |> MyApp.Blog.update!()
 ```
 
----
 
 ### Policies (Authorization)
 
@@ -170,34 +164,30 @@ end
 config :ash, :policies, log_policy_breakdowns: :error
 ```
 
----
 
 ### AshPhoenix LiveView Integration
 
-Add `{:ash_phoenix, "~> 2.0"}` to deps.
+Add `{:ash_phoenix, "~> 2.0"}` to deps. See [AshPhoenix docs](https://hexdocs.pm/ash_phoenix) for full LiveView and form component examples.
 
 ```elixir
-# mount — build form from changeset
+# Build form from changeset in mount
 form =
   post
   |> Ash.Changeset.for_update(:update, %{})
   |> AshPhoenix.Form.for_update()
   |> to_form()
 
-# handle_event "save"
+# Handle save event — reassign form on error
 case Blog.update(Ash.Changeset.for_update(post, :update, params)) do
-  {:ok, post} -> {:noreply, put_flash(socket, :info, "Saved.") |> assign(post: post)}
+  {:ok, post}  -> {:noreply, put_flash(socket, :info, "Saved.") |> assign(post: post)}
   {:error, cs} -> {:noreply, assign(socket, form: cs |> AshPhoenix.Form.for_update() |> to_form())}
 end
 ```
 
-See the [AshPhoenix docs](https://hexdocs.pm/ash_phoenix) for full LiveView and form component examples.
-
----
 
 ### AshJsonApi Integration
 
-Add `{:ash_json_api, "~> 1.0"}` to deps.
+Add `{:ash_json_api, "~> 1.0"}` to deps. See [AshJsonApi docs](https://hexdocs.pm/ash_json_api) for pagination, includes, and error serialization.
 
 ```elixir
 # In your resource
@@ -227,14 +217,10 @@ scope "/api/json" do
 end
 ```
 
-See the [AshJsonApi docs](https://hexdocs.pm/ash_json_api) for pagination, includes, and error serialization.
-
----
 
 ## Calculations and Aggregates
 
 ```elixir
-# Add a count aggregate to a resource
 aggregates do
   count :comment_count, :comments
   count :published_comment_count, :comments do
@@ -248,7 +234,6 @@ MyApp.Blog.Post
 |> MyApp.Blog.read!()
 ```
 
----
 
 ## Ash-Specific Pitfalls
 
@@ -264,7 +249,7 @@ create :create do
 end
 ```
 
-For multi-field or conditional validation logic, implement a custom `Ash.Resource.Validation` module:
+For multi-field or conditional logic, implement a custom `Ash.Resource.Validation` module:
 
 ```elixir
 defmodule MyApp.Validations.TitleNotBlank do
@@ -274,8 +259,8 @@ defmodule MyApp.Validations.TitleNotBlank do
   def validate(changeset, _opts, _context) do
     case Ash.Changeset.get_attribute(changeset, :title) do
       nil -> {:error, field: :title, message: "can't be blank"}
-      "" -> {:error, field: :title, message: "can't be blank"}
-      _ -> :ok
+      ""  -> {:error, field: :title, message: "can't be blank"}
+      _   -> :ok
     end
   end
 end
@@ -294,9 +279,9 @@ MyApp.Blog.Post
 
 ```elixir
 case MyApp.Blog.Post |> Ash.get(id) do
-  {:ok, post} -> {:ok, post}
+  {:ok, post}                            -> {:ok, post}
   {:error, %Ash.Error.Query.NotFound{}} -> {:error, :not_found}
-  {:error, error} -> {:error, error}
+  {:error, error}                        -> {:error, error}
 end
 ```
 
@@ -306,14 +291,10 @@ end
 case MyApp.Blog.Post
      |> Ash.Changeset.for_create(params)
      |> MyApp.Blog.create() do
-  {:ok, post} ->
-    {:ok, post}
-  {:error, %Ash.Error.InvalidInput{fields: fields}} ->
-    {:error, :validation, fields}
-  {:error, %Ash.Error.Forbidden{}} ->
-    {:error, :unauthorized}
-  {:error, %Ash.Error.Changeset{errors: errors}} ->
-    {:error, :invalid_changeset, errors}
+  {:ok, post}                                      -> {:ok, post}
+  {:error, %Ash.Error.InvalidInput{fields: fields}} -> {:error, :validation, fields}
+  {:error, %Ash.Error.Forbidden{}}                 -> {:error, :unauthorized}
+  {:error, %Ash.Error.Changeset{errors: errors}}   -> {:error, :invalid_changeset, errors}
   {:error, error} ->
     Logger.error("Unexpected error: #{inspect(error)}")
     {:error, :internal_error}
@@ -328,7 +309,6 @@ MyApp.Blog.Post
 |> MyApp.Blog.read!()
 ```
 
----
 
 ## Migrations from Ecto to Ash
 

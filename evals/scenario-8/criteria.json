@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent writes property-based tests using StreamData/ExUnitProperties that verify invariants rather than specific input/output pairs, leverages shrinking constraints, uses pattern matching over if/else in the implementation, uses for comprehensions instead of chaining multiple Enum operations, and returns tagged tuples for fallible operations.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Uses ExUnitProperties",
+      "description": "Test file uses `use ExUnitProperties` (not just regular ExUnit assertions with hand-picked values)",
+      "max_score": 8
+    },
+    {
+      "name": "Property syntax",
+      "description": "Test file contains at least 3 `property \"...\" do` blocks with `check all` inside them",
+      "max_score": 8
+    },
+    {
+      "name": "Invariant assertions",
+      "description": "Properties test invariants (e.g. output length <= input length, email contains @, merge contains all keys from both inputs) — NOT specific expected values like `assert result == [user1, user2]`",
+      "max_score": 10
+    },
+    {
+      "name": "Custom generator",
+      "description": "Defines at least one custom generator using `gen all` or a generator-returning function for user structs or maps (not just built-in `integer()` / `string()` alone)",
+      "max_score": 10
+    },
+    {
+      "name": "Shrinking constraints",
+      "description": "At least one generator uses a constraint such as `min_length: 1`, `integer(1..N)`, or a filter/guard that prevents invalid shrunk inputs from reaching assertions",
+      "max_score": 10
+    },
+    {
+      "name": "Pattern matching in impl",
+      "description": "Implementation uses pattern matching (multi-clause functions or case/match) for control flow instead of if/else chains",
+      "max_score": 10
+    },
+    {
+      "name": "No nested if/else",
+      "description": "Implementation does NOT contain any nested if/else blocks",
+      "max_score": 8
+    },
+    {
+      "name": "For comprehension usage",
+      "description": "Implementation uses a `for` comprehension in at least one place where 3 or more Enum operations would otherwise be chained",
+      "max_score": 10
+    },
+    {
+      "name": "Ok/error tuples — normalize",
+      "description": "`normalize_email/1` returns `{:ok, ...}` on success and `{:error, ...}` when email is missing or invalid",
+      "max_score": 9
+    },
+    {
+      "name": "Ok/error tuples — merge",
+      "description": "`merge_profiles/2` returns `{:ok, merged}` on success and `{:error, ...}` when a required field is missing",
+      "max_score": 9
+    },
+    {
+      "name": "Properties cover all functions",
+      "description": "Test file has at least one property test for each of the three public functions: normalize_email, filter_active_users, and merge_profiles",
+      "max_score": 8
+    }
+  ]
+}

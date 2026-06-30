@@ -9,10 +9,8 @@ description: >
   configuration files, writes custom check modules, configures strictness levels, and integrates
   Credo into CI pipelines.
   Trigger words: Credo, .credo.exs, linting, code style, static analysis, custom checks, credo.config,
+
   mix credo, code quality, lint, static analysis, format check.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
 ---
 
 # Credo Configuration
@@ -24,7 +22,6 @@ metadata:
 3. **Add inline disables sparingly** — document why each exception is necessary
 4. **Custom checks belong in `lib/credo/checks/`** — never inline them in application code
 
----
 
 ## Setup Workflow
 
@@ -55,7 +52,7 @@ mix credo gen.config
 
 ### 4. Customize `.credo.exs`
 
-Edit the generated file to match your project's needs. See [Basic Configuration](#basic-configuration) below.
+See [Basic Configuration](#basic-configuration) below.
 
 ### 5. Verify Setup
 
@@ -71,7 +68,7 @@ Success: Credo exits 0 and prints a summary with issue counts per category. If i
 mix credo --strict
 ```
 
-Strict mode enables additional checks disabled by default (mostly design-related). CI must use `--strict`.
+CI must use `--strict`.
 
 ### 7. Add to CI
 
@@ -79,9 +76,8 @@ See [CI Integration](#ci-integration) below.
 
 ### 8. Create Custom Checks
 
-For project-specific patterns, add custom check modules to `lib/credo/checks/`. See [Custom Checks](#custom-checks) below.
+Add custom check modules to `lib/credo/checks/`. See [Custom Checks](#custom-checks) below.
 
----
 
 ## Basic Configuration
 
@@ -129,7 +125,6 @@ For project-specific patterns, add custom check modules to `lib/credo/checks/`. 
 }
 ```
 
----
 
 ## Disabling Checks
 
@@ -164,7 +159,6 @@ checks: %{
 }
 ```
 
----
 
 ## CI Integration
 
@@ -187,15 +181,9 @@ jobs:
       - run: mix credo --strict
 ```
 
-CI must use `--strict` to catch all issues. Exit code 0 means clean; non-zero means issues found.
-
 ### Handling Failures in CI
 
-When Credo fails in CI:
-1. Run locally: `mix credo`
-2. Review each category starting with Readability
-3. Fix the root cause — refactor function, extract logic, shorten names
-4. Only disable a check if it's a false positive with documentation
+When Credo fails in CI, run `mix credo` locally to reproduce the failure. Only disable a check if it's a confirmed false positive — document the reason inline.
 
 ### Mix Alias
 
@@ -209,7 +197,6 @@ defp aliases do
 end
 ```
 
----
 
 ## Custom Checks
 

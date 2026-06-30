@@ -9,11 +9,6 @@ description: >
   authorization, and authorization testing. Use when writing permission checks, policy modules,
   or role-based access controls, or when addressing authorization, access control, permission,
   policy, role, owner, scoped query, or IDOR concerns.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
 ---
 
 # Phoenix Authorization Patterns
@@ -27,7 +22,6 @@ metadata:
 5. **Test both authorized and unauthorized paths** — every `handle_event` that mutates data needs an authz test
 6. **Scope queries to the current user in contexts** — `where(user_id: ^user_id)` prevents IDOR vulnerabilities
 
----
 
 ## Authorization Workflow for a New Resource
 
@@ -44,7 +38,6 @@ Follow these steps in order when adding authorization to any new resource:
 - Policy module has a catch-all clause returning `{:error, :unauthorized}` ✓
 - Every mutating `handle_event` has a corresponding unauthorized-path test ✓
 
----
 
 ## Server-Side Authorization in LiveViews
 
@@ -66,7 +59,6 @@ defmodule MyAppWeb.PostLive.Show do
 end
 ```
 
----
 
 ## Scoped Queries in Contexts
 
@@ -100,7 +92,6 @@ defmodule MyApp.Blog do
 end
 ```
 
----
 
 ## Policy Modules
 
@@ -127,7 +118,6 @@ case Policy.authorize(user, :delete, post) do
 end
 ```
 
----
 
 ## Testing Authorization
 
@@ -156,7 +146,6 @@ describe "authorization" do
 end
 ```
 
----
 
 ## Related Skills
 
@@ -167,7 +156,6 @@ end
 | **testing-essentials** | Testing patterns |
 | **security-essentials** | Broader security best practices |
 
----
 
 ## Integration
 

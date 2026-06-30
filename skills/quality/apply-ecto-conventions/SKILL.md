@@ -10,10 +10,8 @@ description: >
   query composition. Covers non-bang vs bang functions, N+1 prevention,
   pagination, and migration safety.
   Trigger words: ecto conventions, repo pattern, changeset, context module,
+
   preload, ecto query, database conventions, apply ecto patterns.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
 ---
 
 # Apply Ecto Conventions
@@ -22,22 +20,6 @@ Use this skill when writing or reviewing Ecto database code to ensure consistent
 
 **Precondition:** Invoke `ecto-essentials` before this skill for the full Ecto reference.
 
----
-
-## Quick Reference
-
-| Pattern | Convention |
-|---------|------------|
-| Repo calls | In context modules only — never in LiveViews or controllers |
-| Bang functions | `Repo.get!/1` only in tests or when failure is truly unrecoverable |
-| Changesets | `cast/4` for permitted fields, `validate_required/3` for constraints |
-| Query safety | Parameterized with `^` — never string interpolation in fragments |
-| Preloading | Always preload to prevent N+1 |
-| Multi | Use `Ecto.Multi` for 2+ related operations |
-| Pagination | `offset`/`limit` with composite index |
-| Migrations | Reversible `change/0`, expand-contract for column changes |
-
----
 
 ## RULES — Follow these with no exceptions
 
@@ -50,14 +32,24 @@ Use this skill when writing or reviewing Ecto database code to ensure consistent
 7. **Add indexes on foreign keys** and frequently queried columns
 8. **Never combine schema changes and data backfill** in the same migration
 
----
+
+## Review Workflow
+
+When reviewing existing Ecto code, follow these steps in order:
+
+1. **Check Repo calls outside contexts** — search `lib/` for `Repo.` in LiveViews, controllers, or non-context modules
+2. **Search for bang functions** — flag every `!` function in application `lib/` as a potential bug
+3. **Check preloads in loops** — look for association access inside `for`, `Enum.map`, etc. without prior preloading
+4. **Verify Multi usage** — any 2+ sequential `Repo` calls without `Ecto.Multi` is a missing transaction
+5. **Inspect migrations** — confirm reversibility, presence of indexes, and absence of mixed schema/data changes
+
 
 ## Context Boundaries: Repo Lives in Contexts
 
 ❌ **Bad — Repo called directly in LiveView:**
 ```elixir
 def handle_event("load", _params, socket) do
-  users = MyApp.Repo.all(User)  # Direct Repo call!
+  users = MyApp.Repo.all(User)
   {:noreply, assign(socket, :users, users)}
 end
 ```
@@ -81,11 +73,10 @@ defmodule MyApp.Accounts do
 end
 ```
 
----
 
 ## Non-Bang vs Bang Functions
 
-❌ **Bad — bang in application logic (raises on not-found):**
+❌ **Bad — bang in application logic:**
 ```elixir
 def show(conn, %{"id" => id}) do
   user = Repo.get!(User, id)
@@ -93,7 +84,7 @@ def show(conn, %{"id" => id}) do
 end
 ```
 
-✅ **Good — non-bang with pattern matching (handles not-found gracefully):**
+✅ **Good — non-bang with pattern matching:**
 ```elixir
 def show(conn, %{"id" => id}) do
   case Accounts.get_user(id) do
@@ -115,7 +106,6 @@ end
 
 **Checkpoint:** Search for `!` functions in application `lib/` — every one is a potential bug.
 
----
 
 ## Changeset Composition
 
@@ -146,7 +136,6 @@ def changeset(user, attrs) do
 end
 ```
 
----
 
 ## Preloading: Prevent N+1
 
@@ -154,7 +143,7 @@ end
 ```elixir
 users = Repo.all(User)
 for user <- users do
-  user.posts  # Executes a query per user!
+  user.posts
 end
 ```
 
@@ -162,7 +151,7 @@ end
 ```elixir
 users = Repo.all(User) |> Repo.preload(:posts)
 for user <- users do
-  user.posts  # Already loaded — no extra queries
+  user.posts
 end
 ```
 
@@ -173,7 +162,6 @@ Repo.all(from u in User, preload: [posts: :comments])
 
 **Checkpoint:** Run Ecto query log observer in development to detect N+1 violations.
 
----
 
 ## Ecto.Multi for Multi-Step Operations
 
@@ -198,9 +186,8 @@ def create_user_with_profile(user_attrs, profile_attrs) do
 end
 ```
 
-On failure, `{:error, :user, changeset, _}` identifies the failed step.
+On failure, the error tuple `{:error, :user, changeset, _}` names the failed step for targeted error handling.
 
----
 
 ## Query Composition
 
@@ -229,7 +216,6 @@ def list_users(filters) do
 end
 ```
 
----
 
 ## Migrations
 
@@ -237,7 +223,7 @@ end
 ```elixir
 def up do
   alter table(:users) do
-    remove :name  # Irreversible!
+    remove :name
   end
 end
 ```
@@ -258,7 +244,11 @@ def change do
 end
 ```
 
----
+**Migration verification steps:**
+1. Run `mix ecto.migrate` in the test environment first to catch errors early
+2. Verify reversibility with `mix ecto.rollback` — confirm the migration rolls back cleanly
+3. Apply to dev, then production — never skip the rollback check before promoting
+
 
 ## Pagination
 
@@ -280,22 +270,6 @@ def list_posts(page \\ 1, per_page \\ 20) do
 end
 ```
 
----
-
-## Common Pitfalls
-
-| ❌ Wrong | ✅ Correct |
-|----------|-----------|
-| `Repo` in LiveViews or controllers | Delegate to context modules |
-| Repo.get! / Repo.insert! in application code | Use non-bang with pattern matching |
-| String interpolation in `fragment` | Use parameterized `^` queries |
-| N+1 from accessing associations in loops | Preload before iteration |
-| Multiple Repo calls without transaction | Use `Ecto.Multi` |
-| Missing indexes on foreign keys | `create index(:table, [:fk_column])` |
-| Schema change + backfill in one migration | Two separate migrations |
-| Irreversible `up` without `down` | Use `change/0` instead |
-
----
 
 ## Integration
 

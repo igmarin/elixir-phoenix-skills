@@ -8,11 +8,7 @@ description: >
   broadcast, or handle_info for real-time updates. Covers subscription patterns, broadcasting from
   contexts, topic naming, scoped broadcasting, immutable assign updates, and testing.
   Trigger words: PubSub, subscribe, broadcast, handle_info, real-time, topic, presence.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
+
 ---
 
 # Phoenix PubSub Patterns
@@ -26,7 +22,6 @@ Use this skill before writing ANY PubSub or real-time broadcast code.
 3. **Handle in `handle_info/2`** — update assigns immutably with `update/3`
 4. **Verify with a test** — call the context function and assert the LiveView reflects the change
 
----
 
 ## Subscription Pattern
 
@@ -69,7 +64,6 @@ defmodule MyAppWeb.PostLive.Index do
 end
 ```
 
----
 
 ## Broadcasting from Contexts
 
@@ -112,7 +106,6 @@ defmodule MyApp.Blog do
 end
 ```
 
----
 
 ## Testing the Full PubSub Cycle
 
@@ -144,7 +137,6 @@ defmodule MyAppWeb.PostLive.IndexTest do
 end
 ```
 
----
 
 ## Troubleshooting / Validation Checkpoints
 
@@ -153,7 +145,6 @@ end
 - **Duplicate messages?** You subscribed outside the `if connected?(socket)` guard — the static render and the live render both subscribed.
 - **`handle_info` clause missing?** An unhandled PubSub message will crash the LiveView process. Add a catch-all `def handle_info(_, socket), do: {:noreply, socket}` if other processes may send unexpected messages.
 
----
 
 ## Integration
 

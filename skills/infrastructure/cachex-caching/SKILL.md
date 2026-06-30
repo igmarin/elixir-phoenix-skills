@@ -8,24 +8,18 @@ description: >
   Configures Cachex instances, implements cache-aside and get-or-set patterns, sets TTL policies,
   builds cache warmers, monitors cache statistics, and sets up distributed caching across nodes.
   Trigger words: Cachex, caching, cache, TTL, ETS, distributed cache, cache warmer, cache warmup,
+
   cache invalidation, cache hits, cache misses, Cachex.fetch, Cachex.put, Cachex.get.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
 ---
 
 # Cachex Caching
 
-## RULES — Follow these with no exceptions
+## RULES — Non-obvious requirements
 
 1. **Set TTL on every cached entry** — never cache indefinitely unless data is truly immutable
-2. **Use `Cachex.fetch/3` for get-or-set** — never check-then-set (race condition risk)
-3. **Invalidate on writes** — call `Cachex.del/2` after any data mutation
-4. **Enable stats: true** — without stats you cannot measure cache effectiveness
-5. **Use cache warmers for startup** — pre-populate expensive data when application starts
-6. **Handle cache failures gracefully** — fall back to database on cache errors
+2. **Enable stats: true** — required to measure cache effectiveness
+3. **Use cache warmers for startup** — pre-populate expensive data when application starts
 
----
 
 ## End-to-End Workflow
 
@@ -40,24 +34,6 @@ Follow this sequence when adding caching to a feature:
 7. **Verify hit rate** — call `Cachex.stats/1` and confirm `hit_rate` is non-zero; see **Monitoring Cache Stats** for interpretation thresholds and remediation guidance
 8. **Monitor in production** — emit telemetry events for cache operations
 
----
-
-## Error Handling
-
-Cachex operations return `{:ok, result}` or `{:error, reason}`. Always handle errors gracefully:
-
-```elixir
-def get_user(id) do
-  case Cachex.fetch(:my_cache, "user:#{id}", fn _ ->
-    {:commit, Repo.get(User, id)}
-  end) do
-    {:ok, user} -> user
-    {:error, _} -> Repo.get(User, id)  # Fallback to database
-  end
-end
-```
-
----
 
 ## Setup
 
@@ -86,12 +62,16 @@ defmodule MyApp.Application do
       # Cache with stats enabled for monitoring
       {Cachex, name: :stats_cache, limit: 5000, stats: true},
       
-      # Cache with TTL and LRW eviction policy
+      # Cache with TTL, LRW eviction policy, stats, and hooks
       {Cachex,
        name: :ttl_cache,
        limit: 10_000,
        ttl: :timer.minutes(10),
-       policy: Cachex.Policy.LRW}
+       policy: Cachex.Policy.LRW,
+       stats: true,
+       hooks: [
+         %Cachex.Hook{module: MyApp.CacheLogger}
+       ]}
     ]
 
     Supervisor.start_link(children, strategy: :one_for_one)
@@ -99,7 +79,6 @@ defmodule MyApp.Application do
 end
 ```
 
----
 
 ## Basic Operations
 
@@ -112,18 +91,15 @@ end
 # put with explicit TTL (overrides cache-level default)
 Cachex.put(:my_cache, "session:abc", data, ttl: :timer.minutes(30))
 
-# Atomic delete — returns {:ok, true | false}; false means key was absent
 Cachex.del(:my_cache, "user:123")
-
-# Wipe entire cache
 Cachex.clear(:my_cache)
 ```
 
----
 
 ## Get-or-Set Pattern
 
 ```elixir
+# Cachex.fetch/3 — atomic cache-aside, avoids race conditions
 {status, value} =
   Cachex.fetch(:my_cache, "user:123", fn key ->
     user = MyApp.Accounts.get_user(123)
@@ -136,7 +112,6 @@ case status do
 end
 ```
 
----
 
 ## Cache Warmers
 
@@ -165,29 +140,11 @@ children = [
 ]
 ```
 
----
-
-## Cache Configuration
-
-```elixir
-children = [
-  {Cachex,
-   name: :my_cache,
-   limit: 10_000,
-   policy: Cachex.Policy.LRW,
-   ttl: :timer.minutes(10),
-   stats: true,
-   hooks: [
-     %Cachex.Hook{module: MyApp.CacheLogger}
-   ]}
-]
-```
-
----
 
 ## Cache Invalidation
 
 ```elixir
+# All Cachex operations return {:ok, result} or {:error, reason}; fall back to DB on failure
 defmodule MyApp.Accounts do
   def update_user(user, attrs) do
     with {:ok, updated_user} <- Repo.update(User.changeset(user, attrs)) do
@@ -204,16 +161,16 @@ defmodule MyApp.Accounts do
   end
 
   def get_user(id) do
-    Cachex.fetch(:my_cache, "user:#{id}", fn _key ->
-      user = Repo.get(User, id)
-      {:commit, user, ttl: :timer.minutes(5)}
-    end)
-    |> elem(1)
+    case Cachex.fetch(:my_cache, "user:#{id}", fn _ ->
+      {:commit, Repo.get(User, id), ttl: :timer.minutes(5)}
+    end) do
+      {:ok, user} -> user
+      {:error, _} -> Repo.get(User, id)  # Fallback to database
+    end
   end
 end
 ```
 
----
 
 ## Monitoring Cache Stats
 
@@ -230,46 +187,26 @@ end
 - `< 60%` — investigate TTL values and check for over-invalidation
 - `< 20%` — cache may be ineffective; revisit TTL strategy and key design before deploying to production
 
----
 
 ## Telemetry Integration
 
 Emit telemetry events for cache operations to monitor in production:
 
 ```elixir
-defmodule MyApp.Telemetry do
-  def execute(:cache, :hit, cache_name, key) do
-    :telemetry.execute(
-      [:my_app, :cache, cache_name],
-      %{hits: 1},
-      %{key: key}
-    )
-  end
-
-  def execute(:cache, :miss, cache_name, key) do
-    :telemetry.execute(
-      [:my_app, :cache, cache_name],
-      %{misses: 1},
-      %{key: key}
-    )
-  end
-end
-
 def get_user(id) do
   case Cachex.fetch(:my_cache, "user:#{id}", fn _ ->
     {:commit, Repo.get(User, id)}
   end) do
     {:ok, user} ->
-      Telemetry.execute(:cache, :hit, :my_cache, "user:#{id}")
+      :telemetry.execute([:my_app, :cache, :my_cache], %{hits: 1}, %{key: "user:#{id}"})
       user
     {:error, _} ->
-      Telemetry.execute(:cache, :miss, :my_cache, "user:#{id}")
+      :telemetry.execute([:my_app, :cache, :my_cache], %{misses: 1}, %{key: "user:#{id}"})
       Repo.get(User, id)
   end
 end
 ```
 
----
 
 ## Distributed Caching
 

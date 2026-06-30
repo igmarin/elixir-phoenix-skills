@@ -1,0 +1,66 @@
+{
+  "context": "Tests whether the agent correctly implements Ecto schemas, migrations, and a context module for a project management system. Criteria focus on Ecto-specific patterns: dual-layer constraints (DB + changeset), FK indexes, explicit on_delete, cast_assoc for associations, preloading before updates, named changesets, and unsafe_validate_unique pairing.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "DB unique constraint on team name",
+      "description": "The teams migration adds a unique_index on the name column (not just a changeset validation)",
+      "max_score": 8
+    },
+    {
+      "name": "FK index on users.team_id",
+      "description": "The users migration includes an index on team_id (e.g. create index(:users, [:team_id]))",
+      "max_score": 8
+    },
+    {
+      "name": "FK index on projects.user_id",
+      "description": "The projects migration includes an index on user_id (e.g. create index(:projects, [:user_id]))",
+      "max_score": 8
+    },
+    {
+      "name": "FK index on tasks.project_id",
+      "description": "The tasks migration includes an index on project_id (e.g. create index(:tasks, [:project_id]))",
+      "max_score": 8
+    },
+    {
+      "name": "on_delete :delete_all for tasks",
+      "description": "The tasks migration's foreign key to projects sets on_delete: :delete_all (tasks are owned children of projects)",
+      "max_score": 8
+    },
+    {
+      "name": "on_delete explicit for users FK",
+      "description": "The users migration's foreign key to teams sets on_delete explicitly (either :delete_all or :nothing — must not be omitted)",
+      "max_score": 6
+    },
+    {
+      "name": "Separate named changesets",
+      "description": "The Project schema defines at least two distinct named changeset functions (e.g. create_changeset and update_changeset) rather than a single generic changeset/2",
+      "max_score": 10
+    },
+    {
+      "name": "unsafe_validate_unique + unique_constraint pairing",
+      "description": "Any changeset that validates uniqueness uses BOTH unsafe_validate_unique and unique_constraint on the same field",
+      "max_score": 10
+    },
+    {
+      "name": "cast_assoc for tasks",
+      "description": "The Project changeset (or context) uses cast_assoc(:tasks, ...) to handle nested task data — does NOT manually insert tasks in a separate Repo.insert call",
+      "max_score": 10
+    },
+    {
+      "name": "Preload before update",
+      "description": "The update_project/2 function in the context module preloads :tasks on the project before calling changeset/cast_assoc (e.g. Repo.preload(project, :tasks))",
+      "max_score": 10
+    },
+    {
+      "name": "Task changeset omits project_id",
+      "description": "The Task schema's changeset does NOT require or cast project_id — the foreign key is set via the association, not by the client",
+      "max_score": 8
+    },
+    {
+      "name": "No mixed schema+data migrations",
+      "description": "No single migration file contains both DDL schema changes (create_table, alter_table) AND data manipulation (Repo.insert, Repo.update, execute INSERT/UPDATE SQL)",
+      "max_score": 6
+    }
+  ]
+}

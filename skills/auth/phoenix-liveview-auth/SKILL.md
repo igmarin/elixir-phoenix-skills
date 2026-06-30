@@ -9,11 +9,7 @@ description: >
   Covers on_mount patterns, current_scope, import conflict resolution, safe template access,
   and testing auth redirects.
   Trigger words: on_mount, LiveView auth, current_scope, session, live_session, redirect_if_authenticated.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
+
 ---
 
 # Phoenix LiveView Authentication
@@ -24,20 +20,18 @@ Use this skill before writing ANY `on_mount` hook or LiveView auth code.
 
 ## RULES
 
-1. **Use `on_mount` callbacks** — never check auth in `mount/3` directly; use `mount_current_scope/2` to extract scope, never access session tokens manually
+1. **Use `on_mount` callbacks** — never check auth in `mount/3` directly
 2. **`:halt` must redirect with a flash message** — never silently drop the connection
 3. **Define `on_mount` hooks once, reference via `live_session` in router** — never duplicate auth logic across LiveView modules
 
----
 
 ## Implementation Workflow
 
-1. **Define `on_mount` hooks** in `UserAuth` with import conflict resolution; verify the module compiles cleanly with `mix compile`
-2. **Add `live_session` blocks** to the router referencing those hooks; verify routes with `mix phx.routes`
+1. **Define `on_mount` hooks** in `UserAuth` with import conflict resolution; verify with `mix compile`
+2. **Add `live_session` blocks** to the router referencing those hooks; verify with `mix phx.routes`
 3. **Run auth tests** with `mix test test/my_app_web/live/` and assert redirect tuples match expected paths; if tests fail, check session config and verify `Accounts.get_user_by_session_token/1` returns the correct user
 4. **Add template guards** using bracket access for optional assigns
 
----
 
 ## on_mount Authentication Pattern
 
@@ -45,8 +39,7 @@ Use this skill before writing ANY `on_mount` hook or LiveView auth code.
 defmodule MyAppWeb.UserAuth do
   use MyAppWeb, :verified_routes
   import Phoenix.LiveView
-  # Import conflict resolution: exclude Phoenix.Controller's redirect/2 and put_flash/3
-  # so Phoenix.LiveView's versions take precedence in LiveView contexts
+  # Exclude Phoenix.Controller's redirect/2 and put_flash/3 so LiveView's versions take precedence
   import Phoenix.Controller, except: [redirect: 2, put_flash: 3]
 
   def on_mount(:require_authenticated_user, _params, session, socket) do
@@ -94,7 +87,6 @@ defmodule MyAppWeb.UserAuth do
 end
 ```
 
----
 
 ## Router Integration
 
@@ -130,12 +122,10 @@ defmodule MyAppWeb.Router do
 end
 ```
 
----
 
 ## Template Access
 
 ```elixir
-# Access user through scope in mount
 def mount(_params, _session, socket) do
   user = socket.assigns.current_scope.user
   {:ok, assign(socket, :posts, Posts.list_posts(user))}
@@ -143,13 +133,12 @@ end
 ```
 
 ```heex
-<%# Use bracket access for optional current_scope in templates %>
+<%# Use assigns[:current_scope] (bracket access), not @current_scope — avoids KeyError on unauthenticated sockets %>
 <%= if assigns[:current_scope] && @current_scope.user do %>
   <p>Welcome, <%= @current_scope.user.email %></p>
 <% end %>
 ```
 
----
 
 ## Testing LiveView Auth
 
