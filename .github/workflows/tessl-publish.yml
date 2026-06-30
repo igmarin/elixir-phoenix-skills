@@ -31,7 +31,7 @@ jobs:
       - name: Set up Tessl
         uses: tesslio/setup-tessl@25ec223fc0da33b41b8044ff5ab2b85235f4f91e # v2
         with:
-          version: "0.87.0"
+          version: "0.88.2"
           token: ${{ secrets.TESSL_TOKEN }}
 
       - name: Compute automatic patch version
