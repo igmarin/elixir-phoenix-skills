@@ -9,8 +9,10 @@ description: >
   form binding, socket assigns, and error handling. Covers the two-phase rendering lifecycle,
   connected? guards, function components, and the assign-error-to-socket pattern.
   Trigger words: phoenix conventions, liveview conventions, apply phoenix patterns,
+
   liveview patterns, follow phoenix best practices, heex component, liveview mount,
   handle_event convention, phoenix liveview.
+---
 
 # Apply Phoenix LiveView Conventions
 
@@ -18,7 +20,6 @@ Use this skill when writing new LiveView modules or modifying existing LiveView 
 
 **Precondition:** Invoke `phoenix-liveview-essentials` before this skill for the full callback lifecycle reference.
 
----
 
 ## End-to-End Workflow — Creating or Modifying a LiveView
 
@@ -29,7 +30,6 @@ Use this skill when writing new LiveView modules or modifying existing LiveView 
 5. **Extract reusable markup into exported function components** — use `def`, not `defp`
 6. **Check error paths** — every failure branch assigns errors to the socket via `put_flash` or changeset assigns; never `raise`
 
----
 
 ## Conventions — Quick Reference
 
@@ -44,7 +44,6 @@ Use this skill when writing new LiveView modules or modifying existing LiveView 
 | Multi-step errors | Use `with` instead of nested case |
 | Database access | Call context functions only — never query `Repo` directly from a LiveView |
 
----
 
 ## Two-Phase Rendering
 
@@ -57,7 +56,6 @@ LiveView renders twice per page load:
 
 **Always initialize assigns to safe defaults in Phase 1** so the static HTML never raises a `KeyError` before WebSocket connects.
 
----
 
 ## Mount Callback
 
@@ -81,7 +79,6 @@ end
 
 **Checkpoint:** Static HTML must render without `KeyError` before WebSocket connects.
 
----
 
 ## Handle Event
 
@@ -132,7 +129,6 @@ def handle_event("process", %{"id" => id}, socket) do
 end
 ```
 
----
 
 ## Handle Info
 
@@ -149,7 +145,6 @@ def handle_info(%{event: "presence_diff"}, socket) do
 end
 ```
 
----
 
 ## Handle Params
 
@@ -181,7 +176,6 @@ def handle_params(_params, _uri, socket) do
 end
 ```
 
----
 
 ## HEEx Component Structure
 
@@ -266,7 +260,6 @@ end
 </.modal>
 ```
 
----
 
 ## Form Binding
 
@@ -310,7 +303,6 @@ end
 </.simple_form>
 ```
 
----
 
 ## Socket Assigns — Best Practices
 
@@ -344,7 +336,6 @@ defp format_user(socket) do
 end
 ```
 
----
 
 ## Integration
 

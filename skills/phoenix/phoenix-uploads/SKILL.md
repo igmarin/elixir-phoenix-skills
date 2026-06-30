@@ -9,6 +9,8 @@ description: >
   and template patterns.
   Trigger words: upload, file upload, allow_upload, consume_uploaded_entries, static_paths, file serving.
 
+---
+
 # Phoenix File Uploads
 
 Use this skill before implementing ANY file upload functionality.
@@ -21,7 +23,6 @@ Use this skill before implementing ANY file upload functionality.
 4. **Validate file types server-side** — never trust client MIME types
 5. **Restart server after changing `static_paths()`** — changes don't apply until restart
 
----
 
 ## Implementation Workflow
 
@@ -35,7 +36,6 @@ Follow these steps in order:
 6. **Add the upload form to your template** — include drop target, previews, and error display
 7. **Verify** — confirm upload directory exists, files are saved, and URLs resolve correctly
 
----
 
 ## Upload Configuration
 
@@ -49,7 +49,6 @@ allow_upload(:upload_name,
 )
 ```
 
----
 
 ## Complete Upload Pattern
 
@@ -121,7 +120,6 @@ def error_to_string(:too_many_files), do: "Too many files"
 def error_to_string(:not_accepted), do: "Unacceptable file type"
 ```
 
----
 
 ## Static Paths Configuration
 

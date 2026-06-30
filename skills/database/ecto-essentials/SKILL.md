@@ -8,6 +8,7 @@ description: >
   Covers schema definition, changesets, query composition, preloading, transactions,
   associations, migrations, upserts, dynamic queries, and the context pattern.
   Trigger words: Ecto, schema, changeset, migration, Repo, query, preload, association, belongs_to, has_many, Elixir database.
+---
 
 # Ecto Essentials
 
@@ -20,7 +21,6 @@ Use this skill before modifying ANY schema, query, or migration.
 3. **Parameterize all user input in queries** — never interpolate values into SQL fragments, always use `^`
 4. **Never combine schema changes and data backfill** in the same migration
 
----
 
 ## Schema Definition
 
@@ -214,7 +214,6 @@ end
 
 All standard CRUD functions (`list_*`, `get_*!`, `update_*`, `delete_*`) follow the same pattern.
 
----
 
 ## Related Skills
 
@@ -222,7 +221,6 @@ All standard CRUD functions (`list_*`, `get_*!`, `update_*`, `delete_*`) follow 
 - **Next — changeset deep-dive:** [ecto-changeset-patterns](../ecto-changeset-patterns/SKILL.md) — advanced validations, custom constraints, and error formatting
 - **Next — testing:** [testing-essentials](../../testing/testing-essentials/SKILL.md) — testing Ecto contexts and migrations
 
----
 
 ## When Not to Use
 

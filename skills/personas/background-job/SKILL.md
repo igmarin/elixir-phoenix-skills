@@ -5,6 +5,7 @@ tags: [personas]
 license: MIT
 description: >
   Orchestrates robust Oban background job implementation with hard gates: design job with idempotency strategy and error classification (transient→retry, permanent→discard) → TDD implementation where test MUST fail before code → configure retry/discard strategies → test failure scenarios covering idempotency/retry/error handling → production monitoring; phases design→TDD→retry config→failure testing→monitoring. Use when adding async processing, implementing background jobs, or configuring job queues. Trigger: background job, async processing, oban, job queue, worker.
+---
 
 ## Phase 1: Job Design
 
@@ -22,7 +23,6 @@ description: >
 - [ ] Every anticipated error is assigned to exactly one category (transient or permanent) with rationale
 - [ ] Queue name, priority, and timeout value are recorded and justified
 
----
 
 ## Phase 2: TDD Implementation
 
@@ -67,7 +67,6 @@ defmodule MyApp.Workers.SendWelcomeEmailTest do
 end
 ```
 
----
 
 ## Phase 3: Retry/Discard Configuration
 
@@ -107,7 +106,6 @@ end
 - [ ] Every permanent error maps to `:discard` in code; every transient error maps to `{:error, reason}`
 - [ ] Telemetry events are attached and verifiable in tests
 
----
 
 ## Phase 4: Failure Scenario Testing & Monitoring
 
@@ -123,7 +121,6 @@ end
 
 **Never deploy until all four phase gates above are green.**
 
----
 
 ## Output Style
 

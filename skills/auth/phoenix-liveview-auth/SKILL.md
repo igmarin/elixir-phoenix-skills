@@ -10,6 +10,8 @@ description: >
   and testing auth redirects.
   Trigger words: on_mount, LiveView auth, current_scope, session, live_session, redirect_if_authenticated.
 
+---
+
 # Phoenix LiveView Authentication
 
 Use this skill before writing ANY `on_mount` hook or LiveView auth code.
@@ -22,7 +24,6 @@ Use this skill before writing ANY `on_mount` hook or LiveView auth code.
 2. **`:halt` must redirect with a flash message** — never silently drop the connection
 3. **Define `on_mount` hooks once, reference via `live_session` in router** — never duplicate auth logic across LiveView modules
 
----
 
 ## Implementation Workflow
 
@@ -31,7 +32,6 @@ Use this skill before writing ANY `on_mount` hook or LiveView auth code.
 3. **Run auth tests** with `mix test test/my_app_web/live/` and assert redirect tuples match expected paths; if tests fail, check session config and verify `Accounts.get_user_by_session_token/1` returns the correct user
 4. **Add template guards** using bracket access for optional assigns
 
----
 
 ## on_mount Authentication Pattern
 
@@ -87,7 +87,6 @@ defmodule MyAppWeb.UserAuth do
 end
 ```
 
----
 
 ## Router Integration
 
@@ -123,7 +122,6 @@ defmodule MyAppWeb.Router do
 end
 ```
 
----
 
 ## Template Access
 
@@ -141,7 +139,6 @@ end
 <% end %>
 ```
 
----
 
 ## Testing LiveView Auth
 

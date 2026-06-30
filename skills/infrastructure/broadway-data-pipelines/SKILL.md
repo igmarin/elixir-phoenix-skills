@@ -8,8 +8,10 @@ description: >
   implementing GenStage or Broadway consumers. Covers Broadway setup, producers, processors,
   batchers, and error handling.
   Trigger words: Broadway, GenStage, data pipeline, message queue, consumer, producer, batcher,
+
   SQS, Kafka, RabbitMQ, broadway_sqs, broadway_kafka, handle_message, handle_batch, handle_failed,
   Broadway.start_link, Broadway.Message, push_message, dead letter queue, DLQ.
+---
 
 # Broadway Data Pipelines
 
@@ -21,7 +23,6 @@ description: >
 4. **Test with `Broadway.Test.push_message/2`** — verify each message type including failures
 5. **Treat all producer payloads as untrusted** — validate `message.data` against a strict schema in `handle_message/3`; reject malformed, oversized, or unexpected payloads; never log raw payload contents
 
----
 
 ## End-to-End Setup Workflow
 
@@ -38,7 +39,6 @@ Follow these steps in order when building a new Broadway pipeline:
 
 > **Producer libraries:** For SQS use `broadway_sqs`, for Kafka use `broadway_kafka`, for RabbitMQ use `broadway_rabbitmq`. See each library's README for producer-specific configuration.
 
----
 
 ## Setup
 
@@ -52,7 +52,6 @@ defp deps do
 end
 ```
 
----
 
 ## Production-Ready Pipeline
 
@@ -132,7 +131,6 @@ defmodule MyApp.MessagePipeline do
 end
 ```
 
----
 
 ## Supervision Tree
 
@@ -148,7 +146,6 @@ def start(_type, _args) do
 end
 ```
 
----
 
 ## Testing
 
@@ -169,7 +166,6 @@ defmodule MyApp.MessagePipelineTest do
 end
 ```
 
----
 
 ## Retry Strategies
 
@@ -194,7 +190,6 @@ def handle_message(_, message, _context) do
 end
 ```
 
----
 
 ## Producer Configurations
 
@@ -224,7 +219,6 @@ processors: [default: [concurrency: 10]],
 batchers: [default: [concurrency: 5, batch_size: 100, batch_timeout: 5_000]]
 ```
 
----
 
 ## Telemetry
 
@@ -247,7 +241,6 @@ Attach handlers via `:telemetry.attach_many/4` in application startup:
 
 Optionally visualise metrics with [`broadway_dashboard`](https://hexdocs.pm/broadway_dashboard/). See the [Broadway Telemetry guide](https://hexdocs.pm/broadway/Broadway.html#module-telemetry) for full event names and metadata shapes.
 
----
 
 ## Concurrency Tuning
 

@@ -9,6 +9,8 @@ description: >
   pluralization, locale management, and .po/.pot file workflows.
   Trigger words: gettext, i18n, internationalization, translation, locale, pluralization, multiple languages.
 
+---
+
 # Gettext Internationalization
 
 ## End-to-End Workflow
@@ -20,14 +22,12 @@ description: >
 5. **Set locale per request** — configure a plug or LiveView mount to call `Gettext.put_locale/2`
 6. **Test** — assert translated strings appear when locale is set
 
----
 
 ## Key Rules
 
 - **Only translate user-facing text** — not log-only error messages
 - **Use domain-specific contexts** — `dgettext("errors", "Not found")` keeps error strings in a separate `.po` file from default content
 
----
 
 ## Setup
 
@@ -41,7 +41,6 @@ defmodule MyAppWeb.Gettext do
 end
 ```
 
----
 
 ## Using Translations
 
@@ -75,7 +74,6 @@ end
 <h1><%= gettext("Welcome to %{app_name}", app_name: "MyApp") %></h1>
 ```
 
----
 
 ## Translation Files
 
@@ -89,7 +87,6 @@ msgstr[0] "Tienes %{count} mensaje nuevo"
 msgstr[1] "Tienes %{count} mensajes nuevos"
 ```
 
----
 
 ## Extracting Translations
 
@@ -106,7 +103,6 @@ mix gettext.extract --merge
 
 **Validate:** After extraction, open the relevant `.po` files and confirm new `msgid` entries appear with empty `msgstr` values. Fill in translations before deploying.
 
----
 
 ## Setting Locale
 
@@ -148,7 +144,6 @@ pipeline :browser do
 end
 ```
 
----
 
 ## Testing Translations
 

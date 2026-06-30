@@ -12,6 +12,7 @@ description: >
   Trigger words: phoenix controller conventions, controller patterns, phoenix
   router, plug pipeline, before_action, fallback controller, strong params,
   phoenix routes, action fallback.
+---
 
 # Apply Phoenix Controller Conventions
 
@@ -19,7 +20,6 @@ Use this skill when writing new Phoenix controller modules or modifying existing
 
 **Precondition:** Invoke `phoenix-liveview-essentials` before this skill if the feature uses LiveView; for traditional request/response, use this skill directly.
 
----
 
 ## Quick Reference
 
@@ -33,7 +33,6 @@ Use this skill when writing new Phoenix controller modules or modifying existing
 | Error handling | Use `FallbackController` for structured errors |
 | Auth plugs | Include pipeline plugs; skip with `:skip` option |
 
----
 
 ## RULES — Follow these with no exceptions
 
@@ -45,7 +44,6 @@ Use this skill when writing new Phoenix controller modules or modifying existing
 6. **Use `conn.assigns` for passing data between plugs and actions** — never use `Process` dictionaries
 7. **Never interpolate user input into redirect paths** — use `~p"..."` paths for verified routes
 
----
 
 ## Routing Conventions
 
@@ -64,7 +62,6 @@ end
 
 **Checkpoint:** Run `mix phx.routes` to verify routes resolve correctly and there are no unintended deep-nesting paths.
 
----
 
 ## Plug Pipeline Ordering
 
@@ -112,7 +109,6 @@ end
 
 **Checkpoint:** Confirm plug ordering with `mix phx.routes` and verify that exempt actions (e.g., `:index`, `:show`) do not trigger auth plugs in integration tests.
 
----
 
 ## Action Patterns
 
@@ -143,7 +139,6 @@ def create(conn, %{"user" => user_params}) do
 end
 ```
 
----
 
 ## Strong Parameters / Params Validation
 
@@ -158,7 +153,6 @@ def update_user(user, attrs) do
 end
 ```
 
----
 
 ## Content Negotiation
 
@@ -184,7 +178,6 @@ end
 
 **Checkpoint:** Confirm the correct pipeline is applied by inspecting `mix phx.routes` output and checking that API routes lack `:fetch_session` and `:protect_from_forgery` plugs.
 
----
 
 ## FallbackController for JSON APIs
 
@@ -220,7 +213,6 @@ end
 
 **Checkpoint:** Run `mix test test/controllers/` after wiring up `FallbackController` to confirm each expected error tuple (`{:error, :not_found}`, `{:error, :unauthorized}`) is matched and returns the correct HTTP status.
 
----
 
 ## Error Handling — Browser
 
@@ -244,7 +236,6 @@ Avoid `get_user!/1` (raises) for user-triggered lookups; reserve bang variants f
 
 **Checkpoint:** Verify error paths in browser tests by asserting flash messages and redirect targets.
 
----
 
 ## Common Pitfalls
 
@@ -257,7 +248,6 @@ Avoid `get_user!/1` (raises) for user-triggered lookups; reserve bang variants f
 | `pipe_through :browser` for JSON endpoints | Use `pipe_through :api` for JSON scopes |
 | `Process` dictionary for inter-plug data | Use `conn.assigns` |
 
----
 
 ## Integration
 

@@ -9,8 +9,10 @@ description: >
   generates profiling reports with :fprof and :eprof, and integrates benchmark regression checks
   into CI pipelines.
   Trigger words: Benchee, benchmark, profiling, performance, optimization, speed, comparison,
+
   benchee.run, benchee.measure, fprof, eprof, profile, ips, runtime, memory_time, warmup,
   batch_size, inputs, regression, baseline, performance comparison.
+---
 
 # Benchee Profiling
 
@@ -24,7 +26,6 @@ description: >
 6. **Save baseline and check regressions** — write results to `bench/baseline.json`; raise an error if performance degrades more than 10% (compare against the previous 3 baselines before raising to rule out noise)
 7. **Separate I/O benchmarks** — never benchmark network or disk I/O in the same run as compute benchmarks
 
----
 
 ## Setup
 
@@ -37,7 +38,6 @@ defp deps do
 end
 ```
 
----
 
 ## Basic Benchmark with Full Configuration
 
@@ -71,7 +71,6 @@ Benchee.run(
 MIX_ENV=prod mix run bench/list_benchmark.exs
 ```
 
----
 
 ## Comparing Real-World Implementations
 
@@ -101,7 +100,6 @@ Benchee.run(%{
 })
 ```
 
----
 
 ## Profiling with :fprof
 
@@ -114,7 +112,6 @@ MyApp.SlowFunction.run()
 :fprof.analyse(dest: 'analysis.txt')
 ```
 
----
 
 ## Profiling with :eprof
 
@@ -129,7 +126,6 @@ MyApp.SlowFunction.run()
 :eprof.stop()
 ```
 
----
 
 ## Benchmark Suite Organization
 
@@ -149,7 +145,6 @@ Code.require_file("bench/list_benchmark.exs")
 Code.require_file("bench/json_benchmark.exs")
 ```
 
----
 
 ## Advanced Topics
 

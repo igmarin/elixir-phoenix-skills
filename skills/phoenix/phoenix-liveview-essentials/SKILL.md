@@ -9,6 +9,8 @@ description: >
   socket assigns, streams, components, form binding, error handling, and PubSub integration.
   Trigger words: LiveView, live_view, mount, handle_event, handle_info, render, HEEx, socket, assign.
 
+---
+
 # Phoenix LiveView Essentials
 
 Use this skill before writing ANY LiveView module or `.heex` template.
@@ -26,7 +28,6 @@ Use this skill before writing ANY LiveView module or `.heex` template.
 9. **Never query the database directly from LiveViews** — call context functions instead
 10. **Use streams for large collections** — see `liveview-streams` skill for details
 
----
 
 ## Recommended Build Order
 
@@ -36,13 +37,11 @@ Use this skill before writing ANY LiveView module or `.heex` template.
 4. **Add `handle_event/3`** — implement user interactions with proper error handling
 5. **Verify static render** — confirm no `KeyError` before WebSocket connects
 
----
 
 ## Critical Concept: Two-Phase Rendering
 
 Both phases run `mount` → `handle_params` → render. Initialize all assigns to safe defaults in Phase 1 (`connected?(socket)` is `false`) so the static HTML never raises a `KeyError`. Side effects, PubSub, and timers only work in Phase 2 (`connected?(socket)` is `true`).
 
----
 
 ## Mount Callback
 
@@ -81,7 +80,6 @@ end
 
 **✅ Validation checkpoint:** Verify all assigns used in render/1 are initialized — the static render must display without a `KeyError`.
 
----
 
 ## Handle Event
 
@@ -102,7 +100,6 @@ For create/update events, use the Error Handling pattern below — assign change
 
 **✅ Validation checkpoint:** Each handler must return `{:noreply, socket}`; error paths assign errors to the socket rather than raising.
 
----
 
 ## Handle Info
 
@@ -115,7 +112,6 @@ def handle_info({:post_updated, post}, socket) do
 end
 ```
 
----
 
 ## Handle Params
 
@@ -139,7 +135,6 @@ def handle_params(_params, _uri, socket) do
 end
 ```
 
----
 
 ## Socket Assigns
 
@@ -154,7 +149,6 @@ defp format_user(socket) do
 end
 ```
 
----
 
 ## Live Navigation
 
@@ -166,7 +160,6 @@ end
 {:noreply, push_patch(socket, to: ~p"/posts/#{post}")}
 ```
 
----
 
 ## Form Binding
 
@@ -198,7 +191,6 @@ def handle_event("validate", %{"post" => params}, socket) do
 end
 ```
 
----
 
 ## Error Handling
 
@@ -228,11 +220,9 @@ def handle_event("save", %{"post" => post_params}, socket) do
 end
 ```
 
----
 
 Related skills: `liveview-streams`, `phoenix-pubsub-patterns`, `phoenix-liveview-auth`, `phoenix-scopes`, `testing-essentials`.
 
----
 
 ## When Not to Use
 

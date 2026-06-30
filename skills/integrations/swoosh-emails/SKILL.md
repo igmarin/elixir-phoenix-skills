@@ -8,6 +8,8 @@ description: >
   Covers Swoosh setup, email templates, delivery configuration, testing, and production adapters.
   Trigger words: email, Swoosh, mailer, email templates, SMTP, SendGrid, email testing.
 
+---
+
 # Swoosh Emails
 
 ## RULES — Follow these with no exceptions
@@ -18,7 +20,6 @@ description: >
 4. **Test emails with Swoosh.TestAssertions** — assert emails were sent with correct content
 5. **Never send emails synchronously in web requests** — use Oban for async delivery; Task.start only for simple cases
 
----
 
 ## Setup
 
@@ -53,7 +54,6 @@ MyApp.Mailer.deliver(Swoosh.Email.new(to: "test@example.com", from: "noreply@mya
 # => {:error, ...} — Finch missing from supervision tree or adapter misconfigured
 ```
 
----
 
 ## Defining Emails
 
@@ -117,7 +117,6 @@ defmodule MyAppWeb.EmailComponents do
 end
 ```
 
----
 
 ## Mailer Module
 
@@ -128,7 +127,6 @@ defmodule MyApp.Mailer do
 end
 ```
 
----
 
 ## Configuration
 
@@ -149,7 +147,6 @@ config :my_app, MyApp.Mailer,
   api_key: System.get_env("SENDGRID_API_KEY")
 ```
 
----
 
 ## Sending Emails
 
@@ -198,7 +195,6 @@ def register_user(attrs) do
 end
 ```
 
----
 
 ## Testing Emails
 
@@ -229,7 +225,6 @@ defmodule MyApp.AccountsTest do
 end
 ```
 
----
 
 ## Email Preview in Development
 

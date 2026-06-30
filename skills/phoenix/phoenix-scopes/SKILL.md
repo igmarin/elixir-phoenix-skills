@@ -12,6 +12,7 @@ description: >
   scope-based auth, roles, permissions, or migrating from current_user to the new scope-based model.
   Trigger words: Scope, current_scope, scopes, phoenix scopes, role, roles, permission, permissions,
   authorization, authorize, can?, authenticated?, anonymous, on_mount, require_scope.
+---
 
 # Phoenix Scopes
 
@@ -21,7 +22,6 @@ description: >
 2. **Test both authenticated and unauthenticated states** — scope-based auth has two distinct code paths
 3. **Define `anonymous/0` for the unauthenticated case** — return a Scope with `user: nil`
 
----
 
 ## Scope Struct Definition
 
@@ -51,7 +51,6 @@ defmodule MyApp.Scope do
 end
 ```
 
----
 
 ## Using Scopes in LiveViews
 
@@ -84,7 +83,6 @@ defmodule MyAppWeb.DashboardLive do
 end
 ```
 
----
 
 ## Safe Template Access
 
@@ -97,7 +95,6 @@ end
 <% end %>
 ```
 
----
 
 ## Migration Workflow (current_user → Scopes)
 
@@ -132,7 +129,6 @@ def on_mount(:require_authenticated_user, _params, session, socket) do
 end
 ```
 
----
 
 ## Testing Scopes
 

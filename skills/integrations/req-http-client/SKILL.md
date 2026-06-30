@@ -9,11 +9,12 @@ description: >
   Req is the modern HTTP client for Elixir, replacing HTTPoison and Tesla.
   Trigger words: Req, HTTP client, HTTP request, API integration, external API, HTTPoison replacement.
 
+---
+
 # Req HTTP Client
 
 **Sections:** [End-to-End Workflow](#end-to-end-workflow) · [Quick-Reference: Request Types](#quick-reference-request-types) · [Retries](#retries) · [Streaming Responses](#streaming-responses)
 
----
 
 ## End-to-End Workflow
 
@@ -93,7 +94,6 @@ iex> MyApp.ApiClient.fetch_user(1)
 ```
 Checkpoint: confirm a `{:ok, body}` tuple is returned; check logs for retry warnings if the request is slow.
 
----
 
 ## Quick-Reference: Request Types
 
@@ -104,7 +104,6 @@ Checkpoint: confirm a `{:ok, body}` tuple is returned; check logs for retry warn
 | POST form | `Req.post!(url, form: [username: "john", password: "secret"])` |
 | With error handling | Use `Req.get/1` (not bang) and pattern match `{:ok, %{status: _, body: _}}` / `{:error, _}` |
 
----
 
 ## Retries
 
@@ -130,7 +129,6 @@ Req.get!("https://api.your-app.test/data",
 )
 ```
 
----
 
 ## Streaming Responses
 

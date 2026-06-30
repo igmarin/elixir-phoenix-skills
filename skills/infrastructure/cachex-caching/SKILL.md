@@ -8,7 +8,9 @@ description: >
   Configures Cachex instances, implements cache-aside and get-or-set patterns, sets TTL policies,
   builds cache warmers, monitors cache statistics, and sets up distributed caching across nodes.
   Trigger words: Cachex, caching, cache, TTL, ETS, distributed cache, cache warmer, cache warmup,
+
   cache invalidation, cache hits, cache misses, Cachex.fetch, Cachex.put, Cachex.get.
+---
 
 # Cachex Caching
 
@@ -18,7 +20,6 @@ description: >
 2. **Enable stats: true** — required to measure cache effectiveness
 3. **Use cache warmers for startup** — pre-populate expensive data when application starts
 
----
 
 ## End-to-End Workflow
 
@@ -33,7 +34,6 @@ Follow this sequence when adding caching to a feature:
 7. **Verify hit rate** — call `Cachex.stats/1` and confirm `hit_rate` is non-zero; see **Monitoring Cache Stats** for interpretation thresholds and remediation guidance
 8. **Monitor in production** — emit telemetry events for cache operations
 
----
 
 ## Setup
 
@@ -79,7 +79,6 @@ defmodule MyApp.Application do
 end
 ```
 
----
 
 ## Basic Operations
 
@@ -96,7 +95,6 @@ Cachex.del(:my_cache, "user:123")
 Cachex.clear(:my_cache)
 ```
 
----
 
 ## Get-or-Set Pattern
 
@@ -114,7 +112,6 @@ case status do
 end
 ```
 
----
 
 ## Cache Warmers
 
@@ -143,7 +140,6 @@ children = [
 ]
 ```
 
----
 
 ## Cache Invalidation
 
@@ -175,7 +171,6 @@ defmodule MyApp.Accounts do
 end
 ```
 
----
 
 ## Monitoring Cache Stats
 
@@ -192,7 +187,6 @@ end
 - `< 60%` — investigate TTL values and check for over-invalidation
 - `< 20%` — cache may be ineffective; revisit TTL strategy and key design before deploying to production
 
----
 
 ## Telemetry Integration
 
@@ -213,7 +207,6 @@ def get_user(id) do
 end
 ```
 
----
 
 ## Distributed Caching
 

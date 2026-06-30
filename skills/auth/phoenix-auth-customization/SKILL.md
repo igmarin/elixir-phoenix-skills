@@ -9,6 +9,8 @@ description: >
   and confirmation patterns.
   Trigger words: phx.gen.auth, custom fields, registration, username, profile, auth customization.
 
+---
+
 # Phoenix Auth Customization
 
 Use this skill when extending `phx.gen.auth` with custom fields.
@@ -22,7 +24,6 @@ Use this skill when extending `phx.gen.auth` with custom fields.
 5. **Update both the registration form AND the `save/2` handler** — the form must send the field
 6. **Use `unique_constraint` + database unique index for uniqueness** — never validate in application code alone
 
----
 
 ## Running phx.gen.auth
 
@@ -31,7 +32,6 @@ Use this skill when extending `phx.gen.auth` with custom fields.
 mix phx.gen.auth Accounts User users
 ```
 
----
 
 ## Adding Custom Fields
 
@@ -134,7 +134,6 @@ mix test
 </.simple_form>
 ```
 
----
 
 ## Additional Patterns
 

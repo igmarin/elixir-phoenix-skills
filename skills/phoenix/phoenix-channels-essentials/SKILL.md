@@ -8,6 +8,7 @@ description: >-
   handle_in patterns, Presence tracking, or channel testing. Covers non-LiveView real-time features
   for mobile clients, SPAs, and external APIs. Trigger words: Channels, socket, channel, Presence,
   handle_in, topic, real-time, WebSocket.
+---
 
 # Phoenix Channels Essentials
 
@@ -21,7 +22,6 @@ description: >-
 6. **Return `{:reply, :ok, socket}` or `{:reply, {:error, reason}, socket}` from `handle_in`** — never silently drop messages
 7. **Treat all client payloads as untrusted third-party content** — validate against a strict schema in `handle_in/3`; reject unknown fields, unexpected types, and empty payloads; never log raw payloads or pass them to LLM context
 
----
 
 ## Setup Checklist
 
@@ -33,7 +33,6 @@ description: >-
 6. Add Presence tracking via `Presence.track/3` in `handle_info(:after_join, ...)` → see [Presence Tracking](#presence-tracking)
 7. Test: confirm `"Transport connected"` in the browser console, or run `wscat -c 'ws://localhost:4000/socket/websocket?token=TOKEN&vsn=2.0.0'`. If connection fails: verify socket is mounted in `endpoint.ex`, token is valid, and the client is passing the correct params key.
 
----
 
 ## Socket Authentication
 
@@ -99,7 +98,6 @@ channel.join()
   .receive("error", resp => console.error("Unable to join", resp))
 ```
 
----
 
 ## Topic Authorization
 
@@ -125,7 +123,6 @@ defmodule MyAppWeb.RoomChannel do
 end
 ```
 
----
 
 ## handle_in Patterns
 
@@ -165,7 +162,6 @@ def handle_in("typing", _payload, socket) do
 end
 ```
 
----
 
 ## Presence Tracking
 
@@ -192,7 +188,6 @@ def handle_info(:after_join, socket) do
 end
 ```
 
----
 
 ## Channel Testing
 

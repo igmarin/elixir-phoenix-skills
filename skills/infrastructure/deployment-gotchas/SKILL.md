@@ -9,6 +9,8 @@ description: >
   secret management, health endpoints, and production log levels.
   Trigger words: deployment, release, runtime.exs, config, migration, PHX_HOST, Docker, health check, secrets.
 
+---
+
 # Deployment Gotchas
 
 Use this skill before modifying ANY deployment or release configuration.
@@ -23,7 +25,6 @@ Use this skill before modifying ANY deployment or release configuration.
 6. **Use `config :logger, level: :info` in production** — see §7
 7. **Use Docker multi-stage builds** for Elixir releases — see §4
 
----
 
 ## End-to-End Deployment Workflow
 
@@ -35,7 +36,6 @@ Use this skill before modifying ANY deployment or release configuration.
 5. If health check fails → rollback: bin/my_app eval "MyApp.Release.rollback(MyApp.Repo, <version>)"
 ```
 
----
 
 ## 1. runtime.exs vs config.exs
 
@@ -58,7 +58,6 @@ if config_env() == :prod do
 end
 ```
 
----
 
 ## 2. Release Migrations
 
@@ -94,7 +93,6 @@ end
 bin/my_app eval "MyApp.Release.migrate()"
 ```
 
----
 
 ## 3. PHX_HOST and PHX_SERVER
 
@@ -112,7 +110,6 @@ if config_env() == :prod do
 end
 ```
 
----
 
 ## 4. Asset Deployment
 
@@ -142,7 +139,6 @@ ENV HOME=/app
 CMD ["bin/my_app", "start"]
 ```
 
----
 
 ## 5. Never Hardcode Secrets
 
@@ -164,7 +160,6 @@ end
 mix phx.gen.secret
 ```
 
----
 
 ## 6. Health Endpoints
 
@@ -187,7 +182,6 @@ defmodule MyAppWeb.HealthController do
 end
 ```
 
----
 
 ## 7. Production Log Level
 
@@ -210,7 +204,6 @@ if config_env() == :prod do
 end
 ```
 
----
 
 ## Integration
 

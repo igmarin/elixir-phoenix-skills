@@ -9,6 +9,8 @@ description: >
   async safety, setup chaining, timestamp testing, and TDD workflow.
   Trigger words: test, mix test, DataCase, ConnCase, fixture, LiveView test, assert, ExUnit.
 
+---
+
 # Testing Essentials
 
 ## RULES — Follow these with no exceptions
@@ -20,7 +22,6 @@ description: >
 5. **Always test the unauthorized case** for any protected resource
 6. **Never hardcode dates** — use relative timestamps to prevent flaky tests
 
----
 
 ## Workflow: Writing a New Test File
 
@@ -34,7 +35,6 @@ Follow these steps in order, with explicit validation at each checkpoint:
 6. **Implement the feature**
 7. **Verify the test passes** — re-run `mix test path/to/file_test.exs` and confirm green
 
----
 
 ## Test Module Setup
 
@@ -60,7 +60,6 @@ defmodule MyAppWeb.UserLiveTest do
 end
 ```
 
----
 
 ## Fixture Pattern
 
@@ -82,7 +81,6 @@ defmodule MyApp.AccountsFixtures do
 end
 ```
 
----
 
 ## Context Test Skeleton
 
@@ -100,7 +98,6 @@ describe "create_post/1" do
 end
 ```
 
----
 
 ## LiveView Test Skeleton
 
@@ -141,7 +138,6 @@ describe "create" do
 end
 ```
 
----
 
 ## Changeset Test Skeleton
 
@@ -158,7 +154,6 @@ describe "changeset/2" do
 end
 ```
 
----
 
 ## Setup Chaining
 
@@ -184,7 +179,6 @@ defmodule MyAppWeb.PostLiveTest do
 end
 ```
 
----
 
 ## Timestamp Testing
 
@@ -208,7 +202,6 @@ new_post = post_fixture(published_at: future)
 assert Blog.list_published_posts() == [old_post]
 ```
 
----
 
 ## Troubleshooting Common Failures
 
@@ -220,7 +213,6 @@ assert Blog.list_published_posts() == [old_post]
 | Flaky timestamp assertions | Replace hardcoded datetimes with `DateTime.diff/3` (see Timestamp Testing above) |
 | Unexpected redirect in LiveView | Confirm test user has required role/session via `register_and_log_in_user` setup |
 
----
 
 ## When Not to Use
 

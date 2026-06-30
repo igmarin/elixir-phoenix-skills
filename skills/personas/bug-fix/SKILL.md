@@ -11,6 +11,7 @@ description: >
   test (MUST fail for the right reason) → minimal fix with user approval → full suite verification.
   Use when fixing reported bugs, addressing production issues, resolving test failures, or
   implementing fixes for code review findings. Trigger: bug report, production issue, failing test,
+---
   fix bug, resolve issue, address critical finding.
 # Bug Fix Persona
 
@@ -36,7 +37,6 @@ description: >
 - Reproduction steps documented
 - *Fails:* Return to information gathering.
 
----
 
 ### Phase 2: Reproduction
 
@@ -62,7 +62,6 @@ describe "publish_post/1" do
 end
 ```
 
----
 
 ### Phase 3: Fix Implementation
 
@@ -90,7 +89,6 @@ def publish_post(post) do
 end
 ```
 
----
 
 ### Phase 4: Verification
 
@@ -108,7 +106,6 @@ mix test  # Full test suite must pass
 - Edge cases tested and passing
 - *Fails:* Revise the fix to be more targeted and re-verify.
 
----
 
 ## Error Recovery
 
@@ -125,7 +122,6 @@ mix test  # Full test suite must pass
 1. Fix each contributing cause in a separate commit with its own reproduction test.
 2. Verify each fix independently before combining.
 
----
 
 ## Output Style
 

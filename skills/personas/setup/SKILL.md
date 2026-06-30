@@ -5,6 +5,7 @@ tags: [personas]
 license: MIT
 description: >
   Complete Elixir/Phoenix project setup loop with hard gates: verify Elixir/Erlang versions match .tool-versions, Hex and Rebar installed, database connection successful, all env vars loaded → configure CI/CD pipeline with testing and linting → validate end-to-end with mix deps.get, mix ecto.create, mix ecto.migrate, mix test, and write SETUP_CHECKLIST.md; phases context/onboarding→CI/CD configuration→environment validation. Use when starting a new Phoenix project, running `mix phx.new`, configuring mix.exs, setting up a development environment, or wiring up CI/CD for an Elixir project. Trigger: setup project, new Phoenix app, configure CI/CD, dev environment setup, mix phx.new, mix.exs setup, Elixir project bootstrap.
+---
 
 ### Phase 1: Context & Onboarding
 
@@ -31,7 +32,6 @@ cp .env.example .env 2>/dev/null || true
 
 **If environment check FAILS:** Fix the failing item above before proceeding to Phase 2.
 
----
 
 ### Phase 2: CI/CD Configuration
 
@@ -103,7 +103,6 @@ jobs:
 
 > Fill in `<DEPLOY_CLI>` with your deployment command (e.g., `flyctl deploy`, `gigalixir releases deploy`, or a custom Docker push). Replace secret names to match your repository settings.
 
----
 
 ### Phase 3: Environment Validation
 
@@ -124,7 +123,6 @@ act push
 - [ ] Secrets configured
 - [ ] Phoenix server starts and serves pages
 
----
 
 ## Output Style
 
@@ -137,7 +135,6 @@ CI/CD:        ci.yml ✓/✗ | cd.yml ✓/✗ | SHAs pinned ✓/✗ | Pipeline o
 Validation:   Server port <port> ✓/✗ | Full test suite ✓/✗ | SETUP_CHECKLIST.md written ✓/✗
 ```
 
----
 
 ## Error Recovery
 

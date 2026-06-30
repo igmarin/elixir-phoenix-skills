@@ -16,6 +16,7 @@ description: >
   early, review often; self-review before PR; re-review after significant changes.
   Trigger words: code review, PR review, review my code, review PR, pull request review,
   review diff, review before merge, code audit.
+---
 
 # Code Review
 

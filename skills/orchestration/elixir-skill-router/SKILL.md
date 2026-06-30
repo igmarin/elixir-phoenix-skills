@@ -14,6 +14,8 @@ description: >
   Trigger words: where do I start, help me plan, break this down, best approach, not sure how,
   multi-step, complex task, complex Phoenix, what should I do first, orchestrate, triage,
   route to skill, skill routing, entry point, skill router.
+---
+
 # Elixir Skill Router
 
 ## HARD-GATE
@@ -109,7 +111,6 @@ Priority: security-essentials > code-quality; Chain: security-essentials then co
 
 **Language**: Generated artifacts and output MUST be in English unless explicitly requested otherwise.
 
----
 
 ## When Not to Use
 

@@ -9,8 +9,10 @@ description: >
   attributes and relationships, configuring actions and policies, using Ash extensions (AshPostgres,
   AshPhoenix, AshJsonApi), and migrating from Phoenix contexts to Ash DSL patterns.
   Trigger words: Ash Framework, Ash resource, Ash action, resource-oriented, DSL, alternative to contexts,
+
   Ash domain, Ash policy, Ash extension, ash_postgres, ash_phoenix, Ash.JsonApi, AshQuery,
   AshChangeset, use Ash.Resource, use Ash.Domain.
+---
 
 # Ash Framework
 
@@ -23,7 +25,6 @@ description: >
 5. **Run `mix ash_postgres.generate_migrations` before manual migration** — let Ash generate the schema
 6. **Verify resource loads** — run `mix compile` and confirm no `Spark.Error.DslError` before proceeding
 
----
 
 ## End-to-End Workflow
 
@@ -41,7 +42,6 @@ Follow this sequence when starting a new Ash project:
 10. **Generate migrations** — run `mix ash_postgres.generate_migrations` then `mix ash_postgres.migrate`
 11. **Test with Ash API** — use `Domain.create!(resource, attributes)` to verify the resource works
 
----
 
 ## Core Concepts
 
@@ -106,7 +106,6 @@ defmodule MyApp.Blog.Post do
 end
 ```
 
----
 
 ### Using Actions
 
@@ -134,7 +133,6 @@ post
 |> MyApp.Blog.update!()
 ```
 
----
 
 ### Policies (Authorization)
 
@@ -166,7 +164,6 @@ end
 config :ash, :policies, log_policy_breakdowns: :error
 ```
 
----
 
 ### AshPhoenix LiveView Integration
 
@@ -187,7 +184,6 @@ case Blog.update(Ash.Changeset.for_update(post, :update, params)) do
 end
 ```
 
----
 
 ### AshJsonApi Integration
 
@@ -221,7 +217,6 @@ scope "/api/json" do
 end
 ```
 
----
 
 ## Calculations and Aggregates
 
@@ -239,7 +234,6 @@ MyApp.Blog.Post
 |> MyApp.Blog.read!()
 ```
 
----
 
 ## Ash-Specific Pitfalls
 
@@ -315,7 +309,6 @@ MyApp.Blog.Post
 |> MyApp.Blog.read!()
 ```
 
----
 
 ## Migrations from Ecto to Ash
 

@@ -9,6 +9,8 @@ description: >
   Phoenix events, LiveDashboard, custom business metrics, and external tool integration.
   Trigger words: telemetry, logging, Logger, metrics, LiveDashboard, observability, structured logging.
 
+---
+
 # Telemetry Essentials
 
 Use this skill before writing ANY telemetry, logging, or metrics code.
@@ -22,7 +24,6 @@ Use this skill before writing ANY telemetry, logging, or metrics code.
 5. **Tag telemetry events with metadata (user_id, request_id)** — without correlation IDs, traces are useless
 6. **Never log at `:debug` level in production** — it includes query parameters and PII; use `:info` level instead
 
----
 
 ## Structured Logging
 
@@ -53,7 +54,6 @@ defmodule MyAppWeb.Plugs.RequestMetadata do
 end
 ```
 
----
 
 ## :telemetry Basics
 
@@ -113,7 +113,6 @@ After attaching handlers, confirm everything is wired up in `iex`:
 
 If no log line appears, verify `attach_handlers/0` was called before the event and that the event name matches exactly.
 
----
 
 ## Telemetry Spans
 
@@ -126,7 +125,6 @@ def process_order(order) do
 end
 ```
 
----
 
 ## Monitoring Slow Queries
 
@@ -144,7 +142,6 @@ def handle_slow_query(_event, measurements, metadata, %{threshold_ms: threshold}
 end
 ```
 
----
 
 ## LiveDashboard Setup
 
@@ -163,7 +160,6 @@ end
 
 > **Deeper topics:** For performance profiling and benchmarking, see the `benchee-profiling` skill. For exporting metrics to external tools (Prometheus, Datadog) and production deployment considerations, see the `deployment-gotchas` skill. For low-level metric aggregation and reporter configuration, consult the [Telemetry.Metrics](https://hexdocs.pm/telemetry_metrics) and [TelemetryMetricsPrometheus](https://hexdocs.pm/telemetry_metrics_prometheus) library docs.
 
----
 
 ## Integration
 

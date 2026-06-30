@@ -12,6 +12,7 @@ description: >
   command output under the Observed output label.
   Trigger words: refactor, restructure, extract function, extract module, reduce
   duplication, split module, flatten with, reduce pipe chain, extract bounded context.
+---
 
 # Refactor Code
 

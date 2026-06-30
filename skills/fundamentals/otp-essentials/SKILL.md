@@ -9,6 +9,8 @@ description: >
   supervision strategies, DynamicSupervisor, Tasks, Agent, Registry, ETS, and process linking.
   Trigger words: GenServer, Supervisor, OTP, Task, Agent, Registry, ETS, process, supervision.
 
+---
+
 # OTP Essentials
 
 Use this skill before writing ANY GenServer, Supervisor, Task, or Agent module.
@@ -25,7 +27,6 @@ Use this skill before writing ANY GenServer, Supervisor, Task, or Agent module.
 8. **Use `Task.Supervisor`** for fire-and-forget supervised work
 9. **Prefer ETS over a bottleneck GenServer** for shared read-heavy state — one GenServer serializes all access
 
----
 
 ## GenServer
 
@@ -144,7 +145,6 @@ def handle_info(:tick, state) do
 end
 ```
 
----
 
 ## Supervisors
 
@@ -228,7 +228,6 @@ iex> Supervisor.count_children(MyApp.Supervisor)
 # %{active: 3, specs: 3, supervisors: 0, workers: 3}
 ```
 
----
 
 ## Tasks
 
@@ -263,7 +262,6 @@ Task.Supervisor.start_child(MyApp.TaskSupervisor, fn ->
 end)
 ```
 
----
 
 ## Agent
 
@@ -281,7 +279,6 @@ defmodule MyApp.Counter do
 end
 ```
 
----
 
 ## Process Naming
 
@@ -307,7 +304,6 @@ def get_room(room_id) do
 end
 ```
 
----
 
 ## ETS for Shared Read-Heavy State
 
@@ -368,7 +364,6 @@ end
 | `read_concurrency: true` | Optimise for concurrent reads |
 | `write_concurrency: true` | Optimise for concurrent writes (trades some read performance) |
 
----
 
 ## Integration
 

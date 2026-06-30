@@ -8,8 +8,10 @@ description: >
   Covers Phoenix.LiveView.stream/4, stream_insert, stream_delete, DOM patching efficiency,
   and pagination with streams. Available in LiveView 0.19+.
   Trigger words: stream, LiveView stream, large list, pagination, DOM patching, stream_insert,
+
   stream_delete, phx-update="stream", stream_configure, stream_many, infinite scroll,
   virtualized list, DOM ID, dom_id.
+---
 
 # LiveView Streams
 
@@ -20,7 +22,6 @@ description: >
 3. **Use `phx-update="stream"` in templates** — required for stream DOM patching; missing this causes full re-renders
 4. **Use `reset: true` for filtering and sorting** — clears existing items before inserting the new result set
 
----
 
 ## End-to-End Workflow
 
@@ -35,7 +36,6 @@ Follow this sequence when implementing LiveView streams:
 7. **Add handle_info** — handle Phoenix.PubSub broadcasts with stream updates
 8. **Verify WS frames** — confirm targeted DOM patches in browser DevTools
 
----
 
 ## Basic Stream Pattern
 
@@ -71,7 +71,6 @@ defmodule MyAppWeb.PostLive.Index do
 end
 ```
 
----
 
 ## Template with Streams
 
@@ -88,7 +87,6 @@ end
 </div>
 ```
 
----
 
 ## Infinite Scroll with Streams
 
@@ -129,7 +127,6 @@ end
 </div>
 ```
 
----
 
 ## PubSub Integration with Streams
 
@@ -162,7 +159,6 @@ def create_post(attrs) do
 end
 ```
 
----
 
 ## Resetting and Replacing Streams
 
@@ -186,7 +182,6 @@ def handle_event("sort", %{"column" => col, "direction" => dir}, socket) do
 end
 ```
 
----
 
 ## Edit-in-Place Pattern
 
@@ -219,7 +214,6 @@ end
 </div>
 ```
 
----
 
 ## Debugging Checklist
 

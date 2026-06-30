@@ -10,6 +10,8 @@ description: >
   timing attacks, CSRF, and dependency auditing.
   Trigger words: security, atom exhaustion, SQL injection, XSS, open redirect, timing attack, CSRF, Sobelow.
 
+---
+
 # Security Essentials
 
 Use this skill before writing ANY security-sensitive code.
@@ -29,7 +31,6 @@ Apply every item before merging. See the named sections below for patterns and e
 9. **Dependency auditing** → [Dependency Auditing](#dependency-auditing)
 10. **Sobelow in CI** — `mix sobelow` must pass in CI; fail on any HIGH or CRITICAL finding
 
----
 
 ## Security Review Process
 
@@ -45,7 +46,6 @@ Apply this sequence whenever writing or reviewing security-sensitive code:
 8. **Run full audit** — `mix deps.audit && mix hex.audit && mix sobelow` before merging
 9. **Test manually** — verify with curl/introspection that expected inputs are rejected
 
----
 
 ## Common Vulnerable Patterns
 
@@ -96,7 +96,6 @@ def show(conn, %{"id" => id}) do
 end
 ```
 
----
 
 ## Atom Table Exhaustion
 
@@ -115,7 +114,6 @@ case params["role"] do
 end
 ```
 
----
 
 ## SQL Injection
 
@@ -152,7 +150,6 @@ Ecto.Adapters.SQL.query(Repo, "SELECT * FROM users WHERE name = $1 AND status = 
 from(u in User, where: u.status == ^status and u.name == ^name)
 ```
 
----
 
 ## Open Redirects
 
@@ -183,7 +180,6 @@ def create(conn, %{"redirect_to" => redirect_to} = params) do
 end
 ```
 
----
 
 ## Cross-Site Scripting (XSS)
 
@@ -204,7 +200,6 @@ Avoid `raw/1`; sanitize with HtmlSanitizeEx if HTML is required.
 <%= raw(HtmlSanitizeEx.html5(@user_bio)) %>
 ```
 
----
 
 ## Sensitive Data in Logs
 
@@ -220,7 +215,6 @@ Logger.info("User login", email: email, user_id: user.id)
 Logger.debug("API call", endpoint: url, status: resp.status)
 ```
 
----
 
 ## Timing Attacks
 
@@ -240,7 +234,6 @@ def verify_token(provided_token, stored_token) do
 end
 ```
 
----
 
 ## Dependency Auditing
 
@@ -290,7 +283,6 @@ end
 
 **Interpretation:** Any Sobelow finding of HIGH or CRITICAL severity MUST be fixed before merging. LOW findings should be tracked and addressed within 2 sprints.
 
----
 
 ## CSRF Protection
 

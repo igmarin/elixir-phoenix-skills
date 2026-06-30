@@ -9,6 +9,8 @@ description: >
   Supports incremental adoption and catching type errors before production.
   Trigger words: typespec, @spec, @type, Dialyzer, Dialyxir, type safety, type checking.
 
+---
+
 # TypeSpec & Dialyzer
 
 ## RULES — Follow these with no exceptions
@@ -17,7 +19,6 @@ description: >
 2. **Start with core modules** — add typespecs incrementally, don't try to type everything at once
 3. **Never ignore Dialyzer warnings without documenting why** — use `.dialyzer_ignore.exs`
 
----
 
 ## Basic TypeSpecs
 
@@ -39,7 +40,6 @@ defmodule MyApp.Accounts do
 end
 ```
 
----
 
 ## Custom Types
 
@@ -86,7 +86,6 @@ defmodule MyApp.Accounts.User do
 end
 ```
 
----
 
 ## Dialyxir Setup
 
@@ -125,7 +124,6 @@ mix dialyzer --format short
 mix dialyzer --ignore-file .dialyzer_ignore.exs
 ```
 
----
 
 ## Interpreting and Fixing Dialyzer Errors
 
@@ -167,7 +165,6 @@ mix dialyzer --format short
 mix dialyzer --ignore-file .dialyzer_ignore.exs
 ```
 
----
 
 ## TypeSpec Best Practices
 
@@ -204,7 +201,6 @@ defmodule MyApp.Token do
 end
 ```
 
----
 
 ## CI Integration
 

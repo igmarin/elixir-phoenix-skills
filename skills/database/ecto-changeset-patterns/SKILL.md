@@ -9,6 +9,8 @@ description: >
   composition, conditional validation with opts, field transformations, and uniqueness validation.
   Trigger words: changeset, cast_assoc, validation, separate changesets, conditional validation, update_change.
 
+---
+
 # Ecto Changeset Patterns
 
 ## RULES — Quick Checklist
@@ -21,7 +23,6 @@ description: >
 6. Accept `opts \\ []` for conditional validation
 7. Validate at the changeset level, not in context functions
 
----
 
 ## Workflow: Building a New Schema
 
@@ -45,7 +46,6 @@ test "registration_changeset requires email and username" do
 end
 ```
 
----
 
 ## Separate Changesets Per Operation
 
@@ -97,7 +97,6 @@ defmodule MyApp.Accounts.User do
 end
 ```
 
----
 
 ## cast_assoc — Critical Pitfall
 
@@ -119,7 +118,6 @@ def changeset(ingredient, attrs) do
 end
 ```
 
----
 
 ## Changeset Composition
 
@@ -142,7 +140,6 @@ defp validate_username(changeset) do
 end
 ```
 
----
 
 ## Conditional Validation with opts
 
@@ -162,7 +159,6 @@ def register_user_for_test(attrs) do
 end
 ```
 
----
 
 ## Field Transformations with update_change
 
@@ -186,7 +182,6 @@ defp generate_slug(changeset) do
 end
 ```
 
----
 
 ## Uniqueness Validation
 
@@ -205,7 +200,6 @@ def changeset(user, attrs) do
 end
 ```
 
----
 
 ## Related Skills
 

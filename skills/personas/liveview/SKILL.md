@@ -4,6 +4,7 @@ type: persona
 tags: [personas]
 license: MIT
 description: >
+---
   Orchestrates LiveView feature development with hard gates: define mount/3 contract and assigns shape → write failing LiveView test using live_isolated or live/2 → implement mount, handle_event, and render with streams for collections → verify full LiveView lifecycle (mount→render→event→update) → quality gate (no assigns bloat, streams for >10 items, bracket access in templates); phases context→test design→implementation→quality. Use when building a new LiveView, adding features to an existing LiveView, or refactoring LiveView code. Trigger: create LiveView, new LiveView page, add LiveView feature, LiveView component, LiveView event, handle_event, mount.
 # LiveView Persona
 
@@ -19,7 +20,6 @@ description: >
 - [ ] Assigns shape documented (keys, types, streams if applicable)
 - [ ] All events listed
 
----
 
 ### Phase 2: Test Design
 
@@ -54,7 +54,6 @@ end
 - [ ] Test file exists and covers mount, key assigns, and at least one event
 - [ ] `mix test` confirms tests fail (module not yet implemented)
 
----
 
 ### Phase 3: Implementation
 
@@ -114,7 +113,6 @@ end
 - [ ] Stream containers use `phx-update="stream"`
 - [ ] `mix test` passes
 
----
 
 ### Phase 4: Quality Gate
 

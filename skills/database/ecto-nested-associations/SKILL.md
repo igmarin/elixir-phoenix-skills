@@ -8,8 +8,10 @@ description: >
   cast_embed, Ecto.Multi, or cascade operations. Covers nested creates, updates with on_replace,
   Ecto.Multi for unrelated tables, on_delete strategies, and FK indexes.
   Trigger words: cast_assoc, cast_embed, Ecto.Multi, nested, association, cascade, on_delete,
+
   on_replace, has_many, has_one, belongs_to, many_to_many, preload, nested_changeset,
   multi-table transaction, atomic create, atomic update.
+---
 
 # Ecto Nested Associations
 
@@ -24,7 +26,6 @@ description: >
 7. **Do NOT require foreign keys in child changesets** — `cast_assoc` sets them automatically
 8. **Use `Repo.transaction/1` with `Ecto.Multi`** — wrap multi-table operations for atomicity
 
----
 
 ## End-to-End Workflow
 
@@ -36,7 +37,6 @@ description: >
 6. **Handle results** — pattern-match on `{:ok, _}` and `{:error, changeset}`
 7. **Write tests** — test create, update (including removal), and error cases
 
----
 
 ## cast_assoc for Nested Creates
 
@@ -101,7 +101,6 @@ case Repo.insert(Post.changeset(%Post{}, attrs)) do
 end
 ```
 
----
 
 ## cast_assoc for Updates with on_replace
 
@@ -131,7 +130,6 @@ def update_recipe(recipe, attrs) do
 end
 ```
 
----
 
 ## Ecto.Multi for Unrelated Tables
 
@@ -159,7 +157,6 @@ case create_order_with_payment(order_attrs, payment_attrs) do
 end
 ```
 
----
 
 ## on_delete Strategies
 
@@ -190,7 +187,6 @@ def change do
 end
 ```
 
----
 
 ## Many-to-Many Associations
 
@@ -224,7 +220,6 @@ def changeset(post, attrs) do
 end
 ```
 
----
 
 ## Nested Update with Partial Data
 

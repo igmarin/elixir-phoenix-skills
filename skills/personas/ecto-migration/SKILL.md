@@ -4,6 +4,7 @@ type: persona
 tags: [personas]
 license: MIT
 description: >
+---
   Orchestrates safe database migrations with hard gates: plan migration assessing lock behavior, rollback strategy, and performance impact → write and test migration with migrate/rollback/re-migrate idempotent cycle → never combine schema change and data backfill in one migration → use expand-contract for column changes (add nullable→backfill→enforce NOT NULL in separate migrations) → verify full test suite passes; phases planning→implementation→verification→deployment. Use when adding tables, columns, indexes, or modifying database schema. Trigger: database migration, schema change, add column, create table, modify index, ecto migration, Ecto.Migration.
 # Ecto Migration Persona
 
@@ -40,7 +41,6 @@ Orchestrates safe Ecto migrations with idempotent cycles, rollback planning, and
 
 **If gate fails:** Clarify the schema change plan before implementing.
 
----
 
 ### Phase 2: Implementation
 
@@ -130,7 +130,6 @@ defmodule MyApp.Repo.Migrations.AddPostAuthorIndex do
 end
 ```
 
----
 
 ### Phase 3: Verification
 
@@ -148,7 +147,6 @@ MIX_ENV=test mix ecto.migrate
 
 **If gate fails:** Fix tests or migration logic.
 
----
 
 ### Phase 4: Deployment
 
@@ -162,7 +160,6 @@ MIX_ENV=test mix ecto.migrate
 - [ ] Rollback tested locally or on staging
 - [ ] Database backup taken before production migration
 
----
 
 ## Output Style
 
@@ -173,7 +170,6 @@ After completing a migration, produce a concise report covering:
 - **Verification:** `mix test` result (n tests, 0 failures), `MIX_ENV=test mix ecto.migrate` result
 - **Deployment checklist:** code deployed (handles old + new schema), migration applied, backfill run if needed, cleanup code deployed, rollback command confirmed
 
----
 
 ## Error Recovery
 
@@ -183,7 +179,6 @@ After completing a migration, produce a concise report covering:
 
 **Lock timeout on large table:** Apply expand-contract (add nullable → backfill separately → enforce NOT NULL). Use `concurrently: true` with `@disable_ddl_transaction true` for indexes. Schedule during low-traffic windows.
 
----
 
 ## Anti-Patterns to Avoid
 

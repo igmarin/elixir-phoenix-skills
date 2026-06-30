@@ -9,6 +9,8 @@ description: >
   creates property-based test patterns for data transformations, algorithms, and state machines.
   Trigger words: property-based testing, StreamData, ExUnitProperties, generators, fuzzing, shrinking.
 
+---
+
 # Property-Based Testing
 
 ## RULES — Follow these with no exceptions
@@ -17,7 +19,6 @@ description: >
 2. **Test invariants, not specific values** — "output length equals input length" not "output is [1, 2, 3]"
 3. **Leverage shrinking** — let StreamData find minimal failing cases; add constraints like `min_length: 1` or `integer(1..100)` when shrunk cases expose invalid generator inputs
 
----
 
 ## Setup
 
@@ -30,7 +31,6 @@ defp deps do
 end
 ```
 
----
 
 ## Basic Property Test
 
@@ -53,7 +53,6 @@ defmodule MyApp.StringUtilsTest do
 end
 ```
 
----
 
 ## Generators
 
@@ -104,7 +103,6 @@ property "users have valid emails" do
 end
 ```
 
----
 
 ## Testing Invariants
 
@@ -135,7 +133,6 @@ defmodule MyApp.SortingTest do
 end
 ```
 
----
 
 ## Shrinking
 
@@ -154,7 +151,6 @@ end
 # (shrunk from something like [1, 5, 0, 3, 2])
 ```
 
----
 
 ## Workflow: Write → Run → Interpret → Refine
 
@@ -172,7 +168,6 @@ end
 4. **Refine generator or property** — if the shrunk case reveals a generator producing invalid inputs, add constraints (e.g. `min_length: 1`, `integer(1..100)`); if it reveals a real bug, fix the implementation
 5. **Re-run** — confirm the fix holds across new generated cases
 
----
 
 ## Integration
 

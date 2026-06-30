@@ -4,6 +4,7 @@ type: persona
 tags: [personas]
 license: MIT
 description: >
+---
   Complete code quality loop for Elixir projects with hard gates: enforce formatting and linter compliance (mix format, mix credo must pass) → refactor only after characterization tests PASS on current code, verify behavior preserved after each extraction → generate @doc for all public APIs → NEVER open PR before formatter, credo, dialyzer, full test suite, and @doc coverage all pass; phases conventions review→refactoring→documentation. Use this composite end-to-end loop instead of individual refactoring or documentation skills when full three-phase production-readiness review is needed in one pass. Trigger: code review prep, before PR, full Elixir quality sweep, quality audit, production-ready review, end-to-end quality check.
 # Quality Persona
 
@@ -36,7 +37,6 @@ mix hex.audit                  # Dependency audit
 
 **HARD GATE — NEVER open a PR before all four checks above pass**, plus `mix test` (full suite green) and `@doc`/`@spec` annotations on all public APIs (completed in Phase 3). Fix any failure before proceeding.
 
----
 
 ### Phase 2: Refactoring (Optional)
 
@@ -55,7 +55,6 @@ mix hex.audit                  # Dependency audit
 - Re-examine the characterization test to ensure it fully covers the behavior being touched.
 - Propose a smaller, safer extraction and repeat from step 3.
 
----
 
 ### Phase 3: Documentation
 
@@ -71,7 +70,6 @@ mix hex.audit                  # Dependency audit
 4. Run `mix dialyzer` once more to confirm new typespecs are consistent.
 5. Run `mix test` to verify doctests pass.
 
----
 
 ## Final Pre-PR Checklist
 

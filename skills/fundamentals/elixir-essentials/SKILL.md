@@ -9,6 +9,8 @@ description: >
   guards, list comprehensions, naming conventions, and the "let it crash" philosophy.
   Trigger words: elixir, pattern matching, pipe, with, error handling, tagged tuples, guards.
 
+---
+
 # Elixir Essentials
 
 Use this skill before writing ANY `.ex` or `.exs` file.
@@ -28,7 +30,6 @@ Use this skill before writing ANY `.ex` or `.exs` file.
 11. **Don't** use `String.to_atom/1` on user input (atom table exhaustion)
 12. **Prefer `for` comprehensions** before chaining 3+ Enum operations
 
----
 
 ## Pattern Matching
 
@@ -187,7 +188,6 @@ Successor skills to apply after this one:
 - [typespec-dialyzer](../typespec-dialyzer/SKILL.md)
 - [code-quality](../../quality/code-quality/SKILL.md)
 
----
 
 ## When Not to Use
 

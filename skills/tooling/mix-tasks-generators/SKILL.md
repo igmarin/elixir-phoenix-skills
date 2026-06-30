@@ -13,6 +13,7 @@ description: >
   phx.gen.live, phx.gen.auth, scaffold, seed data, ecto.setup, mix help, Mix.Project,
   OptionParser, @shortdoc, preferred_cli_env, alias, mix run, generator, phx.gen.html,
   phx.gen.context, phx.gen.json, phx.gen.channel.
+---
 
 # Mix Tasks & Generators
 
@@ -25,7 +26,6 @@ description: >
 5. **Test custom tasks with `Mix.Project.in_project/4`** — ensure tasks work correctly in isolation
 6. **Follow `Mix.Tasks.Namespace.TaskName` naming** — file path must match: `lib/mix/tasks/namespace.task_name.ex`
 
----
 
 ## End-to-End Workflow
 
@@ -41,7 +41,6 @@ Follow this sequence when creating a custom Mix task:
 8. **Test** — use `Mix.Project.in_project/4` test helper
 9. **Verify** — run `mix help | grep task_name` to confirm registration
 
----
 
 ## Phoenix Generators
 
@@ -71,7 +70,6 @@ mix phx.gen.auth Accounts User users --web Admin
 mix phx.gen.context Blog Post posts --table posts --app MyApp
 ```
 
----
 
 ## Custom Mix Tasks
 
@@ -182,7 +180,6 @@ defmodule Mix.Tasks.MyApp.Migrate do
 end
 ```
 
----
 
 ## Custom Generators
 
@@ -219,7 +216,6 @@ end
 # Creates: lib/my_app/services/send_email.ex
 ```
 
----
 
 ## Mix Project Configuration
 
@@ -257,7 +253,6 @@ def project do
 end
 ```
 
----
 
 ## Testing Custom Tasks
 
@@ -286,7 +281,6 @@ defmodule Mix.Tasks.MyApp.SeedDataTest do
 end
 ```
 
----
 
 ## Common Task Patterns
 

@@ -9,7 +9,9 @@ description: >
   configuration files, writes custom check modules, configures strictness levels, and integrates
   Credo into CI pipelines.
   Trigger words: Credo, .credo.exs, linting, code style, static analysis, custom checks, credo.config,
+
   mix credo, code quality, lint, static analysis, format check.
+---
 
 # Credo Configuration
 
@@ -20,7 +22,6 @@ description: >
 3. **Add inline disables sparingly** — document why each exception is necessary
 4. **Custom checks belong in `lib/credo/checks/`** — never inline them in application code
 
----
 
 ## Setup Workflow
 
@@ -77,7 +78,6 @@ See [CI Integration](#ci-integration) below.
 
 Add custom check modules to `lib/credo/checks/`. See [Custom Checks](#custom-checks) below.
 
----
 
 ## Basic Configuration
 
@@ -125,7 +125,6 @@ Add custom check modules to `lib/credo/checks/`. See [Custom Checks](#custom-che
 }
 ```
 
----
 
 ## Disabling Checks
 
@@ -160,7 +159,6 @@ checks: %{
 }
 ```
 
----
 
 ## CI Integration
 
@@ -199,7 +197,6 @@ defp aliases do
 end
 ```
 
----
 
 ## Custom Checks
 
