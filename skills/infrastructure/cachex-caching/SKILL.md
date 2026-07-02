@@ -8,24 +8,18 @@ description: >
   Configures Cachex instances, implements cache-aside and get-or-set patterns, sets TTL policies,
   builds cache warmers, monitors cache statistics, and sets up distributed caching across nodes.
   Trigger words: Cachex, caching, cache, TTL, ETS, distributed cache, cache warmer, cache warmup,
+
   cache invalidation, cache hits, cache misses, Cachex.fetch, Cachex.put, Cachex.get.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
 ---
 
 # Cachex Caching
 
-## RULES — Follow these with no exceptions
+## RULES — Non-obvious requirements
 
 1. **Set TTL on every cached entry** — never cache indefinitely unless data is truly immutable
-2. **Use `Cachex.fetch/3` for get-or-set** — never check-then-set (race condition risk)
-3. **Invalidate on writes** — call `Cachex.del/2` after any data mutation
-4. **Enable stats: true** — without stats you cannot measure cache effectiveness
-5. **Use cache warmers for startup** — pre-populate expensive data when application starts
-6. **Handle cache failures gracefully** — fall back to database on cache errors
+2. **Enable stats: true** — required to measure cache effectiveness
+3. **Use cache warmers for startup** — pre-populate expensive data when application starts
 
----
 
 ## End-to-End Workflow
 
@@ -40,7 +34,6 @@ Follow this sequence when adding caching to a feature:
 7. **Verify hit rate** — call `Cachex.stats/1` and confirm `hit_rate` is non-zero; see **Monitoring Cache Stats** for interpretation thresholds and remediation guidance
 8. **Monitor in production** — emit telemetry events for cache operations
 
----
 
 ## Setup
 
@@ -63,13 +56,22 @@ defmodule MyApp.Application do
   @impl true
   def start(_type, _args) do
     children = [
+      # Basic cache with 1000 entry limit
       {Cachex, name: :my_cache, limit: 1000},
+      
+      # Cache with stats enabled for monitoring
       {Cachex, name: :stats_cache, limit: 5000, stats: true},
+      
+      # Cache with TTL, LRW eviction policy, stats, and hooks
       {Cachex,
        name: :ttl_cache,
        limit: 10_000,
        ttl: :timer.minutes(10),
-       policy: Cachex.Policy.LRW}
+       policy: Cachex.Policy.LRW,
+       stats: true,
+       hooks: [
+         %Cachex.Hook{module: MyApp.CacheLogger}
+       ]}
     ]
 
     Supervisor.start_link(children, strategy: :one_for_one)
@@ -77,7 +79,6 @@ defmodule MyApp.Application do
 end
 ```
 
----
 
 ## Basic Operations
 
@@ -90,19 +91,15 @@ end
 # put with explicit TTL (overrides cache-level default)
 Cachex.put(:my_cache, "session:abc", data, ttl: :timer.minutes(30))
 
-# Atomic delete — returns {:ok, true | false}; false means key was absent
 Cachex.del(:my_cache, "user:123")
-
 Cachex.clear(:my_cache)
 ```
 
----
 
 ## Get-or-Set Pattern
 
-Use `Cachex.fetch/3` as the canonical atomic cache-aside pattern. Handle `{:error, reason}` to fall back to the database on cache failures:
-
 ```elixir
+# Cachex.fetch/3 — atomic cache-aside, avoids race conditions
 {status, value} =
   Cachex.fetch(:my_cache, "user:123", fn key ->
     user = MyApp.Accounts.get_user(123)
@@ -115,18 +112,6 @@ case status do
 end
 ```
 
-**With error fallback to database:**
-
-```elixir
-case Cachex.fetch(:my_cache, "user:#{id}", fn _ ->
-  {:commit, Repo.get(User, id)}
-end) do
-  {:ok, user} -> user
-  {:error, _} -> Repo.get(User, id)  # Fallback to database
-end
-```
-
----
 
 ## Cache Warmers
 
@@ -155,31 +140,11 @@ children = [
 ]
 ```
 
----
-
-## Cache Configuration
-
-```elixir
-children = [
-  {Cachex,
-   name: :my_cache,
-   limit: 10_000,
-   policy: Cachex.Policy.LRW,
-   ttl: :timer.minutes(10),
-   stats: true,
-   hooks: [
-     %Cachex.Hook{module: MyApp.CacheLogger}
-   ]}
-]
-```
-
----
 
 ## Cache Invalidation
 
-Call `Cachex.del/2` after any data mutation. For reads, use the `Cachex.fetch/3` pattern from **Get-or-Set Pattern**.
-
 ```elixir
+# All Cachex operations return {:ok, result} or {:error, reason}; fall back to DB on failure
 defmodule MyApp.Accounts do
   def update_user(user, attrs) do
     with {:ok, updated_user} <- Repo.update(User.changeset(user, attrs)) do
@@ -194,10 +159,18 @@ defmodule MyApp.Accounts do
       {:ok, updated_user}
     end
   end
+
+  def get_user(id) do
+    case Cachex.fetch(:my_cache, "user:#{id}", fn _ ->
+      {:commit, Repo.get(User, id), ttl: :timer.minutes(5)}
+    end) do
+      {:ok, user} -> user
+      {:error, _} -> Repo.get(User, id)  # Fallback to database
+    end
+  end
 end
 ```
 
----
 
 ## Monitoring Cache Stats
 
@@ -209,52 +182,31 @@ end
 ```
 
 **Interpret hit rate:**
+- `> 80%` — excellent, cache is very effective
+- `60-80%` — good, normal for read-heavy workloads
+- `< 60%` — investigate TTL values and check for over-invalidation
+- `< 20%` — cache may be ineffective; revisit TTL strategy and key design before deploying to production
 
-| Hit Rate | Assessment | Action |
-|----------|------------|--------|
-| `> 80%` | Excellent | No action needed |
-| `60–80%` | Good | Normal for read-heavy workloads |
-| `< 60%` | Investigate | Check TTL values and over-invalidation |
-| `< 20%` | Ineffective | Revisit TTL strategy and key design before deploying |
-
----
 
 ## Telemetry Integration
 
+Emit telemetry events for cache operations to monitor in production:
+
 ```elixir
-defmodule MyApp.Telemetry do
-  def execute(:cache, :hit, cache_name, key) do
-    :telemetry.execute(
-      [:my_app, :cache, cache_name],
-      %{hits: 1},
-      %{key: key}
-    )
-  end
-
-  def execute(:cache, :miss, cache_name, key) do
-    :telemetry.execute(
-      [:my_app, :cache, cache_name],
-      %{misses: 1},
-      %{key: key}
-    )
-  end
-end
-
 def get_user(id) do
   case Cachex.fetch(:my_cache, "user:#{id}", fn _ ->
     {:commit, Repo.get(User, id)}
   end) do
     {:ok, user} ->
-      Telemetry.execute(:cache, :hit, :my_cache, "user:#{id}")
+      :telemetry.execute([:my_app, :cache, :my_cache], %{hits: 1}, %{key: "user:#{id}"})
       user
     {:error, _} ->
-      Telemetry.execute(:cache, :miss, :my_cache, "user:#{id}")
+      :telemetry.execute([:my_app, :cache, :my_cache], %{misses: 1}, %{key: "user:#{id}"})
       Repo.get(User, id)
   end
 end
 ```
 
----
 
 ## Distributed Caching
 
@@ -297,30 +249,3 @@ end
 
 defp primary_node, do: Application.fetch_env!(:my_app, :primary_cache_node)
 ```
-
----
-
-## Common Pitfalls
-
-| ❌ Don't | ✅ Do |
-|----------|-------|
-| Cache entries with no TTL | Set a TTL on every entry unless the data is truly immutable |
-| Check-then-set with `get` + `put` (race condition) | Use `Cachex.fetch/3` for atomic get-or-set |
-| Leave stale data after a write | Call `Cachex.del/2` after any mutation |
-| Crash the request when the cache errors | Fall back to the database on `{:error, _}` |
-| Ship without `stats: true` | Enable stats and check `hit_rate` before/after tuning |
-| Assume a local cache is shared across nodes | Broadcast invalidations (PubSub) or read from an authoritative node |
-
----
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| ecto-essentials | cachex-caching | telemetry-essentials |
-| elixir-essentials | cachex-caching | deployment-gotchas |
-
-**Companion skills:**
-- `telemetry-essentials` — emit and monitor cache hit/miss metrics
-- `ecto-essentials` — the database layer cache-aside falls back to
-- `phoenix-pubsub-patterns` — broadcast cache invalidation across nodes

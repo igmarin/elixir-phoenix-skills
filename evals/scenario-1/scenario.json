@@ -1,0 +1,4 @@
+{
+  "description": "ExUnit test conventions for Phoenix context and LiveView",
+  "include": ["./inputs"]
+}

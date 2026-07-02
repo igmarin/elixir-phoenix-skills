@@ -1,0 +1,56 @@
+{
+  "context": "Tests whether the agent correctly implements an Oban-based async welcome email system following Oban and Swoosh best practices: ID-only job args, idempotent worker, Oban.insert/1 error handling, context-level enqueueing, separate email module, and proper test patterns with perform_job/2.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "ID-only args",
+      "description": "The Oban job is enqueued with only the user's ID (e.g. %{user_id: user.id}) — NOT a full user struct or map with multiple user fields",
+      "max_score": 12
+    },
+    {
+      "name": "Fresh data fetch",
+      "description": "The worker's perform/1 fetches the user from the database by ID (e.g. Accounts.get_user/1 or Repo.get) — it does NOT rely on data from the job args beyond the ID",
+      "max_score": 10
+    },
+    {
+      "name": "Idempotency check",
+      "description": "The worker checks whether the welcome email has already been sent before sending (e.g. checking a flag, a sent_welcome_at timestamp, or catching a unique constraint) — returning early or {:ok, :already_sent} if already processed",
+      "max_score": 12
+    },
+    {
+      "name": "Not-found cancellation",
+      "description": "When the user is not found in the database, the worker returns {:cancel, reason} or {:discard, reason} instead of raising or returning :error (which would cause infinite retries)",
+      "max_score": 10
+    },
+    {
+      "name": "Oban.insert/1 used",
+      "description": "Oban.insert/1 is used to enqueue the job (NOT Oban.insert!/1) — the result is pattern-matched or handled via a with/case clause",
+      "max_score": 10
+    },
+    {
+      "name": "Error tuple handled",
+      "description": "The {:error, changeset} return from Oban.insert/1 is explicitly handled — not silently discarded, not passed through as {:ok, ...}",
+      "max_score": 8
+    },
+    {
+      "name": "Context enqueues job",
+      "description": "The Oban.insert/1 call appears inside the Accounts context module (e.g. MyApp.Accounts) — NOT inside a LiveView, controller, or any module under the web/ directory",
+      "max_score": 12
+    },
+    {
+      "name": "Separate email module",
+      "description": "The welcome email is constructed in its own module (e.g. MyApp.Emails.UserEmail or MyApp.Mailer.WelcomeEmail) — NOT defined inline inside the worker or context",
+      "max_score": 10
+    },
+    {
+      "name": "perform_job/2 in tests",
+      "description": "Tests invoke the worker using perform_job/2 (e.g. perform_job(SendWelcomeEmail, %{user_id: ...})) — NOT by calling worker.perform(%Oban.Job{}) directly",
+      "max_score": 10
+    },
+    {
+      "name": "assert_enqueued in tests",
+      "description": "At least one test uses assert_enqueued/1 to verify a job was enqueued with the correct arguments after calling the registration function",
+      "max_score": 6
+    }
+  ]
+}

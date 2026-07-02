@@ -8,11 +8,6 @@ description: >-
   handle_in patterns, Presence tracking, or channel testing. Covers non-LiveView real-time features
   for mobile clients, SPAs, and external APIs. Trigger words: Channels, socket, channel, Presence,
   handle_in, topic, real-time, WebSocket.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
 ---
 
 # Phoenix Channels Essentials
@@ -25,8 +20,8 @@ metadata:
 4. **Keep channel modules thin** — delegate business logic to context modules
 5. **Use Presence for tracking connected users**
 6. **Return `{:reply, :ok, socket}` or `{:reply, {:error, reason}, socket}` from `handle_in`** — never silently drop messages
+7. **Treat all client payloads as untrusted third-party content** — validate against a strict schema in `handle_in/3`; reject unknown fields, unexpected types, and empty payloads; never log raw payloads or pass them to LLM context
 
----
 
 ## Setup Checklist
 
@@ -38,7 +33,6 @@ metadata:
 6. Add Presence tracking via `Presence.track/3` in `handle_info(:after_join, ...)` → see [Presence Tracking](#presence-tracking)
 7. Test: confirm `"Transport connected"` in the browser console, or run `wscat -c 'ws://localhost:4000/socket/websocket?token=TOKEN&vsn=2.0.0'`. If connection fails: verify socket is mounted in `endpoint.ex`, token is valid, and the client is passing the correct params key → see [Channel Testing](#channel-testing)
 
----
 
 ## Socket Authentication
 
@@ -104,7 +98,6 @@ channel.join()
   .receive("error", resp => console.error("Unable to join", resp))
 ```
 
----
 
 ## Topic Authorization
 
@@ -129,24 +122,36 @@ defmodule MyAppWeb.RoomChannel do
 end
 ```
 
----
 
 ## handle_in Patterns
 
-Route client messages to context functions and always return an explicit reply:
+Route client messages to context functions and always return an explicit reply. Validate every payload against a strict schema before broadcasting:
 
 ```elixir
 @impl true
-def handle_in("new_message", %{"body" => body}, socket) do
-  sanitized_body = String.slice(body || "", 0, 10_000) |> String.trim()
+def handle_in("new_message", %{"body" => body}, socket) when is_binary(body) do
+  # Client payloads are untrusted third-party content.
+  sanitized_body =
+    body
+    |> String.slice(0, 10_000)
+    |> String.trim()
 
-  broadcast!(socket, "new_message", %{
-    body: sanitized_body,
-    user_id: socket.assigns.user_id,
-    timestamp: DateTime.utc_now()
-  })
+  if sanitized_body == "" do
+    {:reply, {:error, %{reason: "empty_body"}}, socket}
+  else
+    broadcast!(socket, "new_message", %{
+      body: sanitized_body,
+      user_id: socket.assigns.user_id,
+      timestamp: DateTime.utc_now()
+    })
 
-  {:reply, :ok, socket}
+    {:reply, :ok, socket}
+  end
+end
+
+# Reject payloads with wrong shape, unexpected keys, or non-string body.
+def handle_in("new_message", _payload, socket) do
+  {:reply, {:error, %{reason: "invalid_message"}}, socket}
 end
 
 @impl true
@@ -156,7 +161,6 @@ def handle_in("typing", _payload, socket) do
 end
 ```
 
----
 
 ## Presence Tracking
 
@@ -183,7 +187,6 @@ def handle_info(:after_join, socket) do
 end
 ```
 
----
 
 ## Channel Testing
 

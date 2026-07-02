@@ -8,9 +8,7 @@ description: >
   Covers @spec, @type, Dialyxir setup, typespec best practices, and CI integration.
   Supports incremental adoption and catching type errors before production.
   Trigger words: typespec, @spec, @type, Dialyzer, Dialyxir, type safety, type checking.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
+
 ---
 
 # TypeSpec & Dialyzer
@@ -25,7 +23,6 @@ metadata:
 6. **Use `@opaque` for encapsulated types** — hide the internal representation from callers
 7. **Cache the PLT in CI** — never rebuild the persistent lookup table on every run
 
----
 
 ## Basic TypeSpecs
 
@@ -47,7 +44,6 @@ defmodule MyApp.Accounts do
 end
 ```
 
----
 
 ## Custom Types
 
@@ -94,7 +90,6 @@ defmodule MyApp.Accounts.User do
 end
 ```
 
----
 
 ## Dialyxir Setup
 
@@ -133,7 +128,6 @@ mix dialyzer --format short
 mix dialyzer --ignore-file .dialyzer_ignore.exs
 ```
 
----
 
 ## Interpreting and Fixing Dialyzer Errors
 
@@ -175,7 +169,6 @@ mix dialyzer --format short
 mix dialyzer --ignore-file .dialyzer_ignore.exs
 ```
 
----
 
 ## TypeSpec Best Practices
 
@@ -212,7 +205,6 @@ defmodule MyApp.Token do
 end
 ```
 
----
 
 ## CI Integration
 

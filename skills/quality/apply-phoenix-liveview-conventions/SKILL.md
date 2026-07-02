@@ -9,11 +9,9 @@ description: >
   form binding, socket assigns, and error handling. Covers the two-phase rendering lifecycle,
   connected? guards, function components, and the assign-error-to-socket pattern.
   Trigger words: phoenix conventions, liveview conventions, apply phoenix patterns,
+
   liveview patterns, follow phoenix best practices, heex component, liveview mount,
   handle_event convention, phoenix liveview.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
 ---
 
 # Apply Phoenix LiveView Conventions
@@ -22,34 +20,30 @@ Use this skill when writing new LiveView modules or modifying existing LiveView 
 
 **Precondition:** Invoke `phoenix-liveview-essentials` before this skill for the full callback lifecycle reference.
 
----
 
-## Quick Reference
+## End-to-End Workflow — Creating or Modifying a LiveView
+
+1. **Define `mount/3` with safe defaults** — initialize all assigns so disconnected render never raises a `KeyError`
+2. **Add `handle_params/3` for URL-dependent assigns** — guard any PubSub subscriptions with `connected?(socket)`
+3. **Verify disconnected render** — confirm static HTML renders without errors before WebSocket connects
+4. **Add `handle_event/handle_info` callbacks** — one `@impl true` per callback; use `with` for 2+ fallible steps
+5. **Extract reusable markup into exported function components** — use `def`, not `defp`
+6. **Check error paths** — every failure branch assigns errors to the socket via `put_flash` or changeset assigns; never `raise`
+
+
+## Conventions — Quick Reference
 
 | Pattern | Convention |
 |---------|------------|
-| `@impl true` | Before every callback (mount, handle_event, handle_info, handle_params) |
+| `@impl true` | Before every callback (mount, handle_event, handle_info, handle_params, render) |
 | Assigns in mount | Static defaults in mount; URL-dependent in handle_params |
 | Side effects | Guard with `if connected?(socket)` — only run when WebSocket connected |
 | Return value | `{:noreply, socket}` from handle_event/handle_info |
 | Error handling | Assign errors to socket with `put_flash`; never raise |
 | Components | Use `def` (exported), not `defp` |
 | Multi-step errors | Use `with` instead of nested case |
+| Database access | Call context functions only — never query `Repo` directly from a LiveView |
 
----
-
-## RULES — Follow these with no exceptions
-
-1. **Always use `@impl true`** before every callback (mount, handle_event, handle_info, handle_params, render)
-2. **Initialize all assigns in mount** — static defaults go in mount, URL-dependent assigns go in handle_params
-3. **Guard side effects with `connected?(socket)`** — PubSub subscriptions, timers, and async work only run when connected
-4. **Return `{:noreply, socket}` from handle_event/handle_info** — never `{:reply, ...}` unless broadcast is needed
-5. **Assign errors to socket, don't raise** — use `put_flash` and changeset assigns for error states
-6. **Use function components (def, not defp)** for reusable HEEx markup — export via `~H"""` sigil
-7. **Use `with` for multi-step error handling** in event handlers instead of nested case
-8. **Never query the database directly from a LiveView** — call context functions instead
-
----
 
 ## Two-Phase Rendering
 
@@ -62,18 +56,8 @@ LiveView renders twice per page load:
 
 **Always initialize assigns to safe defaults in Phase 1** so the static HTML never raises a `KeyError` before WebSocket connects.
 
----
 
 ## Mount Callback
-
-❌ **Bad — missing `@impl true` and unsafe assign access:**
-```elixir
-def mount(_params, _session, socket) do
-  socket = assign(socket, :user, current_user)
-  Phoenix.PubSub.subscribe(MyApp.PubSub, "notifications:#{@user.id}")
-  {:ok, socket}
-end
-```
 
 ✅ **Good — `@impl true`, safe defaults, guarded side effects:**
 ```elixir
@@ -95,19 +79,8 @@ end
 
 **Checkpoint:** Static HTML must render without `KeyError` before WebSocket connects.
 
----
 
 ## Handle Event
-
-❌ **Bad — no `@impl true`, returning incorrect tuple, raising on error:**
-```elixir
-def handle_event("delete", %{"id" => id}, socket) do
-  case Posts.delete_post(id) do
-    {:ok, _} -> {:reply, %{ok: true}, socket}
-    {:error, _} -> raise "Delete failed"
-  end
-end
-```
 
 ✅ **Good — `@impl true`, `{:noreply, socket}`, assign errors to socket:**
 ```elixir
@@ -156,17 +129,8 @@ def handle_event("process", %{"id" => id}, socket) do
 end
 ```
 
----
 
 ## Handle Info
-
-❌ **Bad — no `@impl true`, mutating socket directly:**
-```elixir
-def handle_info({:item_updated, item}, socket) do
-  socket.assigns.items = [item | socket.assigns.items]
-  {:reply, %{items: socket.assigns.items}, socket}
-end
-```
 
 ✅ **Good — `@impl true`, use `update` for immutable assign changes:**
 ```elixir
@@ -181,11 +145,10 @@ def handle_info(%{event: "presence_diff"}, socket) do
 end
 ```
 
----
 
 ## Handle Params
 
-❌ **Bad — no `@impl true`, side effects not guarded:**
+❌ **Bad — no `@impl true`, side effects not guarded, wrong return tuple:**
 ```elixir
 def handle_params(%{"id" => id}, _uri, socket) do
   post = Posts.get_post!(id)
@@ -213,22 +176,19 @@ def handle_params(_params, _uri, socket) do
 end
 ```
 
----
 
 ## HEEx Component Structure
 
 ### Function Components (exported, reusable)
 
-❌ **Bad — using `defp` (private), not exported:**
+❌ **Bad — `defp` makes the component unexportable and unusable across templates:**
 ```elixir
 defmodule MyAppWeb.Components do
   use Phoenix.Component
 
   defp card(assigns) do
     ~H"""
-    <div class="card">
-      <h3><%= @title %></h3>
-    </div>
+    <div class="card"><h3><%= @title %></h3></div>
     """
   end
 end
@@ -300,21 +260,8 @@ end
 </.modal>
 ```
 
----
 
 ## Form Binding
-
-❌ **Bad — no `@impl true`, no validation handler, no error handling:**
-```elixir
-def mount(_params, _session, socket) do
-  {:ok, assign(socket, changeset: Post.changeset(%Post{}, %{}))}
-end
-
-def handle_event("save", %{"post" => params}, socket) do
-  Posts.create_post(params)
-  {:reply, %{ok: true}, socket}
-end
-```
 
 ✅ **Good — `@impl true`, separate validate event, assign changeset on error:**
 ```elixir
@@ -356,17 +303,8 @@ end
 </.simple_form>
 ```
 
----
 
 ## Socket Assigns — Best Practices
-
-❌ **Bad — mutating socket.assigns directly:**
-```elixir
-def handle_info({:count_update, n}, socket) do
-  socket.assigns[:count] = n
-  {:noreply, socket}
-end
-```
 
 ✅ **Good — use `assign`/`update` for immutable changes:**
 ```elixir
@@ -398,62 +336,6 @@ defp format_user(socket) do
 end
 ```
 
----
-
-## Error Handling Patterns
-
-### Assign Errors to Socket (never raise)
-
-❌ **Bad — raising on expected error:**
-```elixir
-def handle_event("submit", %{"data" => data}, socket) do
-  case process_data(data) do
-    {:ok, result} -> {:noreply, assign(socket, :result, result)}
-    {:error, :invalid} -> raise "Invalid data"
-  end
-end
-```
-
-✅ **Good — assign error to socket with `put_flash`:**
-```elixir
-@impl true
-def handle_event("submit", %{"data" => data}, socket) do
-  case process_data(data) do
-    {:ok, result} ->
-      {:noreply, assign(socket, :result, result)}
-
-    {:error, :invalid} ->
-      {:noreply, put_flash(socket, :error, "Invalid data")}
-
-    {:error, reason} ->
-      {:noreply, put_flash(socket, :error, "Failed: #{inspect(reason)}")}
-  end
-end
-```
-
-### Flash Messages
-
-```elixir
-put_flash(socket, :info, "Success message")
-put_flash(socket, :error, "Error message")
-put_flash(socket, :warning, "Warning message")
-```
-
----
-
-## Common Pitfalls
-
-| ❌ Wrong | ✅ Correct |
-|----------|-----------|
-| `def handle_event(...)` without `@impl true` | `@impl true` before every callback |
-| Side effects (PubSub, DB calls) outside `connected?` guard | Always guard with `if connected?(socket)` |
-| `raise` in handle_event for expected errors | Assign errors to socket with `put_flash` |
-| Nested `case` for multi-step error handling | Use `with` for 2+ fallible operations |
-| Querying `Repo` directly in LiveView | Call context functions (`Posts.get_post!`) |
-| `defp` for component used in template | Use `def` (exported function component) |
-| Mutating socket.assigns directly | Use `assign`/`update` returning new socket |
-
----
 
 ## Integration
 

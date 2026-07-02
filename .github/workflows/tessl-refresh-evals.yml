@@ -1,0 +1,135 @@
+name: Tessl Refresh Eval Scenarios
+
+# Run manually when you want a fresh set of eval scenarios.
+# Scenarios are intentionally kept stable in the repo so that every publish
+# uses the same well-known test cases and results are comparable over time.
+# Only refresh when you add/change skills and want Tessl to generate new ones.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tessl-refresh-evals
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          ref: refs/heads/main
+          fetch-depth: 0
+
+      - name: Set up Tessl
+        uses: tesslio/setup-tessl@25ec223fc0da33b41b8044ff5ab2b85235f4f91e # v2
+        with:
+          version: "0.88.2"
+          token: ${{ secrets.TESSL_TOKEN }}
+
+      - name: Generate Tessl eval scenarios
+        id: generate
+        run: |
+          echo "Requesting scenario generation..."
+          generation_output=$(tessl scenario generate --json .)
+          echo "Raw output:"
+          echo "$generation_output"
+          generation_id=$(echo "$generation_output" | ruby -rjson -e '
+            json = STDIN.read.lines.reject { |line| line.start_with?("-") }.join
+            puts JSON.parse(json)["generationId"]
+          ')
+          if [ -z "$generation_id" ]; then
+            echo "::error::Unable to extract generation ID"
+            exit 1
+          fi
+          echo "generation_id=$generation_id" >> "$GITHUB_OUTPUT"
+          echo "Generation ID: $generation_id"
+
+      - name: Wait for generation to complete
+        env:
+          GENERATION_ID: ${{ steps.generate.outputs.generation_id }}
+        run: |
+          generation_id="$GENERATION_ID"
+          max_attempts=60
+          attempt=0
+          while [ $attempt -lt $max_attempts ]; do
+            if ! status_output=$(tessl scenario view --json "$generation_id" 2>&1); then
+              attempt=$((attempt + 1))
+              echo "Attempt $attempt: tessl scenario view failed; retrying in 10s..."
+              sleep 10
+              continue
+            fi
+            status=$(echo "$status_output" | ruby -rjson -e '
+              json = STDIN.read.lines.reject { |line| line.start_with?("-") }.join
+              puts JSON.parse(json).dig("data", "attributes", "status")
+            ')
+            echo "Attempt $((attempt + 1)): $status"
+            if [ "$status" = "completed" ]; then
+              echo "Generation completed"
+              exit 0
+            elif [ "$status" = "failed" ]; then
+              echo "::error::Generation failed"
+              echo "$status_output"
+              exit 1
+            fi
+            attempt=$((attempt + 1))
+            sleep 10
+          done
+          echo "::error::Generation timed out"
+          exit 1
+
+      - name: Download new scenarios
+        env:
+          GENERATION_ID: ${{ steps.generate.outputs.generation_id }}
+        run: |
+          generation_id="$GENERATION_ID"
+          echo "Downloading scenarios for generation $generation_id..."
+          tessl scenario download "$generation_id" --output evals --strategy replace
+
+      - name: Validate downloaded scenarios
+        run: |
+          if [ ! -d evals ] || [ -z "$(ls -A evals/ 2>/dev/null)" ]; then
+            echo "::error::evals/ directory is empty or missing after download"
+            exit 1
+          fi
+          scenario_count=$(find evals -mindepth 1 -maxdepth 1 -type d | wc -l)
+          echo "Found $scenario_count scenario directories"
+          if [ "$scenario_count" -eq 0 ]; then
+            echo "::error::No scenario directories found in evals/"
+            exit 1
+          fi
+          # Verify each scenario has the required files and valid JSON
+          for scenario_dir in evals/scenario-*/; do
+            for required in scenario.json criteria.json task.md; do
+              if [ ! -f "$scenario_dir$required" ]; then
+                echo "::error::Missing $required in $scenario_dir"
+                exit 1
+              fi
+            done
+            for json_file in scenario.json criteria.json; do
+              if ! ruby -rjson -e "JSON.parse(File.read('${scenario_dir}${json_file}'))" 2>/dev/null; then
+                echo "::error::Invalid JSON in ${scenario_dir}${json_file}"
+                exit 1
+              fi
+            done
+          done
+          echo "All scenarios validated successfully"
+
+      - name: Commit updated scenarios
+        env:
+          GENERATION_ID: ${{ steps.generate.outputs.generation_id }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add evals/
+          if git diff --cached --quiet; then
+            echo "Scenarios unchanged — nothing to commit"
+          else
+            git commit -m "chore(evals): refresh eval scenarios from generation $GENERATION_ID [skip ci]"
+            git push origin HEAD:main
+            echo "Committed and pushed updated scenarios"
+          fi

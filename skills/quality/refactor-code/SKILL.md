@@ -11,10 +11,7 @@ description: >
   include a Stable behavior statement and Verification evidence showing actual
   command output under the Observed output label.
   Trigger words: refactor, restructure, extract function, extract module, reduce
-  duplication, split module, flatten with, reduce pipe chain, extract context.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
+  duplication, split module, flatten with, reduce pipe chain, extract bounded context.
 ---
 
 # Refactor Code
@@ -45,19 +42,6 @@ If a public interface changes, document the compatibility shim and its removal c
 NEVER fabricate test output — label only actual run output as Observed output.
 ```
 
-These constraints are authoritative. The process steps below implement them; do not re-derive or relax them.
-
-## RULES — Follow these with no exceptions
-
-1. **Write characterization tests first** — they must pass on the current, un-refactored code before you touch any production file.
-2. **Never mix behavior changes with structural refactors** in the same step — finish the structural refactor, then change behavior in a separate step with its own test.
-3. **Refactor one boundary per step** — never extract two abstractions in the same step.
-4. **Keep public interfaces stable** until callers are migrated — document any compatibility shim/facade and its removal condition, or state why none is needed.
-5. **Verify after every step** — run the relevant test file after each change and the full `mix test` suite at the end.
-6. **Stop and undo on failure** — if a test fails after a step, revert that step and investigate; fix the code, never the test.
-7. **Label only actual run output as `Observed output`** — never fabricate output or use "Expected/Planned output" as a substitute, and provide at least two Observed output entries at different sequence points.
-8. **Include an explicit Stable behavior statement** describing exactly which inputs/outputs and public interfaces must not change.
-
 ## Core Process
 
 ### 1. Define stable behavior
@@ -70,7 +54,7 @@ Include in your output:
 
 ### 2. Add characterization tests
 
-Write this test and confirm it passes on the **current** (un-refactored) code before touching any production file. If it fails, stop and fix the test or the behavior mismatch before continuing.
+**Write this before touching any production file.** No refactoring step begins until this test exists and passes on the current (un-refactored) code. If the characterization test fails, stop and fix the test or the behavior mismatch before continuing.
 
 ```elixir
 # test/my_app/accounts_test.exs
@@ -91,17 +75,39 @@ defmodule MyApp.AccountsRefactorTest do
 end
 ```
 
-Run it: `mix test test/my_app/accounts_test.exs` — it must pass on the **current** code.
+Run it: `mix test test/my_app/accounts_test.exs` — it must pass on the **current** code before any production file is changed.
 
 ### 3. Choose the smallest safe slice
 
-Good first moves include: extracting duplicated logic into a private helper, flattening a nested `case` into `with`, reducing a long pipe chain into named functions, or wrapping a context boundary. One boundary at a time.
+Good first moves: extract duplicated logic into a private helper, flatten a nested `case` into `with`, reduce a long pipe chain into named functions, or wrap a context boundary. One boundary at a time.
 
-### 4. Execute extraction/refactor (One step at a time)
+### 4. Execute extraction/refactor (one step at a time)
 
-Apply structural changes only — do not add, remove, or alter behavior in this step. The patterns below illustrate the general approach; adapt them to the specific codebase.
+Apply the appropriate pattern below. Each shows a representative before/after; adapt to your context.
 
-**Example — Flatten Nested Case into With:**
+#### Extract Private Function (ABC complexity reduction)
+
+```elixir
+# Before: one large public function
+def calculate_trend_line(data) do
+  # 50 lines of assignments, branches, conditions
+end
+
+# After: delegate to named private helpers
+def calculate_trend_line(data) do
+  sums = calculate_regression_sums(data)
+  slope = calculate_slope(sums)
+  intercept = calculate_intercept(sums, slope)
+  build_trend_points(data, slope, intercept)
+end
+
+defp calculate_regression_sums(data), do: # ...
+defp calculate_slope(sums), do: # ...
+defp calculate_intercept(sums, slope), do: # ...
+defp build_trend_points(data, slope, intercept), do: # ...
+```
+
+#### Flatten Nested Case into With
 
 ```elixir
 # Before
@@ -109,11 +115,7 @@ def process_order(order_id) do
   case find_order(order_id) do
     {:ok, order} ->
       case validate_order(order) do
-        {:ok, valid_order} ->
-          case charge_order(valid_order) do
-            {:ok, charge} -> {:ok, charge}
-            error -> error
-          end
+        {:ok, valid_order} -> charge_order(valid_order)
         error -> error
       end
     error -> error
@@ -130,44 +132,69 @@ def process_order(order_id) do
 end
 ```
 
-Other common structural moves (apply the same characterization-test-first discipline to each):
-- **Extract private function** — decompose a long function body into named `defp` helpers, keeping the public signature identical.
-- **Reduce pipe chain** — replace anonymous inline transformations with named private functions that each do one thing.
-- **Extract context boundary** — move cross-context calls behind a module alias or thin wrapper, preserving the calling interface exactly.
+#### Reduce Pipe Chain into Named Functions
+
+```elixir
+# Before
+def process_data(data) do
+  data
+  |> Enum.filter(&active?/1)
+  |> Enum.map(&transform/1)
+  |> Enum.group_by(& &1.category)
+  |> Enum.map(fn {cat, items} -> {cat, Enum.count(items)} end)
+end
+
+# After
+def process_data(data) do
+  data |> filter_active() |> transform_all() |> group_by_category() |> count_per_category()
+end
+
+defp filter_active(data), do: Enum.filter(data, &active?/1)
+defp transform_all(data), do: Enum.map(data, &transform/1)
+defp group_by_category(data), do: Enum.group_by(data, & &1.category)
+defp count_per_category(groups), do: Enum.map(groups, fn {cat, items} -> {cat, Enum.count(items)} end)
+```
+
+#### Extract Context Module Boundary
+
+```elixir
+# Before: Accounts calls mailer directly
+defmodule MyApp.Accounts do
+  def send_welcome_email(user) do
+    MyApp.Mailer.deliver(MyApp.Mailers.UserEmail.welcome(user))
+  end
+end
+
+# After: delegate through a Mail context
+defmodule MyApp.Accounts do
+  alias MyApp.Mail
+
+  def register_user(attrs) do
+    with {:ok, user} <- create_user(attrs) do
+      Mail.send_welcome(user)
+      {:ok, user}
+    end
+  end
+end
+```
 
 ### 5. Verification Protocol
 
-Run verification after every refactoring step:
+This is the single authoritative source for all verification rules.
 
-1. Run the relevant test file: `mix test test/path/to/file_test.exs`
-2. Read the output — check exit code, count failures
-3. If tests fail: STOP, undo the step, investigate
-4. If tests pass: proceed to next step
-5. At the end, run full suite: `mix test`
-6. Only claim completion with evidence from the last test run
-
-**Evidence labelling rules (authoritative):** Label actual run output as **Observed output** only. Never use labels such as "Expected output", "Required output", or "Planned output" as substitutes for actual observed run output. If you have not run the tests, you have no observed output to report. Report test run output at EACH step — not only at the end. At least two separate **Observed output** entries at different sequence points are required.
-
-## Common Pitfalls
-
-| ❌ Don't | ✅ Do |
-|----------|-------|
-| Start refactoring before any tests exist | Write characterization tests that pass on the current code first |
-| Change behavior and structure in the same step | Complete the structural refactor, then change behavior in a separate step |
-| Extract two abstractions at once | Refactor one boundary per step |
-| Change a public interface with no migration path | Keep the interface stable behind a shim and document its removal condition |
-| Edit the test until it passes after a refactor | Fix the production code — a failing characterization test means behavior changed |
-| Run the suite only at the very end | Verify after every step and run the full `mix test` at the end |
-| Label planned or expected results as evidence | Report only actual runs as `Observed output` (≥2 entries) |
+- Run `mix test test/path/to/file_test.exs` **after every refactoring step** and check exit code and failure count.
+- If tests fail: **STOP, undo the step, investigate.**
+- At the end, run the full suite: `mix test`.
+- **Evidence labelling:** Label actual run output as **Observed output** only. Never use labels such as "Expected output", "Required output", or "Planned output" as substitutes for actual observed run output.
+- Report test run output at EACH step — not only at the end. At least two separate **Observed output** entries at different sequence points are required.
 
 ## Integration
 
 | Predecessor | This Skill | Successor |
 |-------------|------------|-----------|
-| code-quality | refactor-code | code-review |
-| testing-essentials | refactor-code | code-quality |
+| code-review | refactor-code | code-quality |
 
 **Companion skills:**
-- `code-quality` — identifies the duplication and complexity that motivates a refactor
-- `testing-essentials` — provides the test harness the characterization tests build on
-- `code-review` — reviews the structural change once behavior is proven unchanged
+- `code-quality` — Credo complexity detection and quality gate
+- `testing-essentials` — fixture and test setup patterns
+- `apply-phoenix-liveview-conventions` — LiveView-specific refactoring

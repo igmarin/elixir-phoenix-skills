@@ -9,11 +9,9 @@ description: >
   attributes and relationships, configuring actions and policies, using Ash extensions (AshPostgres,
   AshPhoenix, AshJsonApi), and migrating from Phoenix contexts to Ash DSL patterns.
   Trigger words: Ash Framework, Ash resource, Ash action, resource-oriented, DSL, alternative to contexts,
+
   Ash domain, Ash policy, Ash extension, ash_postgres, ash_phoenix, Ash.JsonApi, AshQuery,
   AshChangeset, use Ash.Resource, use Ash.Domain.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
 ---
 
 # Ash Framework
@@ -27,7 +25,6 @@ metadata:
 5. **Run `mix ash_postgres.generate_migrations` before manual migration** — let Ash generate the schema
 6. **Verify resource loads** — run `mix compile` and confirm no `Spark.Error.DslError` before proceeding
 
----
 
 ## End-to-End Workflow
 
@@ -45,7 +42,6 @@ Follow this sequence when starting a new Ash project:
 10. **Generate migrations** — run `mix ash_postgres.generate_migrations` then `mix ash_postgres.migrate`
 11. **Test with Ash API** — use `Domain.create!(resource, attributes)` to verify the resource works
 
----
 
 ## Core Concepts
 
@@ -110,7 +106,6 @@ defmodule MyApp.Blog.Post do
 end
 ```
 
----
 
 ### Using Actions
 
@@ -138,7 +133,6 @@ post
 |> MyApp.Blog.update!()
 ```
 
----
 
 ### Policies (Authorization)
 
@@ -163,40 +157,37 @@ policies do
 end
 ```
 
-**Debugging `Ash.Error.Forbidden`:** enable policy breakdown logging in `config/dev.exs`:
+**Debugging authorization failures:** If a call raises `Ash.Error.Forbidden`, enable policy breakdown logging:
 
 ```elixir
+# config/dev.exs
 config :ash, :policies, log_policy_breakdowns: :error
 ```
 
----
 
 ### AshPhoenix LiveView Integration
 
-Add `{:ash_phoenix, "~> 2.0"}` to deps.
+Add `{:ash_phoenix, "~> 2.0"}` to deps. See [AshPhoenix docs](https://hexdocs.pm/ash_phoenix) for full LiveView and form component examples.
 
 ```elixir
-# mount — build form from changeset
+# Build form from changeset in mount
 form =
   post
   |> Ash.Changeset.for_update(:update, %{})
   |> AshPhoenix.Form.for_update()
   |> to_form()
 
-# handle_event "save"
+# Handle save event — reassign form on error
 case Blog.update(Ash.Changeset.for_update(post, :update, params)) do
-  {:ok, post} -> {:noreply, put_flash(socket, :info, "Saved.") |> assign(post: post)}
-  {:error, cs} -> {:noreply, assign(socket, form: AshPhoenix.Form.for_update(cs) |> to_form())}
+  {:ok, post}  -> {:noreply, put_flash(socket, :info, "Saved.") |> assign(post: post)}
+  {:error, cs} -> {:noreply, assign(socket, form: cs |> AshPhoenix.Form.for_update() |> to_form())}
 end
 ```
 
-See the [AshPhoenix docs](https://hexdocs.pm/ash_phoenix) for full LiveView and form component examples.
-
----
 
 ### AshJsonApi Integration
 
-Add `{:ash_json_api, "~> 1.0"}` to deps.
+Add `{:ash_json_api, "~> 1.0"}` to deps. See [AshJsonApi docs](https://hexdocs.pm/ash_json_api) for pagination, includes, and error serialization.
 
 ```elixir
 # In your resource
@@ -226,9 +217,6 @@ scope "/api/json" do
 end
 ```
 
-See the [AshJsonApi docs](https://hexdocs.pm/ash_json_api) for pagination, includes, and error serialization.
-
----
 
 ## Calculations and Aggregates
 
@@ -240,26 +228,14 @@ aggregates do
   end
 end
 
+# Use in queries
 MyApp.Blog.Post
 |> Ash.Query.filter(comment_count > 0)
 |> MyApp.Blog.read!()
 ```
 
----
 
-## Common Pitfalls
-
-| ❌ Don't | ✅ Do |
-|----------|-------|
-| Enforce validation only with DB constraints | Validate in the action layer (`validate`, custom `Ash.Resource.Validation`) |
-| Interpolate strings into `Ash.Query.filter` | Pin values with `^` to avoid injection |
-| Ignore missing records | Match `%Ash.Error.Query.NotFound{}` explicitly |
-| Catch every error with a single clause | Match specific Ash error types (`InvalidInput`, `Forbidden`, `Changeset`) |
-| Use offset pagination for large result sets | Use keyset pagination (`Ash.Query.page/2`) |
-| Manipulate resource structs directly | Build changes with `Ash.Changeset.for_create/3` / `for_update/3` |
-| Rely on `defaults [:read, :create]` blindly | Define actions explicitly and know what they expose |
-
-The examples below show each pitfall in context.
+## Ash-Specific Pitfalls
 
 ### Custom Validations — use the action layer, not DB constraints
 
@@ -273,7 +249,7 @@ create :create do
 end
 ```
 
-For multi-field or conditional validation logic, implement a custom `Ash.Resource.Validation` module:
+For multi-field or conditional logic, implement a custom `Ash.Resource.Validation` module:
 
 ```elixir
 defmodule MyApp.Validations.TitleNotBlank do
@@ -303,9 +279,9 @@ MyApp.Blog.Post
 
 ```elixir
 case MyApp.Blog.Post |> Ash.get(id) do
-  {:ok, post} -> {:ok, post}
+  {:ok, post}                            -> {:ok, post}
   {:error, %Ash.Error.Query.NotFound{}} -> {:error, :not_found}
-  {:error, error} -> {:error, error}
+  {:error, error}                        -> {:error, error}
 end
 ```
 
@@ -315,14 +291,10 @@ end
 case MyApp.Blog.Post
      |> Ash.Changeset.for_create(params)
      |> MyApp.Blog.create() do
-  {:ok, post} ->
-    {:ok, post}
-  {:error, %Ash.Error.InvalidInput{fields: fields}} ->
-    {:error, :validation, fields}
-  {:error, %Ash.Error.Changeset{errors: errors}} ->
-    {:error, :validation, errors}
-  {:error, %Ash.Error.Forbidden{}} ->
-    {:error, :unauthorized}
+  {:ok, post}                                      -> {:ok, post}
+  {:error, %Ash.Error.InvalidInput{fields: fields}} -> {:error, :validation, fields}
+  {:error, %Ash.Error.Forbidden{}}                 -> {:error, :unauthorized}
+  {:error, %Ash.Error.Changeset{errors: errors}}   -> {:error, :invalid_changeset, errors}
   {:error, error} ->
     Logger.error("Unexpected error: #{inspect(error)}")
     {:error, :internal_error}
@@ -337,7 +309,6 @@ MyApp.Blog.Post
 |> MyApp.Blog.read!()
 ```
 
----
 
 ## Migrations from Ecto to Ash
 
@@ -362,16 +333,3 @@ def get_post!(id) do
   MyApp.Blog.Post |> Ash.get!(id)
 end
 ```
-
----
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| elixir-essentials | ash-framework | testing-essentials |
-| ecto-essentials | ash-framework | phoenix-liveview-essentials |
-
-**Companion skills:**
-- `apply-ecto-conventions` — when migrating from Ecto contexts to Ash
-- `phoenix-json-api` — compare with AshJsonApi for JSON:API endpoints

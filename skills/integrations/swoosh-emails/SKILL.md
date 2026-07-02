@@ -7,9 +7,7 @@ description: >
   Use when sending emails from Phoenix applications. Invoke before implementing email functionality.
   Covers Swoosh setup, email templates, delivery configuration, testing, and production adapters.
   Trigger words: email, Swoosh, mailer, email templates, SMTP, SendGrid, email testing.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
+
 ---
 
 # Swoosh Emails
@@ -17,12 +15,11 @@ metadata:
 ## RULES — Follow these with no exceptions
 
 1. **Define emails in separate modules** — `MyApp.Emails.UserEmail`, not inline in contexts
-2. **Configure delivery per environment** — Local adapter in dev/test, real adapter in prod
-3. **Test emails with Swoosh.TestAssertions** — assert emails were sent with correct content
-4. **Never send emails synchronously in web requests** — use Oban for async delivery; use Task.start only for simple cases
-5. **Use `Swoosh.Preview` in development** — preview emails in the browser
+2. **Use Phoenix components for email templates** — reuse UI components in emails
+3. **Configure delivery per environment** — Local adapter in dev/test, real adapter in prod
+4. **Test emails with Swoosh.TestAssertions** — assert emails were sent with correct content
+5. **Never send emails synchronously in web requests** — use Oban for async delivery; Task.start only for simple cases
 
----
 
 ## Setup
 
@@ -57,11 +54,10 @@ MyApp.Mailer.deliver(Swoosh.Email.new(to: "test@example.com", from: "noreply@mya
 # => {:error, ...} — Finch missing from supervision tree or adapter misconfigured
 ```
 
----
 
 ## Defining Emails
 
-### With Phoenix Components (Preferred)
+### With Phoenix Components
 
 ```elixir
 # lib/my_app/emails/user_email.ex
@@ -96,8 +92,6 @@ end
 
 ### Email Layout and Button Components
 
-Define reusable components in `lib/my_app_web/components/email_components.ex`. A minimal layout and button:
-
 ```elixir
 # lib/my_app_web/components/email_components.ex
 defmodule MyAppWeb.EmailComponents do
@@ -123,7 +117,6 @@ defmodule MyAppWeb.EmailComponents do
 end
 ```
 
----
 
 ## Mailer Module
 
@@ -134,9 +127,6 @@ defmodule MyApp.Mailer do
 end
 ```
 
-See [`assets/mailer_template.ex`](assets/mailer_template.ex) for a copy-paste Mailer, email-builder, and Oban delivery worker template.
-
----
 
 ## Configuration
 
@@ -157,13 +147,13 @@ config :my_app, MyApp.Mailer,
   api_key: System.get_env("SENDGRID_API_KEY")
 ```
 
----
 
 ## Sending Emails
 
-### With Oban (Recommended for Production)
+### With Oban
 
 ```elixir
+# lib/my_app/workers/send_welcome_email.ex
 defmodule MyApp.Workers.SendWelcomeEmail do
   use Oban.Worker, queue: :mailers, max_attempts: 3
 
@@ -205,7 +195,6 @@ def register_user(attrs) do
 end
 ```
 
----
 
 ## Testing Emails
 
@@ -236,7 +225,6 @@ defmodule MyApp.AccountsTest do
 end
 ```
 
----
 
 ## Email Preview in Development
 
@@ -246,31 +234,3 @@ config :swoosh, serve: true
 
 # Access preview at http://localhost:4000/dev/mailbox
 ```
-
----
-
-## Common Pitfalls
-
-| ❌ Don't | ✅ Do |
-|----------|-------|
-| Build emails inline inside context functions | Define builders in `MyApp.Emails.*` modules |
-| `Mailer.deliver/1` synchronously in a web request | Enqueue delivery via an Oban worker |
-| Use the Local/prod adapter in the test env | `Swoosh.Adapters.Test` + `Swoosh.TestAssertions` |
-| Hardcode the SendGrid API key in config | `System.get_env("SENDGRID_API_KEY")` in `runtime.exs` |
-| Send HTML-only emails | Always set both `html_body` and `text_body` |
-| Forget `{Finch, name: MyApp.Finch}` in the tree | Add the Finch child before delivering |
-| Skip assertions after triggering an email | `assert_email_sent/1` / `assert_no_email_sent/0` |
-
----
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| oban-essentials | swoosh-emails | testing-essentials |
-| ecto-essentials | swoosh-emails | None (standalone) |
-
-**Companion skills:**
-- `oban-essentials` — deliver emails asynchronously outside the request cycle
-- `testing-essentials` — assert delivery with `Swoosh.TestAssertions`
-- `gettext-i18n` — localize subjects and bodies for multi-language mail

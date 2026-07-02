@@ -8,11 +8,7 @@ description: >
   Covers DataCase/ConnCase setup, fixture patterns, LiveView tests, changeset tests,
   async safety, setup chaining, timestamp testing, and TDD workflow.
   Trigger words: test, mix test, DataCase, ConnCase, fixture, LiveView test, assert, ExUnit.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
+
 ---
 
 # Testing Essentials
@@ -26,7 +22,6 @@ metadata:
 5. **Always test the unauthorized case** for any protected resource
 6. **Never hardcode dates** — use relative timestamps to prevent flaky tests
 
----
 
 ## Workflow: Writing a New Test File
 
@@ -40,9 +35,6 @@ Follow these steps in order, with explicit validation at each checkpoint:
 6. **Implement the feature**
 7. **Verify the test passes** — re-run `mix test path/to/file_test.exs` and confirm green
 
-See [`assets/tdd_checklist.md`](assets/tdd_checklist.md) for the full RED → GREEN → REFACTOR checklist and pre-commit quality gate.
-
----
 
 ## Test Module Setup
 
@@ -68,9 +60,6 @@ defmodule MyAppWeb.UserLiveTest do
 end
 ```
 
-See [`assets/spec_templates.md`](assets/spec_templates.md) for copy-paste DataCase, ConnCase, isolated LiveView, and ChannelCase test templates.
-
----
 
 ## Fixture Pattern
 
@@ -92,7 +81,6 @@ defmodule MyApp.AccountsFixtures do
 end
 ```
 
----
 
 ## Context Test Skeleton
 
@@ -110,7 +98,6 @@ describe "create_post/1" do
 end
 ```
 
----
 
 ## LiveView Test Skeleton
 
@@ -151,7 +138,6 @@ describe "create" do
 end
 ```
 
----
 
 ## Changeset Test Skeleton
 
@@ -168,11 +154,10 @@ describe "changeset/2" do
 end
 ```
 
----
 
 ## Setup Chaining
 
-Use `setup [:func1, :func2]` to compose reusable setup functions; later functions receive assigns from earlier ones.
+Use `setup [:func1, :func2]` to compose reusable setup functions:
 
 ```elixir
 defmodule MyAppWeb.PostLiveTest do
@@ -194,7 +179,6 @@ defmodule MyAppWeb.PostLiveTest do
 end
 ```
 
----
 
 ## Timestamp Testing
 
@@ -218,44 +202,18 @@ new_post = post_fixture(published_at: future)
 assert Blog.list_published_posts() == [old_post]
 ```
 
----
 
 ## Troubleshooting Common Failures
 
-- **Sandbox ownership errors** (`ownership timeout` or `DBConnection.OwnershipError`): flip the test to `async: false`.
-- **LiveView sandbox errors** (`cannot find ownership process`): LiveView tests must use `async: false`.
-- **`Application.put_env` leaking between tests**: restore in an `on_exit` callback and use `async: false`.
-- **Flaky timestamp assertions**: replace hardcoded datetimes with `DateTime.diff/3` comparisons (see Timestamp Testing above).
-- **Unexpected redirect in LiveView**: confirm the test user has the required role/session via `register_and_log_in_user` setup.
+| Symptom | Fix |
+|---|---|
+| `ownership timeout` / `DBConnection.OwnershipError` | Set `async: false` |
+| LiveView `cannot find ownership process` | Set `async: false` (LiveView tests must not be async) |
+| `Application.put_env` leaking between tests | Use `async: false`; restore original value in `on_exit` callback |
+| Flaky timestamp assertions | Replace hardcoded datetimes with `DateTime.diff/3` (see Timestamp Testing above) |
+| Unexpected redirect in LiveView | Confirm test user has required role/session via `register_and_log_in_user` setup |
 
----
 
-## Common Pitfalls
+## When Not to Use
 
-| ❌ Don't | ✅ Do |
-|----------|-------|
-| Run LiveView tests with `async: true` | Use `async: false` for LiveView tests (sandbox ownership) |
-| Assert structure with `html =~ "text"` | Use `has_element?/2` and `element/2` for structural checks |
-| Inline the same test data across many tests | Define reusable `*_fixture/1` helpers in `test/support/fixtures/` |
-| Assert against hardcoded datetimes | Compare relative to `DateTime.utc_now/1` with `DateTime.diff/3` |
-| Test only the happy path for protected resources | Always assert the unauthorized/redirect case too |
-| Call `Repo` directly in test setup | Build state through context functions and fixtures |
-| Leave `Application.put_env` changes unrestored | Restore in `on_exit` and mark the test `async: false` |
-
----
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| ecto-essentials | testing-essentials | property-based-testing |
-| phoenix-liveview-essentials | testing-essentials | benchee-profiling |
-
-**Companion skills:**
-- `tdd` — persona that drives the RED → GREEN → REFACTOR loop
-- `property-based-testing` — generator-driven invariants for edge-case coverage
-- `benchee-profiling` — performance benchmarking once behaviour is verified
-
----
-
-See `agents/testing-guide.md` for comprehensive examples covering async tests, Mox mocking, file upload testing, and Ecto query testing.
+Do not invoke this skill for: pure-function unit tests with no DB/external side effects (use plain ExUnit), property-based testing (`property-based-testing` skill), benchmarking (`benchee-profiling` skill), Mox patterns for external services, or LiveView streams (`phoenix/liveview-streams` skill).

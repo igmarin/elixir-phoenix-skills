@@ -9,10 +9,8 @@ description: >
   configuration files, writes custom check modules, configures strictness levels, and integrates
   Credo into CI pipelines.
   Trigger words: Credo, .credo.exs, linting, code style, static analysis, custom checks, credo.config,
+
   mix credo, code quality, lint, static analysis, format check.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
 ---
 
 # Credo Configuration
@@ -24,7 +22,6 @@ metadata:
 3. **Add inline disables sparingly** — document why each exception is necessary
 4. **Custom checks belong in `lib/credo/checks/`** — never inline them in application code
 
----
 
 ## Setup Workflow
 
@@ -55,7 +52,7 @@ mix credo gen.config
 
 ### 4. Customize `.credo.exs`
 
-Edit the generated file to match your project's needs. See [Basic Configuration](#basic-configuration) below.
+See [Basic Configuration](#basic-configuration) below.
 
 ### 5. Verify Setup
 
@@ -63,7 +60,7 @@ Edit the generated file to match your project's needs. See [Basic Configuration]
 mix credo
 ```
 
-Fix violations, adjust check configuration, or add inline disable comments for intentional exceptions.
+Success: Credo exits 0 and prints a summary with issue counts per category. If issues are found, review them — fix violations, adjust check configuration, or add inline disable comments for intentional exceptions.
 
 ### 6. Run in Strict Mode
 
@@ -79,21 +76,21 @@ See [CI Integration](#ci-integration) below.
 
 ### 8. Create Custom Checks
 
-For project-specific patterns, add custom check modules to `lib/credo/checks/`. See [Custom Checks](#custom-checks) below.
+Add custom check modules to `lib/credo/checks/`. See [Custom Checks](#custom-checks) below.
 
----
 
 ## Basic Configuration
 
-> Use `mix credo gen.config` for the complete check list. The example below shows how to override specific checks in the generated file — only include the checks you are changing.
+> Use `mix credo gen.config` for the complete check list rather than writing it by hand.
 
 ```elixir
-# .credo.exs (overrides only — start from gen.config output)
+# .credo.exs
 %{
   configs: [
     %{
       name: "default",
       strict: false,
+      color: true,
       files: %{
         included: ["lib/", "src/", "test/", "web/", "apps/"],
         excluded: [~r"/_build/", ~r"/deps/", ~r"/node_modules/"]
@@ -101,11 +98,26 @@ For project-specific patterns, add custom check modules to `lib/credo/checks/`. 
       checks: %{
         enabled: [
           {Credo.Check.Readability.MaxLineLength, [priority: :low, max_length: 120]},
-          {Credo.Check.Design.AliasUsage, [if_nested_deeper_than: 2, if_called_more_often_than: 0]}
+          {Credo.Check.Design.AliasUsage, [if_nested_deeper_than: 2, if_called_more_often_than: 0]},
+          # ... add or override checks as needed
         ],
         disabled: [
           {Credo.Check.Consistency.MultiAliasImportRequireUse, []},
-          {Credo.Check.Design.DuplicatedCode, []}
+          {Credo.Check.Design.DuplicatedCode, []},
+        ]
+      }
+    },
+    %{
+      name: "strict",
+      strict: true,
+      files: %{
+        included: ["lib/", "src/", "test/", "web/", "apps/"],
+        excluded: [~r"/_build/", ~r"/deps/", ~r"/node_modules/"]
+      },
+      checks: %{
+        enabled: [
+          {Credo.Check.Design.TagTODO, [priority: :high]},
+          {Credo.Check.Readability.Specs, []},
         ]
       }
     }
@@ -113,7 +125,6 @@ For project-specific patterns, add custom check modules to `lib/credo/checks/`. 
 }
 ```
 
----
 
 ## Disabling Checks
 
@@ -148,7 +159,6 @@ checks: %{
 }
 ```
 
----
 
 ## CI Integration
 
@@ -171,6 +181,10 @@ jobs:
       - run: mix credo --strict
 ```
 
+### Handling Failures in CI
+
+When Credo fails in CI, run `mix credo` locally to reproduce the failure. Only disable a check if it's a confirmed false positive — document the reason inline.
+
 ### Mix Alias
 
 ```elixir
@@ -183,7 +197,6 @@ defp aliases do
 end
 ```
 
----
 
 ## Custom Checks
 
@@ -234,28 +247,3 @@ checks: %{
   ]
 }
 ```
-
----
-
-## Common Pitfalls
-
-| ❌ Don't | ✅ Do |
-|----------|-------|
-| Hand-craft `.credo.exs` from scratch | Run `mix credo gen.config` first, then override only what you change |
-| Run `mix credo` without `--strict` in CI | Use `mix credo --strict` in CI so default-disabled checks run |
-| Blanket-disable a check with no explanation | Document why each disable or inline exception is necessary |
-| Inline custom checks in application modules | Keep custom check modules in `lib/credo/checks/` |
-| Disable a check for a whole file when one line offends | Prefer `# credo:disable-for-next-line` for a single case |
-| Copy the entire generated check list into version control edits | Commit only the overrides block; regenerate the full list with `gen.config` |
-
----
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| code-quality | credo-config | code-review |
-| None (standalone) | credo-config | PR submission |
-
-**Companion skills:**
-- `code-quality` — runs `mix credo --strict` as part of the quality gate this skill configures

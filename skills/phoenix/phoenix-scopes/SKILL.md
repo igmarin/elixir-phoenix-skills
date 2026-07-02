@@ -12,14 +12,9 @@ description: >
   scope-based auth, roles, permissions, or migrating from current_user to the new scope-based model.
   Trigger words: Scope, current_scope, scopes, phoenix scopes, role, roles, permission, permissions,
   authorization, authorize, can?, authenticated?, anonymous, on_mount, require_scope.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
 ---
 
 # Phoenix Scopes
-
-Phoenix 1.8 introduced `Scope` as the new authentication primitive, replacing direct `current_user` access.
 
 ## RULES — Follow these with no exceptions
 
@@ -27,7 +22,6 @@ Phoenix 1.8 introduced `Scope` as the new authentication primitive, replacing di
 2. **Test both authenticated and unauthenticated states** — scope-based auth has two distinct code paths
 3. **Define `anonymous/0` for the unauthenticated case** — return a Scope with `user: nil`
 
----
 
 ## Scope Struct Definition
 
@@ -50,10 +44,13 @@ defmodule MyApp.Scope do
 
   def can?(%__MODULE__{permissions: perms}, action) when is_list(perms), do: action in perms
   def can?(%__MODULE__{}, _action), do: false
+
+  defp permissions_for(:admin), do: [:read, :write, :delete, :manage_users]
+  defp permissions_for(:editor), do: [:read, :write]
+  defp permissions_for(_), do: []
 end
 ```
 
----
 
 ## Using Scopes in LiveViews
 
@@ -86,7 +83,6 @@ defmodule MyAppWeb.DashboardLive do
 end
 ```
 
----
 
 ## Safe Template Access
 
@@ -99,7 +95,6 @@ end
 <% end %>
 ```
 
----
 
 ## Migration Workflow (current_user → Scopes)
 
@@ -134,100 +129,19 @@ def on_mount(:require_authenticated_user, _params, session, socket) do
 end
 ```
 
----
 
 ## Testing Scopes
 
-Always test both authenticated and unauthenticated paths.
-
-### Context / unit test — scope-based filtering
-
 ```elixir
-defmodule MyApp.BlogTest do
-  use MyApp.DataCase, async: true
-
-  alias MyApp.{Blog, Scope}
-
-  describe "list_user_posts/1" do
-    test "returns only posts owned by the scope's user" do
-      owner = insert(:user)
-      other = insert(:user)
-      mine = insert(:post, user: owner)
-      _theirs = insert(:post, user: other)
-
-      scope = Scope.for_user(owner)
-      results = Blog.list_user_posts(scope)
-
-      assert Enum.map(results, & &1.id) == [mine.id]
-    end
-
-    test "anonymous scope sees no user-scoped posts" do
-      insert(:post)
-      assert Blog.list_user_posts(Scope.anonymous()) == []
-    end
-  end
-
-  describe "Scope predicates" do
-    test "authenticated?/1 distinguishes a user from anonymous" do
-      assert Scope.authenticated?(Scope.for_user(insert(:user)))
-      refute Scope.authenticated?(Scope.anonymous())
-    end
-
-    test "can?/2 checks the scope's permission list" do
-      scope = %Scope{permissions: [:delete]}
-      assert Scope.can?(scope, :delete)
-      refute Scope.can?(scope, :publish)
-      refute Scope.can?(Scope.anonymous(), :delete)
-    end
-  end
-end
-```
-
-### LiveView test — scope-based access control
-
-```elixir
-defmodule MyAppWeb.DashboardLiveTest do
-  use MyAppWeb.ConnCase, async: true
-
-  import Phoenix.LiveViewTest
-
-  test "authenticated user reaches the dashboard", %{conn: conn} do
+describe "DashboardLive" do
+  test "shows dashboard content for authenticated user", %{conn: conn} do
     conn = log_in_user(conn, insert(:user))
-
-    {:ok, _view, html} = live(conn, ~p"/dashboard")
-
-    assert html =~ "Dashboard"
+    assert {:ok, _, html} = live(conn, "/dashboard")
+    assert html =~ "Welcome"
   end
 
-  test "unauthenticated request is redirected to login", %{conn: conn} do
-    assert {:error, {:redirect, %{to: "/login"}}} = live(conn, ~p"/dashboard")
+  test "redirects to login when unauthenticated", %{conn: conn} do
+    assert {:error, {:redirect, %{to: "/login"}}} = live(conn, "/dashboard")
   end
 end
 ```
-
----
-
-## Common Pitfalls
-
-| ❌ Don't | ✅ Do |
-|----------|-------|
-| `@current_scope` in templates (crashes when unauthenticated) | `assigns[:current_scope]` bracket access, then guard |
-| Assume a scope always has a user | Handle `Scope.anonymous()` (`user: nil`) explicitly |
-| Test only the logged-in path | Test both authenticated and unauthenticated flows |
-| Pass raw `user` to context functions | Pass the `scope` so auth context travels with the call |
-| Scatter permission checks with `if user.role == ...` | Centralize checks in `Scope.can?/2` |
-| Leave `@current_user` references after migrating | Replace with `@current_scope.user` (and `assigns[:current_scope]` for optional reads) |
-
----
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| phoenix-liveview-essentials | phoenix-scopes | phoenix-authorization-patterns |
-| phoenix-liveview-auth | phoenix-scopes | testing-essentials |
-
-**Companion skills:**
-- `phoenix-liveview-auth` — authentication generators and `on_mount` hooks
-- `phoenix-authorization-patterns` — role/permission enforcement built on scopes
-- `phoenix-liveview-essentials` — LiveView lifecycle the scope assigns plug into

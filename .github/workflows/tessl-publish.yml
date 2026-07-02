@@ -25,47 +25,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
+          ref: refs/heads/main
           fetch-depth: 0
 
       - name: Set up Tessl
         uses: tesslio/setup-tessl@25ec223fc0da33b41b8044ff5ab2b85235f4f91e # v2
         with:
-          version: "0.85.0"
+          version: "0.88.2"
           token: ${{ secrets.TESSL_TOKEN }}
 
-      - name: Generate Tessl eval scenarios
-        id: generate_scenarios
-        run: |
-          echo "Starting scenario generation..."
-          generation_output=$(tessl scenario generate .)
-          generation_id=$(echo "$generation_output" | grep -oP 'Scenario generation started: \K[0-9a-f-]+')
-          echo "generation_id=$generation_id" >> "$GITHUB_OUTPUT"
-          echo "Generation ID: $generation_id"
+      - name: Validate plugin before publishing
+        run: tessl skill lint .
 
-      - name: Wait for scenario generation to complete
+      - name: Review all skills before publishing
         run: |
-          generation_id="${{ steps.generate_scenarios.outputs.generation_id }}"
-          max_attempts=60
-          attempt=0
-          
-          while [ $attempt -lt $max_attempts ]; do
-            status=$(tessl scenario view "$generation_id" 2>&1 | grep -oP 'Status:\s*\K[^[:space:]]+' || echo "Unknown")
-            echo "Attempt $((attempt + 1)): Status is $status"
-            
-            if [ "$status" = "Completed" ]; then
-              echo "Scenario generation completed successfully"
-              exit 0
-            elif [ "$status" = "Failed" ]; then
-              echo "::error::Scenario generation failed"
-              exit 1
-            fi
-            
-            attempt=$((attempt + 1))
-            sleep 10
-          done
-          
-          echo "::error::Scenario generation timed out after $max_attempts attempts"
-          exit 1
+          while IFS= read -r skill_path; do
+            [ -z "$skill_path" ] && continue
+            echo "Reviewing $skill_path"
+            tessl review run "$skill_path" --threshold 80
+          done < <(find skills -mindepth 2 -name SKILL.md -exec dirname {} \;)
 
       - name: Compute automatic patch version
         id: version
@@ -133,7 +111,36 @@ jobs:
           fi
 
       - name: Publish plugin
-        run: tessl plugin publish .
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          plugin_name="$(ruby -rjson -e 'puts JSON.parse(File.read(".tessl-plugin/plugin.json")).fetch("name")')"
+          max_attempts=3
+          attempt=0
+
+          while [ $attempt -lt $max_attempts ]; do
+            if tessl plugin publish .; then
+              echo "Plugin published successfully"
+              exit 0
+            fi
+
+            # The CLI may time out after the server has already accepted the
+            # publish. Verify the registry before retrying to avoid duplicate
+            # publishes or wasted retries.
+            if tessl plugin info "$plugin_name@$VERSION" >/dev/null 2>&1; then
+              echo "Version $plugin_name@$VERSION is already published; treating as success"
+              exit 0
+            fi
+
+            attempt=$((attempt + 1))
+            if [ $attempt -lt $max_attempts ]; then
+              echo "Publish attempt $attempt failed; retrying in 30 seconds..."
+              sleep 30
+            fi
+          done
+
+          echo "::error::Plugin publish failed after $max_attempts attempts"
+          exit 1
 
       - name: Create matching Git tag
         env:

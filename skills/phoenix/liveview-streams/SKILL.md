@@ -8,30 +8,26 @@ description: >
   Covers Phoenix.LiveView.stream/4, stream_insert, stream_delete, DOM patching efficiency,
   and pagination with streams. Available in LiveView 0.19+.
   Trigger words: stream, LiveView stream, large list, pagination, DOM patching, stream_insert,
+
   stream_delete, phx-update="stream", stream_configure, stream_many, infinite scroll,
   virtualized list, DOM ID, dom_id.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
 ---
 
 # LiveView Streams
 
-## RULES — Follow these with no exceptions
+## RULES — Non-Obvious Constraints
 
-1. **Use streams for collections with 100+ items** — smaller lists use regular assigns
+1. **Use streams for collections with 100+ items; combine with pagination or infinite scroll** — smaller lists use regular assigns; never stream unlimited items
 2. **Use `stream_insert/3` and `stream_delete/3` for incremental updates** — never replace the entire stream assign
 3. **Use `phx-update="stream"` in templates** — required for stream DOM patching; missing this causes full re-renders
-4. **Combine with pagination or infinite scroll** — do not stream unlimited items
-5. **Use `reset: true` for filtering and sorting** — clears existing items before inserting the new result set
+4. **Use `reset: true` for filtering and sorting** — clears existing items before inserting the new result set
 
----
 
 ## End-to-End Workflow
 
 Follow this sequence when implementing LiveView streams:
 
-1. **Identify collection size** — use streams only for 100+ items; smaller lists use regular assigns
+1. **Identify collection size** — see Rule 1 above for the threshold
 2. **Define DOM ID strategy** — decide on `id` attribute format (e.g., `post-#{post.id}`)
 3. **Add `stream_configure/3`** in `mount/3` to set custom DOM ID generator
 4. **Initialize stream** — call `stream(socket, :name, collection)` in `mount/3`
@@ -40,7 +36,6 @@ Follow this sequence when implementing LiveView streams:
 7. **Add handle_info** — handle Phoenix.PubSub broadcasts with stream updates
 8. **Verify WS frames** — confirm targeted DOM patches in browser DevTools
 
----
 
 ## Basic Stream Pattern
 
@@ -76,7 +71,6 @@ defmodule MyAppWeb.PostLive.Index do
 end
 ```
 
----
 
 ## Template with Streams
 
@@ -93,9 +87,6 @@ end
 </div>
 ```
 
-> If items re-render fully instead of patching, see the **Debugging Checklist** below.
-
----
 
 ## Infinite Scroll with Streams
 
@@ -136,9 +127,6 @@ end
 </div>
 ```
 
-> Ensure DOM IDs are globally unique across pages — collisions cause items to overwrite each other. See the **Debugging Checklist** below if patches are not targeted.
-
----
 
 ## PubSub Integration with Streams
 
@@ -171,7 +159,6 @@ def create_post(attrs) do
 end
 ```
 
----
 
 ## Resetting and Replacing Streams
 
@@ -183,10 +170,10 @@ def handle_event("filter", %{"status" => status}, socket) do
   {:noreply, stream(socket, :posts, Blog.list_posts_by_status(status), reset: true)}
 end
 
-# Sorting — always re-query from the data source
-def handle_event("sort", %{"column" => col}, socket) do
-  direction = if socket.assigns.sort_direction == :asc, do: :desc, else: :asc
-  sorted = Blog.list_posts(sort_by: String.to_existing_atom(col), direction: direction)
+# Sorting — re-fetch from the database because streams do not store items in assigns
+def handle_event("sort", %{"column" => col, "direction" => dir}, socket) do
+  direction = String.to_existing_atom(dir)
+  sorted = Blog.list_posts(order_by: [{direction, String.to_existing_atom(col)}])
 
   {:noreply,
    socket
@@ -195,11 +182,8 @@ def handle_event("sort", %{"column" => col}, socket) do
 end
 ```
 
----
 
 ## Edit-in-Place Pattern
-
-Track editing state with a regular assign; use `stream_insert` to push the updated item back into the stream:
 
 ```elixir
 def handle_event("save_edit", %{"id" => id, "post" => params}, socket) do
@@ -230,7 +214,6 @@ end
 </div>
 ```
 
----
 
 ## Debugging Checklist
 
@@ -239,36 +222,8 @@ If stream patching is not working as expected, check for:
 - Missing `phx-update="stream"` on the container `<div>`
 - Missing `id={dom_id}` on each item element
 - Accidentally replacing the entire stream assign instead of using `stream_insert`/`stream_delete`
-- DOM ID collisions caused by non-unique item IDs
+- DOM ID collisions caused by non-unique item IDs (especially across pages in infinite scroll)
 - Using `stream_insert` without proper `dom_id` configuration
 - Forgetting to call `stream_configure` before `stream` when using custom IDs
 
-**To verify:** Open browser DevTools → Network → WS frames. Confirm incoming frames contain targeted patch operations for individual items, not full list replacements.
-
----
-
-## Common Pitfalls
-
-| ❌ Don't | ✅ Do |
-|----------|-------|
-| Assign a large list with `assign(:posts, ...)` | Use `stream(socket, :posts, ...)` for 100+ items |
-| Replace the whole stream to add/remove one item | Use `stream_insert/3` and `stream_delete/3` |
-| Omit `phx-update="stream"` on the container | Add `phx-update="stream"` — required for DOM patching |
-| Leave off `id={dom_id}` on stream items | Set `id={dom_id}` on every item element |
-| Reuse non-unique DOM IDs across pages | Generate globally-unique IDs via `stream_configure/3` |
-| Filter/sort by re-inserting into the existing stream | Re-query and `stream(..., reset: true)` |
-| Stream an unbounded collection | Combine with pagination or infinite scroll |
-
----
-
-## Integration
-
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| phoenix-liveview-essentials | liveview-streams | phoenix-pubsub-patterns |
-| apply-phoenix-liveview-conventions | liveview-streams | testing-essentials |
-
-**Companion skills:**
-- `phoenix-liveview-essentials` — LiveView callback lifecycle and assigns
-- `phoenix-pubsub-patterns` — stream updates driven by real-time broadcasts
-- `testing-essentials` — assert stream contents with `Phoenix.LiveViewTest`
+**Verify with DevTools:** Open browser DevTools → Network → WS frames. Confirm incoming frames contain targeted patch operations for individual items, not full list replacements. If you see full re-renders, the first two checklist items above are the most common cause.

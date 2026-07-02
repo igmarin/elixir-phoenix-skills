@@ -8,9 +8,7 @@ description: >
   custom StreamData generators, writes ExUnitProperties tests, configures shrinking strategies, and
   creates property-based test patterns for data transformations, algorithms, and state machines.
   Trigger words: property-based testing, StreamData, ExUnitProperties, generators, fuzzing, shrinking.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
+
 ---
 
 # Property-Based Testing
@@ -21,7 +19,6 @@ metadata:
 2. **Test invariants, not specific values** — "output length equals input length" not "output is [1, 2, 3]"
 3. **Leverage shrinking** — let StreamData find minimal failing cases; add constraints like `min_length: 1` or `integer(1..100)` when shrunk cases expose invalid generator inputs
 
----
 
 ## Setup
 
@@ -34,7 +31,6 @@ defp deps do
 end
 ```
 
----
 
 ## Basic Property Test
 
@@ -57,7 +53,6 @@ defmodule MyApp.StringUtilsTest do
 end
 ```
 
----
 
 ## Generators
 
@@ -108,15 +103,17 @@ property "users have valid emails" do
 end
 ```
 
----
 
 ## Testing Invariants
+
+Key invariants to test for collections: ordering, element preservation, and idempotence.
 
 ```elixir
 defmodule MyApp.SortingTest do
   use ExUnit.Case, async: true
   use ExUnitProperties
 
+  # Invariant: sorted list is ordered
   property "sorted list is ordered" do
     check all list <- list_of(integer()) do
       sorted = Enum.sort(list)
@@ -127,6 +124,7 @@ defmodule MyApp.SortingTest do
     end
   end
 
+  # Invariant: sorting preserves all elements
   property "sorted list contains same elements" do
     check all list <- list_of(integer()) do
       assert Enum.sort(list) |> Enum.frequencies() == Enum.frequencies(list)
@@ -135,14 +133,15 @@ defmodule MyApp.SortingTest do
 end
 ```
 
----
 
 ## Shrinking
+
+StreamData automatically shrinks failing inputs to the smallest example that still fails. The
+property below *intentionally* fails to illustrate shrinking output:
 
 ```elixir
 property "no list contains its own length as element" do
   check all list <- list_of(integer()) do
-    # This will fail and shrink to a minimal example
     refute list |> Enum.member?(length(list))
   end
 end
@@ -152,7 +151,6 @@ end
 # (shrunk from something like [1, 5, 0, 3, 2])
 ```
 
----
 
 ## Workflow: Write → Run → Interpret → Refine
 
@@ -170,7 +168,6 @@ end
 4. **Refine generator or property** — if the shrunk case reveals a generator producing invalid inputs, add constraints (e.g. `min_length: 1`, `integer(1..100)`); if it reveals a real bug, fix the implementation
 5. **Re-run** — confirm the fix holds across new generated cases
 
----
 
 ## Common Pitfalls
 

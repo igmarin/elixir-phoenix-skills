@@ -5,22 +5,11 @@ tags: [personas]
 license: MIT
 description: >
   Complete code quality loop for Elixir projects with hard gates: enforce formatting and linter compliance (mix format, mix credo must pass) → refactor only after characterization tests PASS on current code, verify behavior preserved after each extraction → generate @doc for all public APIs → NEVER open PR before formatter, credo, dialyzer, full test suite, and @doc coverage all pass; phases conventions review→refactoring→documentation. Use this composite end-to-end loop instead of individual refactoring or documentation skills when full three-phase production-readiness review is needed in one pass. Trigger: code review prep, before PR, full Elixir quality sweep, quality audit, production-ready review, end-to-end quality check.
-metadata:
-  version: 1.0.0
-  user-invocable: "true"
-  entry_point: "Invoke when conducting full production-readiness review or code quality sweep before PR"
-  phases: "Phase 1: Conventions Review, Phase 2: Refactoring, Phase 3: Documentation"
-  hard_gates: "Conventions Check, Refactoring Test Gate, Quality Before Merge"
-  dependencies:
-    - source: self
-      skills: [code-quality, credo-config, apply-phoenix-liveview-conventions, apply-phoenix-controller-conventions, apply-ecto-conventions, code-review, refactor-code, respond-to-review, typespec-dialyzer, security-essentials]
-  keywords: elixir, quality, conventions, refactoring, documentation, credo, review
 ---
+
 # Quality Persona
 
 Orchestrates code quality checks, safe refactoring, and documentation updates across three phases.
-
----
 
 ## Complexity Thresholds
 
@@ -30,11 +19,9 @@ Proceed to Phase 2 if any threshold is exceeded:
 |--------|-----------|--------|
 | Function Length | > 20 lines | Extract function or private helper |
 | Parameter Count | > 4 | Use keyword list or map |
-| Module Length | > 400 lines | Extract context or sub-module |
+| Module Length | > 400 lines | Extract bounded context or sub-module |
 | Nesting Depth | > 3 levels | Extract function or use `with` |
 | Pipe Chain | > 5 pipes | Extract into named function |
-
----
 
 ## Agent Phases
 
@@ -51,9 +38,6 @@ mix hex.audit                  # Dependency audit
 
 **HARD GATE — NEVER open a PR before all four checks above pass**, plus `mix test` (full suite green) and `@doc`/`@spec` annotations on all public APIs (completed in Phase 3). Fix any failure before proceeding.
 
-**If gate fails:** Fix each violation at its source and re-run all four tools plus `mix test` — a fix for one check can surface another; never open the PR while any check is red.
-
----
 
 ### Phase 2: Refactoring (Optional)
 
@@ -72,7 +56,6 @@ mix hex.audit                  # Dependency audit
 - Re-examine the characterization test to ensure it fully covers the behavior being touched.
 - Propose a smaller, safer extraction and repeat from step 3.
 
----
 
 ### Phase 3: Documentation
 
@@ -88,7 +71,6 @@ mix hex.audit                  # Dependency audit
 4. Run `mix dialyzer` once more to confirm new typespecs are consistent.
 5. Run `mix test` to verify doctests pass.
 
----
 
 ## Final Pre-PR Checklist
 
@@ -104,50 +86,3 @@ Before opening a PR, confirm every item is green:
 | Doc/spec coverage | All public APIs annotated | ✅ |
 
 **Do not open the PR until every row is ✅.**
-
----
-
-## Output Style
-
-When completing a quality sweep, output MUST include:
-
-```markdown
-# Quality Report — [Module / PR]
-
-## Conventions
-- mix format --check-formatted: ✓
-- mix credo --strict: ✓
-- mix dialyzer: ✓
-- mix hex.audit: ✓
-
-## Refactoring
-- Thresholds exceeded: <list or "none">
-- Changes applied: <each extraction, characterization test kept green>
-
-## Documentation
-- Public APIs with @doc: <n>/<n>
-- Public APIs with @spec: <n>/<n>
-
-## Pre-PR Checklist
-- mix test: ✓ (<n> tests, 0 failures)
-- All rows green: ✓
-
-Verdict: PASS / FAIL — <one-line reason>
-```
-
----
-
-## Error Recovery
-
-**Formatter, credo, or dialyzer fails in Phase 1:**
-1. Fix each violation at the source; never suppress a credo check without explicit user approval.
-2. Re-run all four tools — one fix can surface another.
-
-**Tests go red after a refactoring in Phase 2:**
-1. Revert the last extraction immediately.
-2. Confirm the characterization test fully covers the touched behavior.
-3. Propose a smaller, safer change and re-validate before continuing.
-
-**Doctest fails in Phase 3:**
-1. Correct the `iex>` example or the function so output matches.
-2. Re-run `mix test` before opening the PR.

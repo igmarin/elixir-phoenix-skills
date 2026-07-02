@@ -1,0 +1,61 @@
+{
+  "context": "Tests whether the agent correctly implements a Phoenix JSON API using the :api pipeline with versioned URL prefixes, a FallbackController for consistent error handling, secure constant-time token comparison, and parameterized Ecto queries that scope results to the authenticated user.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": ":api pipeline used",
+      "description": "The router uses the :api pipeline (not :browser) for the JSON API routes — i.e. the route scope references `pipe_through :api`",
+      "max_score": 10
+    },
+    {
+      "name": "No mixed pipelines",
+      "description": "JSON API routes do NOT also pipe through :browser — the pipelines are kept separate",
+      "max_score": 8
+    },
+    {
+      "name": "URL version prefix",
+      "description": "All notes API routes are nested under a /api/v1 URL prefix (e.g. `scope \"/api/v1\"`)",
+      "max_score": 10
+    },
+    {
+      "name": "action_fallback declared",
+      "description": "The notes controller declares `action_fallback` pointing to the FallbackController module",
+      "max_score": 8
+    },
+    {
+      "name": "Controller returns tagged tuples",
+      "description": "Controller action bodies return {:ok, result} or {:error, reason} tuples rather than rendering responses directly on the happy path",
+      "max_score": 8
+    },
+    {
+      "name": "FallbackController handles errors",
+      "description": "A FallbackController module exists and implements at least two clause matches for error tuples (e.g. {:error, :not_found} and {:error, :unauthorized}), rendering JSON error responses",
+      "max_score": 8
+    },
+    {
+      "name": "Secure token comparison",
+      "description": "The auth plug uses Plug.Crypto.secure_compare/2 for token verification — NOT the == operator",
+      "max_score": 12
+    },
+    {
+      "name": "No == for token check",
+      "description": "The auth plug does NOT use == (or !=, ===) to compare the provided Bearer token against the stored/expected token",
+      "max_score": 5
+    },
+    {
+      "name": "Parameterized search query",
+      "description": "The search/filter query in the notes context uses the ^ pin operator (e.g. ^search_term or ^(\"%#{search_term}%\")) — NOT string interpolation directly into a fragment or where clause",
+      "max_score": 12
+    },
+    {
+      "name": "No interpolation in queries",
+      "description": "The notes context does NOT use string interpolation (#{...}) inside Ecto query fragments or where conditions",
+      "max_score": 8
+    },
+    {
+      "name": "User-scoped queries",
+      "description": "Context query functions (list_notes, get_note, delete_note) filter by user_id using `where(user_id: ^user_id)` or equivalent — results are scoped to the authenticated user",
+      "max_score": 11
+    }
+  ]
+}

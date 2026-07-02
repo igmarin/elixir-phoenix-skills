@@ -8,11 +8,7 @@ description: >
   or custom registration fields. Covers migrations, schema updates, fixture updates, form changes,
   and confirmation patterns.
   Trigger words: phx.gen.auth, custom fields, registration, username, profile, auth customization.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
-  adapted-from: j-morgan6/elixir-phoenix-guide
-  original-author: Joseph Morgan
+
 ---
 
 # Phoenix Auth Customization
@@ -28,7 +24,6 @@ Use this skill when extending `phx.gen.auth` with custom fields.
 5. **Update both the registration form AND the `save/2` handler** — the form must send the field
 6. **Use `unique_constraint` + database unique index for uniqueness** — never validate in application code alone
 
----
 
 ## Running phx.gen.auth
 
@@ -37,7 +32,6 @@ Use this skill when extending `phx.gen.auth` with custom fields.
 mix phx.gen.auth Accounts User users
 ```
 
----
 
 ## Adding Custom Fields
 
@@ -140,40 +134,23 @@ mix test
 </.simple_form>
 ```
 
----
 
-## Advanced Patterns
+## Additional Patterns
 
-The workflow above covers a single custom field. For more complex scenarios, apply the same principles and extend accordingly:
+### Profile Fields
 
-- **Multiple custom fields** — add each field to the same migration, cast them all in `registration_changeset`, and include each in the fixture map.
-- **Separate profile data** — create a distinct `profiles` table with a `belongs_to :user` association; manage it via its own schema and changeset rather than expanding the `users` table indefinitely.
-- **Confirmation email customization** — modify the generated `UserNotifier` module to adjust subject lines, body copy, or layout; the delivery mechanism (e.g., Swoosh mailer) remains unchanged.
+For optional fields like `display_name` or `avatar_url`, follow the same migration → schema → fixture sequence as above. Differences from required fields:
 
----
+- Omit `null: false` in the migration column definition.
+- Omit `validate_required` for that field in the changeset.
 
-## Common Pitfalls
+### Confirmation Patterns
 
-| ❌ Don't | ✅ Do |
-|----------|-------|
-| Edit the generated `phx.gen.auth` migration | Create a separate migration for custom fields |
-| Add a brand-new changeset for custom fields | Extend `registration_changeset` to cast and validate them |
-| Leave fixtures missing the new required field | Add the field to `user_fixture` before running tests |
-| Skip `confirmed_at` in fixtures | Set `confirmed_at` so password-auth tests pass |
-| Add the form input but forget the event handler | Update both the form and the `save/2` handler |
-| Rely on `validate_format`/`validate_length` alone for uniqueness | Add `unique_constraint` plus a DB unique index |
+`phx.gen.auth` generates a `confirmed_at` field and an email-confirmation flow automatically.
 
----
+- **In tests**: set `confirmed_at: DateTime.utc_now(:second)` in fixtures (Rule 4) so tests are not blocked by the confirmation gate.
+- **In production**: users must click the confirmation link before `confirmed_at` is populated. Guard LiveViews with `require_authenticated_user` and check `confirmed_at` explicitly where needed.
 
-## Integration
+### Extending Other Changesets
 
-| Predecessor | This Skill | Successor |
-|-------------|------------|-----------|
-| phoenix-liveview-auth | phoenix-auth-customization | ecto-changeset-patterns |
-| mix-tasks-generators | phoenix-auth-customization | phoenix-authorization-patterns |
-
-**Companion skills:**
-- `phoenix-liveview-auth` — authentication hooks the custom fields feed into
-- `ecto-changeset-patterns` — cast/validate patterns for `registration_changeset`
-- `ecto-essentials` — migration and schema fundamentals
-- `testing-essentials` — fixture and context test patterns
+`email_changeset` and `password_changeset` follow the same cast-then-validate pattern as `registration_changeset`. Never add a parallel changeset; extend the existing one.

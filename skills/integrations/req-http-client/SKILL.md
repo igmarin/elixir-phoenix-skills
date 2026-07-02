@@ -8,9 +8,7 @@ description: >
   Covers Req setup, request patterns, error handling, retries, timeouts, and testing with Req.Test.
   Req is the modern HTTP client for Elixir, replacing HTTPoison and Tesla.
   Trigger words: Req, HTTP client, HTTP request, API integration, external API, HTTPoison replacement.
-metadata:
-  user-invocable: "true"
-  version: 1.0.0
+
 ---
 
 # Req HTTP Client
@@ -31,7 +29,6 @@ metadata:
 
 See [`assets/req_client_snippets.ex`](assets/req_client_snippets.ex) for a copy-paste base client and wrapper module.
 
----
 
 ## End-to-End Workflow
 
@@ -111,7 +108,6 @@ iex> MyApp.ApiClient.fetch_user(1)
 ```
 Checkpoint: confirm a `{:ok, body}` tuple is returned; check logs for retry warnings if the request is slow.
 
----
 
 ## Quick-Reference: Request Types
 
@@ -122,13 +118,12 @@ Checkpoint: confirm a `{:ok, body}` tuple is returned; check logs for retry warn
 | POST form | `Req.post!(url, form: [username: "john", password: "secret"])` |
 | With error handling | Use `Req.get/1` (not bang) and pattern match `{:ok, %{status: _, body: _}}` / `{:error, _}` |
 
----
 
 ## Retries
 
 ```elixir
 # Automatic retries for transient failures
-Req.get!("https://api.example.com/data",
+Req.get!("https://api.your-app.test/data",
   retry: :transient,           # Retry on 5xx and network errors
   retry_delay: &(&1 * 1000),   # Exponential backoff: 1s, 2s, 4s, ...
   max_retries: 3,              # Max 3 retries
@@ -136,7 +131,7 @@ Req.get!("https://api.example.com/data",
 )
 
 # Custom retry logic (e.g. also retry on 429)
-Req.get!("https://api.example.com/data",
+Req.get!("https://api.your-app.test/data",
   retry: fn response ->
     case response do
       %{status: 429} -> true
@@ -148,18 +143,17 @@ Req.get!("https://api.example.com/data",
 )
 ```
 
----
 
 ## Streaming Responses
 
 ```elixir
 # Stream large responses to a file
-Req.get!("https://api.example.com/large-file",
+Req.get!("https://api.your-app.test/large-file",
   into: File.stream!("download.txt")
 )
 
 # Stream with a callback
-Req.get!("https://api.example.com/stream",
+Req.get!("https://api.your-app.test/stream",
   into: fn {:data, data}, {req, resp} ->
     IO.puts("Received #{byte_size(data)} bytes")
     {:cont, {req, resp}}

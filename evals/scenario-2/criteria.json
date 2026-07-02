@@ -1,0 +1,51 @@
+{
+  "context": "Tests whether the agent correctly adds a Cachex caching layer to a Phoenix Accounts context, using the atomic fetch pattern, explicit TTLs, stats configuration, supervisor ownership, structured logging, and the `with` construct for sequential fallible operations.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "Cachex.fetch/3 used",
+      "description": "Uses Cachex.fetch/3 for the cache-aside lookup in get_user — NOT a separate Cachex.get + Cachex.put pair",
+      "max_score": 20
+    },
+    {
+      "name": "TTL set on cache entry",
+      "description": "Every Cachex.fetch/3 commit (or any Cachex.put call) explicitly sets a TTL — no entry is cached without one",
+      "max_score": 15
+    },
+    {
+      "name": "stats: true in config",
+      "description": "The Cachex child spec includes `stats: true` (or equivalent option) so hit/miss metrics can be collected",
+      "max_score": 15
+    },
+    {
+      "name": "Cachex in supervision tree",
+      "description": "Cachex is started as a supervised child in application.ex (or a dedicated supervisor), NOT started ad-hoc via Cachex.start_link outside a supervisor",
+      "max_score": 10
+    },
+    {
+      "name": "Cache invalidation on update",
+      "description": "update_user/2 (or equivalent) calls Cachex.del/2 (or Cachex.put with updated value) to remove or refresh the stale cache entry after a successful update",
+      "max_score": 10
+    },
+    {
+      "name": "Structured logging",
+      "description": "Logger calls use keyword-list metadata — e.g. Logger.info(\"...\", user_id: id) — NOT string interpolation like Logger.info(\"user #{id} ...\")",
+      "max_score": 10
+    },
+    {
+      "name": "with for sequential operations",
+      "description": "When 2 or more sequential fallible operations are chained (e.g. cache miss then DB fetch, or validate then update), a `with` expression is used instead of nested case statements",
+      "max_score": 10
+    },
+    {
+      "name": "cachex dep in mix.exs",
+      "description": "The Cachex package (`:cachex`) is present in the deps list in mix.exs",
+      "max_score": 5
+    },
+    {
+      "name": "DESIGN.md present",
+      "description": "A DESIGN.md file exists and contains an explanation of the TTL value chosen and how to read or access cache stats",
+      "max_score": 5
+    }
+  ]
+}
