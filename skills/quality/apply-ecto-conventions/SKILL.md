@@ -271,6 +271,20 @@ end
 ```
 
 
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Call `Repo` directly from a LiveView or controller | Put every query behind a context module function |
+| Use bang functions (`Repo.get!`) in application logic | Use non-bang functions and pattern match on `{:ok, _}` / `nil` |
+| Interpolate user input into a `fragment` string | Parameterize with `^` and `field(u, :col)` |
+| Access associations inside a loop without preloading | `Repo.preload/2` (or `preload:`) before iterating |
+| Chain 2+ related `Repo` writes without a transaction | Wrap them in `Ecto.Multi` and `Repo.transaction/1` |
+| Mix schema changes and data backfill in one migration | Keep structural and data migrations separate |
+| Ship foreign keys without indexes | `create index(...)` on FKs and frequently queried columns |
+
+---
+
 ## Integration
 
 | Predecessor | This Skill | Successor |

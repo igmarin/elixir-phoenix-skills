@@ -16,7 +16,7 @@ description: >
 
 # Benchee Profiling
 
-## Rules & Workflow — Follow these in order with no exceptions
+## RULES — Follow these with no exceptions
 
 1. **Profile first** — run `:fprof` or `:eprof` and verify the output explicitly names the expected slow call site; re-run with a larger workload if ambiguous
 2. **Write a comparative benchmark** — implement at least 2 alternative approaches using Benchee, ensuring implementations do the same thing; benchmark in `MIX_ENV=prod` for realistic results
@@ -225,3 +225,27 @@ Benchee.run(
   reduction_time: 5
 )
 ```
+
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Benchmark in `MIX_ENV=dev` | Run with `MIX_ENV=prod mix run bench/...` for realistic numbers |
+| Measure with no warmup | Set `warmup: 2` and `time: 10` before measuring |
+| Compare approaches that return different results | Verify every implementation produces identical output first |
+| Optimize before profiling | Run `:fprof`/`:eprof` to confirm the real hotspot |
+| Benchmark a single input size | Use small/medium/large `inputs` to catch scaling behavior |
+| Mix I/O and compute in one run | Separate network/disk benchmarks from CPU benchmarks |
+| Fail CI on one noisy run | Compare against the last 3 baselines before raising a regression |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| telemetry-essentials | benchee-profiling | deployment-gotchas |
+| code-quality | benchee-profiling | None (standalone) |
+
+**Companion skills:** `telemetry-essentials`, `deployment-gotchas`, `code-quality`.

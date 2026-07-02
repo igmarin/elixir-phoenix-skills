@@ -169,6 +169,19 @@ end
 5. **Re-run** — confirm the fix holds across new generated cases
 
 
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Assert exact outputs (`== [1, 2, 3]`) | Assert invariants that always hold (ordering, length, membership) |
+| Generate unconstrained inputs that break the code under test | Constrain generators (`min_length: 1`, `integer(1..100)`) to valid domains |
+| Ignore the shrunk minimal case in failure output | Read the shrunk values first — they point straight at the bug |
+| Use `check all` without `use ExUnitProperties` | Add `use ExUnitProperties` alongside `use ExUnit.Case` |
+| Write one giant property covering many behaviours | Split into focused properties, one invariant each |
+| Leave generators unbounded, causing slow/huge cases | Bound ranges and collection sizes to keep runs fast |
+
+---
+
 ## Integration
 
 | Predecessor | This Skill | Successor |

@@ -1,0 +1,24 @@
+{
+  "target_skill": "property-based-testing",
+  "source_path": "skills/testing/property-based-testing/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "**Define properties, not examples** — state what should always be true, not specific inputs/outputs",
+      "original_snippets": "**Define properties, not examples** — state what should always be true, not specific inputs/outputs",
+      "relevant_when": "When a user asks for planning work that should trigger property-based-testing.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "**Write property** — define an invariant using `check all` with appropriate generators",
+      "original_snippets": "**Write property** — define an invariant using `check all` with appropriate generators",
+      "relevant_when": "When a user asks for planning work that should trigger property-based-testing.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Run test** — `mix test test/my_test.exs`",
+      "original_snippets": "**Run test** — `mix test test/my_test.exs`",
+      "relevant_when": "When a user asks for planning work that should trigger property-based-testing.",
+      "why_given": "new knowledge"
+    }
+  ]
+}

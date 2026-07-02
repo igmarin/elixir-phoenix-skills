@@ -13,15 +13,15 @@ description: >
 
 # Ecto Changeset Patterns
 
-## RULES — Quick Checklist
+## RULES — Follow these with no exceptions
 
-1. Separate named changesets per operation (`registration_changeset`, `email_changeset`, etc.)
-2. Never require foreign key fields in `cast_assoc` child changesets
-3. Compose changesets with pipes; each validation step is a separate function
-4. Always pair `unsafe_validate_unique` with `unique_constraint`
-5. Use `update_change/3` for field transformations (trim, downcase, slugify)
-6. Accept `opts \\ []` for conditional validation
-7. Validate at the changeset level, not in context functions
+1. **Define separate named changesets per operation** — `registration_changeset`, `email_changeset`, `password_changeset`, etc.
+2. **Never require foreign key fields in `cast_assoc` child changesets** — `cast_assoc` sets them automatically
+3. **Compose changesets with pipes** — each validation step is a separate, reusable function
+4. **Always pair `unsafe_validate_unique` with `unique_constraint`** — fast UI feedback plus race-safe enforcement
+5. **Use `update_change/3` for field transformations** — trim, downcase, and slugify inside the changeset
+6. **Accept `opts \\ []` for conditional validation** — toggle hashing or uniqueness checks per call site
+7. **Validate at the changeset level, not in context functions** — keep validation next to the schema
 
 
 ## Workflow: Building a New Schema
@@ -98,7 +98,19 @@ end
 ```
 
 
-## cast_assoc — Critical Pitfall
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Require `:post_id` in a `cast_assoc` child changeset | Cast only user fields; `cast_assoc` sets the FK |
+| Reuse one changeset for every operation | Define separate named changesets per operation |
+| Use `unsafe_validate_unique` alone | Pair it with `unique_constraint` for race safety |
+| Trim/downcase fields in the controller | Transform in the changeset with `update_change/3` |
+| Hardcode hashing/uniqueness behavior | Accept `opts \\ []` for conditional validation |
+| Validate inside context functions | Validate at the changeset level, next to the schema |
+| Cast the virtual `:password` and forget to hash | Hash via `put_password_hash/1` in the password changeset |
+
+### cast_assoc — Critical Pitfall
 
 ❌ **Bad — `:post_id` is required but set automatically by cast_assoc:**
 ```elixir
@@ -200,6 +212,21 @@ def changeset(user, attrs) do
 end
 ```
 
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| ecto-essentials | ecto-changeset-patterns | ecto-nested-associations |
+| ecto-essentials | ecto-changeset-patterns | testing-essentials |
+
+**Companion skills:**
+- `ecto-essentials` — schema, query, and migration foundations
+- `ecto-nested-associations` — `cast_assoc` for deeply nested data structures
+- `testing-essentials` — changeset tests with `errors_on/1` helpers
+- `apply-ecto-conventions` — enforce changeset conventions on existing code
+
+---
 
 ## Related Skills
 

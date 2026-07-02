@@ -1,0 +1,24 @@
+{
+  "target_skill": "req-http-client",
+  "source_path": "skills/integrations/req-http-client/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "**Step 2 — Create a configured client module**",
+      "original_snippets": "**Step 2 — Create a configured client module**",
+      "relevant_when": "When a user asks for planning work that should trigger req-http-client.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Checkpoint: run `mix test` — all stubs must pass before using the real API.",
+      "original_snippets": "Checkpoint: run `mix test` — all stubs must pass before using the real API.",
+      "relevant_when": "When a user asks for planning work that should trigger req-http-client.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "**Step 4 — Verify in IEx against the real endpoint**",
+      "original_snippets": "**Step 4 — Verify in IEx against the real endpoint**",
+      "relevant_when": "When a user asks for planning work that should trigger req-http-client.",
+      "why_given": "new knowledge"
+    }
+  ]
+}

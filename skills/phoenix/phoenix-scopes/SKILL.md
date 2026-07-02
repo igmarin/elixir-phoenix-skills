@@ -21,6 +21,8 @@ description: >
 1. **Use bracket access in templates** — `assigns[:current_scope]` prevents crashes when unauthenticated
 2. **Test both authenticated and unauthenticated states** — scope-based auth has two distinct code paths
 3. **Define `anonymous/0` for the unauthenticated case** — return a Scope with `user: nil`
+4. **Pass `scope` to context functions, not a bare `user`** — centralizes authorization and enables tenant/permission checks
+5. **Guard mutating events with `Scope.can?/2`** — enforce authorization server-side; never rely on hidden UI controls
 
 
 ## Scope Struct Definition
@@ -132,16 +134,69 @@ end
 
 ## Testing Scopes
 
-```elixir
-describe "DashboardLive" do
-  test "shows dashboard content for authenticated user", %{conn: conn} do
-    conn = log_in_user(conn, insert(:user))
-    assert {:ok, _, html} = live(conn, "/dashboard")
-    assert html =~ "Welcome"
-  end
+Cover both code paths. Context tests assert that scope-based filtering returns only the caller's data; LiveView tests assert scope-based access control.
 
-  test "redirects to login when unauthenticated", %{conn: conn} do
-    assert {:error, {:redirect, %{to: "/login"}}} = live(conn, "/dashboard")
+**Context test — scope-based filtering (`MyApp.DataCase`):**
+
+```elixir
+defmodule MyApp.BlogTest do
+  use MyApp.DataCase, async: true
+
+  alias MyApp.{Blog, Scope}
+
+  test "list_user_posts/1 returns only posts visible to the scope" do
+    owner = insert(:user)
+    other = insert(:user)
+    own_post = insert(:post, user: owner)
+    _hidden = insert(:post, user: other)
+
+    scope = Scope.for_user(owner)
+
+    assert Blog.list_user_posts(scope) == [own_post]
   end
 end
 ```
+
+**LiveView test — scope-based access (`Phoenix.LiveViewTest`):**
+
+```elixir
+defmodule MyAppWeb.DashboardLiveTest do
+  use MyAppWeb.ConnCase, async: true
+
+  import Phoenix.LiveViewTest
+
+  test "shows dashboard content for an authenticated scope", %{conn: conn} do
+    conn = log_in_user(conn, insert(:user))
+    assert {:ok, _view, html} = live(conn, ~p"/dashboard")
+    assert html =~ "Welcome"
+  end
+
+  test "redirects to login for an unauthenticated scope", %{conn: conn} do
+    assert {:error, {:redirect, %{to: "/login"}}} = live(conn, ~p"/dashboard")
+  end
+end
+```
+
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Read `@current_scope` directly in a template | Use `assigns[:current_scope]` so unauthenticated renders don't crash |
+| Test only the authenticated path | Cover both authenticated and unauthenticated scopes |
+| Trust the UI to hide privileged actions | Authorize every mutation server-side with `Scope.can?/2` |
+| Pass a bare `user` into context functions | Pass the `scope` so filtering and permissions stay centralized |
+| Return `nil` or crash for anonymous callers | Define `anonymous/0` returning a `Scope` with `user: nil` |
+| Assume `permissions` is always a list | Pattern-match with an `is_list/1` guard, as `can?/2` does |
+| Render a partial page for an unauthenticated scope | Halt in `on_mount` and redirect to the login route |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| phoenix-liveview-essentials | phoenix-scopes | phoenix-authorization-patterns |
+| phoenix-liveview-auth | phoenix-scopes | testing-essentials |
+
+**Companion skills:** `phoenix-liveview-auth`, `phoenix-authorization-patterns`, `phoenix-auth-customization`, `testing-essentials`.

@@ -365,6 +365,19 @@ end
 | `write_concurrency: true` | Optimise for concurrent writes (trades some read performance) |
 
 
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Block in `init/1` with DB queries or heavy setup | Return fast and defer expensive work to `handle_continue` |
+| Wrap every failure in defensive `try`/`rescue` | Let it crash and rely on the supervisor to restart cleanly |
+| Start long-running processes unsupervised | Put them under a supervisor that owns their lifecycle |
+| Register processes with dynamically-built atoms | Use `Registry` — the atom table is finite and never GC'd |
+| Expose `GenServer.call(pid, ...)` to callers | Wrap calls behind a public module API |
+| Serialize read-heavy shared state through one GenServer | Read directly from ETS; funnel only writes through the server |
+| Leave `:DOWN`/monitor messages unhandled | Handle them explicitly in `handle_info` |
+
+
 ## Integration
 
 | Predecessor | This Skill | Successor |

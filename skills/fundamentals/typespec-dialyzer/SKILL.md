@@ -18,6 +18,10 @@ description: >
 1. **Run Dialyzer in CI** — catch type errors before they reach production
 2. **Start with core modules** — add typespecs incrementally, don't try to type everything at once
 3. **Never ignore Dialyzer warnings without documenting why** — use `.dialyzer_ignore.exs`
+4. **Add `@spec` to every public function** — document argument and return types at the boundary
+5. **Define `@type t` for structs and schemas** — give each module a canonical type callers can reference
+6. **Use `@opaque` for encapsulated types** — hide the internal representation from callers
+7. **Cache the PLT in CI** — never rebuild the persistent lookup table on every run
 
 
 ## Basic TypeSpecs
@@ -224,3 +228,30 @@ end
 - name: Dialyzer
   run: mix dialyzer --format short
 ```
+
+---
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Try to type the whole codebase at once | Adopt incrementally, starting with core modules |
+| Silence Dialyzer warnings inline | Document and suppress via `.dialyzer_ignore.exs` |
+| Skip Dialyzer in CI | Run `mix dialyzer --format short` in CI |
+| Write `any()` specs everywhere | Use precise union and parameterized types |
+| Widen a `@spec` past the real success typing | Match the spec to what the function actually returns |
+| Rebuild the PLT on every CI run | Cache `priv/plts` keyed on `mix.lock` |
+| Leave public functions unspecced | Add `@spec` at every public boundary |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| elixir-essentials | typespec-dialyzer | code-quality |
+| ecto-essentials | typespec-dialyzer | testing-essentials |
+
+**Companion skills:**
+- `code-quality` — Credo and static analysis alongside Dialyzer
+- `credo-config` — configure Credo checks that complement typespecs

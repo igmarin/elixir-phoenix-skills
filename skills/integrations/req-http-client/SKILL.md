@@ -13,7 +13,21 @@ description: >
 
 # Req HTTP Client
 
-**Sections:** [End-to-End Workflow](#end-to-end-workflow) · [Quick-Reference: Request Types](#quick-reference-request-types) · [Retries](#retries) · [Streaming Responses](#streaming-responses)
+**Sections:** [RULES](#rules--follow-these-with-no-exceptions) · [End-to-End Workflow](#end-to-end-workflow) · [Quick-Reference: Request Types](#quick-reference-request-types) · [Retries](#retries) · [Streaming Responses](#streaming-responses) · [Common Pitfalls](#common-pitfalls) · [Integration](#integration)
+
+---
+
+## RULES — Follow these with no exceptions
+
+1. **Always build a configured base client with `Req.new/1`** — set `base_url`, `receive_timeout`, and default headers once, then reuse it for every call instead of re-passing options
+2. **Use the non-bang `Req.get/1` / `Req.post/1` in application code** — pattern match `{:ok, %{status: _, body: _}}` / `{:error, _}`; reserve the `!` variants for scripts and tests
+3. **Match status codes explicitly** — handle `404`, `429`, and `status >= 500` distinctly; never collapse every non-200 into one branch
+4. **Enable `retry: :transient` only for idempotent requests** — Req retries 5xx and network errors with backoff; never blindly retry non-idempotent writes
+5. **Set an explicit `receive_timeout`** — never rely on infinite defaults for calls to external services
+6. **Stub every external call in tests with `Req.Test`** — the suite must never hit a real API
+7. **Stream large responses with `into:`** — write to `File.stream!/1` or a callback instead of loading the full payload into memory
+
+See [`assets/req_client_snippets.ex`](assets/req_client_snippets.ex) for a copy-paste base client and wrapper module.
 
 
 ## End-to-End Workflow
@@ -146,3 +160,32 @@ Req.get!("https://api.your-app.test/stream",
   end
 )
 ```
+
+---
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| `Req.get!` in app code and rescue exceptions | `Req.get/1` and pattern match `{:ok, _}` / `{:error, _}` |
+| Rebuild `Req.new/1` options on every call | Build a base client once and reuse it |
+| Treat any non-200 status the same | Match `404`, `429`, and `status >= 500` explicitly |
+| `retry: :transient` on non-idempotent POSTs | Retry only idempotent requests; handle writes deliberately |
+| Leave `receive_timeout` at the default | Set an explicit timeout for every external call |
+| Hit the real API in the test suite | Stub with `Req.Test.stub/2` |
+| Load a large response into memory | Stream with `into: File.stream!(path)` |
+| Hardcode tokens in the client module | Read from `Application.get_env/2` / runtime config |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| elixir-essentials | req-http-client | testing-essentials |
+| None (standalone) | req-http-client | oban-essentials |
+
+**Companion skills:**
+- `testing-essentials` — stub HTTP calls with `Req.Test` in the suite
+- `oban-essentials` — retry and schedule outbound API calls in background jobs
+- `cachex-caching` — cache responses from slow or rate-limited APIs

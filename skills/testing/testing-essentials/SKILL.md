@@ -35,8 +35,12 @@ Follow these steps in order, with explicit validation at each checkpoint:
 6. **Implement the feature**
 7. **Verify the test passes** — re-run `mix test path/to/file_test.exs` and confirm green
 
+See [`assets/tdd_checklist.md`](assets/tdd_checklist.md) for a copy-paste RED/GREEN/REFACTOR checklist and pre-commit quality gate.
+
 
 ## Test Module Setup
+
+See [`assets/spec_templates.md`](assets/spec_templates.md) for copy-paste DataCase, ConnCase, LiveView, isolated-LiveView, and ChannelCase test templates.
 
 ### DataCase — for context and schema tests
 
@@ -217,3 +221,26 @@ assert Blog.list_published_posts() == [old_post]
 ## When Not to Use
 
 Do not invoke this skill for: pure-function unit tests with no DB/external side effects (use plain ExUnit), property-based testing (`property-based-testing` skill), benchmarking (`benchee-profiling` skill), Mox patterns for external services, or LiveView streams (`phoenix/liveview-streams` skill).
+
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| `async: true` on LiveView or shared-row DB tests | Set `async: false` when tests share mutable state |
+| `assert html =~ "Save"` for structure checks | `has_element?(lv, "#post-form button", "Save")` |
+| Build test data inline in every test | Define reusable fixtures in `test/support/` |
+| `assert post.published_at == ~U[2026-01-15 12:00:00Z]` | Assert relative to `DateTime.utc_now/1` with `DateTime.diff/3` |
+| Test only the happy path | Always add the unauthorized/invalid-attrs case |
+| Reuse a hardcoded email across tests | `"user#{System.unique_integer([:positive])}@example.com"` |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| ecto-essentials | testing-essentials | property-based-testing |
+| phoenix-liveview-essentials | testing-essentials | code-quality |
+
+**Companion skills:** `property-based-testing`, `benchee-profiling`, `tdd`, `code-quality`.

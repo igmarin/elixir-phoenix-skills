@@ -235,7 +235,17 @@ MyApp.Blog.Post
 ```
 
 
-## Ash-Specific Pitfalls
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Rely on `defaults [:read, :create]` without knowing what they expose | Define actions explicitly and `accept` only the intended attributes |
+| Build filters with string interpolation (`"status == '#{s}'"`) | Use pinned expressions: `Ash.Query.filter(status == ^status)` |
+| Alter the DB schema by hand before defining the resource | Define the resource first, then `mix ash_postgres.generate_migrations` |
+| Skip policy blocks on resources with sensitive data | Add `policies do ... end` with explicit `authorize_if`/`forbid_if` |
+| Manipulate structs directly for writes | Use `Ash.Changeset.for_create/3` and `Ash.Changeset.for_update/3` |
+| Rescue a generic error and lose context | Match specific types: `Ash.Error.Forbidden`, `Ash.Error.Query.NotFound` |
+| Offset-paginate large result sets | Use keyset pagination (`Ash.Query.page(after: ...)`) |
 
 ### Custom Validations — use the action layer, not DB constraints
 
@@ -333,3 +343,15 @@ def get_post!(id) do
   MyApp.Blog.Post |> Ash.get!(id)
 end
 ```
+
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| elixir-essentials | ash-framework | phoenix-json-api |
+| ecto-essentials | ash-framework | phoenix-authorization-patterns |
+
+**Companion skills:**
+- [testing-essentials](../../testing/testing-essentials/SKILL.md) — test Ash actions and policies
+- [phoenix-liveview-essentials](../../phoenix/phoenix-liveview-essentials/SKILL.md) — wire AshPhoenix forms into LiveView

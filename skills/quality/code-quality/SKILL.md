@@ -34,6 +34,8 @@ description: >
 4. **Security check** — run `mix sobelow` before committing
 5. **Commit** — only after both Credo and Sobelow pass cleanly
 
+See [`assets/refactoring_checklist.md`](assets/refactoring_checklist.md) for copy-paste complexity thresholds and a before/during/after refactoring checklist.
+
 
 ## What Gets Detected
 
@@ -125,3 +127,29 @@ mix sobelow --config
 # All three in sequence
 mix deps.audit && mix hex.audit && mix sobelow
 ```
+
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Copy-paste similar logic across modules | Extract a shared module when 2+ share >70% implementation |
+| Let a function grow past ABC complexity 30 | Break it into named private helper functions |
+| Leave unused private functions after refactoring | Remove dead private functions |
+| Duplicate HEEx markup across templates | Extract a function component when 2+ files share >40% markup |
+| Reduce complexity before removing duplication | Extract shared code first, then reduce complexity |
+| Open a PR without a security pass | Run `mix credo --strict` and `mix sobelow` before committing |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| code-review | code-quality | refactor-code |
+| refactor-code | code-quality | testing-essentials |
+
+**Companion skills:**
+- `credo-config` — configure Credo checks and CI integration
+- `refactor-code` — safe structural changes backed by characterization tests
+- `code-review` — PR review that surfaces the quality issues fixed here

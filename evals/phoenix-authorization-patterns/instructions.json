@@ -1,0 +1,36 @@
+{
+  "target_skill": "phoenix-authorization-patterns",
+  "source_path": "skills/auth/phoenix-authorization-patterns/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "**Always authorize on the server in event handlers** — never rely on UI-only checks",
+      "original_snippets": "**Always authorize on the server in event handlers** — never rely on UI-only checks",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-authorization-patterns.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "**Verify resource ownership by comparing `current_scope.user.id` against the resource's `user_id`** — never trust client-sent user IDs",
+      "original_snippets": "**Verify resource ownership by comparing `current_scope.user.id` against the resource's `user_id`** — never trust client-sent user IDs",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-authorization-patterns.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Use policy modules for complex authorization** — don't inline permission checks in LiveViews or controllers",
+      "original_snippets": "**Use policy modules for complex authorization** — don't inline permission checks in LiveViews or controllers",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-authorization-patterns.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Define policy module rules** — add clauses for every action (`view`, `edit`, `delete`, etc.) before wiring up any LiveView",
+      "original_snippets": "**Define policy module rules** — add clauses for every action (`view`, `edit`, `delete`, etc.) before wiring up any LiveView",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-authorization-patterns.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Write unauthorized-path tests first** — confirm that a non-owner receives an error and that the mutation does not occur",
+      "original_snippets": "**Write unauthorized-path tests first** — confirm that a non-owner receives an error and that the mutation does not occur",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-authorization-patterns.",
+      "why_given": "new knowledge"
+    }
+  ]
+}

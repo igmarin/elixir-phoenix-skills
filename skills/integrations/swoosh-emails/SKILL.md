@@ -57,6 +57,8 @@ MyApp.Mailer.deliver(Swoosh.Email.new(to: "test@example.com", from: "noreply@mya
 
 ## Defining Emails
 
+See [`assets/mailer_template.ex`](assets/mailer_template.ex) for a copy-paste template with the Mailer module, an email-builder module, and an Oban delivery worker.
+
 ### With Phoenix Components
 
 ```elixir
@@ -234,3 +236,29 @@ config :swoosh, serve: true
 
 # Access preview at http://localhost:4000/dev/mailbox
 ```
+
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Build emails inline inside a context | Define them in dedicated modules (`MyApp.Emails.UserEmail`) |
+| Call `Mailer.deliver/1` inside a web request | Enqueue an Oban job (or `Task.start` for simple cases) so the request never blocks on SMTP |
+| Ship an HTML-only email | Always set both `html_body/2` and `text_body/2` |
+| Use a real adapter in dev/test | `Swoosh.Adapters.Local` in dev, `Swoosh.Adapters.Test` in test, real adapter only in prod |
+| Hardcode the API key in config | Read it at runtime: `System.get_env("SENDGRID_API_KEY")` in `runtime.exs` |
+| Assert delivery by inspecting logs | Use `Swoosh.TestAssertions` — `assert_email_sent/1` and `assert_no_email_sent/0` |
+| Forget `{Finch, name: MyApp.Finch}` in the supervision tree | Start Finch so API-based adapters have an HTTP client |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| phoenix-auth-customization | swoosh-emails | oban-essentials |
+| ecto-essentials | swoosh-emails | testing-essentials |
+
+**Companion skills:**
+- `oban-essentials` — deliver emails asynchronously with retries
+- `testing-essentials` — assert delivery with `Swoosh.TestAssertions`

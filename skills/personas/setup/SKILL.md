@@ -7,6 +7,8 @@ description: >
   Complete Elixir/Phoenix project setup loop with hard gates: verify Elixir/Erlang versions match .tool-versions, Hex and Rebar installed, database connection successful, all env vars loaded → configure CI/CD pipeline with testing and linting → validate end-to-end with mix deps.get, mix ecto.create, mix ecto.migrate, mix test, and write SETUP_CHECKLIST.md; phases context/onboarding→CI/CD configuration→environment validation. Use when starting a new Phoenix project, running `mix phx.new`, configuring mix.exs, setting up a development environment, or wiring up CI/CD for an Elixir project. Trigger: setup project, new Phoenix app, configure CI/CD, dev environment setup, mix phx.new, mix.exs setup, Elixir project bootstrap.
 ---
 
+## Agent Phases
+
 ### Phase 1: Context & Onboarding
 
 **Inline setup (always applicable):**
@@ -30,7 +32,7 @@ cp .env.example .env 2>/dev/null || true
 - [ ] Phoenix secret key base configured (`SECRET_KEY_BASE` env var)
 - [ ] All external CI actions pinned to immutable commit SHAs (never mutable tags like @v4)
 
-**If environment check FAILS:** Fix the failing item above before proceeding to Phase 2.
+**If gate fails:** Fix the failing item above before proceeding to Phase 2.
 
 
 ### Phase 2: CI/CD Configuration

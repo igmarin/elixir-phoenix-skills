@@ -1,8 +1,10 @@
 # Ecto Changeset Snippets
+#
+# Copy-paste reference snippets. Grouped by pattern; each block is standalone.
+# Rename the duplicate `changeset/2` examples when combining them into one module.
 
-## Basic Changeset
+# --- Basic Changeset ---
 
-```elixir
 defmodule MyApp.Blog.Post do
   use Ecto.Schema
   import Ecto.Changeset
@@ -28,92 +30,88 @@ defmodule MyApp.Blog.Post do
     |> unique_constraint(:title)
     |> foreign_key_constraint(:author_id)
   end
-end
-```
 
-## Custom Changeset with Conditional Validation
+  # --- Custom Changeset with Conditional Validation ---
 
-```elixir
-def publish_changeset(post) do
-  post
-  |> change(status: :published, published_at: DateTime.utc_now())
-  |> validate_required([:title, :body])
-  |> validate_change(:status, fn :status, :published ->
-    if post_has_comments?(post), do: [], else: [status: "cannot publish post without comments"]
-  end)
-end
-```
+  def publish_changeset(post) do
+    post
+    |> change(status: :published, published_at: DateTime.utc_now())
+    |> validate_required([:title, :body])
+    |> validate_change(:status, fn :status, :published ->
+      if post_has_comments?(post), do: [], else: [status: "cannot publish post without comments"]
+    end)
+  end
 
-## Changeset with prepare_changes
+  # --- Changeset with prepare_changes ---
 
-```elixir
-def changeset(post, attrs) do
-  post
-  |> cast(attrs, [:title, :body, :slug])
-  |> validate_required([:title, :body])
-  |> prepare_changes(fn changeset ->
-    slug = get_field(changeset, :title) |> slugify()
-    put_change(changeset, :slug, slug)
-  end)
-end
+  def slug_changeset(post, attrs) do
+    post
+    |> cast(attrs, [:title, :body, :slug])
+    |> validate_required([:title, :body])
+    |> prepare_changes(fn changeset ->
+      slug = get_field(changeset, :title) |> slugify()
+      put_change(changeset, :slug, slug)
+    end)
+  end
 
-defp slugify(title) when is_binary(title) do
-  title
-  |> String.downcase()
-  |> String.replace(~r/[^a-z0-9\s-]/, "")
-  |> String.replace(~r/[\s]+/, "-")
-end
-```
+  defp slugify(title) when is_binary(title) do
+    title
+    |> String.downcase()
+    |> String.replace(~r/[^a-z0-9\s-]/, "")
+    |> String.replace(~r/[\s]+/, "-")
+  end
 
-## Insert with Ecto.Multi
+  # --- Validate with Custom Function ---
 
-```elixir
-alias Ecto.Multi
+  def author_changeset(post, attrs) do
+    post
+    |> cast(attrs, [:title, :body, :author_id])
+    |> validate_required([:title, :body])
+    |> validate_author_exists()
+  end
 
-def create_post_with_tags(attrs, tag_names) do
-  Multi.new()
-  |> Multi.insert(:post, Post.changeset(%Post{}, attrs))
-  |> Multi.run(:tags, fn repo, %{post: post} ->
-    tags =
-      Enum.map(tag_names, fn name ->
-        %Tag{name: name} |> Tag.changeset(%{})
-      end)
+  defp validate_author_exists(changeset) do
+    author_id = get_field(changeset, :author_id)
 
-    repo.insert_all(Tag, tags, on_conflict: :nothing)
-  end)
-  |> Repo.transaction()
-end
-```
+    if author_id && MyApp.Repo.get(MyApp.Accounts.User, author_id) do
+      changeset
+    else
+      add_error(changeset, :author_id, "does not exist")
+    end
+  end
 
-## Validate with Custom Function
+  # --- Safe String Casting with put_change ---
 
-```elixir
-def changeset(post, attrs) do
-  post
-  |> cast(attrs, [:title, :body, :author_id])
-  |> validate_required([:title, :body])
-  |> validate_author_exists()
+  def trimmed_changeset(post, attrs) do
+    post
+    |> cast(attrs, [:title, :body])
+    |> put_change(:title, String.trim(get_field(post, :title) || ""))
+    |> put_change(:body, String.trim(get_field(post, :body) || ""))
+    |> validate_required([:title, :body])
+  end
+
+  defp post_has_comments?(_post), do: true
 end
 
-defp validate_author_exists(changeset) do
-  author_id = get_field(changeset, :author_id)
+# --- Insert with Ecto.Multi ---
 
-  if author_id && Repo.get(User, author_id) do
-    changeset
-  else
-    add_error(changeset, :author_id, "does not exist")
+defmodule MyApp.Blog.MultiSnippets do
+  alias Ecto.Multi
+  alias MyApp.Blog.{Post, Tag}
+  alias MyApp.Repo
+
+  def create_post_with_tags(attrs, tag_names) do
+    Multi.new()
+    |> Multi.insert(:post, Post.changeset(%Post{}, attrs))
+    |> Multi.run(:tags, fn repo, %{post: _post} ->
+      tags =
+        Enum.map(tag_names, fn name ->
+          %{name: name, inserted_at: DateTime.utc_now(), updated_at: DateTime.utc_now()}
+        end)
+
+      {count, _} = repo.insert_all(Tag, tags, on_conflict: :nothing)
+      {:ok, count}
+    end)
+    |> Repo.transaction()
   end
 end
-```
-
-## Safe String Casting with put_change
-
-```elixir
-def changeset(post, attrs) do
-  post
-  |> cast(attrs, [:title, :body])
-  |> put_change(:title, String.trim(get_field(post, :title) || ""))
-  |> put_change(:body, String.trim(get_field(post, :body) || ""))
-  |> validate_required([:title, :body])
-end
-```

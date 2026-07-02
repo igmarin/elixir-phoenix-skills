@@ -205,6 +205,20 @@ end
 ```
 
 
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Read env vars in `config/prod.exs` (compiled) | Read them in `config/runtime.exs` (evaluated at boot) |
+| `System.get_env("SECRET")` that returns `nil` silently | `System.get_env!("SECRET")` so the release crashes on startup |
+| Run `mix ecto.migrate` against a release | Run `bin/my_app eval "MyApp.Release.migrate()"` |
+| Forget `PHX_SERVER=true` and get no HTTP server | Set `server: true` / `PHX_SERVER=true` in runtime config |
+| Build the release before `mix assets.deploy` | Run `mix assets.deploy` first, then `mix release` |
+| Ship a `/health` that returns 200 without checking the DB | Query the database in the health endpoint |
+| Leave `:debug` logging on in prod (leaks PII/params) | Use `config :logger, level: :info` in production |
+
+---
+
 ## Integration
 
 | Predecessor | This Skill | Successor |

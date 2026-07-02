@@ -38,6 +38,8 @@ mix hex.audit                  # Dependency audit
 
 **HARD GATE — NEVER open a PR before all four checks above pass**, plus `mix test` (full suite green) and `@doc`/`@spec` annotations on all public APIs (completed in Phase 3). Fix any failure before proceeding.
 
+**If gate fails:** Fix the failing check — formatter, `credo`, `dialyzer`, `hex.audit`, or a red test — before doing anything else; do not open the PR until every command exits 0.
+
 
 ### Phase 2: Refactoring (Optional)
 
@@ -86,3 +88,50 @@ Before opening a PR, confirm every item is green:
 | Doc/spec coverage | All public APIs annotated | ✅ |
 
 **Do not open the PR until every row is ✅.**
+
+
+## Output Style
+
+When completing a quality pass, output a report using this template:
+
+```markdown
+# Quality Report — [Module / Scope]
+
+## Conventions
+- mix format --check-formatted: ✓/✗
+- mix credo --strict: ✓/✗ (<n> issues)
+- mix dialyzer: ✓/✗
+- mix hex.audit: ✓/✗
+
+## Refactoring
+- Thresholds exceeded: <list or none>
+- Extractions applied: <list>, each re-validated green
+
+## Documentation
+- Public functions annotated: <n>/<n> @doc, <n>/<n> @spec
+- Doctests passing: ✓/✗
+
+## Full Suite
+- mix test: ✓/✗ (<n> tests, 0 failures)
+
+Verdict: <READY FOR PR / NOT READY — blocking check>
+```
+
+
+## Error Recovery
+
+**Tests go red after a refactoring extraction:**
+1. Revert the last change immediately.
+2. Widen the characterization test to cover the touched behavior, then propose a smaller extraction.
+
+**Credo flags an issue you believe is a false positive:**
+1. Do not blanket-disable the check; confirm with the user before suppressing anything.
+2. If the pattern is genuinely intentional, add a scoped `# credo:disable-for-next-line` with a justifying comment.
+
+**Dialyzer reports a contract or type error after you add an `@spec`:**
+1. Re-derive the spec from actual usage and dialyzer's hint.
+2. If the code is correct but the spec is wrong, fix the spec; if the spec exposed a real type bug, fix the code.
+
+**`mix hex.audit` reports a vulnerable dependency:**
+1. Bump the affected dependency to a patched version and re-run the audit.
+2. If no patched release exists, document the exposure and raise it with the user before opening the PR.

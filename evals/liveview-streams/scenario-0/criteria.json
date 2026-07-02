@@ -1,0 +1,56 @@
+{
+  "context": "Checks whether the final artifact follows the liveview-streams instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: **Use streams for collections with 100+ items** — regular assigns re-render the entire list on every change",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: **Use `stream_insert/3` and `stream_delete/3` for incremental updates** — never replace the entire stream assign",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: **Use `phx-update=\"stream\"` in templates** — required for stream DOM patching; missing this causes full re-renders",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: **Use `reset: true` for filtering and sorting** — clears existing items before inserting the new result set",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: **Identify collection size** — use streams only for 100+ items; smaller lists use regular assigns",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-6",
+      "description": "The submitted artifact follows this skill instruction: **Define DOM ID strategy** — decide on `id` attribute format (e.g., `post-#{post.id}`)",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-7",
+      "description": "The submitted artifact follows this skill instruction: **Verify WS frames** — confirm targeted DOM patches in browser DevTools",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-8",
+      "description": "The submitted artifact follows this skill instruction: **Verify after adding the template:** Open browser DevTools → Network → WS frames. Confirm incoming frames contain targeted patch operations for individual items, not full list replacements. If you see full re-renders, check:",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-9",
+      "description": "The submitted artifact follows this skill instruction: **Verify after implementing load_more:** Trigger the event and confirm in DevTools WS frames that only the new batch of items is appended, not the entire list. If DOM IDs collide across pages, items will overwrite each other — ensure your ID scheme is globally unique.",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-10",
+      "description": "The submitted artifact follows this skill instruction: Use `reset: true` to clear existing items before inserting new ones — required for filtering and sorting:",
+      "max_score": 10
+    }
+  ]
+}

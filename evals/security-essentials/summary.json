@@ -1,0 +1,13 @@
+{
+  "target_skill": "security-essentials",
+  "total_scenarios": 1,
+  "instructions_coverage": {
+    "total_instructions": 10,
+    "instructions_tested": 10,
+    "coverage_percentage": 100
+  },
+  "reason_distribution": {
+    "new knowledge": 6,
+    "preference": 4
+  }
+}

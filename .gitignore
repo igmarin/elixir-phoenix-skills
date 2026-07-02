@@ -12,4 +12,5 @@ tessl_generations.log
 report.md
 review-result.txt
 rs-guard-metrics.json
+.rs-guard/cache/
 .rs-guard-allowlist.md

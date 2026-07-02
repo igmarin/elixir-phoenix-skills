@@ -247,3 +247,27 @@ checks: %{
   ]
 }
 ```
+
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Hand-write `.credo.exs` from scratch | Generate the baseline with `mix credo gen.config` |
+| Run plain `mix credo` in CI | Run `mix credo --strict` in CI |
+| Add Credo as a runtime dependency | Scope it: `only: [:dev, :test], runtime: false` |
+| Scatter inline disables without explanation | Document why each `credo:disable-*` exception exists |
+| Inline custom checks in application code | Put custom checks in `lib/credo/checks/` |
+| Pin CI actions to `@latest` or `@main` | Pin to a specific version tag (e.g. `@v4`) |
+
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| None (standalone) | credo-config | code-quality |
+| code-quality | credo-config | code-review |
+
+**Companion skills:**
+- `code-quality` — runs `mix credo --strict` against this configuration
+- `code-review` — enforces the same conventions during PR review

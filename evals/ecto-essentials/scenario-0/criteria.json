@@ -1,0 +1,56 @@
+{
+  "context": "Checks whether the final artifact follows the ecto-essentials instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: Use this skill before modifying ANY schema, query, or migration.",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: **Never combine schema changes and data backfill** in the same migration",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: Define schemas with proper types and associations. The example below shows a child schema with `belongs_to`; a parent schema uses `has_many` in the same pattern (see `Folder` in the migration section for reference).",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: Write clear, reversible migrations. After writing a migration, always validate it with the steps below.",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: Run `mix ecto.migrate` — confirm it applies without errors",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-6",
+      "description": "The submitted artifact follows this skill instruction: Run `mix ecto.rollback` — confirm it reverses cleanly",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-7",
+      "description": "The submitted artifact follows this skill instruction: Run `mix ecto.migrate` again — confirm re-applying succeeds",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-8",
+      "description": "The submitted artifact follows this skill instruction: **Never call Repo from the web layer** (LiveViews, controllers) — all database operations belong in context modules.",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-9",
+      "description": "The submitted artifact follows this skill instruction: **Do not invoke this skill** for simple read-only schema inspection or introspection (use `mix ecto.schema` directly instead)",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-10",
+      "description": "The submitted artifact follows this skill instruction: **Do not use this skill** for raw SQL queries that bypass Ecto entirely — write raw SQL in a dedicated repo method, not inline in contexts",
+      "max_score": 10
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "target_skill": "security-essentials",
+  "source_path": "skills/security/security-essentials/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "Use this skill before writing ANY security-sensitive code.",
+      "original_snippets": "Use this skill before writing ANY security-sensitive code.",
+      "relevant_when": "When a user asks for planning work that should trigger security-essentials.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Sensitive data in logs** — passwords, tokens, API keys, and PII must never appear in logs → [Sensitive Data in Logs](#sensitive-data-in-logs)",
+      "original_snippets": "**Sensitive data in logs** — passwords, tokens, API keys, and PII must never appear in logs → [Sensitive Data in Logs](#sensitive-data-in-logs)",
+      "relevant_when": "When a user asks for planning work that should trigger security-essentials.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "**Sobelow in CI** — `mix sobelow` must pass in CI; fail on any HIGH or CRITICAL finding",
+      "original_snippets": "**Sobelow in CI** — `mix sobelow` must pass in CI; fail on any HIGH or CRITICAL finding",
+      "relevant_when": "When a user asks for planning work that should trigger security-essentials.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "**Identify attack surface** — list all user inputs, external data sources, and network boundaries",
+      "original_snippets": "**Identify attack surface** — list all user inputs, external data sources, and network boundaries",
+      "relevant_when": "When a user asks for planning work that should trigger security-essentials.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Run `mix sobelow --router MyAppWeb.Router`** — static analysis on your router and controllers",
+      "original_snippets": "**Run `mix sobelow --router MyAppWeb.Router`** — static analysis on your router and controllers",
+      "relevant_when": "When a user asks for planning work that should trigger security-essentials.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Run `mix sobelow --private`** — check private functions for vulnerabilities",
+      "original_snippets": "**Run `mix sobelow --private`** — check private functions for vulnerabilities",
+      "relevant_when": "When a user asks for planning work that should trigger security-essentials.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Review findings by severity** — HIGH severity first, then MEDIUM, then LOW",
+      "original_snippets": "**Review findings by severity** — HIGH severity first, then MEDIUM, then LOW",
+      "relevant_when": "When a user asks for planning work that should trigger security-essentials.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Run full audit** — `mix deps.audit && mix hex.audit && mix sobelow` before merging",
+      "original_snippets": "**Run full audit** — `mix deps.audit && mix hex.audit && mix sobelow` before merging",
+      "relevant_when": "When a user asks for planning work that should trigger security-essentials.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Interpretation:** Any Sobelow finding of HIGH or CRITICAL severity MUST be fixed before merging. LOW findings should be tracked and addressed within 2 sprints.",
+      "original_snippets": "**Interpretation:** Any Sobelow finding of HIGH or CRITICAL severity MUST be fixed before merging. LOW findings should be tracked and addressed within 2 sprints.",
+      "relevant_when": "When a user asks for planning work that should trigger security-essentials.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "Never disable Phoenix's built-in CSRF protection.",
+      "original_snippets": "Never disable Phoenix's built-in CSRF protection.",
+      "relevant_when": "When a user asks for planning work that should trigger security-essentials.",
+      "why_given": "preference"
+    }
+  ]
+}

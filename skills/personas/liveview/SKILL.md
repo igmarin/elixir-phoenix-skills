@@ -9,6 +9,8 @@ description: >
 
 # LiveView Persona
 
+## Agent Phases
+
 ### Phase 1: Context & Contract
 
 1. Define the LiveView's purpose and URL (via `live "/path"` in router).
@@ -20,6 +22,8 @@ description: >
 - [ ] Module name, file path, and route pattern decided
 - [ ] Assigns shape documented (keys, types, streams if applicable)
 - [ ] All events listed
+
+**If gate fails:** Return to Phase 1 — decide the module, file path, and route; document the assigns shape; and enumerate every event before writing tests.
 
 
 ### Phase 2: Test Design
@@ -54,6 +58,8 @@ end
 **HARD GATE — Test Fails:**
 - [ ] Test file exists and covers mount, key assigns, and at least one event
 - [ ] `mix test` confirms tests fail (module not yet implemented)
+
+**If gate fails:** If the test errors for the wrong reason (syntax or setup, not the missing module), fix the test until it fails because the LiveView is unimplemented.
 
 
 ### Phase 3: Implementation
@@ -114,6 +120,8 @@ end
 - [ ] Stream containers use `phx-update="stream"`
 - [ ] `mix test` passes
 
+**If gate fails:** Implement the missing `mount/3` assign, event handler, or `phx-update="stream"` container, then re-run `mix test` until it is green.
+
 
 ### Phase 4: Quality Gate
 
@@ -151,3 +159,54 @@ stream(socket, :items, Catalog.list_items())
 - [ ] All checklist items above confirmed
 - [ ] No compiler warnings related to the new LiveView module
 - [ ] Peer review or self-review of assigns shape against original contract (Phase 1)
+
+**If gate fails:** Address the flagged checklist item — convert bloated assigns to streams, move data prep out of `render/1`, or fix warnings — then re-run the quality gate.
+
+
+## Output Style
+
+When completing a LiveView, output a report using this template:
+
+```markdown
+# LiveView Report — [Module Name]
+
+## Contract
+- Module / route: <MyAppWeb.ItemLive @ /items>
+- Assigns: <keys + types; streams noted>
+- Events: <handle_event / handle_info / handle_params>
+
+## Test
+- File: <test path>
+- RED: <exact failure confirming the module is unimplemented>
+
+## Implementation
+- mount/3: <assigns + streams set>
+- Events: <implemented list>
+
+## Quality Gate
+- Streams for >10-item collections: ✓
+- Dot vs bracket access correct: ✓
+- No logic in render/1: ✓
+- mix test: ✓ (<n> tests, 0 failures, no warnings)
+
+Verdict: <PASS / CHANGES REQUESTED — reason>
+```
+
+
+## Error Recovery
+
+**Test fails for the wrong reason (setup or syntax, not the missing module):**
+1. Fix the test harness (`ConnCase`, `~p` route, imports) until the only failure is the unimplemented LiveView.
+2. Re-confirm RED before implementing.
+
+**`mount/3` returns but the template raises `KeyError` on an assign:**
+1. Ensure every key the template dot-accesses is set in `mount/3`.
+2. For keys that may be absent, switch to bracket access (`@assigns[:key]`).
+
+**A stream renders empty or items duplicate:**
+1. Confirm the container has `phx-update="stream"` and each child uses its `dom_id` as the `id`.
+2. Use `stream_insert/3` in the event handler instead of reassigning the whole collection.
+
+**Assigns bloat — socket state grows unbounded:**
+1. Move large or list-shaped assigns into `stream/3`.
+2. If assigns still exceed ~8 keys, extract a LiveComponent for a focused sub-view.

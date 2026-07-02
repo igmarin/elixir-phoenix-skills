@@ -36,7 +36,8 @@ description: >
 **HARD GATE — Bug Understanding:**
 - Root cause hypothesis formed
 - Reproduction steps documented
-- *Fails:* Return to information gathering.
+
+**If gate fails:** Return to information gathering.
 
 
 ### Phase 2: Reproduction
@@ -48,7 +49,8 @@ description: >
 **HARD GATE — Reproduction Test:**
 - Test FAILS with an error matching bug symptoms
 - Test is isolated and deterministic
-- *Fails:* Fix the test (not the code) to accurately reproduce the bug.
+
+**If gate fails:** Fix the test (not the code) to accurately reproduce the bug.
 
 ```elixir
 # Example: test/my_app/blog_test.exs
@@ -75,7 +77,8 @@ end
 **HARD GATE — Fix Verification:**
 - Reproduction test PASSES
 - No unrelated changes introduced
-- *Fails:* Revise approach and re-implement.
+
+**If gate fails:** Revise approach and re-implement.
 
 ```elixir
 # Example fix: lib/my_app/blog.ex — reload record after update to reflect DB-computed fields
@@ -105,7 +108,8 @@ mix test  # Full test suite must pass
 ```
 - Full test suite PASSES (no regressions)
 - Edge cases tested and passing
-- *Fails:* Revise the fix to be more targeted and re-verify.
+
+**If gate fails:** Revise the fix to be more targeted and re-verify.
 
 
 ## Error Recovery

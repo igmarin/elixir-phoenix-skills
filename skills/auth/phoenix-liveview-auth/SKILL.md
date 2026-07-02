@@ -18,11 +18,14 @@ Use this skill before writing ANY `on_mount` hook or LiveView auth code.
 
 > **Requires** `phoenix-scopes` for Scope struct setup. See `phoenix-authorization-patterns` for access control after authentication, and `phoenix-liveview-essentials` before writing any LiveView module.
 
-## RULES
+## RULES — Follow these with no exceptions
 
 1. **Use `on_mount` callbacks** — never check auth in `mount/3` directly
 2. **`:halt` must redirect with a flash message** — never silently drop the connection
 3. **Define `on_mount` hooks once, reference via `live_session` in router** — never duplicate auth logic across LiveView modules
+4. **Resolve import conflicts with `import Phoenix.Controller, except: [redirect: 2, put_flash: 3]`** — so LiveView's `redirect/2` and `put_flash/3` take precedence
+5. **Use bracket access `assigns[:current_scope]` in templates that can render unauthenticated** — never `@current_scope` directly (raises `KeyError`)
+6. **Add `@impl true` to every LiveView callback** — including a `mount/3` that reads `socket.assigns.current_scope.user`
 
 
 ## Implementation Workflow
@@ -87,6 +90,8 @@ defmodule MyAppWeb.UserAuth do
 end
 ```
 
+See [`assets/on_mount_template.ex`](assets/on_mount_template.ex) for copy-paste `on_mount` templates (Phoenix 1.7 `current_user`, Phoenix 1.8+ `Scope`, and role-based variants).
+
 
 ## Router Integration
 
@@ -126,6 +131,7 @@ end
 ## Template Access
 
 ```elixir
+@impl true
 def mount(_params, _session, socket) do
   user = socket.assigns.current_scope.user
   {:ok, assign(socket, :posts, Posts.list_posts(user))}
@@ -168,3 +174,26 @@ describe "redirect_if_authenticated" do
   end
 end
 ```
+
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Check auth inside `mount/3` with a manual token lookup | Use an `on_mount` hook wired through `live_session` |
+| Return `{:halt, socket}` with no redirect or flash | `redirect(socket, to: ~p"/users/log_in")` plus a `put_flash/3` |
+| `import Phoenix.Controller` unfiltered (shadows LiveView helpers) | `import Phoenix.Controller, except: [redirect: 2, put_flash: 3]` |
+| Reference `@current_scope` in templates that render for guests | Use `assigns[:current_scope] && @current_scope.user` (bracket access) |
+| Repeat the auth check in every LiveView module | Group routes under a `live_session` with the shared hook |
+| Omit `@impl true` on LiveView callbacks | Add `@impl true` above `mount/3`, `handle_event/3`, etc. |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| phoenix-scopes | phoenix-liveview-auth | phoenix-authorization-patterns |
+| phoenix-liveview-essentials | phoenix-liveview-auth | phoenix-auth-customization |
+
+**Companion skills:** `phoenix-scopes`, `phoenix-authorization-patterns`, `testing-essentials`

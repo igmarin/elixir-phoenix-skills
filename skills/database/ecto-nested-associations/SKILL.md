@@ -233,3 +233,32 @@ def update_post(post, %{post: post_attrs, comments: comments_attrs}) do
   |> Repo.update()
 end
 ```
+
+---
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Manually insert children in a separate step | Use `cast_assoc/3` for has_many/has_one |
+| Use `Ecto.Multi` for nested associations | Use `cast_assoc`; reserve `Ecto.Multi` for unrelated tables |
+| Build the update changeset without preloading | `Repo.preload/2` before `cast_assoc` compares data |
+| Require the FK in the child changeset | Let `cast_assoc` set the FK automatically |
+| Omit `on_replace` on a managed list | Set `on_replace: :delete` to remove omitted items |
+| Leave `on_delete` unset in the migration | `:delete_all` for owned children, `:nothing` for independent |
+| Forget the foreign key index | `create index(:comments, [:post_id])` |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| ecto-changeset-patterns | ecto-nested-associations | testing-essentials |
+| ecto-essentials | ecto-nested-associations | apply-ecto-conventions |
+
+**Companion skills:**
+- `ecto-essentials` — schema, migration, and association basics
+- `ecto-changeset-patterns` — changeset composition and `cast_assoc` rules
+- `ecto-migration` — migration planning for FK and `on_delete` changes
+- `testing-essentials` — testing nested creates, updates, and error cases

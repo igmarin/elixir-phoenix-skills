@@ -1,0 +1,48 @@
+{
+  "target_skill": "phoenix-scopes",
+  "source_path": "skills/phoenix/phoenix-scopes/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "**Use bracket access in templates** — `assigns[:current_scope]` prevents crashes when unauthenticated",
+      "original_snippets": "**Use bracket access in templates** — `assigns[:current_scope]` prevents crashes when unauthenticated",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-scopes.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Define `anonymous/0` for the unauthenticated case** — return a Scope with `user: nil`",
+      "original_snippets": "**Define `anonymous/0` for the unauthenticated case** — return a Scope with `user: nil`",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-scopes.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Define the Scope struct** — create `MyApp.Scope` with `for_user/1`, `anonymous/0`, `authenticated?/1`, and `can?/2` as shown above.",
+      "original_snippets": "**Define the Scope struct** — create `MyApp.Scope` with `for_user/1`, `anonymous/0`, `authenticated?/1`, and `can?/2` as shown above.",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-scopes.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Update `on_mount` hooks** — replace user assignment with scope assignment (see before/after below). Run `mix test test/my_app_web/live/ --trace` and verify all `on_mount` tests pass before proceeding.",
+      "original_snippets": "**Update `on_mount` hooks** — replace user assignment with scope assignment (see before/after below). Run `mix test test/my_app_web/live/ --trace` and verify all `on_mount` tests pass before proceeding.",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-scopes.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Search and replace `@current_user`** — update all template references to `@current_scope.user`; use `assigns[:current_scope]` for optional access. Run `mix test` and fix any `KeyError` or `FunctionClauseError` failures before continuing.",
+      "original_snippets": "**Search and replace `@current_user`** — update all template references to `@current_scope.user`; use `assigns[:current_scope]` for optional access. Run `mix test` and fix any `KeyError` or `FunctionClauseError` failures before continuing.",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-scopes.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Run the full test suite** — verify both authenticated and unauthenticated flows still work. If failures occur, revert the most recent step, fix the issue, and re-verify before moving forward.",
+      "original_snippets": "**Run the full test suite** — verify both authenticated and unauthenticated flows still work. If failures occur, revert the most recent step, fix the issue, and re-verify before moving forward.",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-scopes.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Always test both authenticated and unauthenticated paths.",
+      "original_snippets": "Always test both authenticated and unauthenticated paths.",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-scopes.",
+      "why_given": "preference"
+    }
+  ]
+}

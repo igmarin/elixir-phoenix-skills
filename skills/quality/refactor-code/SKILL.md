@@ -42,6 +42,17 @@ If a public interface changes, document the compatibility shim and its removal c
 NEVER fabricate test output — label only actual run output as Observed output.
 ```
 
+## RULES — Follow these with no exceptions
+
+1. **Write characterization tests before touching any production file** — they must pass on the current, un-refactored code first
+2. **Never mix behavior changes with structural refactors in the same step** — finish the structural change, then apply behavior changes separately with their own test
+3. **Refactor one boundary per step** — never extract two abstractions at once
+4. **Keep public interfaces stable** — document any compatibility shim and its removal condition
+5. **Run `mix test` after every step** — if it fails, STOP, undo the step, and investigate
+6. **Run the full `mix test` suite at the end** before declaring the refactor complete
+7. **Label only actual run output as `Observed output`** — never fabricate output or substitute "Expected"/"Planned" output
+8. **Report at least two `Observed output` entries** at different sequence points
+
 ## Core Process
 
 ### 1. Define stable behavior
@@ -187,6 +198,17 @@ This is the single authoritative source for all verification rules.
 - At the end, run the full suite: `mix test`.
 - **Evidence labelling:** Label actual run output as **Observed output** only. Never use labels such as "Expected output", "Required output", or "Planned output" as substitutes for actual observed run output.
 - Report test run output at EACH step — not only at the end. At least two separate **Observed output** entries at different sequence points are required.
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Start refactoring before writing characterization tests | Write and pass characterization tests on the current code first |
+| Change behavior and structure in the same step | Do the structural refactor first, behavior change separately |
+| Extract two abstractions in one step | Refactor one boundary per step |
+| Break the public interface silently | Keep interfaces stable; document the shim and its removal |
+| Test only at the end of the refactor | Run `mix test` after every step; stop and undo on failure |
+| Paste fabricated or "expected" test output | Label only actual run output as `Observed output` |
 
 ## Integration
 

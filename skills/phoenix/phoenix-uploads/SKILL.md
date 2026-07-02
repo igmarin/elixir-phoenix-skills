@@ -129,3 +129,31 @@ def static_paths do
   ~w(assets fonts images favicon.ico robots.txt uploads)
 end
 ```
+
+---
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Use `auto_upload: true` with form submission | Use manual uploads and consume on `save` |
+| Forget to add `uploads` to `static_paths()` | Add the dir to `static_paths()` (files 404 without it) |
+| Expect `static_paths()` edits to hot-reload | Restart the server after changing `static_paths()` |
+| Trust the client-reported MIME type | Validate file types server-side |
+| Keep the client's original filename | Generate a safe filename (e.g. `Ecto.UUID.generate/0` + ext) |
+| Swallow upload errors silently | Render `error_to_string/1` per entry in the template |
+| Skip the `"validate"` handler | Implement `handle_event("validate", ...)` to track changes |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| phoenix-liveview-essentials | phoenix-uploads | testing-essentials |
+| apply-phoenix-liveview-conventions | phoenix-uploads | security-essentials |
+
+**Companion skills:**
+- `phoenix-liveview-essentials` — LiveView lifecycle and form binding
+- `security-essentials` — validating and safely serving user-supplied files
+- `testing-essentials` — exercising uploads with `Phoenix.LiveViewTest`
