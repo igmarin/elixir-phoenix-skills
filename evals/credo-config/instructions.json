@@ -1,0 +1,78 @@
+{
+  "target_skill": "credo-config",
+  "source_path": "skills/quality/credo-config/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "**Always run `mix credo gen.config` first** — never hand-craft .credo.exs from scratch",
+      "original_snippets": "**Always run `mix credo gen.config` first** — never hand-craft .credo.exs from scratch",
+      "relevant_when": "When a user asks for planning work that should trigger credo-config.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "**Use `--strict` in CI** — enables additional checks that are disabled by default",
+      "original_snippets": "**Use `--strict` in CI** — enables additional checks that are disabled by default",
+      "relevant_when": "When a user asks for planning work that should trigger credo-config.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Strict mode enables additional checks disabled by default (mostly design-related). CI must use `--strict`.",
+      "original_snippets": "Strict mode enables additional checks disabled by default (mostly design-related). CI must use `--strict`.",
+      "relevant_when": "When a user asks for planning work that should trigger credo-config.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "> Use `mix credo gen.config` for the complete check list rather than writing it by hand.",
+      "original_snippets": "> Use `mix credo gen.config` for the complete check list rather than writing it by hand.",
+      "relevant_when": "When a user asks for planning work that should trigger credo-config.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "{Credo.Check.Readability.MaxLineLength, [priority: :low, max_length: 120]},",
+      "original_snippets": "{Credo.Check.Readability.MaxLineLength, [priority: :low, max_length: 120]},",
+      "relevant_when": "When a user asks for planning work that should trigger credo-config.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "{Credo.Check.Design.AliasUsage, [if_nested_deeper_than: 2, if_called_more_often_than: 0]},",
+      "original_snippets": "{Credo.Check.Design.AliasUsage, [if_nested_deeper_than: 2, if_called_more_often_than: 0]},",
+      "relevant_when": "When a user asks for planning work that should trigger credo-config.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "{Credo.Check.Consistency.MultiAliasImportRequireUse, []},",
+      "original_snippets": "{Credo.Check.Consistency.MultiAliasImportRequireUse, []},",
+      "relevant_when": "When a user asks for planning work that should trigger credo-config.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "{Credo.Check.Design.DuplicatedCode, []},",
+      "original_snippets": "{Credo.Check.Design.DuplicatedCode, []},",
+      "relevant_when": "When a user asks for planning work that should trigger credo-config.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "{Credo.Check.Design.TagTODO, [priority: :high]},",
+      "original_snippets": "{Credo.Check.Design.TagTODO, [priority: :high]},",
+      "relevant_when": "When a user asks for planning work that should trigger credo-config.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "{Credo.Check.Readability.Specs, []},",
+      "original_snippets": "{Credo.Check.Readability.Specs, []},",
+      "relevant_when": "When a user asks for planning work that should trigger credo-config.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "{Credo.Check.Readability.ModuleDoc, []}",
+      "original_snippets": "{Credo.Check.Readability.ModuleDoc, []}",
+      "relevant_when": "When a user asks for planning work that should trigger credo-config.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "CI must use `--strict` to catch all issues. Exit code 0 means clean; non-zero means issues found.",
+      "original_snippets": "CI must use `--strict` to catch all issues. Exit code 0 means clean; non-zero means issues found.",
+      "relevant_when": "When a user asks for planning work that should trigger credo-config.",
+      "why_given": "preference"
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "target_skill": "ecto-nested-associations",
+  "source_path": "skills/database/ecto-nested-associations/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "**Use `cast_assoc/3` for has_many/has_one** — never manually insert children in a separate step",
+      "original_snippets": "**Use `cast_assoc/3` for has_many/has_one** — never manually insert children in a separate step",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-nested-associations.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Use `Ecto.Multi` for operations spanning multiple unrelated tables** — do NOT use `Ecto.Multi` for nested associations",
+      "original_snippets": "**Use `Ecto.Multi` for operations spanning multiple unrelated tables** — do NOT use `Ecto.Multi` for nested associations",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-nested-associations.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Always create indexes on foreign key columns**",
+      "original_snippets": "**Always create indexes on foreign key columns**",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-nested-associations.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "**Use `on_replace: :delete` in `cast_assoc` for list management** — allows removing items by omitting them",
+      "original_snippets": "**Use `on_replace: :delete` in `cast_assoc` for list management** — allows removing items by omitting them",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-nested-associations.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Use `Repo.transaction/1` with `Ecto.Multi`** — wrap multi-table operations for atomicity",
+      "original_snippets": "**Use `Repo.transaction/1` with `Ecto.Multi`** — wrap multi-table operations for atomicity",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-nested-associations.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Identify ownership** — determine if children are owned (cascade delete) or independent",
+      "original_snippets": "**Identify ownership** — determine if children are owned (cascade delete) or independent",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-nested-associations.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Define schema** — add `has_many`/`belongs_to` with appropriate `on_replace` strategy",
+      "original_snippets": "**Define schema** — add `has_many`/`belongs_to` with appropriate `on_replace` strategy",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-nested-associations.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Create migration** — add FK column with `on_delete` and create index",
+      "original_snippets": "**Create migration** — add FK column with `on_delete` and create index",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-nested-associations.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Define changesets** — child changeset does NOT require FK field; parent uses `cast_assoc`",
+      "original_snippets": "**Define changesets** — child changeset does NOT require FK field; parent uses `cast_assoc`",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-nested-associations.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Write tests** — test create, update (including removal), and error cases",
+      "original_snippets": "**Write tests** — test create, update (including removal), and error cases",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-nested-associations.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Always pattern-match on both success and error tuples from `Repo.transaction/1`:",
+      "original_snippets": "Always pattern-match on both success and error tuples from `Repo.transaction/1`:",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-nested-associations.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "Use a join schema with `cast_assoc` for full control over nested creation and updates:",
+      "original_snippets": "Use a join schema with `cast_assoc` for full control over nested creation and updates:",
+      "relevant_when": "When a user asks for planning work that should trigger ecto-nested-associations.",
+      "why_given": "new knowledge"
+    }
+  ]
+}

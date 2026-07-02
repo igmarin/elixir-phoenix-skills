@@ -1,0 +1,41 @@
+{
+  "context": "Checks whether the final artifact follows the apply-ecto-conventions instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: Use this skill when writing or reviewing Ecto database code to ensure consistent, idiomatic patterns.",
+      "max_score": 15
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: **Never call Repo from LiveViews or controllers** — all database operations belong in context modules",
+      "max_score": 15
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: **Prefer non-bang functions** in application logic (`Repo.get/1`, `Repo.insert/1`) — use bang only in tests",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: **Always preload associations** outside loops to prevent N+1 queries",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: **Use Ecto.Multi for 2+ related operations** — never chain multiple Repo calls in sequence without a transaction",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-6",
+      "description": "The submitted artifact follows this skill instruction: **Never combine schema changes and data backfill** in the same migration",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-7",
+      "description": "The submitted artifact follows this skill instruction: **Checkpoint:** Run Ecto query log observer in development to detect N+1 violations.",
+      "max_score": 14
+    }
+  ]
+}

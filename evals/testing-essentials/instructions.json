@@ -1,0 +1,78 @@
+{
+  "target_skill": "testing-essentials",
+  "source_path": "skills/testing/testing-essentials/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "**Use `async: true` only when safe** — avoid for DB contexts with shared rows, LiveView, `Application.put_env`, and external services",
+      "original_snippets": "**Use `async: true` only when safe** — avoid for DB contexts with shared rows, LiveView, `Application.put_env`, and external services",
+      "relevant_when": "When a user asks for planning work that should trigger testing-essentials.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Define test data in fixtures** (`test/support/`) — never build it inline across multiple tests",
+      "original_snippets": "**Define test data in fixtures** (`test/support/`) — never build it inline across multiple tests",
+      "relevant_when": "When a user asks for planning work that should trigger testing-essentials.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Use `has_element?/2` and `element/2` for LiveView assertions** — not `html =~ \"text\"` for structure checks",
+      "original_snippets": "**Use `has_element?/2` and `element/2` for LiveView assertions** — not `html =~ \"text\"` for structure checks",
+      "relevant_when": "When a user asks for planning work that should trigger testing-essentials.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Always test the unauthorized case** for any protected resource",
+      "original_snippets": "**Always test the unauthorized case** for any protected resource",
+      "relevant_when": "When a user asks for planning work that should trigger testing-essentials.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "**Never hardcode dates** — use relative timestamps to prevent flaky tests",
+      "original_snippets": "**Never hardcode dates** — use relative timestamps to prevent flaky tests",
+      "relevant_when": "When a user asks for planning work that should trigger testing-essentials.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "**Check existing fixtures** — inspect `test/support/fixtures/` for relevant fixtures before creating new ones",
+      "original_snippets": "**Check existing fixtures** — inspect `test/support/fixtures/` for relevant fixtures before creating new ones",
+      "relevant_when": "When a user asks for planning work that should trigger testing-essentials.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Create fixture if needed** — add to the appropriate fixtures module (see Fixture Pattern below)",
+      "original_snippets": "**Create fixture if needed** — add to the appropriate fixtures module (see Fixture Pattern below)",
+      "relevant_when": "When a user asks for planning work that should trigger testing-essentials.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Verify compilation** — run `mix test` to confirm the fixture compiles before writing any tests",
+      "original_snippets": "**Verify compilation** — run `mix test` to confirm the fixture compiles before writing any tests",
+      "relevant_when": "When a user asks for planning work that should trigger testing-essentials.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Write the failing test** — implement the test case; run `mix test path/to/file_test.exs` and confirm it fails with a meaningful message (not a compile error)",
+      "original_snippets": "**Write the failing test** — implement the test case; run `mix test path/to/file_test.exs` and confirm it fails with a meaningful message (not a compile error)",
+      "relevant_when": "When a user asks for planning work that should trigger testing-essentials.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Verify the failure message** — the failure should describe a missing behaviour, not a setup problem",
+      "original_snippets": "**Verify the failure message** — the failure should describe a missing behaviour, not a setup problem",
+      "relevant_when": "When a user asks for planning work that should trigger testing-essentials.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "**Verify the test passes** — re-run `mix test path/to/file_test.exs` and confirm green",
+      "original_snippets": "**Verify the test passes** — re-run `mix test path/to/file_test.exs` and confirm green",
+      "relevant_when": "When a user asks for planning work that should trigger testing-essentials.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Define all test data in `test/support/fixtures/`:",
+      "original_snippets": "Define all test data in `test/support/fixtures/`:",
+      "relevant_when": "When a user asks for planning work that should trigger testing-essentials.",
+      "why_given": "new knowledge"
+    }
+  ]
+}

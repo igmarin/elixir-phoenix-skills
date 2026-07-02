@@ -1,0 +1,56 @@
+{
+  "context": "Checks whether the final artifact follows the deployment-gotchas instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: Use this skill before modifying ANY deployment or release configuration.",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: **Use `runtime.exs` for all secrets and URLs; never hardcode secrets — use `System.get_env!/1`** — see §1 & §5",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: **Run migrations via release commands (`bin/migrate`)** — see §2",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: **Run `mix assets.deploy` before building the release** — see §4",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: **Use `config :logger, level: :info` in production** — see §7",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-6",
+      "description": "The submitted artifact follows this skill instruction: **Use Docker multi-stage builds** for Elixir releases — see §4",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-7",
+      "description": "The submitted artifact follows this skill instruction: Run migrations (bin/my_app eval \"MyApp.Release.migrate()\")",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-8",
+      "description": "The submitted artifact follows this skill instruction: Verify /health returns HTTP 200 and {\"database\": \"connected\"}",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-9",
+      "description": "The submitted artifact follows this skill instruction: url: System.get_env(\"DATABASE_URL\")  # Always nil in release!",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-10",
+      "description": "The submitted artifact follows this skill instruction: Always use `System.get_env!/1` in `runtime.exs` so the app crashes on startup if a required secret is missing rather than silently misconfiguring.",
+      "max_score": 10
+    }
+  ]
+}

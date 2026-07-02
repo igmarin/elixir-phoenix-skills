@@ -1,0 +1,48 @@
+{
+  "target_skill": "code-quality",
+  "source_path": "skills/quality/code-quality/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "**Duplicated functions must be extracted** — when 2+ modules share >70% similar implementations, create a shared module",
+      "original_snippets": "**Duplicated functions must be extracted** — when 2+ modules share >70% similar implementations, create a shared module",
+      "relevant_when": "When a user asks for planning work that should trigger code-quality.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "**Functions must stay below ABC complexity 30** — break complex functions into smaller helpers",
+      "original_snippets": "**Functions must stay below ABC complexity 30** — break complex functions into smaller helpers",
+      "relevant_when": "When a user asks for planning work that should trigger code-quality.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "**Duplicated templates must become components** — when 2+ HEEx files share >40% identical markup, extract to a function component",
+      "original_snippets": "**Duplicated templates must become components** — when 2+ HEEx files share >40% identical markup, extract to a function component",
+      "relevant_when": "When a user asks for planning work that should trigger code-quality.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "**Run `mix credo --strict` before any PR**",
+      "original_snippets": "**Run `mix credo --strict` before any PR**",
+      "relevant_when": "When a user asks for planning work that should trigger code-quality.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Run `mix sobelow` for security** — check after quality checks",
+      "original_snippets": "**Run `mix sobelow` for security** — check after quality checks",
+      "relevant_when": "When a user asks for planning work that should trigger code-quality.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Run analysis** — `mix credo --strict` to identify all issues",
+      "original_snippets": "**Run analysis** — `mix credo --strict` to identify all issues",
+      "relevant_when": "When a user asks for planning work that should trigger code-quality.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Verify fixes** — re-run `mix credo --strict` to confirm all issues are resolved",
+      "original_snippets": "**Verify fixes** — re-run `mix credo --strict` to confirm all issues are resolved",
+      "relevant_when": "When a user asks for planning work that should trigger code-quality.",
+      "why_given": "new knowledge"
+    }
+  ]
+}

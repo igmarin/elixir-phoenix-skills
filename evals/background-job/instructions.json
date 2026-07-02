@@ -1,0 +1,54 @@
+{
+  "target_skill": "background-job",
+  "source_path": "skills/personas/background-job/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "**Job Purpose** — Define trigger conditions, input parameters, expected output/side effects, and criticality.",
+      "original_snippets": "**Job Purpose** — Define trigger conditions, input parameters, expected output/side effects, and criticality.",
+      "relevant_when": "When a user asks for planning work that should trigger background-job.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Error Classification** — Classify all anticipated errors:",
+      "original_snippets": "**Error Classification** — Classify all anticipated errors:",
+      "relevant_when": "When a user asks for planning work that should trigger background-job.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Queue & Timeout** — Assign queue priority and set execution timeout.",
+      "original_snippets": "**Queue & Timeout** — Assign queue priority and set execution timeout.",
+      "relevant_when": "When a user asks for planning work that should trigger background-job.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Write failing tests covering: successful execution, idempotency (run twice = same result), transient error raises, permanent error discards.",
+      "original_snippets": "Write failing tests covering: successful execution, idempotency (run twice = same result), transient error raises, permanent error discards.",
+      "relevant_when": "When a user asks for planning work that should trigger background-job.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Run full test suite: `mix test` — confirm no regressions.",
+      "original_snippets": "Run full test suite: `mix test` — confirm no regressions.",
+      "relevant_when": "When a user asks for planning work that should trigger background-job.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Verify telemetry events fire on success and failure paths.",
+      "original_snippets": "Verify telemetry events fire on success and failure paths.",
+      "relevant_when": "When a user asks for planning work that should trigger background-job.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Never deploy until all four phase gates above are green.**",
+      "original_snippets": "**Never deploy until all four phase gates above are green.**",
+      "relevant_when": "When a user asks for planning work that should trigger background-job.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "When completing a background job implementation, output MUST follow this structure:",
+      "original_snippets": "When completing a background job implementation, output MUST follow this structure:",
+      "relevant_when": "When a user asks for planning work that should trigger background-job.",
+      "why_given": "preference"
+    }
+  ]
+}

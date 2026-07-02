@@ -1,0 +1,24 @@
+{
+  "target_skill": "phoenix-pubsub-patterns",
+  "source_path": "skills/phoenix/phoenix-pubsub-patterns/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "Use this skill before writing ANY PubSub or real-time broadcast code.",
+      "original_snippets": "Use this skill before writing ANY PubSub or real-time broadcast code.",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-pubsub-patterns.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Verify with a test** — call the context function and assert the LiveView reflects the change",
+      "original_snippets": "**Verify with a test** — call the context function and assert the LiveView reflects the change",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-pubsub-patterns.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Subscription not firing?** Verify the LiveView is fully connected: subscriptions inside `if connected?(socket)` only run after WebSocket upgrade, not on the initial static render.",
+      "original_snippets": "**Subscription not firing?** Verify the LiveView is fully connected: subscriptions inside `if connected?(socket)` only run after WebSocket upgrade, not on the initial static render.",
+      "relevant_when": "When a user asks for planning work that should trigger phoenix-pubsub-patterns.",
+      "why_given": "new knowledge"
+    }
+  ]
+}

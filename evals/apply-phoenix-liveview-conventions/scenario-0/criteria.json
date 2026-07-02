@@ -1,0 +1,46 @@
+{
+  "context": "Checks whether the final artifact follows the apply-phoenix-liveview-conventions instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: Use this skill when writing new LiveView modules or modifying existing LiveView code to ensure consistent, idiomatic Phoenix patterns.",
+      "max_score": 13
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: **Always use `@impl true`** before every callback (mount, handle_event, handle_info, handle_params, render)",
+      "max_score": 13
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: **Assign errors to socket, don't raise** — use `put_flash` and changeset assigns for error states",
+      "max_score": 13
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: **Use function components (def, not defp)** for reusable HEEx markup — export via `~H\"\"\"` sigil",
+      "max_score": 13
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: **Use `with` for multi-step error handling** in event handlers instead of nested case",
+      "max_score": 12
+    },
+    {
+      "name": "instruction-6",
+      "description": "The submitted artifact follows this skill instruction: **Never query the database directly from a LiveView** — call context functions instead",
+      "max_score": 12
+    },
+    {
+      "name": "instruction-7",
+      "description": "The submitted artifact follows this skill instruction: **Always initialize assigns to safe defaults in Phase 1** so the static HTML never raises a `KeyError` before WebSocket connects.",
+      "max_score": 12
+    },
+    {
+      "name": "instruction-8",
+      "description": "The submitted artifact follows this skill instruction: **Checkpoint:** Static HTML must render without `KeyError` before WebSocket connects.",
+      "max_score": 12
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "context": "Checks whether the final artifact follows the ash-framework instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: **Use `use Ash.Resource` for domain resources** — never manually implement protocols",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: **Define actions explicitly** — don't rely on `defaults [:read, :create]` without understanding what they expose",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: **Add policies for authorization** — every resource with sensitive data must have explicit policy blocks",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: **Use `Ash.Changeset.for_create/3` and `Ash.Changeset.for_update/3`** — not bare struct manipulation",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: **Run `mix ash_postgres.generate_migrations` before manual migration** — let Ash generate the schema",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-6",
+      "description": "The submitted artifact follows this skill instruction: **Verify resource loads** — run `mix compile` and confirm no `Spark.Error.DslError` before proceeding",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-7",
+      "description": "The submitted artifact follows this skill instruction: **Define Domain module** — create a domain with `use Ash.Domain` and `resources do ... end`",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-8",
+      "description": "The submitted artifact follows this skill instruction: **Define Resource** — use `use Ash.Resource, domain: MyApp.Domain, data_layer: AshPostgres.DataLayer`",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-9",
+      "description": "The submitted artifact follows this skill instruction: **Define attributes** — use `uuid_primary_key`, `attribute`, `timestamps()` in the `attributes do` block",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-10",
+      "description": "The submitted artifact follows this skill instruction: **Define relationships** — use `belongs_to`, `has_many`, `many_to_many` in `relationships do` block",
+      "max_score": 10
+    }
+  ]
+}

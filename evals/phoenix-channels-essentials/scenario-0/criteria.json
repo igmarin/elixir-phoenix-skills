@@ -1,0 +1,46 @@
+{
+  "context": "Checks whether the final artifact follows the phoenix-channels-essentials instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: **Always authenticate in `connect/3`** — tokens must be verified; channels bypass the Plug pipeline",
+      "max_score": 13
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: **Use `handle_in` for client-to-server, `push` for server-to-client, `broadcast` for server-to-all**",
+      "max_score": 13
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: **Use Presence for tracking connected users** — don't roll your own presence tracking",
+      "max_score": 13
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: Generate a token server-side after user authentication → see [Step 2](#step-2--generate-tokens-server-side)",
+      "max_score": 13
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: Verify the token in `connect/3`; if auth fails, confirm salt matches between `sign` and `verify` and `max_age` hasn't expired → see [Step 3](#step-3--verify-tokens-in-the-socket)",
+      "max_score": 12
+    },
+    {
+      "name": "instruction-6",
+      "description": "The submitted artifact follows this skill instruction: Use token-based authentication — session-based auth is unavailable in channels.",
+      "max_score": 12
+    },
+    {
+      "name": "instruction-7",
+      "description": "The submitted artifact follows this skill instruction: Define a Presence module once per app, then track users in `handle_info(:after_join, ...)`:",
+      "max_score": 12
+    },
+    {
+      "name": "instruction-8",
+      "description": "The submitted artifact follows this skill instruction: Use `Phoenix.ChannelTest` to test socket connections, joins, and message handling:",
+      "max_score": 12
+    }
+  ]
+}

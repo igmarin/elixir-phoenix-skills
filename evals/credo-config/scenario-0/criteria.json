@@ -1,0 +1,56 @@
+{
+  "context": "Checks whether the final artifact follows the credo-config instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: **Always run `mix credo gen.config` first** — never hand-craft .credo.exs from scratch",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: **Use `--strict` in CI** — enables additional checks that are disabled by default",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: Strict mode enables additional checks disabled by default (mostly design-related). CI must use `--strict`.",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: > Use `mix credo gen.config` for the complete check list rather than writing it by hand.",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: {Credo.Check.Readability.MaxLineLength, [priority: :low, max_length: 120]},",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-6",
+      "description": "The submitted artifact follows this skill instruction: {Credo.Check.Design.AliasUsage, [if_nested_deeper_than: 2, if_called_more_often_than: 0]},",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-7",
+      "description": "The submitted artifact follows this skill instruction: {Credo.Check.Consistency.MultiAliasImportRequireUse, []},",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-8",
+      "description": "The submitted artifact follows this skill instruction: {Credo.Check.Design.DuplicatedCode, []},",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-9",
+      "description": "The submitted artifact follows this skill instruction: {Credo.Check.Design.TagTODO, [priority: :high]},",
+      "max_score": 10
+    },
+    {
+      "name": "instruction-10",
+      "description": "The submitted artifact follows this skill instruction: {Credo.Check.Readability.Specs, []},",
+      "max_score": 10
+    }
+  ]
+}

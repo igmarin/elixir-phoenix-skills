@@ -1,0 +1,36 @@
+{
+  "target_skill": "setup",
+  "source_path": "skills/personas/setup/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "**HARD GATE — Environment Check** (all items must pass before Phase 2):",
+      "original_snippets": "**HARD GATE — Environment Check** (all items must pass before Phase 2):",
+      "relevant_when": "When a user asks for planning work that should trigger setup.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "Fill in `DEPLOY_CLI` (e.g., `flyctl`, `gigalixir`, custom Docker) and the appropriate secret names. Use the same action SHAs and versions from the shared table above.",
+      "original_snippets": "Fill in `DEPLOY_CLI` (e.g., `flyctl`, `gigalixir`, custom Docker) and the appropriate secret names. Use the same action SHAs and versions from the shared table above.",
+      "relevant_when": "When a user asks for planning work that should trigger setup.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Verify everything works end-to-end:**",
+      "original_snippets": "**Verify everything works end-to-end:**",
+      "relevant_when": "When a user asks for planning work that should trigger setup.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Write `SETUP_CHECKLIST.md`** recording the final state of all Phase 1 HARD GATE items plus:",
+      "original_snippets": "**Write `SETUP_CHECKLIST.md`** recording the final state of all Phase 1 HARD GATE items plus:",
+      "relevant_when": "When a user asks for planning work that should trigger setup.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Use ✓/✗ symbols and include counts (e.g., number of deps, migrations, tests) for each item.",
+      "original_snippets": "Use ✓/✗ symbols and include counts (e.g., number of deps, migrations, tests) for each item.",
+      "relevant_when": "When a user asks for planning work that should trigger setup.",
+      "why_given": "new knowledge"
+    }
+  ]
+}

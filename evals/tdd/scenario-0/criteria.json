@@ -1,0 +1,51 @@
+{
+  "context": "Checks whether the final artifact follows the tdd instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: Orchestrates the full Elixir TDD cycle. Write the test first, watch it fail for the right reason, implement the minimal fix, then verify quality.",
+      "max_score": 12
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: **Write the minimal failing test** — see Example below.",
+      "max_score": 11
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: **Run**: `mix test test/path/to/file_test.exs` — confirm it FAILS.",
+      "max_score": 11
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: **On approval**: Write the implementation.",
+      "max_score": 11
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: **Run**: `mix test test/path/to/file_test.exs` — confirm the target test now PASSES.",
+      "max_score": 11
+    },
+    {
+      "name": "instruction-6",
+      "description": "The submitted artifact follows this skill instruction: **Run full quality suite** in order:",
+      "max_score": 11
+    },
+    {
+      "name": "instruction-7",
+      "description": "The submitted artifact follows this skill instruction: **All four commands must be green.** If any fail:",
+      "max_score": 11
+    },
+    {
+      "name": "instruction-8",
+      "description": "The submitted artifact follows this skill instruction: **HARD GATE — Quality Check**",
+      "max_score": 11
+    },
+    {
+      "name": "instruction-9",
+      "description": "The submitted artifact follows this skill instruction: **Produce the PR** with a description that references the failing test, the minimal implementation, and the quality suite result.",
+      "max_score": 11
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "target_skill": "deployment-gotchas",
+  "source_path": "skills/infrastructure/deployment-gotchas/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "Use this skill before modifying ANY deployment or release configuration.",
+      "original_snippets": "Use this skill before modifying ANY deployment or release configuration.",
+      "relevant_when": "When a user asks for planning work that should trigger deployment-gotchas.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Use `runtime.exs` for all secrets and URLs; never hardcode secrets — use `System.get_env!/1`** — see §1 & §5",
+      "original_snippets": "**Use `runtime.exs` for all secrets and URLs; never hardcode secrets — use `System.get_env!/1`** — see §1 & §5",
+      "relevant_when": "When a user asks for planning work that should trigger deployment-gotchas.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Run migrations via release commands (`bin/migrate`)** — see §2",
+      "original_snippets": "**Run migrations via release commands (`bin/migrate`)** — see §2",
+      "relevant_when": "When a user asks for planning work that should trigger deployment-gotchas.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Run `mix assets.deploy` before building the release** — see §4",
+      "original_snippets": "**Run `mix assets.deploy` before building the release** — see §4",
+      "relevant_when": "When a user asks for planning work that should trigger deployment-gotchas.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Use `config :logger, level: :info` in production** — see §7",
+      "original_snippets": "**Use `config :logger, level: :info` in production** — see §7",
+      "relevant_when": "When a user asks for planning work that should trigger deployment-gotchas.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Use Docker multi-stage builds** for Elixir releases — see §4",
+      "original_snippets": "**Use Docker multi-stage builds** for Elixir releases — see §4",
+      "relevant_when": "When a user asks for planning work that should trigger deployment-gotchas.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Run migrations (bin/my_app eval \"MyApp.Release.migrate()\")",
+      "original_snippets": "Run migrations (bin/my_app eval \"MyApp.Release.migrate()\")",
+      "relevant_when": "When a user asks for planning work that should trigger deployment-gotchas.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Verify /health returns HTTP 200 and {\"database\": \"connected\"}",
+      "original_snippets": "Verify /health returns HTTP 200 and {\"database\": \"connected\"}",
+      "relevant_when": "When a user asks for planning work that should trigger deployment-gotchas.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "url: System.get_env(\"DATABASE_URL\")  # Always nil in release!",
+      "original_snippets": "url: System.get_env(\"DATABASE_URL\")  # Always nil in release!",
+      "relevant_when": "When a user asks for planning work that should trigger deployment-gotchas.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "Always use `System.get_env!/1` in `runtime.exs` so the app crashes on startup if a required secret is missing rather than silently misconfiguring.",
+      "original_snippets": "Always use `System.get_env!/1` in `runtime.exs` so the app crashes on startup if a required secret is missing rather than silently misconfiguring.",
+      "relevant_when": "When a user asks for planning work that should trigger deployment-gotchas.",
+      "why_given": "preference"
+    }
+  ]
+}

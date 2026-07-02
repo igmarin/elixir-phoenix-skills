@@ -1,0 +1,78 @@
+{
+  "target_skill": "code-review",
+  "source_path": "skills/quality/code-review/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "Self-review the actual full branch diff using the Review Order below.",
+      "original_snippets": "Self-review the actual full branch diff using the Review Order below.",
+      "relevant_when": "When a user asks for planning work that should trigger code-review.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Large diff (>50 files)**: Prioritize **Critical** checks first; sample key files for **Suggestion** items.",
+      "original_snippets": "**Large diff (>50 files)**: Prioritize **Critical** checks first; sample key files for **Suggestion** items.",
+      "relevant_when": "When a user asks for planning work that should trigger code-review.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Use **only** these labels:",
+      "original_snippets": "Use **only** these labels:",
+      "relevant_when": "When a user asks for planning work that should trigger code-review.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**`Critical`** — security, data loss, crash, or **Always Critical** (see below). Block merge.",
+      "original_snippets": "**`Critical`** — security, data loss, crash, or **Always Critical** (see below). Block merge.",
+      "relevant_when": "When a user asks for planning work that should trigger code-review.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "**Always Critical (flag every occurrence):**",
+      "original_snippets": "**Always Critical (flag every occurrence):**",
+      "relevant_when": "When a user asks for planning work that should trigger code-review.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "`Repo` calls inside LiveViews — must delegate to context modules",
+      "original_snippets": "`Repo` calls inside LiveViews — must delegate to context modules",
+      "relevant_when": "When a user asks for planning work that should trigger code-review.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "`{:reply, ...}` from handle_event (should always be `{:noreply, socket}`)",
+      "original_snippets": "`{:reply, ...}` from handle_event (should always be `{:noreply, socket}`)",
+      "relevant_when": "When a user asks for planning work that should trigger code-review.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "[lib/my_app/accounts.ex:42] (Security) `String.to_atom(params[\"role\"])` on user input causes atom table exhaustion. **Mitigation:** Use explicit case with whitelist instead.",
+      "original_snippets": "[lib/my_app/accounts.ex:42] (Security) `String.to_atom(params[\"role\"])` on user input causes atom table exhaustion. **Mitigation:** Use explicit case with whitelist instead.",
+      "relevant_when": "When a user asks for planning work that should trigger code-review.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Re-review required:** Yes — Critical fixes must be re-diffed before approval.",
+      "original_snippets": "**Re-review required:** Yes — Critical fixes must be re-diffed before approval.",
+      "relevant_when": "When a user asks for planning work that should trigger code-review.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "Findings must come from an actual diff or provided file contents — do not present a simulated review as-if real.",
+      "original_snippets": "Findings must come from an actual diff or provided file contents — do not present a simulated review as-if real.",
+      "relevant_when": "When a user asks for planning work that should trigger code-review.",
+      "why_given": "preference"
+    },
+    {
+      "instruction": "Tagging: Tag (Area) from the Review Order table. Cover **≥4** distinct areas if applicable.",
+      "original_snippets": "Tagging: Tag (Area) from the Review Order table. Cover **≥4** distinct areas if applicable.",
+      "relevant_when": "When a user asks for planning work that should trigger code-review.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "Task-list: Always include a `Code review before merge` task or task-list line.",
+      "original_snippets": "Task-list: Always include a `Code review before merge` task or task-list line.",
+      "relevant_when": "When a user asks for planning work that should trigger code-review.",
+      "why_given": "preference"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "context": "Checks whether the final artifact follows the gettext-i18n instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: **Verify `.po` files** — confirm new `msgid` entries appear with empty `msgstr` values",
+      "max_score": 50
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: **Use domain-specific contexts** — `dgettext(\"errors\", \"Not found\")` keeps error strings in a separate `.po` file from default content",
+      "max_score": 50
+    }
+  ]
+}

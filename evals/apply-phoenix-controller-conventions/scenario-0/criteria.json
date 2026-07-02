@@ -1,0 +1,41 @@
+{
+  "context": "Checks whether the final artifact follows the apply-phoenix-controller-conventions instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: Use this skill when writing new Phoenix controller modules or modifying existing controller code to ensure consistent, idiomatic patterns.",
+      "max_score": 15
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: **Use `before_action` for authentication and resource loading** — chain with `:skip` opt-out pattern",
+      "max_score": 15
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: **Always validate and authorize** every action that touches access-controlled resources",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: **Use `FallbackController` for JSON API error handling** — never inline `error/2` or catch-all `case` clauses in actions",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: **Use `conn.assigns` for passing data between plugs and actions** — never use `Process` dictionaries",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-6",
+      "description": "The submitted artifact follows this skill instruction: **Never interpolate user input into redirect paths** — use `~p\"...\"` paths for verified routes",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-7",
+      "description": "The submitted artifact follows this skill instruction: **Checkpoint:** Run `mix phx.routes` to verify routes resolve correctly.",
+      "max_score": 14
+    }
+  ]
+}

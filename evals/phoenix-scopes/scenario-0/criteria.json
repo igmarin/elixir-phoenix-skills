@@ -1,0 +1,41 @@
+{
+  "context": "Checks whether the final artifact follows the phoenix-scopes instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: **Use bracket access in templates** — `assigns[:current_scope]` prevents crashes when unauthenticated",
+      "max_score": 15
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: **Define `anonymous/0` for the unauthenticated case** — return a Scope with `user: nil`",
+      "max_score": 15
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: **Define the Scope struct** — create `MyApp.Scope` with `for_user/1`, `anonymous/0`, `authenticated?/1`, and `can?/2` as shown above.",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: **Update `on_mount` hooks** — replace user assignment with scope assignment (see before/after below). Run `mix test test/my_app_web/live/ --trace` and verify all `on_mount` tests pass before proceeding.",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: **Search and replace `@current_user`** — update all template references to `@current_scope.user`; use `assigns[:current_scope]` for optional access. Run `mix test` and fix any `KeyError` or `FunctionClauseError` failures before continuing.",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-6",
+      "description": "The submitted artifact follows this skill instruction: **Run the full test suite** — verify both authenticated and unauthenticated flows still work. If failures occur, revert the most recent step, fix the issue, and re-verify before moving forward.",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-7",
+      "description": "The submitted artifact follows this skill instruction: Always test both authenticated and unauthenticated paths.",
+      "max_score": 14
+    }
+  ]
+}

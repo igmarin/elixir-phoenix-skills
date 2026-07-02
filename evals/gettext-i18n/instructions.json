@@ -1,0 +1,18 @@
+{
+  "target_skill": "gettext-i18n",
+  "source_path": "skills/integrations/gettext-i18n/SKILL.md",
+  "instructions": [
+    {
+      "instruction": "**Verify `.po` files** — confirm new `msgid` entries appear with empty `msgstr` values",
+      "original_snippets": "**Verify `.po` files** — confirm new `msgid` entries appear with empty `msgstr` values",
+      "relevant_when": "When a user asks for planning work that should trigger gettext-i18n.",
+      "why_given": "new knowledge"
+    },
+    {
+      "instruction": "**Use domain-specific contexts** — `dgettext(\"errors\", \"Not found\")` keeps error strings in a separate `.po` file from default content",
+      "original_snippets": "**Use domain-specific contexts** — `dgettext(\"errors\", \"Not found\")` keeps error strings in a separate `.po` file from default content",
+      "relevant_when": "When a user asks for planning work that should trigger gettext-i18n.",
+      "why_given": "new knowledge"
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "context": "Checks whether the final artifact follows the swoosh-emails instructions from the published Elixir Phoenix Skills plugin.",
+  "type": "weighted_checklist",
+  "checklist": [
+    {
+      "name": "instruction-1",
+      "description": "The submitted artifact follows this skill instruction: **Use Swoosh for all email sending**",
+      "max_score": 15
+    },
+    {
+      "name": "instruction-2",
+      "description": "The submitted artifact follows this skill instruction: **Define emails in separate modules** — `MyApp.Emails.UserEmail`, not inline in contexts",
+      "max_score": 15
+    },
+    {
+      "name": "instruction-3",
+      "description": "The submitted artifact follows this skill instruction: **Use Phoenix components for email templates** — reuse UI components in emails",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-4",
+      "description": "The submitted artifact follows this skill instruction: **Never send emails synchronously in web requests** — use Oban for async delivery with retries and observability; use Task.start only for simple cases",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-5",
+      "description": "The submitted artifact follows this skill instruction: **Use `Swoosh.Preview` in development** — preview emails in the browser",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-6",
+      "description": "The submitted artifact follows this skill instruction: Prefer Phoenix components for rich templates. Use plain `html_body/text_body` strings only for simple one-off emails.",
+      "max_score": 14
+    },
+    {
+      "name": "instruction-7",
+      "description": "The submitted artifact follows this skill instruction: Define reusable components in `lib/my_app_web/components/email_components.ex`. See `EMAIL_COMPONENTS.md` for a full example. A minimal layout and button:",
+      "max_score": 14
+    }
+  ]
+}
