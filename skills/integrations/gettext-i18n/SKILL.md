@@ -23,10 +23,15 @@ description: >
 6. **Test** — assert translated strings appear when locale is set
 
 
-## Key Rules
+## RULES — Follow these with no exceptions
 
-- **Only translate user-facing text** — not log-only error messages
-- **Use domain-specific contexts** — `dgettext("errors", "Not found")` keeps error strings in a separate `.po` file from default content
+1. **Wrap only user-facing strings** — translate UI text, never log-only or internal error messages
+2. **Use domain contexts with `dgettext/2`** — `dgettext("errors", "Not found")` keeps error strings in a separate `.po` domain from default content
+3. **Use `ngettext/3` for anything countable** — never build plurals by hand; plural rules vary by locale
+4. **Pass interpolations as bindings** — `gettext("Hello %{name}", name: name)`, never `gettext("Hello #{name}")`, which breaks extraction
+5. **Re-run `mix gettext.extract --merge` after adding calls** — keep `.pot`/`.po` files in sync before committing
+6. **Set the locale per request** — call `Gettext.put_locale/2` from a plug (and on LiveView `mount`); never rely on the default
+7. **Validate locale input against an allowlist** — only `put_locale` supported locales; reject arbitrary values from params
 
 
 ## Setup
@@ -160,3 +165,29 @@ defmodule MyAppWeb.PageTest do
   end
 end
 ```
+
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| `gettext("Hello #{name}")` — interpolate before translating | `gettext("Hello %{name}", name: name)` — pass a binding so the `msgid` stays static |
+| Build plurals with `if count == 1` | Use `ngettext("%{count} item", "%{count} items", count, count: count)` |
+| Translate log lines and internal errors | Only wrap user-facing strings in `gettext/*` |
+| Rely on a global default locale | Set it per request with `Gettext.put_locale/2` in a plug and on LiveView `mount` |
+| Add `gettext` calls but skip extraction | Run `mix gettext.extract --merge` so `.pot`/`.po` files stay in sync |
+| `put_locale` any value from params | Validate against a supported-locale allowlist first |
+| Dump every string into the default domain | Split with `dgettext` domains (e.g. `"errors"`) |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| phoenix-liveview-essentials | gettext-i18n | testing-essentials |
+| apply-phoenix-controller-conventions | gettext-i18n | testing-essentials |
+
+**Companion skills:**
+- `security-essentials` — validate and constrain locale input from user-controlled params
+- `phoenix-liveview-essentials` — call `Gettext.put_locale/2` on `mount` for translated LiveViews

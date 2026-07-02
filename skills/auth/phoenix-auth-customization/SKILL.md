@@ -154,3 +154,26 @@ For optional fields like `display_name` or `avatar_url`, follow the same migrati
 ### Extending Other Changesets
 
 `email_changeset` and `password_changeset` follow the same cast-then-validate pattern as `registration_changeset`. Never add a parallel changeset; extend the existing one.
+
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Edit the generated `phx.gen.auth` migration in place | Create a separate migration (e.g. `add_username_to_users`) for custom fields |
+| Create a parallel changeset for the new field | Extend `registration_changeset` with `cast/3` + `validate_*` |
+| Validate uniqueness only in Elixir | Pair `unique_constraint` with a database `unique_index` |
+| Forget to update `user_fixture/1` | Add the required field and `confirmed_at` to the fixture |
+| Add the field to the schema but not the form | Update the form input AND the `save/2` handler |
+| Leave `confirmed_at` nil in test fixtures | Set `confirmed_at: DateTime.utc_now(:second)` so password auth tests pass |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| phoenix-liveview-auth | phoenix-auth-customization | phoenix-authorization-patterns |
+| ecto-changeset-patterns | phoenix-auth-customization | testing-essentials |
+
+**Companion skills:** `phoenix-liveview-auth`, `ecto-changeset-patterns`, `testing-essentials`

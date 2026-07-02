@@ -180,13 +180,30 @@ end
 def get_username(%User{name: name}), do: name
 ```
 
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Nest `case`/`if` for sequential fallible steps | Chain them with a single `with` |
+| Write defensive code for impossible states | Trust your types and let it crash |
+| Call `String.to_atom/1` on user input | Use `String.to_existing_atom/1` or keep strings (atom table is finite) |
+| Return bare values or raise for expected failures | Return `{:ok, result}` / `{:error, reason}` tuples |
+| Chain 3+ `Enum.map`/`filter` passes over a list | Use a single `for` comprehension |
+| Mutate data in place | Return new immutable values from each transformation |
+| Skip `@impl true` on callbacks | Annotate every callback with `@impl true` |
+
 ## Integration
 
-Successor skills to apply after this one:
-- [testing-essentials](../../testing/testing-essentials/SKILL.md)
-- [otp-essentials](../otp-essentials/SKILL.md)
-- [typespec-dialyzer](../typespec-dialyzer/SKILL.md)
-- [code-quality](../../quality/code-quality/SKILL.md)
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| None (always first) | elixir-essentials | otp-essentials |
+| None (always first) | elixir-essentials | testing-essentials |
+
+**Companion skills:**
+- `otp-essentials` — processes, GenServer, and supervision
+- `typespec-dialyzer` — static typing and Dialyzer analysis
+- `testing-essentials` — ExUnit and TDD workflow
+- `code-quality` — Credo/Dialyzer/format loop before PR
 
 
 ## When Not to Use

@@ -15,12 +15,14 @@ description: >
 
 # LiveView Streams
 
-## RULES — Non-Obvious Constraints
+## RULES — Follow these with no exceptions
 
 1. **Use streams for collections with 100+ items; combine with pagination or infinite scroll** — smaller lists use regular assigns; never stream unlimited items
 2. **Use `stream_insert/3` and `stream_delete/3` for incremental updates** — never replace the entire stream assign
 3. **Use `phx-update="stream"` in templates** — required for stream DOM patching; missing this causes full re-renders
 4. **Use `reset: true` for filtering and sorting** — clears existing items before inserting the new result set
+5. **Call `stream_configure/3` before `stream/3`** — configuring a custom `dom_id` after the stream is initialized has no effect
+6. **Re-fetch from the database when sorting or filtering** — streams do not keep items in assigns, so you cannot reorder them in memory
 
 
 ## End-to-End Workflow
@@ -227,3 +229,27 @@ If stream patching is not working as expected, check for:
 - Forgetting to call `stream_configure` before `stream` when using custom IDs
 
 **Verify with DevTools:** Open browser DevTools → Network → WS frames. Confirm incoming frames contain targeted patch operations for individual items, not full list replacements. If you see full re-renders, the first two checklist items above are the most common cause.
+
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Replace the whole stream assign to update it | Use `stream_insert/3` and `stream_delete/3` for incremental changes |
+| Omit `phx-update="stream"` on the container | Add `phx-update="stream"` so LiveView patches items instead of re-rendering |
+| Forget `id={dom_id}` on each item element | Set `id={dom_id}` so DOM patching can target individual rows |
+| Reuse non-unique IDs across pages in infinite scroll | Configure a stable `dom_id` (e.g. `&"post-#{&1.id}"`) so IDs never collide |
+| Sort or filter from items held in assigns | Re-fetch from the database and apply `stream(..., reset: true)` |
+| Stream tiny collections (a handful of rows) | Use regular assigns; reserve streams for 100+ item lists |
+| Call `stream_configure/3` after `stream/3` | Configure the custom `dom_id` before the stream is initialized |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| phoenix-liveview-essentials | liveview-streams | phoenix-pubsub-patterns |
+| ecto-essentials | liveview-streams | testing-essentials |
+
+**Companion skills:** `phoenix-liveview-essentials`, `phoenix-pubsub-patterns`, `testing-essentials`.

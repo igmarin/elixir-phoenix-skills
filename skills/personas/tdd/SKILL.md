@@ -23,6 +23,8 @@ Orchestrates the full Elixir TDD cycle. Write the test first, watch it fail for 
 - FAILS for correct reason (e.g., `** (UndefinedFunctionError) function MyApp.Blog.list_posts/0 is undefined`).
 - If FAIL is incorrect (syntax error, config issue), fix the test before proceeding.
 
+**If gate fails:** If the test fails for the wrong reason (syntax or config, not a missing function), fix the test until it fails because the implementation is absent — do not write implementation code yet.
+
 #### Example: Minimal Failing Test
 ```elixir
 # test/my_app/blog_test.exs
@@ -56,6 +58,8 @@ Expected failure output:
 - No new test failures introduced.
 - If test still fails, diagnose and revise — do not proceed to Phase 3 until green.
 
+**If gate fails:** Diagnose the failing test and revise the implementation (re-seeking approval if the approach changes); do not advance to Phase 3 until the target test is green with no new failures.
+
 ### Phase 3: Iterate
 1. **Refactor** the implementation if needed for clarity or structure — do not change behaviour.
 2. **Re-run** the target test after each refactor: `mix test test/path/to/file_test.exs`.
@@ -85,10 +89,62 @@ mix test
 - All four mix commands exit with 0.
 - No warnings suppressed without explicit user approval.
 
+**If gate fails:** Apply the matching remediation from the table above, then re-run all four commands in order — finish only when each exits 0.
+
 #### 4c. Documentation & PR
 1. **Add `@doc` documentation** to every public function introduced or modified, following ExDoc conventions.
 2. **Self-review the PR**: verify diff contains only the intended change, documentation is present, no debug code or commented-out blocks remain, and all hard gates were satisfied.
 3. **Produce the PR** with a description that references the failing test, the minimal implementation, and the quality suite result.
+
+
+## Output Style
+
+When completing a TDD cycle, output a report using this template:
+
+```markdown
+# TDD Report — [Feature / Behavior]
+
+## Test Design
+- Type: <unit / integration / LiveView>
+- File: <test path>
+- RED: <exact failure, e.g. UndefinedFunctionError ...>
+
+## Implementation
+- Approval: <obtained>
+- Change: <file path + one-line summary>
+- GREEN: target test passes, no new failures
+
+## Quality Suite
+- mix format --check-formatted: ✓/✗
+- mix credo --strict: ✓/✗
+- mix dialyzer: ✓/✗
+- mix test: ✓/✗ (<n> tests, 0 failures)
+
+## Docs & PR
+- @doc added to new public functions: ✓/✗
+- Self-review complete: ✓/✗
+
+Verdict: <PASS / BLOCKED — reason>
+```
+
+
+## Error Recovery
+
+**Test fails for the wrong reason (syntax or config, not missing code):**
+1. Fix the test file or setup until the only failure is the undefined function or behavior.
+2. Re-confirm RED before proposing any implementation.
+
+**Test still fails after implementation:**
+1. Diagnose whether the test's expectation or the implementation is wrong.
+2. Revise the implementation (re-seeking approval if the approach changes); do not advance until green.
+
+**A Phase 3 refactor turns the suite red:**
+1. Revert the refactor immediately.
+2. Re-run the target test to confirm green, then attempt a smaller behavior-preserving change.
+
+**Quality suite fails (format / credo / dialyzer / test):**
+1. Apply the matching row from the Phase 4 remediation table.
+2. Re-run all four commands in order; fixing one may surface another, so treat the suite as passing only when every command exits 0.
 
 
 ## Integration

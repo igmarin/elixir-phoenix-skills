@@ -291,3 +291,27 @@ end
 | **Cleanup** (`my_app.cleanup`) | Parse `--dry-run` flag → query expired records → report count → conditionally `Repo.delete_all/1` |
 
 All follow the same skeleton: parse opts → `app.start` → transact → report.
+
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Access `Repo` before the app is started | Call `Mix.Task.run("app.start")` first |
+| `Repo.insert_all` / `delete_all` without a transaction | Wrap data mutations in `Repo.transaction/1` |
+| Override a built-in task like `mix test` | Namespace custom tasks under `Mix.Tasks.MyApp.*` |
+| `Mix.Tasks.MyApp.SeedData` in a mismatched file | Match the path: `lib/mix/tasks/my_app.seed_data.ex` |
+| Omit `@shortdoc` | Add `@shortdoc` so the task appears in `mix help` |
+| Ignore the `OptionParser` `errors` list | Check `errors` and `Mix.raise/1` on invalid args |
+| Hand-roll CRUD boilerplate | Scaffold with `mix phx.gen.live` / `phx.gen.context` / `phx.gen.json` |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| elixir-essentials | mix-tasks-generators | ecto-essentials |
+| None (standalone) | mix-tasks-generators | testing-essentials |
+
+**Companion skills:** `ecto-essentials`, `testing-essentials`, `oban-essentials`.

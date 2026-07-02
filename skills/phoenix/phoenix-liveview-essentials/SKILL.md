@@ -138,11 +138,48 @@ end
 
 ## Socket Assigns
 
-In `render/1`, direct `@assign` access is safe when the assign is initialized in `mount`. In helper functions, guard optional assigns with `Map.get` to avoid `KeyError`:
+Assigns drive rendering. Use `assign/3` for direct values and `update/3` when the new value depends on the current one. In `render/1`, direct `@key` access is safe when the assign is initialized in `mount`; in helper functions, guard optional assigns with `Map.get/3` to avoid `KeyError`.
 
+**Single assign:**
+```elixir
+socket = assign(socket, :count, 0)
+```
+
+**Multiple assigns at once:**
+```elixir
+socket =
+  socket
+  |> assign(:user, user)
+  |> assign(:loading, false)
+  |> assign(:posts, [])
+```
+
+**Incremental change — depend on the current value:**
+
+❌ **Bad — reads the assign manually, then re-assigns:**
+```elixir
+count = socket.assigns.count
+assign(socket, :count, count + 1)
+```
+
+✅ **Good — `update/3` transforms the current value:**
+```elixir
+update(socket, :count, fn count -> count + 1 end)
+```
+
+**Safe helper access:**
+
+❌ **Bad — a maybe-missing `@current_user` raises `KeyError`:**
 ```elixir
 defp format_user(socket) do
-  case Map.get(socket.assigns, :current_user) do
+  socket.assigns.current_user.name
+end
+```
+
+✅ **Good — guard optional assigns with `Map.get/3`:**
+```elixir
+defp format_user(socket) do
+  case Map.get(socket.assigns, :current_user, nil) do
     nil -> "Guest"
     user -> user.name
   end
@@ -229,3 +266,32 @@ Related skills: `liveview-streams`, `phoenix-pubsub-patterns`, `phoenix-liveview
 - **Static pages or controller/view patterns** — no LiveView module or `.heex` template involved
 - **Large collection rendering (100+ items)** — use `liveview-streams` instead for DOM efficiency
 - **Authentication flows** — use `phoenix-liveview-auth` and `phoenix-scopes` instead
+
+
+## Testing LiveViews
+
+Drive the full lifecycle with `Phoenix.LiveViewTest` — mount, render, events, and navigation. See [`assets/liveview_test_template.md`](assets/liveview_test_template.md) for a LiveView test template and [`assets/component_test_template.md`](assets/component_test_template.md) for a function-component test template.
+
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Access an assign in `render/1` that was never initialized | Initialize every assign in `mount/3` or `handle_params/3` before it is rendered |
+| Subscribe to PubSub or start timers in the static mount | Guard side effects with `if connected?(socket)` |
+| Query the database directly from the LiveView | Call context functions (e.g. `Posts.list_posts/0`) instead |
+| Read an assign then re-assign it to increment | Use `update/3` to transform the current value |
+| Use `@key` for an optional assign in a helper | Use `Map.get(assigns, :key, default)` to avoid `KeyError` |
+| Return a bare socket or the wrong tuple from a callback | Return `{:ok, socket}` from `mount`, `{:noreply, socket}` from handlers |
+| Omit `@impl true` on a callback | Add `@impl true` before `mount`, `handle_event`, `handle_info`, `handle_params` |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| elixir-essentials | phoenix-liveview-essentials | liveview-streams |
+| ecto-changeset-patterns | phoenix-liveview-essentials | phoenix-liveview-auth |
+
+**Companion skills:** `liveview-streams`, `phoenix-scopes`, `phoenix-pubsub-patterns`, `testing-essentials`.

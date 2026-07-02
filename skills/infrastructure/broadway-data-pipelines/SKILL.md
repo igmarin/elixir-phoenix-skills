@@ -55,6 +55,8 @@ end
 
 ## Production-Ready Pipeline
 
+See [`assets/broadway_pipeline_template.ex`](assets/broadway_pipeline_template.ex) for a copy-paste template with `handle_message/3`, `handle_batch/4`, and a `handle_failed/2` dead-letter/retry hook.
+
 ```elixir
 defmodule MyApp.MessagePipeline do
   use Broadway
@@ -190,6 +192,32 @@ def handle_message(_, message, _context) do
 end
 ```
 
+Route failed messages in `handle_failed/2` by inspecting `message.status` and metadata — retry the transient failures and dead-letter the terminal ones:
+
+```elixir
+@impl true
+def handle_failed(messages, _context) do
+  Enum.map(messages, fn message ->
+    attempt = Map.get(message.metadata, :retry_count, 0)
+
+    case message.status do
+      {:failed, {:retryable, _reason}} when attempt < 3 ->
+        MyApp.Requeue.push(message.data, retry_count: attempt + 1)
+
+      {:failed, reason} ->
+        Logger.error("Dead-lettering message",
+          message_id: message.metadata[:message_id],
+          reason: inspect(reason)
+        )
+
+        MyApp.DeadLetterQueue.send(message.data, reason)
+    end
+
+    message
+  end)
+end
+```
+
 
 ## Producer Configurations
 
@@ -260,3 +288,29 @@ batchers: [
   ]
 ]
 ```
+
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| `raise` inside `handle_message/3` on bad data | Return `Broadway.Message.failed/2` so the message is nacked, not the pipeline crashed |
+| Skip `handle_failed/2` | Implement it — dead-letter/retry handling must be explicit for every pipeline |
+| Log raw `message.data` (may hold PII/secrets) | Log only metadata: `message_id`, `status.reason` |
+| Trust producer payloads as-is | Validate `message.data` against a strict schema; reject malformed or oversized input |
+| Retry poison messages forever | Cap attempts via metadata, then route to a dead-letter queue |
+| Insert one row per message | Batch side effects in `handle_batch/4` (one DB round-trip per batch) |
+| Hardcode processor/batcher concurrency | Derive from `System.schedulers_online()` and throughput targets |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| otp-essentials | broadway-data-pipelines | telemetry-essentials |
+| ecto-essentials | broadway-data-pipelines | deployment-gotchas |
+
+**Companion skills:**
+- `oban-essentials` — for scheduled/retryable jobs when you don't need a streaming producer
+- `telemetry-essentials` — instrument pipeline throughput, latency, and failure events

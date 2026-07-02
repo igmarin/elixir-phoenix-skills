@@ -14,11 +14,15 @@ description: >
 
 # Cachex Caching
 
-## RULES — Non-obvious requirements
+## RULES — Follow these with no exceptions
 
-1. **Set TTL on every cached entry** — never cache indefinitely unless data is truly immutable
-2. **Enable stats: true** — required to measure cache effectiveness
-3. **Use cache warmers for startup** — pre-populate expensive data when application starts
+1. **Set a TTL on every cached entry** — never cache indefinitely unless the data is truly immutable
+2. **Enable `stats: true`** — required to measure cache effectiveness via `hit_rate`
+3. **Use cache warmers for startup** — pre-populate expensive data when the application starts
+4. **Use `Cachex.fetch/3` for get-or-set** — atomic cache-aside avoids the dogpile/race on concurrent misses
+5. **Invalidate with `Cachex.del/2` after every mutation** — stale entries outlive the source of truth otherwise
+6. **Handle the `{:error, reason}` tuple from every Cachex call** — fall back to the database; a cache failure must never break the request
+7. **Bound the cache with `:limit` and an eviction policy** — unbounded caches leak memory
 
 
 ## End-to-End Workflow
@@ -249,3 +253,29 @@ end
 
 defp primary_node, do: Application.fetch_env!(:my_app, :primary_cache_node)
 ```
+
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Cache with no TTL | Set a per-entry TTL (or a cache-level default) so stale data expires |
+| Do `Cachex.get/2` + `Cachex.put/3` for cache-aside | Use `Cachex.fetch/3` — atomic get-or-set avoids concurrent-miss races |
+| Ignore Cachex return tuples | Match `{:ok, _}` / `{:error, _}` and fall back to the database on error |
+| Forget to invalidate after writes | Call `Cachex.del/2` after every mutation of the cached record |
+| Run a cache without stats | Enable `stats: true` and watch `hit_rate` to confirm effectiveness |
+| Let the cache grow unbounded | Set `:limit` with an eviction policy (e.g. `Cachex.Policy.LRW`) |
+| Assume a local cache is shared across nodes | Broadcast invalidation via PubSub or read from an authoritative node via RPC |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| ecto-essentials | cachex-caching | telemetry-essentials |
+| otp-essentials | cachex-caching | deployment-gotchas |
+
+**Companion skills:**
+- `telemetry-essentials` — emit and monitor cache hit/miss events in production
+- `phoenix-pubsub-patterns` — broadcast cross-node cache invalidation

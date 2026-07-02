@@ -32,6 +32,8 @@ Triages and decomposes any Elixir/Phoenix request into ordered sub-tasks, then d
 
 The eight most-used skills are listed here. For the full catalog, see `directory.json` at the repository root. If unavailable, fall back to the catalog below and use `elixir-essentials` or `phoenix-liveview-essentials` for any skill not listed.
 
+See [`assets/skill-map.json`](assets/skill-map.json) for the full machine-readable trigger→skill routing map used by this orchestrator.
+
 | Skill | Use when... | Notes |
 | ----- | ----------- | ----- |
 | **elixir-essentials** | Writing any `.ex` or `.exs` file | Default fallback for Elixir language questions |
@@ -117,3 +119,18 @@ Priority: security-essentials > code-quality; Chain: security-essentials then co
 - Simple, single-concern requests that clearly map to one skill (e.g., "write a test for this function" → use `testing-essentials` directly)
 - Direct questions about Elixir syntax or Phoenix patterns — route to the specific skill instead
 - Cases where the user explicitly names a target skill (e.g., "use the oban-essentials skill")
+
+
+## Error Recovery
+
+**No skill clearly matches the request:**
+- Route to `elixir-essentials` (language ambiguity) or `phoenix-liveview-essentials` (web/Phoenix ambiguity) and label it `Fallback: <skill>`.
+
+**Request spans multiple concerns:**
+- Decompose into ordered sub-tasks and state the priority chain (TDD → Planning → Implementation → Quality → Review) immediately after the routing line.
+
+**A named skill is missing from the catalog:**
+- Consult `directory.json`; if still unresolved, fall back to `elixir-essentials` and note the gap in the routing rationale.
+
+**User asks the router to implement directly:**
+- Do not write code — restate the `Next skill:` routing line and delegate, since this orchestrator never implements.

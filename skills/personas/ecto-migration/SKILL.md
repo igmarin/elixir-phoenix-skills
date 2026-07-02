@@ -161,6 +161,8 @@ MIX_ENV=test mix ecto.migrate
 - [ ] Rollback tested locally or on staging
 - [ ] Database backup taken before production migration
 
+**If gate fails:** Do not deploy — document the exact rollback command, test the rollback locally or on staging, and take a database backup before running the production migration.
+
 
 ## Output Style
 

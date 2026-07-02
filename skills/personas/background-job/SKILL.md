@@ -7,7 +7,9 @@ description: >
   Orchestrates robust Oban background job implementation with hard gates: design job with idempotency strategy and error classification (transient→retry, permanent→discard) → TDD implementation where test MUST fail before code → configure retry/discard strategies → test failure scenarios covering idempotency/retry/error handling → production monitoring; phases design→TDD→retry config→failure testing→monitoring. Use when adding async processing, implementing background jobs, or configuring job queues. Trigger: background job, async processing, oban, job queue, worker.
 ---
 
-## Phase 1: Job Design
+## Agent Phases
+
+### Phase 1: Job Design
 
 **Steps:**
 1. **Job Purpose** — Define trigger conditions, input parameters, expected output/side effects, and criticality.
@@ -23,8 +25,10 @@ description: >
 - [ ] Every anticipated error is assigned to exactly one category (transient or permanent) with rationale
 - [ ] Queue name, priority, and timeout value are recorded and justified
 
+**If gate fails:** Return to job design — document the missing idempotency mechanism, complete the error classification, or record the queue/priority/timeout value before writing any code.
 
-## Phase 2: TDD Implementation
+
+### Phase 2: TDD Implementation
 
 **Steps:**
 1. Write failing tests covering: successful execution, idempotency (run twice = same result), transient error raises, permanent error discards.
@@ -36,6 +40,8 @@ description: >
 **HARD GATE — Tests Pass:**
 - [ ] RED confirmed: test output shows failures attributable to missing implementation, not misconfiguration
 - [ ] GREEN confirmed: all tests pass including idempotency scenario; `mix test` exits clean with no regressions
+
+**If gate fails:** If RED is wrong (misconfiguration or syntax, not a missing implementation), fix the test first; if GREEN fails, revise the implementation and do not proceed until `mix test` passes with no regressions.
 
 **Example job test skeleton** (for `SendWelcomeEmail` worker):
 ```elixir
@@ -68,7 +74,7 @@ end
 ```
 
 
-## Phase 3: Retry/Discard Configuration
+### Phase 3: Retry/Discard Configuration
 
 **Steps:**
 1. Configure `max_attempts` for retry with exponential backoff.
@@ -106,8 +112,10 @@ end
 - [ ] Every permanent error maps to `:discard` in code; every transient error maps to `{:error, reason}`
 - [ ] Telemetry events are attached and verifiable in tests
 
+**If gate fails:** Re-derive `max_attempts`, backoff, and timeout from the Phase 1 error classification, and correct any error whose return value contradicts its class (`{:error, reason}` for transient, `:discard` for permanent).
 
-## Phase 4: Failure Scenario Testing & Monitoring
+
+### Phase 4: Failure Scenario Testing & Monitoring
 
 **Steps:**
 1. For each error classified in Phase 1, assert the correct return value (transient → `{:error, ...}`, permanent → `:discard`).
@@ -118,6 +126,8 @@ end
 - [ ] Every error path from Phase 1 has a corresponding test assertion with the correct return value
 - [ ] Telemetry/logging assertions pass for both success and failure paths
 - [ ] Queue depth alert threshold is set and its value is documented
+
+**If gate fails:** Add the missing error-path assertion or telemetry check, or set and document the queue-depth threshold, then re-run the failure-scenario tests.
 
 **Never deploy until all four phase gates above are green.**
 
@@ -138,3 +148,21 @@ When completing a background job implementation, produce a concise summary repor
 - Telemetry events: <list>
 - Queue depth alerts: <configured threshold>
 ```
+
+## Error Recovery
+
+**Effects duplicate when a job retries:**
+1. Confirm the Phase 1 idempotency guard actually short-circuits (unique key, status check, or sentinel timestamp).
+2. Add a test that calls `perform/1` twice and asserts a single side effect.
+
+**A transient error is discarded (or a permanent error keeps retrying):**
+1. Recheck the offending error against the Phase 1 classification.
+2. Map transient errors to `{:error, reason}` (retryable) and permanent errors to `:discard`, and adjust `max_attempts` to match.
+
+**A job exhausts its retries in production:**
+1. Inspect the Oban dashboard for the failure reason and attempt count.
+2. If the error is actually permanent, add a `:discard` branch; if transient and recoverable, raise `max_attempts` or widen the backoff.
+
+**The queue backs up (depth alert firing):**
+1. Look for a poison job blocking the queue or under-provisioned queue concurrency.
+2. Increase concurrency or move the slow job to a dedicated queue, then confirm the depth alert clears.

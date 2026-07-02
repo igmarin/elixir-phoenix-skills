@@ -34,7 +34,7 @@ defmodule MyApp.Media.Image do
     field :filename, :string
     field :content_type, :string
 
-    belongs_to :folder, MyApp.Media.Folder
+    belongs_to :folder, MyApp.Media.Folder  # parent uses has_many :images, MyApp.Media.Image
 
     timestamps()
   end
@@ -49,6 +49,8 @@ defmodule MyApp.Media.Image do
   end
 end
 ```
+
+See [`assets/changeset_snippets.ex`](assets/changeset_snippets.ex) for copy-paste changeset templates (validations, associations, and error formatting).
 
 ## Query Composition
 
@@ -186,6 +188,8 @@ end
 2. Run `mix ecto.rollback` — confirm it reverses cleanly
 3. Run `mix ecto.migrate` again — confirm re-applying succeeds
 
+See [`assets/migration_checklist.md`](assets/migration_checklist.md) for the full safe-migration and expand-contract checklist.
+
 ### Unique Constraints
 
 Add unique constraints in migration AND schema changeset.
@@ -228,3 +232,26 @@ All standard CRUD functions (`list_*`, `get_*!`, `update_*`, `delete_*`) follow 
 - Raw SQL queries that bypass Ecto entirely — write these in a dedicated repo method, not inline in contexts
 - Advanced nested association patterns — use `ecto-changeset-patterns` instead
 - Migration orchestration planning — use `ecto-migration` persona instead
+
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Interpolate user input into a query fragment | Bind values with `^` so Ecto parameterizes them |
+| Add a changeset validation but skip the DB constraint | Pair `validate_*` / `unique_constraint` with `unique_index` / `references` |
+| Leave foreign keys unindexed | `create index(:images, [:folder_id])` in the migration |
+| Access `image.folder` inside `Enum.each` (N+1) | `preload(:folder)` before `Repo.all/1` |
+| Call `Repo` directly from a LiveView or controller | Route all queries through a context module |
+| Combine schema changes and data backfill in one migration | Split into separate migrations (expand → backfill → contract) |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| elixir-essentials | ecto-essentials | ecto-changeset-patterns |
+| elixir-essentials | ecto-essentials | testing-essentials |
+
+**Companion skills:** `ecto-changeset-patterns`, `ecto-nested-associations`, `ecto-migration`, `testing-essentials`
