@@ -20,24 +20,29 @@ metadata:
 
 ## RULES — Follow these with no exceptions
 
-1. **Benchmark in production-like conditions** — use `MIX_ENV=prod` for realistic results
-2. **Compare alternatives** — always benchmark at least 2 approaches to justify optimization; ensure implementations do the same thing
-3. **Document performance regressions** — track benchmark results over time in `bench/baseline.json` with a >10% threshold
-4. **Profile before benchmarking** — use `:fprof` or `:eprof` to identify the actual bottleneck before writing benchmarks
-5. **Use multiple inputs** — test with small, medium, and large inputs to catch size-dependent behavior; use realistic data sizes
-6. **Warm up before measuring** — run warmup phase to let JIT compilation settle
-7. **Run sufficiently and repeatedly** — use `time: 10` (10 seconds) for reliable measurements and run 3-5 times to rule out variance
-8. **Separate I/O benchmarks** — never benchmark network or disk I/O in the same run as compute benchmarks
+1. **Profile before you benchmark** — use `:fprof` or `:eprof` to confirm the actual bottleneck before writing any Benchee benchmark
+2. **Always run benchmarks under `MIX_ENV=prod`** — dev-mode measurements are misleading because compile-time optimizations differ
+3. **Include a `warmup:` phase** — let the BEAM and JIT settle before Benchee records measurements
+4. **Compare at least two implementations that produce identical results** — a benchmark of a single function proves nothing about the alternative
+5. **Validate across input sizes with `inputs:`** — small, medium, and large realistic datasets catch size-dependent behavior
+6. **Never mix I/O and compute in one run** — benchmark network or disk work separately from CPU-bound code
+7. **Guard regressions against a saved baseline** — compare with a >10% threshold and check recent baseline runs before failing to rule out noise
 
 ---
 
 ## Workflow
 
-1. **Profile with `:fprof` or `:eprof`** — identify which function is the actual bottleneck; verify the output explicitly names the expected slow call site before proceeding
-2. **Identify the bottleneck** — confirm the slow call site before writing any benchmarks; if the profile output is ambiguous, re-run with a larger workload to amplify signal
-3. **Write a comparative Benchee benchmark** — implement at least 2 alternative approaches
-4. **Validate improvement** — confirm the faster approach wins across input sizes using `inputs:`; if results are within noise (< 5% difference), run 3 additional times to rule out variance
-5. **Save baseline** — write results to `bench/baseline.json` and check for regressions (>10% threshold); if a regression is detected, compare against the previous 3 baseline runs before raising an error to rule out noise
+Follow these steps in order — do not skip profiling or go straight to benchmarking.
+
+1. **Profile with `:fprof` or `:eprof`** — identify which function is the actual bottleneck; verify the output explicitly names the expected slow call site before proceeding. If ambiguous, re-run with a larger workload to amplify signal.
+
+2. **Confirm the bottleneck** — do not write any benchmarks until the slow call site is identified. _(Never benchmark network or disk I/O in the same run as compute benchmarks.)_
+
+3. **Write a comparative Benchee benchmark** — implement at least 2 alternative approaches that produce the same result. Run under `MIX_ENV=prod` for realistic results. Use `time: 10` (10 seconds) for reliable measurements; run 3–5 times to rule out variance. Include a `warmup:` phase to let JIT compilation settle.
+
+4. **Validate across input sizes** — use `inputs:` with small, medium, and large realistic datasets to catch size-dependent behavior. If results are within noise (< 5% difference), run 3 additional times before drawing conclusions.
+
+5. **Save baseline and check for regressions** — write results to `bench/baseline.json` with a >10% threshold. If a regression is detected, compare against the previous 3 baseline runs before raising an error to rule out noise.
 
 ---
 
@@ -54,35 +59,16 @@ end
 
 ---
 
-## Basic Benchmark
+## Benchmark Configuration
+
+The canonical benchmark pattern — use `inputs:` for size-dependent validation, `memory_time:` and `reduction_time:` for resource profiling, and the HTML formatter for shareable reports:
 
 ```elixir
 # bench/list_benchmark.exs
-list = Enum.to_list(1..10_000)
-
-Benchee.run(%{
-  "Enum.map" => fn -> Enum.map(list, &(&1 * 2)) end,
-  "for comprehension" => fn -> for i <- list, do: i * 2 end,
-  ":lists.map (Erlang)" => fn -> :lists.map(fn x -> x * 2 end, list) end
-})
-```
-
-```bash
-# Run benchmark
-MIX_ENV=prod mix run bench/list_benchmark.exs
-```
-
----
-
-## Benchmark Configuration
-
-```elixir
-list = Enum.to_list(1..10_000)
-
 Benchee.run(
   %{
-    "Enum.sort" => fn -> Enum.sort(list) end,
-    "Enum.sort_by" => fn -> Enum.sort_by(list, & &1) end
+    "Enum.sort" => fn list -> Enum.sort(list) end,
+    "Enum.sort_by" => fn list -> Enum.sort_by(list, & &1) end
   },
   time: 10,              # Run each scenario for 10 seconds
   warmup: 2,             # Warm up for 2 seconds
@@ -98,6 +84,11 @@ Benchee.run(
     {Benchee.Formatters.HTML, file: "output/benchmark.html"}
   ]
 )
+```
+
+```bash
+# Run benchmark
+MIX_ENV=prod mix run bench/list_benchmark.exs
 ```
 
 ---
@@ -239,49 +230,28 @@ Code.require_file("bench/json_benchmark.exs")
 
 ---
 
-## Real-World Benchmark Patterns
+## Common Pitfalls
 
-```elixir
-# bench/json_benchmark.exs
-data = %{
-  users: for i <- 1..1000 do
-    %{id: i, name: "User #{i}", email: "user#{i}@example.com", active: true}
-  end,
-  metadata: %{created: DateTime.utc_now(), version: "1.0"}
-}
-
-json_string = Jason.encode!(data)
-
-Benchee.run(
-  %{
-    "Jason.encode!" => fn -> Jason.encode!(data) end,
-    "Jason.encode_to_iodata!" => fn -> Jason.encode_to_iodata!(data) end,
-    "Poison.encode!" => fn -> Poison.encode!(data) end,
-    "Jason.decode!" => fn -> Jason.decode!(json_string) end,
-    "Poison.decode!" => fn -> Poison.decode!(json_string) end
-  },
-  time: 10,
-  warmup: 2
-)
-```
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Benchmark in the `:dev` environment | Run under `MIX_ENV=prod mix run bench/...` |
+| Guess the bottleneck and optimize blindly | Profile with `:fprof`/`:eprof` first, then benchmark |
+| Skip `warmup:` and measure a cold BEAM | Always include a `warmup:` phase |
+| Test a single input size | Use `inputs:` with small, medium, and large datasets |
+| Mix network/disk I/O with compute in one run | Isolate I/O benchmarks from CPU-bound ones |
+| Draw conclusions from one noisy run | Run 3–5 times and compare against recent baselines |
+| Optimize with no recorded baseline | Save `bench/baseline.json` and check a >10% regression threshold |
 
 ---
 
-## Memory Profiling
+## Integration
 
-```elixir
-Benchee.run(
-  %{
-    "String manipulation" => fn ->
-      list = for i <- 1..1000, do: "item_#{i}"
-      Enum.join(list, ",")
-    end,
-    "Binary manipulation" => fn ->
-      list = for i <- 1..1000, do: <<("item_#{i}"::binary)>>
-      IO.iodata_to_binary(Enum.intersperse(list, <<","::binary>>))
-    end
-  },
-  memory_time: 5,
-  reduction_time: 5
-)
-```
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| testing-essentials | benchee-profiling | telemetry-essentials |
+| code-quality | benchee-profiling | deployment-gotchas |
+
+**Companion skills:**
+- `telemetry-essentials` — production-time measurement to complement offline benchmarks
+- `code-quality` — apply idiomatic refactors before and after measuring
+- `testing-essentials` — verify behaviour is correct before optimizing for speed

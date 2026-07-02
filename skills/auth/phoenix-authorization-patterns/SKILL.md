@@ -168,6 +168,19 @@ end
 
 ---
 
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Rely on hidden or disabled UI buttons for access control | Authorize on the server in every `handle_event` |
+| Trust a `user_id` sent from the client | Compare `current_scope.user.id` against the resource's `user_id` |
+| Query a resource without a user filter | Scope queries with `where(user_id: ^user.id)` to prevent IDOR |
+| Inline complex permission logic in LiveViews/controllers | Extract rules into a `Policy` module |
+| Omit a catch-all authorize clause | End `Policy` with `def authorize(_, _, _), do: {:error, :unauthorized}` |
+| Test only the happy path | Test both authorized and unauthorized paths |
+
+---
+
 ## Integration
 
 | Predecessor | This Skill | Successor |

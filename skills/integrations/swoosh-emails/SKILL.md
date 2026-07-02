@@ -16,13 +16,11 @@ metadata:
 
 ## RULES — Follow these with no exceptions
 
-1. **Use Swoosh for all email sending**
-2. **Define emails in separate modules** — `MyApp.Emails.UserEmail`, not inline in contexts
-3. **Use Phoenix components for email templates** — reuse UI components in emails
-4. **Configure delivery per environment** — Local adapter in dev/test, real adapter in prod
-5. **Test emails with Swoosh.TestAssertions** — assert emails were sent with correct content
-6. **Never send emails synchronously in web requests** — use Oban for async delivery with retries and observability; use Task.start only for simple cases
-7. **Use `Swoosh.Preview` in development** — preview emails in the browser
+1. **Define emails in separate modules** — `MyApp.Emails.UserEmail`, not inline in contexts
+2. **Configure delivery per environment** — Local adapter in dev/test, real adapter in prod
+3. **Test emails with Swoosh.TestAssertions** — assert emails were sent with correct content
+4. **Never send emails synchronously in web requests** — use Oban for async delivery; use Task.start only for simple cases
+5. **Use `Swoosh.Preview` in development** — preview emails in the browser
 
 ---
 
@@ -63,8 +61,6 @@ MyApp.Mailer.deliver(Swoosh.Email.new(to: "test@example.com", from: "noreply@mya
 
 ## Defining Emails
 
-Prefer Phoenix components for rich templates. Use plain `html_body/text_body` strings only for simple one-off emails.
-
 ### With Phoenix Components (Preferred)
 
 ```elixir
@@ -95,15 +91,12 @@ defmodule MyApp.Emails.UserEmail do
     |> html_body(html)
     |> text_body("Welcome, #{user.name}! Thanks for signing up.")
   end
-
-  # Same pattern applies for password_reset, confirmation emails, etc.
-  # Build the html with ~H and EmailComponents, then pipe through new/to/from/subject/html_body/text_body.
 end
 ```
 
 ### Email Layout and Button Components
 
-Define reusable components in `lib/my_app_web/components/email_components.ex`. See `EMAIL_COMPONENTS.md` for a full example. A minimal layout and button:
+Define reusable components in `lib/my_app_web/components/email_components.ex`. A minimal layout and button:
 
 ```elixir
 # lib/my_app_web/components/email_components.ex
@@ -140,6 +133,8 @@ defmodule MyApp.Mailer do
   use Swoosh.Mailer, otp_app: :my_app
 end
 ```
+
+See [`assets/mailer_template.ex`](assets/mailer_template.ex) for a copy-paste Mailer, email-builder, and Oban delivery worker template.
 
 ---
 
@@ -251,3 +246,31 @@ config :swoosh, serve: true
 
 # Access preview at http://localhost:4000/dev/mailbox
 ```
+
+---
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Build emails inline inside context functions | Define builders in `MyApp.Emails.*` modules |
+| `Mailer.deliver/1` synchronously in a web request | Enqueue delivery via an Oban worker |
+| Use the Local/prod adapter in the test env | `Swoosh.Adapters.Test` + `Swoosh.TestAssertions` |
+| Hardcode the SendGrid API key in config | `System.get_env("SENDGRID_API_KEY")` in `runtime.exs` |
+| Send HTML-only emails | Always set both `html_body` and `text_body` |
+| Forget `{Finch, name: MyApp.Finch}` in the tree | Add the Finch child before delivering |
+| Skip assertions after triggering an email | `assert_email_sent/1` / `assert_no_email_sent/0` |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| oban-essentials | swoosh-emails | testing-essentials |
+| ecto-essentials | swoosh-emails | None (standalone) |
+
+**Companion skills:**
+- `oban-essentials` — deliver emails asynchronously outside the request cycle
+- `testing-essentials` — assert delivery with `Swoosh.TestAssertions`
+- `gettext-i18n` — localize subjects and bodies for multi-language mail

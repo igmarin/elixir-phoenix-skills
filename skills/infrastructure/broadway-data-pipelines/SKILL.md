@@ -61,6 +61,8 @@ end
 
 ## Production-Ready Pipeline
 
+See [`assets/broadway_pipeline_template.ex`](assets/broadway_pipeline_template.ex) for a copy-paste Broadway module skeleton (`start_link/1`, producer config, `handle_message/3`, `handle_batch/4`, `handle_failed/2`).
+
 ```elixir
 defmodule MyApp.MessagePipeline do
   use Broadway
@@ -172,26 +174,40 @@ end
 
 ## Retry Strategies
 
-Broadway does not provide a built-in backoff/requeue mechanism at the message level. For retry logic:
+Broadway has no built-in backoff/requeue at the message level:
 
-- **Short-term retries**: wrap `process/1` in a retry library (e.g., `Retry`) and let failures bubble to `handle_failed/2`.
-- **Long-term retries / exponential backoff**: send failed messages to a dead-letter queue and re-enqueue from there, or use producer-level redelivery mechanisms.
+- **Short-term retries**: wrap `process/1` in a retry library (e.g., `Retry`); unrecoverable failures surface in `handle_failed/2`.
+- **Long-term / exponential backoff**: send failed messages to a dead-letter queue and re-enqueue from there, or rely on producer-level redelivery (SQS visibility timeout, Kafka consumer group offset management).
+- **Retry count tracking**: must be implemented in your own producer or via the external queue's message attributes — Broadway does not populate retry metadata automatically.
+
+Because Broadway has no message-level retry, `handle_failed/2` is where you inspect each
+failed message's `status`/`metadata` and decide whether to dead-letter it or re-enqueue it
+with a bumped retry counter:
 
 ```elixir
 @impl true
-def handle_message(_, message, _context) do
-  attempt = Map.get(message.metadata, :retry_count, 0)
+def handle_failed(messages, _context) do
+  Enum.map(messages, fn message ->
+    retries = message.metadata[:retry_count] || 0
 
-  case process(message.data) do
-    {:ok, result} ->
-      Broadway.Message.update_data(message, fn _ -> result end)
+    case message.status do
+      # Non-retryable: route straight to the dead-letter queue
+      {:failed, :invalid_json} ->
+        DeadLetterQueue.send(message.data, :invalid_json)
+        message
 
-    {:error, reason} when attempt < 3 ->
-      Broadway.Message.failed(message, {:retryable, reason})
+      # Retryable and under the cap: re-enqueue via the external queue with a higher count
+      {:failed, _reason} when retries < 3 ->
+        MyApp.Requeue.push(message.data, retry_count: retries + 1)
+        message
 
-    {:error, reason} ->
-      Broadway.Message.failed(message, {:max_retries_exceeded, reason})
-  end
+      # Retries exhausted: dead-letter it so the pipeline keeps draining
+      {:failed, reason} ->
+        Logger.error("Dropping message after #{retries} retries: #{inspect(reason)}")
+        DeadLetterQueue.send(message.data, reason)
+        message
+    end
+  end)
 end
 ```
 
@@ -217,18 +233,10 @@ Broadway.start_link(__MODULE__,
     concurrency: 1
   ],
   processors: [
-    default: [
-      concurrency: 10,
-      max_demand: 10,
-      min_demand: 5
-    ]
+    default: [concurrency: 10, max_demand: 10, min_demand: 5]
   ],
   batchers: [
-    default: [
-      concurrency: 5,
-      batch_size: 100,
-      batch_timeout: 5_000
-    ]
+    default: [concurrency: 5, batch_size: 100, batch_timeout: 5_000]
   ]
 )
 ```
@@ -283,12 +291,10 @@ Optionally visualise metrics with [`broadway_dashboard`](https://hexdocs.pm/broa
 ## Concurrency Tuning
 
 ```elixir
-# CPU-bound: fewer workers, lower demand
-# I/O-bound: more workers, higher demand
 processors: [
   default: [
-    concurrency: System.schedulers_online() * 2,  # multiply by 4 for heavy I/O
-    max_demand: 50                                 # raise to 100 for I/O-bound
+    concurrency: System.schedulers_online() * 2,
+    max_demand: 50
   ]
 ]
 
@@ -300,3 +306,33 @@ batchers: [
   ]
 ]
 ```
+
+- **CPU-bound**: fewer workers, lower demand
+- **I/O-bound**: more workers (`* 4`), higher `max_demand` (100)
+
+---
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Raise inside `handle_message/3` on a bad message | Return `Broadway.Message.failed(message, reason)` so the pipeline keeps draining |
+| Skip `handle_failed/2` and lose failed messages | Implement `handle_failed/2` to dead-letter or re-enqueue every failure |
+| Insert records one-by-one in `handle_message/3` | Batch DB writes in `handle_batch/4` (batch size ~100) |
+| Expect Broadway to retry with backoff automatically | Track retries yourself (message metadata / external queue redelivery) |
+| Hardcode processor/batcher concurrency to a fixed number | Tune from `System.schedulers_online()` for the workload profile |
+| Ship without observability | Attach handlers to Broadway telemetry events before scaling up |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| otp-essentials | broadway-data-pipelines | telemetry-essentials |
+| ecto-essentials | broadway-data-pipelines | deployment-gotchas |
+
+**Companion skills:**
+- `oban-essentials` — in-app background jobs when you don't need an external message queue
+- `telemetry-essentials` — attach handlers to Broadway's telemetry events
+- `deployment-gotchas` — configure producers and supervision for production releases

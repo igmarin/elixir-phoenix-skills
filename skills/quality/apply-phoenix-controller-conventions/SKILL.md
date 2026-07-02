@@ -25,29 +25,41 @@ Use this skill when writing new Phoenix controller modules or modifying existing
 
 ---
 
-## Quick Reference
+## Workflow: Creating a New Controller
 
-| Pattern | Convention |
-|---------|------------|
-| Routes | `resources` for RESTful; `scope` for grouping |
-| Controllers | Thin — delegate business logic to contexts |
-| before_action | For auth, resource loading; return `conn` |
-| Strong params | Use `changeset` validation or `cast/4` in context |
-| Content type | Pipeline `:browser` for HTML; `:api` for JSON |
-| Error handling | Use `FallbackController` for structured errors |
-| Auth plugs | Include pipeline plugs; skip with `:skip` option |
+1. **Define route** — add to `router.ex` using `resources` or `scope`; verify with `mix phx.routes`
+2. **Create controller module** — thin module, delegate all business logic to a context
+3. **Add auth/load plugs** — declare `plug` directives at the top of the controller; verify with `mix compile --warnings-as-errors`
+4. **Implement actions** — pattern-match params, call context, render or redirect
+5. **Wire error handling** — use `action_fallback` for JSON APIs; pattern-match for browser; verify with `mix test test/controllers/`
 
 ---
 
 ## RULES — Follow these with no exceptions
 
-1. **Keep controllers thin** — never put business logic in controllers; delegate to context modules
-2. **Use `before_action` for authentication and resource loading** — chain with `:skip` opt-out pattern
-3. **Always validate and authorize** every action that touches access-controlled resources
-4. **Use `FallbackController` for JSON API error handling** — never inline `error/2` or catch-all `case` clauses in actions
-5. **Match content pipeline to format** — API pipeline (no session, no CSRF) for JSON; browser pipeline for HTML
-6. **Use `conn.assigns` for passing data between plugs and actions** — never use `Process` dictionaries
-7. **Never interpolate user input into redirect paths** — use `~p"..."` paths for verified routes
+1. **Keep controllers thin** — delegate all business logic to context modules; never inline `Repo` calls or email sending in an action
+2. **Cast and validate params in a context `changeset/2`** — never pass raw `params` straight to `Repo`
+3. **Declare auth/resource plugs at the controller top** — scope with `when action in/not in [...]`; every plug must return `conn`
+4. **Use `action_fallback` + a `FallbackController`** for JSON APIs; pattern-match on context results for browser actions
+5. **Pick the right pipeline** — `:browser` (session + CSRF) for HTML, `:api` (no session, no CSRF) for JSON
+6. **Always use `~p"..."` verified route sigils** for redirects and links — never interpolate user input into paths
+7. **Share state through `conn.assigns`** between plugs and actions — never the process dictionary
+
+---
+
+## Quick Reference
+
+| Pattern | Convention |
+|---------|------------|
+| Controllers | **Thin** — delegate all business logic to context modules; never inline Repo calls or email sending |
+| Routes | `resources` for RESTful; `scope` for grouping; shallow nesting preferred |
+| Plugs (`before_action`) | Auth and resource loading only; use `when action in/not in` guards; return `conn` |
+| Strong params | Validate and cast in context via `changeset/2`; never pass raw params to Repo |
+| Content type | Pipeline `:browser` for HTML (session + CSRF); `:api` for JSON (no session, no CSRF) |
+| Error handling | `FallbackController` + `action_fallback` for JSON APIs; pattern-match for browser |
+| Auth plugs | Declare at controller level; opt-out with `when action not in [...]` |
+| Redirects | Always use `~p"..."` verified route sigils — never interpolate user input |
+| Conn sharing | Use `conn.assigns` between plugs and actions — never `Process` dictionaries |
 
 ---
 
@@ -147,6 +159,8 @@ defmodule MyAppWeb.UserController do
 end
 ```
 
+**Checkpoint:** Run `mix compile --warnings-as-errors` to confirm no unused plug warnings, then `mix test test/controllers/` to verify auth behaviour.
+
 ---
 
 ## Action Patterns
@@ -205,7 +219,7 @@ end
 ```elixir
 def update(conn, %{"user" => user_params}) do
   user = Accounts.get_user!(conn.params["id"])
-  Accounts.update_user(user, user_params)  # User could send any field
+  Accounts.update_user(user, user_params)
 end
 ```
 
@@ -224,7 +238,6 @@ def update(conn, %{"user" => user_params}) do
 end
 ```
 
-The context module validates fields:
 ```elixir
 def update_user(user, attrs) do
   user
@@ -321,6 +334,8 @@ defmodule MyAppWeb.FallbackController do
 end
 ```
 
+**Checkpoint:** Run `mix test test/controllers/` to confirm fallback clauses handle all expected error tuples.
+
 ---
 
 ## Error Handling — Browser
@@ -353,14 +368,15 @@ end
 
 ## Common Pitfalls
 
-| ❌ Wrong | ✅ Correct |
-|----------|-----------|
-| Business logic in controller (e.g., `Repo.insert` inline) | Delegate to context module (`Accounts.create_user`) |
-| `before_action` without `:skip` on login/exempt actions | Use `plug :auth when action not in [:index, :show]` |
-| `redirect(to: user_provided_url)` | Use `~p"..."` verified path or `url` helpers |
-| JSON error handling in each action | Use `action_fallback FallbackController` |
-| `json(conn, ...)` in browser pipeline | Use `pipe_through :api` for JSON endpoints |
-| Process dictionaries for passing data between plugs | Use `conn.assigns` |
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Put business logic or `Repo` calls inside an action | Delegate to a context function and keep the action thin |
+| Pass raw `params` to `Repo.insert/1` | Cast/validate through a context `changeset/2` first |
+| `raise` on an expected-missing record in a browser action | Pattern-match `{:error, :not_found}` and `put_flash` + `redirect` |
+| Duplicate error rendering in every JSON action | Centralize with `action_fallback MyAppWeb.FallbackController` |
+| Interpolate user input into a redirect path string | Use the `~p"..."` verified route sigil |
+| Reuse the `:browser` pipeline for a JSON endpoint | Route JSON through the `:api` pipeline (no session/CSRF) |
+| Load the current user with a raw plug returning a value | Write a plug that assigns to `conn.assigns` and returns `conn` |
 
 ---
 

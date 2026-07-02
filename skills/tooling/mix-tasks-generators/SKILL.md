@@ -302,18 +302,27 @@ All follow the same skeleton: parse opts → `app.start` → transact → report
 
 ---
 
-## Task Output Formatting
+## Common Pitfalls
 
-```elixir
-Mix.shell().info("Starting task...")
-Mix.shell().info("✓ Success")
-Mix.shell().error("✗ Failed")
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Touch Repo before starting the app | Call `Mix.Task.run("app.start")` first |
+| Override built-in Mix tasks | Create namespaced `Mix.Tasks.MyApp.*` tasks |
+| Mismatch module name and file path | `Mix.Tasks.Foo.Bar` → `lib/mix/tasks/foo.bar.ex` |
+| Run bulk `insert_all`/`delete_all` unwrapped | Wrap data changes in `Repo.transaction` |
+| Omit `@shortdoc` | Add `@shortdoc` so the task shows in `mix help` |
+| Rely on the default CLI env | Register `preferred_cli_env` in `mix.exs` |
+| Skip argument validation | Parse with `OptionParser` and `Mix.raise` on bad input |
 
-# Progress reporting for long operations
-records
-|> Enum.with_index()
-|> Enum.each(fn {record, index} ->
-  process_record(record)
-  if rem(index, 100) == 0, do: Mix.shell().info("  Processed #{index + 1}/#{total} records")
-end)
-```
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| elixir-essentials | mix-tasks-generators | ecto-migration |
+| ecto-essentials | mix-tasks-generators | testing-essentials |
+
+**Companion skills:**
+- `apply-ecto-conventions` — conventions for generated context/schema code
+- `ecto-migration` — writing and running the migrations generators produce

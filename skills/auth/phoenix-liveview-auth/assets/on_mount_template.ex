@@ -1,8 +1,11 @@
 # LiveView on_mount Authentication Templates
+#
+# Copy-paste on_mount hook templates for LiveView authentication.
+# Three variants are shown: Phoenix 1.7 (current_user), Phoenix 1.8+ (Scope),
+# and role-based authorization.
 
-## Phoenix 1.7 (current_user)
+# ── Phoenix 1.7 (current_user) ──
 
-```elixir
 # lib/my_app_web/user_auth.ex
 defmodule MyAppWeb.UserAuth do
   import Plug.Conn
@@ -41,11 +44,9 @@ defmodule MyAppWeb.UserAuth do
   #   live "/dashboard", DashboardLive
   # end
 end
-```
 
-## Phoenix 1.8+ (Scope)
+# ── Phoenix 1.8+ (Scope) ──
 
-```elixir
 # lib/my_app_web/user_auth.ex
 defmodule MyAppWeb.UserAuth do
   import Plug.Conn
@@ -83,11 +84,9 @@ defmodule MyAppWeb.UserAuth do
     end
   end
 end
-```
 
-## With Role-based Authorization
+# ── With Role-based Authorization ──
 
-```elixir
 defmodule MyAppWeb.UserAuth do
   alias MyApp.Scope
 
@@ -110,4 +109,3 @@ defmodule MyAppWeb.UserAuth do
   #   live "/admin", AdminDashboardLive
   # end
 end
-```

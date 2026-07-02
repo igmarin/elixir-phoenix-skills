@@ -139,3 +139,41 @@ mix test
   </:actions>
 </.simple_form>
 ```
+
+---
+
+## Advanced Patterns
+
+The workflow above covers a single custom field. For more complex scenarios, apply the same principles and extend accordingly:
+
+- **Multiple custom fields** — add each field to the same migration, cast them all in `registration_changeset`, and include each in the fixture map.
+- **Separate profile data** — create a distinct `profiles` table with a `belongs_to :user` association; manage it via its own schema and changeset rather than expanding the `users` table indefinitely.
+- **Confirmation email customization** — modify the generated `UserNotifier` module to adjust subject lines, body copy, or layout; the delivery mechanism (e.g., Swoosh mailer) remains unchanged.
+
+---
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Edit the generated `phx.gen.auth` migration | Create a separate migration for custom fields |
+| Add a brand-new changeset for custom fields | Extend `registration_changeset` to cast and validate them |
+| Leave fixtures missing the new required field | Add the field to `user_fixture` before running tests |
+| Skip `confirmed_at` in fixtures | Set `confirmed_at` so password-auth tests pass |
+| Add the form input but forget the event handler | Update both the form and the `save/2` handler |
+| Rely on `validate_format`/`validate_length` alone for uniqueness | Add `unique_constraint` plus a DB unique index |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| phoenix-liveview-auth | phoenix-auth-customization | ecto-changeset-patterns |
+| mix-tasks-generators | phoenix-auth-customization | phoenix-authorization-patterns |
+
+**Companion skills:**
+- `phoenix-liveview-auth` — authentication hooks the custom fields feed into
+- `ecto-changeset-patterns` — cast/validate patterns for `registration_changeset`
+- `ecto-essentials` — migration and schema fundamentals
+- `testing-essentials` — fixture and context test patterns

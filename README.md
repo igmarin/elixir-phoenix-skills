@@ -103,10 +103,17 @@ Key skills include `assets/` with templates, checklists, and code snippets:
 |-------|--------|
 | `testing-essentials` | `spec_templates.md`, `tdd_checklist.md` |
 | `code-quality` | `refactoring_checklist.md` |
+| `code-review` | `checklist.md` |
 | `security-essentials` | `security_checklist.md` |
 | `phoenix-liveview-essentials` | `liveview_test_template.md`, `component_test_template.md` |
+| `phoenix-channels-essentials` | `channel_test_template.md` |
 | `phoenix-liveview-auth` | `on_mount_template.ex` |
 | `ecto-essentials` | `migration_checklist.md`, `changeset_snippets.ex` |
+| `oban-essentials` | `oban_job_template.ex`, `oban_testing_checklist.md` |
+| `broadway-data-pipelines` | `broadway_pipeline_template.ex` |
+| `telemetry-essentials` | `telemetry_handler_snippets.ex` |
+| `req-http-client` | `req_client_snippets.ex` |
+| `swoosh-emails` | `mailer_template.ex` |
 | `elixir-skill-router` | `skill-map.json` |
 
 ## How Skills Chain Together

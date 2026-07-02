@@ -55,8 +55,7 @@ Orchestrates safe Ecto migrations with idempotent cycles, rollback planning, and
 1. Generate migration: `mix ecto.gen.migration <descriptive_name>`.
 2. Implement `up/0` (or `change/0` for reversible migrations).
 3. Implement `down/0` for explicit rollback.
-4. Apply Ecto migration conventions (see `ecto-essentials` companion skill).
-5. For data transformations in migrations, follow changeset patterns (see `ecto-changeset-patterns` companion skill).
+4. For data transformations in migrations, use raw SQL via `execute/1` or repo calls with care for large datasets.
 
 **Idempotent cycle test:**
 ```bash
@@ -191,6 +190,8 @@ MIX_ENV=test mix ecto.migrate
 - [ ] Rollback tested locally or on staging
 - [ ] Database backup taken before production migration
 
+**If gate fails:** Do not deploy — document the exact rollback command, verify it on staging, and take a database backup before running the production migration.
+
 ---
 
 ## Output Style
@@ -238,7 +239,7 @@ When completing a migration, output MUST include:
 3. If rollback is truly irreversible, document it and plan a forward-only fix migration.
 
 **Lock timeout on large table:**
-1. Apply the expand-contract strategy from Phase 1: add nullable, backfill separately, enforce NOT NULL.
+1. Apply the expand-contract strategy from Phase 1.
 2. Use `concurrently: true` and `@disable_ddl_transaction true` for index creation.
 3. Schedule during low-traffic windows.
 

@@ -15,8 +15,6 @@ metadata:
 
 # Gettext Internationalization
 
-Gettext is the standard internationalization library for Elixir/Phoenix applications.
-
 ## End-to-End Workflow
 
 1. **Add Gettext calls** — wrap strings with `gettext/1`, `dgettext/2`, or `ngettext/3` in templates, LiveView, and controllers
@@ -28,27 +26,27 @@ Gettext is the standard internationalization library for Elixir/Phoenix applicat
 
 ---
 
-## Key Rules
+## RULES — Follow these with no exceptions
 
-- **Only translate user-facing text** — do not translate error messages intended for logs
-- **Use domain-specific contexts** — `dgettext("errors", "Not found")` keeps error strings in a separate `.po` file from default content
+1. **Only translate user-facing text** — never run `gettext` on log messages or internal identifiers
+2. **Use domain-specific contexts** — `dgettext("errors", "Not found")` keeps error strings in their own `.po` file
+3. **Never interpolate into `msgid`** — pass runtime values as bindings (`%{count}`), so the extractor sees a stable string
+4. **Set the locale once per request/mount** — via a plug or `mount/3`, and always validate against a supported-locale allowlist
+5. **Run `mix gettext.extract --merge`** after adding calls — never hand-edit `msgid` entries in `.po` files
+6. **Provide plural forms with `ngettext/3`** — do not build pluralized strings with string concatenation
 
 ---
 
 ## Setup
 
+Add the dependency in `mix.exs`:
+
 ```elixir
-# mix.exs
-defp deps do
-  [
-    {:gettext, "~> 0.26"}
-  ]
-end
+# mix.exs — deps/0
+{:gettext, "~> 0.26"}
 ```
 
----
-
-## Gettext Module
+Then create the backend module:
 
 ```elixir
 # lib/my_app_web/gettext.ex
@@ -109,19 +107,6 @@ end
 
 ## Translation Files
 
-### Directory Structure
-
-```
-priv/gettext/
-├── en/LC_MESSAGES/
-│   ├── default.po      # Default domain
-│   └── errors.po       # Errors domain
-├── es/LC_MESSAGES/
-│   ├── default.po
-│   └── errors.po
-└── default.pot         # Template file
-```
-
 ### PO File Format
 
 ```po
@@ -140,13 +125,7 @@ msgstr[1] "Tienes %{count} mensajes nuevos"
 ## Extracting Translations
 
 ```bash
-# Extract new strings to .pot files
-mix gettext.extract
-
-# Merge .pot files into .po files
-mix gettext.merge priv/gettext
-
-# Extract and merge in one step
+# Extract and merge in one step (recommended)
 mix gettext.extract --merge
 ```
 
@@ -167,16 +146,13 @@ defmodule MyAppWeb.Plugs.SetLocale do
 
   def call(conn, _opts) do
     locale =
-      get_locale_from_params(conn) ||
-      get_locale_from_session(conn) ||
+      validate(conn.params["locale"]) ||
+      validate(get_session(conn, "locale")) ||
       "en"
 
     Gettext.put_locale(MyAppWeb.Gettext, locale)
     conn
   end
-
-  defp get_locale_from_params(conn), do: validate(conn.params["locale"])
-  defp get_locale_from_session(conn), do: validate(get_session(conn, "locale"))
 
   defp validate(locale) when locale in @supported_locales, do: locale
   defp validate(_), do: nil
@@ -209,3 +185,30 @@ defmodule MyAppWeb.PageTest do
   end
 end
 ```
+
+---
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| `gettext("Hello #{name}")` (interpolates into `msgid`) | `gettext("Hello %{name}", name: name)` — stable extractable string |
+| Trust `params["locale"]` directly | Validate against a `@supported_locales` allowlist before `put_locale` |
+| Hand-edit `msgid` lines in `.po` files | Change the source string and re-run `mix gettext.extract --merge` |
+| Build plurals with `if count == 1` string logic | Use `ngettext/3` with `%{count}` in both forms |
+| Translate log/telemetry messages | Only translate user-facing UI text |
+| Forget to set locale in LiveView `mount/3` | Call `Gettext.put_locale/2` in both the plug and the LiveView mount |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| phoenix-liveview-essentials | gettext-i18n | testing-essentials |
+| phoenix-json-api | gettext-i18n | code-quality |
+
+**Companion skills:**
+- `phoenix-liveview-essentials` — where `gettext/1` calls live in LiveView
+- `swoosh-emails` — localizing transactional email copy
+- `testing-essentials` — asserting translated output per locale

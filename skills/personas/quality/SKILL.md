@@ -20,6 +20,8 @@ metadata:
 
 Orchestrates code quality checks, safe refactoring, and documentation updates across three phases.
 
+---
+
 ## Complexity Thresholds
 
 Proceed to Phase 2 if any threshold is exceeded:
@@ -31,6 +33,8 @@ Proceed to Phase 2 if any threshold is exceeded:
 | Module Length | > 400 lines | Extract context or sub-module |
 | Nesting Depth | > 3 levels | Extract function or use `with` |
 | Pipe Chain | > 5 pipes | Extract into named function |
+
+---
 
 ## Agent Phases
 
@@ -46,6 +50,8 @@ mix hex.audit                  # Dependency audit
 ```
 
 **HARD GATE — NEVER open a PR before all four checks above pass**, plus `mix test` (full suite green) and `@doc`/`@spec` annotations on all public APIs (completed in Phase 3). Fix any failure before proceeding.
+
+**If gate fails:** Fix each violation at its source and re-run all four tools plus `mix test` — a fix for one check can surface another; never open the PR while any check is red.
 
 ---
 
@@ -98,3 +104,50 @@ Before opening a PR, confirm every item is green:
 | Doc/spec coverage | All public APIs annotated | ✅ |
 
 **Do not open the PR until every row is ✅.**
+
+---
+
+## Output Style
+
+When completing a quality sweep, output MUST include:
+
+```markdown
+# Quality Report — [Module / PR]
+
+## Conventions
+- mix format --check-formatted: ✓
+- mix credo --strict: ✓
+- mix dialyzer: ✓
+- mix hex.audit: ✓
+
+## Refactoring
+- Thresholds exceeded: <list or "none">
+- Changes applied: <each extraction, characterization test kept green>
+
+## Documentation
+- Public APIs with @doc: <n>/<n>
+- Public APIs with @spec: <n>/<n>
+
+## Pre-PR Checklist
+- mix test: ✓ (<n> tests, 0 failures)
+- All rows green: ✓
+
+Verdict: PASS / FAIL — <one-line reason>
+```
+
+---
+
+## Error Recovery
+
+**Formatter, credo, or dialyzer fails in Phase 1:**
+1. Fix each violation at the source; never suppress a credo check without explicit user approval.
+2. Re-run all four tools — one fix can surface another.
+
+**Tests go red after a refactoring in Phase 2:**
+1. Revert the last extraction immediately.
+2. Confirm the characterization test fully covers the touched behavior.
+3. Propose a smaller, safer change and re-validate before continuing.
+
+**Doctest fails in Phase 3:**
+1. Correct the `iex>` example or the function so output matches.
+2. Re-run `mix test` before opening the PR.

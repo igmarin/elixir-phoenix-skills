@@ -18,7 +18,7 @@ metadata:
 ---
 # Setup Persona
 
-Orchestrates complete project setup from scratch, CI/CD configuration, and environment validation.
+Orchestrates complete project setup, CI/CD configuration, and environment validation across three gated phases.
 
 ## Agent Phases
 
@@ -51,7 +51,7 @@ cp .env.example .env 2>/dev/null || true
 - [ ] Phoenix secret key base configured (`SECRET_KEY_BASE` env var)
 - [ ] All external CI actions pinned to immutable commit SHAs (never mutable tags like @v4)
 
-**If environment check FAILS:** Fix the failing item above before proceeding to Phase 2.
+**If gate fails:** Fix the failing item above before proceeding to Phase 2.
 
 ---
 
@@ -116,7 +116,7 @@ jobs:
 
 **Verify everything works end-to-end:**
 
-Confirm every item in the Phase 1 HARD GATE checklist is still fully passing, then additionally verify:
+Confirm Phase 1 gates still pass, then additionally verify:
 
 ```bash
 # Start Phoenix server

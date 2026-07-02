@@ -20,7 +20,9 @@ metadata:
 
 Use this skill before writing ANY security-sensitive code.
 
-## RULES — Quick Checklist
+See [`assets/security_checklist.md`](assets/security_checklist.md) for a copy-paste pre-merge security checklist covering input validation, SQL injection, XSS, CSRF, auth, secrets, and production hardening.
+
+## RULES — Follow these with no exceptions
 
 Apply every item before merging. See the named sections below for patterns and examples.
 
@@ -304,6 +306,21 @@ pipeline :api do
   # No :protect_from_forgery — APIs use Bearer tokens instead
 end
 ```
+
+---
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| `String.to_atom(params["role"])` on user input | `String.to_existing_atom/1` or an explicit `case` whitelist |
+| `fragment("lower(#{field}) = ?", ^value)` | `fragment("lower(?) = ?", field(u, :status), ^value)` |
+| `Repo.query!("... '#{name}'")` string interpolation | Parameterized `$1`/`$2` placeholders with a bindings list |
+| `raw(@user_bio)` on user content in HEEx | `<%= @user_bio %>` (auto-escape) or `raw(HtmlSanitizeEx.html5(...))` |
+| `provided_token == stored_token` | `Plug.Crypto.secure_compare/2` (constant-time) |
+| Disable `:protect_from_forgery` / use raw `<form>` | Keep CSRF protection; use the `<.form>` component |
+| `redirect(conn, to: user_supplied_url)` | `redirect(conn, to: ~p"/dashboard")` or a whitelist |
+| `Logger.info("login", password: pw)` | Log `user_id`; never log passwords, tokens, or PII |
 
 ---
 

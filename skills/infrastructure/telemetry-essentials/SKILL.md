@@ -74,6 +74,8 @@ end
 
 ### Attaching Handlers
 
+See [`assets/telemetry_handler_snippets.ex`](assets/telemetry_handler_snippets.ex) for a copy-paste template that attaches handlers in `start/2`, detaches them in `stop/1`, and implements `handle_event/4`.
+
 ✅ **Good — in application.ex:**
 ```elixir
 defmodule MyApp.Application do
@@ -168,6 +170,19 @@ end
 ```
 
 > **Deeper topics:** For performance profiling and benchmarking, see the `benchee-profiling` skill. For exporting metrics to external tools (Prometheus, Datadog) and production deployment considerations, see the `deployment-gotchas` skill. For low-level metric aggregation and reporter configuration, consult the [Telemetry.Metrics](https://hexdocs.pm/telemetry_metrics) and [TelemetryMetricsPrometheus](https://hexdocs.pm/telemetry_metrics_prometheus) library docs.
+
+---
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Interpolate values into the log message string | Pass structured metadata: `Logger.info("event", key: value)` |
+| Attach handlers inside a module `init` / GenServer that restarts | Attach once in `Application.start/2`, detach in `stop/1` |
+| Run heavy work inside `handle_event/4` (blocks the caller) | Keep handlers fast; offload slow work to a process/queue |
+| Manually instrument every Ecto query | Consume Ecto's built-in `[:my_app, :repo, :query]` events |
+| Emit events without correlation metadata | Tag events with `user_id` / `request_id` for traceable logs |
+| Leave `:debug` logging on in production | Use `:info`; `:debug` leaks query params and PII |
 
 ---
 

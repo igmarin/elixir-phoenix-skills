@@ -163,10 +163,9 @@ policies do
 end
 ```
 
-**Debugging authorization failures:** If a call raises `Ash.Error.Forbidden`, enable policy breakdown logging:
+**Debugging `Ash.Error.Forbidden`:** enable policy breakdown logging in `config/dev.exs`:
 
 ```elixir
-# config/dev.exs
 config :ash, :policies, log_policy_breakdowns: :error
 ```
 
@@ -187,7 +186,7 @@ form =
 # handle_event "save"
 case Blog.update(Ash.Changeset.for_update(post, :update, params)) do
   {:ok, post} -> {:noreply, put_flash(socket, :info, "Saved.") |> assign(post: post)}
-  {:error, cs} -> {:noreply, assign(socket, form: cs |> AshPhoenix.Form.for_update() |> to_form())}
+  {:error, cs} -> {:noreply, assign(socket, form: AshPhoenix.Form.for_update(cs) |> to_form())}
 end
 ```
 
@@ -234,7 +233,6 @@ See the [AshJsonApi docs](https://hexdocs.pm/ash_json_api) for pagination, inclu
 ## Calculations and Aggregates
 
 ```elixir
-# Add a count aggregate to a resource
 aggregates do
   count :comment_count, :comments
   count :published_comment_count, :comments do
@@ -242,7 +240,6 @@ aggregates do
   end
 end
 
-# Use in queries
 MyApp.Blog.Post
 |> Ash.Query.filter(comment_count > 0)
 |> MyApp.Blog.read!()
@@ -250,7 +247,19 @@ MyApp.Blog.Post
 
 ---
 
-## Ash-Specific Pitfalls
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Enforce validation only with DB constraints | Validate in the action layer (`validate`, custom `Ash.Resource.Validation`) |
+| Interpolate strings into `Ash.Query.filter` | Pin values with `^` to avoid injection |
+| Ignore missing records | Match `%Ash.Error.Query.NotFound{}` explicitly |
+| Catch every error with a single clause | Match specific Ash error types (`InvalidInput`, `Forbidden`, `Changeset`) |
+| Use offset pagination for large result sets | Use keyset pagination (`Ash.Query.page/2`) |
+| Manipulate resource structs directly | Build changes with `Ash.Changeset.for_create/3` / `for_update/3` |
+| Rely on `defaults [:read, :create]` blindly | Define actions explicitly and know what they expose |
+
+The examples below show each pitfall in context.
 
 ### Custom Validations — use the action layer, not DB constraints
 
@@ -274,8 +283,8 @@ defmodule MyApp.Validations.TitleNotBlank do
   def validate(changeset, _opts, _context) do
     case Ash.Changeset.get_attribute(changeset, :title) do
       nil -> {:error, field: :title, message: "can't be blank"}
-      "" -> {:error, field: :title, message: "can't be blank"}
-      _ -> :ok
+      ""  -> {:error, field: :title, message: "can't be blank"}
+      _   -> :ok
     end
   end
 end
@@ -310,10 +319,10 @@ case MyApp.Blog.Post
     {:ok, post}
   {:error, %Ash.Error.InvalidInput{fields: fields}} ->
     {:error, :validation, fields}
+  {:error, %Ash.Error.Changeset{errors: errors}} ->
+    {:error, :validation, errors}
   {:error, %Ash.Error.Forbidden{}} ->
     {:error, :unauthorized}
-  {:error, %Ash.Error.Changeset{errors: errors}} ->
-    {:error, :invalid_changeset, errors}
   {:error, error} ->
     Logger.error("Unexpected error: #{inspect(error)}")
     {:error, :internal_error}
@@ -353,3 +362,16 @@ def get_post!(id) do
   MyApp.Blog.Post |> Ash.get!(id)
 end
 ```
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| elixir-essentials | ash-framework | testing-essentials |
+| ecto-essentials | ash-framework | phoenix-liveview-essentials |
+
+**Companion skills:**
+- `apply-ecto-conventions` — when migrating from Ecto contexts to Ash
+- `phoenix-json-api` — compare with AshJsonApi for JSON:API endpoints

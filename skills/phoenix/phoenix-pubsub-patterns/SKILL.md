@@ -19,6 +19,18 @@ metadata:
 
 Use this skill before writing ANY PubSub or real-time broadcast code.
 
+## RULES — Follow these with no exceptions
+
+1. **Subscribe inside `if connected?(socket)`** — never subscribe on the static render, or the disconnected and connected phases both subscribe and you get duplicate messages
+2. **Broadcast from context modules, not LiveViews** — keep real-time logic in the business layer
+3. **Only broadcast on success** — pattern-match `{:ok, result}` in a private `broadcast/2` and pass `{:error, changeset}` through untouched
+4. **Update assigns immutably with `update/3`** in `handle_info/2` — never mutate `socket.assigns`
+5. **Match `subscribe` and `broadcast` topic strings exactly** — topics are case-sensitive and must be identical
+6. **Add a `handle_info/2` clause for every broadcast event** — an unhandled message crashes the LiveView; add a catch-all when other processes may send messages
+7. **Test the full cycle through the LiveView** — call the context function and assert the rendered view updates; don't test `PubSub.broadcast` in isolation
+
+---
+
 ## Implementation Workflow
 
 1. **Subscribe in `mount`** — guard with `if connected?(socket)` to prevent duplicate subscriptions
@@ -155,8 +167,28 @@ end
 
 ---
 
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Subscribe outside the `connected?` guard | Subscribe only inside `if connected?(socket)` |
+| Broadcast directly from a LiveView | Broadcast from the context after a successful write |
+| Broadcast before checking the result | Broadcast only on `{:ok, result}`; pass errors through |
+| Mismatch `subscribe`/`broadcast` topic strings | Use identical, case-sensitive topic strings |
+| Mutate `socket.assigns` in `handle_info/2` | Update immutably with `update/3` |
+| Leave a broadcast event without a matching clause | Add a `handle_info/2` clause (plus a catch-all) |
+| Assert on `PubSub.broadcast` in isolation | Drive the context function and assert the view updates |
+
+---
+
 ## Integration
 
 | Predecessor | This Skill | Successor |
 |-------------|------------|-----------|
 | phoenix-liveview-essentials | phoenix-pubsub-patterns | testing-essentials |
+| liveview-streams | phoenix-pubsub-patterns | phoenix-channels-essentials |
+
+**Companion skills:**
+- `phoenix-liveview-essentials` — LiveView lifecycle that receives the broadcasts
+- `liveview-streams` — apply broadcasts as targeted stream inserts/deletes
+- `phoenix-channels-essentials` — broadcasting to non-LiveView clients

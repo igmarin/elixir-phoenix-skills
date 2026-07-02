@@ -166,7 +166,7 @@ end
 
 ## Bang Functions
 
-Use `!` suffix for functions that raise on failure. Prefer the non-bang variant in application logic; use bang in tests or when failure is truly unrecoverable.
+Prefer the non-bang variant in application logic; use `!` in tests or when failure is truly unrecoverable.
 
 ## Early Returns
 
@@ -187,20 +187,35 @@ def get_username(%User{name: name}), do: name
 
 If the user is nil or missing a name, it's a bug that should crash and be fixed.
 
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| `if/else` chains to branch on data shape | Multi-clause functions with pattern matching |
+| Nested `case` for 2+ fallible steps | `with` chaining `{:ok, _}` clauses |
+| `String.to_atom/1` on user input | `String.to_existing_atom/1` (avoid atom table exhaustion) |
+| Defensive `nil` guards for impossible states | Trust your types and let it crash |
+| Chaining 3+ `Enum` passes over one list | A single `for` comprehension |
+| Returning bare values from fallible calls | Tagged tuples: `{:ok, result}` / `{:error, reason}` |
+| Mutating data in place | Return new immutable data structures |
+
 ## Integration
 
-Successor skills to apply after this one:
-- [testing-essentials](../../testing/testing-essentials/SKILL.md)
-- [otp-essentials](../otp-essentials/SKILL.md)
-- [typespec-dialyzer](../typespec-dialyzer/SKILL.md)
-- [code-quality](../../quality/code-quality/SKILL.md)
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| None (always first) | elixir-essentials | otp-essentials |
+| None (always first) | elixir-essentials | testing-essentials |
+
+**Companion skills:**
+- `typespec-dialyzer` — add `@spec`/`@type` and Dialyzer checks
+- `code-quality` — Credo, formatting, and refactoring conventions
 
 ---
 
 ## When Not to Use
 
-- **Do not invoke this skill** when working inside a Phoenix application context — use the relevant Phoenix/LiveView skill instead
-- **Do not use this skill** for OTP patterns (GenServer, Supervisor, Agent) — use `otp-essentials` instead
-- **Do not invoke this skill** for database operations — use `ecto-essentials` instead
-- **Do not use this skill** if you are already following the patterns (pattern matching, pipe operator, `with` statements) — this skill is for enforcing fundamentals, not advanced idioms
-- **Do not invoke this skill** for type specification or Dialyzer integration — use `typespec-dialyzer` instead
+- Phoenix/LiveView context — use the relevant Phoenix/LiveView skill instead
+- OTP patterns (GenServer, Supervisor, Agent) — use `otp-essentials`
+- Database operations — use `ecto-essentials`
+- Type specifications or Dialyzer — use `typespec-dialyzer`
+- Already following these patterns — this skill enforces fundamentals, not advanced idioms

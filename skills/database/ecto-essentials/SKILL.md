@@ -30,7 +30,7 @@ Use this skill before modifying ANY schema, query, or migration.
 
 ## Schema Definition
 
-Define schemas with proper types and associations. The example below shows a child schema with `belongs_to`; a parent schema uses `has_many` in the same pattern (see `Folder` in the migration section for reference).
+Define schemas with proper types and associations. The example below shows a child schema with `belongs_to`; a parent schema uses `has_many` in the same pattern.
 
 ```elixir
 defmodule MyApp.Media.Image do
@@ -57,6 +57,8 @@ defmodule MyApp.Media.Image do
   end
 end
 ```
+
+See [`assets/changeset_snippets.ex`](assets/changeset_snippets.ex) for copy-paste changeset templates (conditional validation, `prepare_changes`, custom validators).
 
 ## Query Composition
 
@@ -171,6 +173,8 @@ end
 
 Write clear, reversible migrations. After writing a migration, always validate it with the steps below.
 
+See [`assets/migration_checklist.md`](assets/migration_checklist.md) for a full pre-flight, testing, and expand-contract checklist.
+
 ```elixir
 defmodule MyApp.Repo.Migrations.CreateImages do
   use Ecto.Migration
@@ -226,6 +230,35 @@ All standard CRUD functions (`list_*`, `get_*!`, `update_*`, `delete_*`) follow 
 
 ---
 
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Interpolate user input into a query fragment | Parameterize with the `^` pin operator |
+| Omit indexes on foreign keys | `create index(:images, [:folder_id])` in the migration |
+| Rely on a changeset validation alone for uniqueness | Pair `unique_constraint` with a DB `unique_index` |
+| Access `image.folder` inside a loop (N+1 queries) | `preload(:folder)` in a single query |
+| Call `Repo` directly from a LiveView or controller | Route all DB access through a context module |
+| Combine schema changes and data backfill in one migration | Split them into separate migrations |
+| Assume a migration reverses cleanly | Run `mix ecto.migrate` → `rollback` → `migrate` |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| elixir-essentials | ecto-essentials | ecto-changeset-patterns |
+| None (always first) | ecto-essentials | testing-essentials |
+
+**Companion skills:**
+- `ecto-changeset-patterns` — advanced validations, composition, and `cast_assoc` pitfalls
+- `ecto-nested-associations` — nested creates/updates and multi-table transactions
+- `apply-ecto-conventions` — enforce Ecto conventions on existing code
+- `ecto-migration` — migration planning and orchestration persona
+
+---
+
 ## Related Skills
 
 - **Prerequisite:** [elixir-essentials](../../fundamentals/elixir-essentials/SKILL.md) — core Elixir patterns before working with Ecto
@@ -236,7 +269,7 @@ All standard CRUD functions (`list_*`, `get_*!`, `update_*`, `delete_*`) follow 
 
 ## When Not to Use
 
-- **Do not invoke this skill** for simple read-only schema inspection or introspection (use `mix ecto.schema` directly instead)
-- **Do not use this skill** for raw SQL queries that bypass Ecto entirely — write raw SQL in a dedicated repo method, not inline in contexts
-- **Do not invoke this skill** for multi-table complex transactions — use `ecto-changeset-patterns` for `Ecto.Multi` and nested association patterns
-- **Do not use this skill** for database migration planning — use `ecto-migration` persona instead for migration orchestration
+- For simple read-only schema inspection, use `mix ecto.schema` directly
+- For raw SQL that bypasses Ecto entirely, write it in a dedicated repo method rather than inline in contexts
+- For multi-table complex transactions with nested associations, use `ecto-changeset-patterns`
+- For migration planning and orchestration, use the `ecto-migration` persona instead

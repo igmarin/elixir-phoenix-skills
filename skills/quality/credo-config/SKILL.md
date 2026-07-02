@@ -63,7 +63,7 @@ Edit the generated file to match your project's needs. See [Basic Configuration]
 mix credo
 ```
 
-Success: Credo exits 0 and prints a summary with issue counts per category. If issues are found, review them — fix violations, adjust check configuration, or add inline disable comments for intentional exceptions.
+Fix violations, adjust check configuration, or add inline disable comments for intentional exceptions.
 
 ### 6. Run in Strict Mode
 
@@ -71,7 +71,7 @@ Success: Credo exits 0 and prints a summary with issue counts per category. If i
 mix credo --strict
 ```
 
-Strict mode enables additional checks disabled by default (mostly design-related). CI must use `--strict`.
+CI must use `--strict`.
 
 ### 7. Add to CI
 
@@ -85,16 +85,15 @@ For project-specific patterns, add custom check modules to `lib/credo/checks/`. 
 
 ## Basic Configuration
 
-> Use `mix credo gen.config` for the complete check list rather than writing it by hand.
+> Use `mix credo gen.config` for the complete check list. The example below shows how to override specific checks in the generated file — only include the checks you are changing.
 
 ```elixir
-# .credo.exs
+# .credo.exs (overrides only — start from gen.config output)
 %{
   configs: [
     %{
       name: "default",
       strict: false,
-      color: true,
       files: %{
         included: ["lib/", "src/", "test/", "web/", "apps/"],
         excluded: [~r"/_build/", ~r"/deps/", ~r"/node_modules/"]
@@ -102,26 +101,11 @@ For project-specific patterns, add custom check modules to `lib/credo/checks/`. 
       checks: %{
         enabled: [
           {Credo.Check.Readability.MaxLineLength, [priority: :low, max_length: 120]},
-          {Credo.Check.Design.AliasUsage, [if_nested_deeper_than: 2, if_called_more_often_than: 0]},
-          # ... add or override checks as needed
+          {Credo.Check.Design.AliasUsage, [if_nested_deeper_than: 2, if_called_more_often_than: 0]}
         ],
         disabled: [
           {Credo.Check.Consistency.MultiAliasImportRequireUse, []},
-          {Credo.Check.Design.DuplicatedCode, []},
-        ]
-      }
-    },
-    %{
-      name: "strict",
-      strict: true,
-      files: %{
-        included: ["lib/", "src/", "test/", "web/", "apps/"],
-        excluded: [~r"/_build/", ~r"/deps/", ~r"/node_modules/"]
-      },
-      checks: %{
-        enabled: [
-          {Credo.Check.Design.TagTODO, [priority: :high]},
-          {Credo.Check.Readability.Specs, []},
+          {Credo.Check.Design.DuplicatedCode, []}
         ]
       }
     }
@@ -187,16 +171,6 @@ jobs:
       - run: mix credo --strict
 ```
 
-CI must use `--strict` to catch all issues. Exit code 0 means clean; non-zero means issues found.
-
-### Handling Failures in CI
-
-When Credo fails in CI:
-1. Run locally: `mix credo`
-2. Review each category starting with Readability
-3. Fix the root cause — refactor function, extract logic, shorten names
-4. Only disable a check if it's a false positive with documentation
-
 ### Mix Alias
 
 ```elixir
@@ -260,3 +234,28 @@ checks: %{
   ]
 }
 ```
+
+---
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Hand-craft `.credo.exs` from scratch | Run `mix credo gen.config` first, then override only what you change |
+| Run `mix credo` without `--strict` in CI | Use `mix credo --strict` in CI so default-disabled checks run |
+| Blanket-disable a check with no explanation | Document why each disable or inline exception is necessary |
+| Inline custom checks in application modules | Keep custom check modules in `lib/credo/checks/` |
+| Disable a check for a whole file when one line offends | Prefer `# credo:disable-for-next-line` for a single case |
+| Copy the entire generated check list into version control edits | Commit only the overrides block; regenerate the full list with `gen.config` |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| code-quality | credo-config | code-review |
+| None (standalone) | credo-config | PR submission |
+
+**Companion skills:**
+- `code-quality` — runs `mix credo --strict` as part of the quality gate this skill configures

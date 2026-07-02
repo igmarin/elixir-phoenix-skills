@@ -20,23 +20,6 @@ metadata:
 
 Use this skill when writing or reviewing Ecto database code to ensure consistent, idiomatic patterns.
 
-**Precondition:** Invoke `ecto-essentials` before this skill for the full Ecto reference.
-
----
-
-## Quick Reference
-
-| Pattern | Convention |
-|---------|------------|
-| Repo calls | In context modules only — never in LiveViews or controllers |
-| Bang functions | `Repo.get!/1` only in tests or when failure is truly unrecoverable |
-| Changesets | `cast/4` for permitted fields, `validate_required/3` for constraints |
-| Query safety | Parameterized with `^` — never string interpolation in fragments |
-| Preloading | Always preload to prevent N+1 |
-| Multi | Use `Ecto.Multi` for 2+ related operations |
-| Pagination | `offset`/`limit` with composite index |
-| Migrations | Reversible `change/0`, expand-contract for column changes |
-
 ---
 
 ## RULES — Follow these with no exceptions
@@ -70,7 +53,6 @@ def handle_event("load", _params, socket) do
 end
 ```
 
-The context module owns Repo:
 ```elixir
 defmodule MyApp.Accounts do
   alias MyApp.Repo
@@ -85,7 +67,7 @@ end
 
 ## Non-Bang vs Bang Functions
 
-❌ **Bad — bang in application logic (raises on not-found):**
+❌ **Bad — bang in application logic:**
 ```elixir
 def show(conn, %{"id" => id}) do
   user = Repo.get!(User, id)
@@ -93,7 +75,7 @@ def show(conn, %{"id" => id}) do
 end
 ```
 
-✅ **Good — non-bang with pattern matching (handles not-found gracefully):**
+✅ **Good — non-bang with pattern matching:**
 ```elixir
 def show(conn, %{"id" => id}) do
   case Accounts.get_user(id) do
@@ -103,7 +85,6 @@ def show(conn, %{"id" => id}) do
 end
 ```
 
-The context returns tagged tuples:
 ```elixir
 def get_user(id) do
   case Repo.get(User, id) do
@@ -119,7 +100,7 @@ end
 
 ## Changeset Composition
 
-❌ **Bad — missing database constraints, no validation:**
+❌ **Bad — missing constraints and validation:**
 ```elixir
 def create_user(attrs) do
   %User{}
@@ -162,7 +143,7 @@ end
 ```elixir
 users = Repo.all(User) |> Repo.preload(:posts)
 for user <- users do
-  user.posts  # Already loaded — no extra queries
+  user.posts  # Already loaded
 end
 ```
 
@@ -284,16 +265,15 @@ end
 
 ## Common Pitfalls
 
-| ❌ Wrong | ✅ Correct |
-|----------|-----------|
-| `Repo` in LiveViews or controllers | Delegate to context modules |
-| Repo.get! / Repo.insert! in application code | Use non-bang with pattern matching |
-| String interpolation in `fragment` | Use parameterized `^` queries |
-| N+1 from accessing associations in loops | Preload before iteration |
-| Multiple Repo calls without transaction | Use `Ecto.Multi` |
-| Missing indexes on foreign keys | `create index(:table, [:fk_column])` |
-| Schema change + backfill in one migration | Two separate migrations |
-| Irreversible `up` without `down` | Use `change/0` instead |
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Call `Repo` directly from a LiveView or controller | Wrap every query in a context function (`Posts.list_posts/1`) |
+| Use bang functions (`Repo.get!/2`) for expected-missing rows | Use non-bang (`Repo.get/2`) and pattern-match `nil` in application code |
+| Interpolate user input into `fragment("... #{value}")` | Parameterize with `^value` so Ecto casts and escapes it |
+| Preload inside an `Enum.map/2` loop (N+1) | Preload once on the base query with `Repo.preload/2` or `preload:` |
+| Chain 2+ dependent `Repo` writes without a transaction | Compose them in `Ecto.Multi` and run with `Repo.transaction/1` |
+| Alter a table and backfill data in the same migration | Split schema change and data backfill into separate migrations |
+| Omit `unique_constraint`/`foreign_key_constraint` in the changeset | Mirror every DB constraint in the changeset for friendly errors |
 
 ---
 
@@ -302,9 +282,28 @@ end
 | Predecessor | This Skill | Successor |
 |-------------|------------|-----------|
 | ecto-essentials | apply-ecto-conventions | code-quality |
-| ecto-changeset-patterns | apply-ecto-conventions | testing-essentials |
+| ecto-changeset-patterns | apply-ecto-conventions | code-review |
 
 **Companion skills:**
-- `ecto-essentials` — full Ecto reference (schemas, queries, migrations)
-- `ecto-changeset-patterns` — advanced validations and changeset composition
-- `ecto-nested-associations` — `cast_assoc`, `Ecto.Multi`, cascade operations
+- `ecto-essentials` — schema, migration, and query fundamentals
+- `ecto-changeset-patterns` — validation, `cast_assoc`, conditional changesets
+- `ecto-nested-associations` — `has_many`/`belongs_to` and nested inserts
+- `code-quality` — Credo/Dialyzer/format loop before PR
+
+---
+
+## Audit Workflow
+
+Use this checklist when reviewing an existing codebase for compliance with these conventions:
+
+1. **Repo outside contexts** — grep for direct Repo calls in LiveViews and controllers:
+   ```bash
+   grep -rn "Repo\." lib/**/*_live.ex lib/**/*_controller.ex
+   ```
+2. **Bang functions in application code** — flag every `!` Repo call in `lib/`:
+   ```bash
+   grep -rn "Repo\.\w\+!" lib/
+   ```
+3. **N+1 queries** — enable Ecto query logging in `config/dev.exs` and exercise each context function; watch for repeated queries inside loops.
+4. **Missing indexes** — check each schema for `belongs_to` or `has_many` associations, then verify a corresponding `create index` exists in migrations for each foreign key column.
+5. **Unsafe migrations** — scan for `def up` without a matching `def down`, and for migrations that both alter schema and mutate data in the same file.

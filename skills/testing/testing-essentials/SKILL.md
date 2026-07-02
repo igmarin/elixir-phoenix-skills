@@ -40,6 +40,8 @@ Follow these steps in order, with explicit validation at each checkpoint:
 6. **Implement the feature**
 7. **Verify the test passes** — re-run `mix test path/to/file_test.exs` and confirm green
 
+See [`assets/tdd_checklist.md`](assets/tdd_checklist.md) for the full RED → GREEN → REFACTOR checklist and pre-commit quality gate.
+
 ---
 
 ## Test Module Setup
@@ -65,6 +67,8 @@ defmodule MyAppWeb.UserLiveTest do
   import MyApp.AccountsFixtures
 end
 ```
+
+See [`assets/spec_templates.md`](assets/spec_templates.md) for copy-paste DataCase, ConnCase, isolated LiveView, and ChannelCase test templates.
 
 ---
 
@@ -226,7 +230,17 @@ assert Blog.list_published_posts() == [old_post]
 
 ---
 
-See `agents/testing-guide.md` for comprehensive examples covering async tests, Mox mocking, file upload testing, and Ecto query testing.
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Run LiveView tests with `async: true` | Use `async: false` for LiveView tests (sandbox ownership) |
+| Assert structure with `html =~ "text"` | Use `has_element?/2` and `element/2` for structural checks |
+| Inline the same test data across many tests | Define reusable `*_fixture/1` helpers in `test/support/fixtures/` |
+| Assert against hardcoded datetimes | Compare relative to `DateTime.utc_now/1` with `DateTime.diff/3` |
+| Test only the happy path for protected resources | Always assert the unauthorized/redirect case too |
+| Call `Repo` directly in test setup | Build state through context functions and fixtures |
+| Leave `Application.put_env` changes unrestored | Restore in `on_exit` and mark the test `async: false` |
 
 ---
 
@@ -234,14 +248,14 @@ See `agents/testing-guide.md` for comprehensive examples covering async tests, M
 
 | Predecessor | This Skill | Successor |
 |-------------|------------|-----------|
-| elixir-essentials | testing-essentials | None (standalone) |
+| ecto-essentials | testing-essentials | property-based-testing |
+| phoenix-liveview-essentials | testing-essentials | benchee-profiling |
+
+**Companion skills:**
+- `tdd` — persona that drives the RED → GREEN → REFACTOR loop
+- `property-based-testing` — generator-driven invariants for edge-case coverage
+- `benchee-profiling` — performance benchmarking once behaviour is verified
 
 ---
 
-## When Not to Use
-
-- **Do not invoke this skill** for unit tests of pure functions that have no side effects, DB calls, or external dependencies — write plain ExUnit tests without DataCase/ConnCase
-- **Do not invoke this skill** for property-based testing — use `property-based-testing` instead
-- **Do not invoke this skill** for benchmarking/profiling — use `benchee-profiling` instead
-- **Do not use this skill** when you need to mock external services — use `property-based-testing` skill's Mox patterns instead
-- **Do not invoke this skill** for testing LiveView streams — use `phoenix/liveview-streams` skill instead
+See `agents/testing-guide.md` for comprehensive examples covering async tests, Mox mocking, file upload testing, and Ecto query testing.

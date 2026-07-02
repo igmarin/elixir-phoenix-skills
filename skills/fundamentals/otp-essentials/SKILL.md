@@ -26,7 +26,7 @@ Use this skill before writing ANY GenServer, Supervisor, Task, or Agent module.
 3. **Use `GenServer.call` for request/response, `GenServer.cast` for fire-and-forget** — never cast when you need a result
 4. **Always define a public API wrapping GenServer calls** — callers should never use `GenServer.call(pid, ...)` directly
 5. **Use `Task.async`/`Task.await` with bounded timeouts** — never `Task.async` without a corresponding `Task.await` or `Task.yield`
-6. **Name processes via Registry, not atoms** — atom table is finite and never garbage collected
+6. **Name processes via Registry, not atoms** — the atom table is never garbage collected
 7. **Supervisors own process lifecycle** — never start unsupervised long-running processes
 8. **Handle `:DOWN` messages** from monitored processes — don't let them go unhandled
 9. **Use `Task.Supervisor`** for fire-and-forget supervised work
@@ -38,7 +38,7 @@ Use this skill before writing ANY GenServer, Supervisor, Task, or Agent module.
 
 ### Public API Pattern
 
-Always wrap GenServer calls behind a public module API. Callers should not know they're talking to a GenServer.
+Always wrap GenServer calls behind a public module API.
 
 ❌ **Bad — leaks GenServer implementation:**
 ```elixir
@@ -374,6 +374,20 @@ end
 | `:public` / `:protected` | Any process reads/writes vs. owner writes, all read |
 | `read_concurrency: true` | Optimise for concurrent reads |
 | `write_concurrency: true` | Optimise for concurrent writes (trades some read performance) |
+
+---
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Block in `init/1` with DB queries or long work | Return fast and defer setup to `handle_continue` |
+| `GenServer.cast` when you need a result | `GenServer.call` for request/response |
+| Name processes with dynamically built atoms | Register via `Registry` (the atom table is never GC'd) |
+| Start unsupervised long-running processes | Put processes under a supervisor / `Task.Supervisor` |
+| Funnel read-heavy state through one GenServer | Use ETS for shared reads; serialize only writes |
+| Wrap every callback in defensive `try/rescue` | Let it crash and let the supervisor restart it |
+| Leave `Task.async` without `await`/`yield` | Always `Task.await`/`Task.yield` with a bounded timeout |
 
 ---
 

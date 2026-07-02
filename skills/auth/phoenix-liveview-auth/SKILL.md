@@ -18,8 +18,6 @@ metadata:
 
 # Phoenix LiveView Authentication
 
-Use this skill before writing ANY `on_mount` hook or LiveView auth code.
-
 > **Requires** `phoenix-scopes` for Scope struct setup. See `phoenix-authorization-patterns` for access control after authentication, and `phoenix-liveview-essentials` before writing any LiveView module.
 
 ## RULES — Follow these with no exceptions
@@ -93,22 +91,29 @@ defmodule MyAppWeb.UserAuth do
 end
 ```
 
+See [`assets/on_mount_template.ex`](assets/on_mount_template.ex) for copy-paste `on_mount` templates (Phoenix 1.7 `current_user`, 1.8+ Scope, and role-based hooks).
+
 ---
 
 ## Router Integration
+
+Define one `live_session` block per auth mode, each referencing the matching `on_mount` hook from `UserAuth`.
 
 ```elixir
 defmodule MyAppWeb.Router do
   use MyAppWeb, :router
 
+  # Mounts current scope for public pages — never redirects, user may be nil
   live_session :mount_current_scope,
     on_mount: [{MyAppWeb.UserAuth, :mount_current_scope}] do
     scope "/", MyAppWeb do
       pipe_through :browser
-      live "/", HomeLive.Index
+      live "/", PageLive.Home
+      live "/posts", PostLive.Index
     end
   end
 
+  # Requires authentication — redirects unauthenticated users to the log-in page
   live_session :require_authenticated_user,
     on_mount: [{MyAppWeb.UserAuth, :require_authenticated_user}] do
     scope "/", MyAppWeb do
@@ -118,12 +123,13 @@ defmodule MyAppWeb.Router do
     end
   end
 
+  # Redirects already-authenticated users away from login/register pages
   live_session :redirect_if_authenticated,
     on_mount: [{MyAppWeb.UserAuth, :redirect_if_authenticated}] do
     scope "/", MyAppWeb do
-      pipe_through [:browser, :redirect_if_user]
-      live "/users/register", UserRegistrationLive
-      live "/users/log_in", UserLoginLive
+      pipe_through :browser
+      live "/users/log_in", UserLive.Login
+      live "/users/register", UserLive.Registration
     end
   end
 end
@@ -133,14 +139,18 @@ end
 
 ## Template Access
 
-```elixir
-# In LiveView — access user through scope
-def mount(_params, _session, socket) do
-  user = socket.assigns.current_scope.user
-  {:ok, assign(socket, :posts, Posts.list_posts(user))}
-end
+After an `on_mount` hook populates `current_scope`, read the user in `mount/3` and assign it for the template that follows:
 
-# In templates — use bracket access for optional assigns
+```elixir
+@impl true
+def mount(_params, _session, socket) do
+  {:ok, assign(socket, :current_user, socket.assigns.current_scope.user)}
+end
+```
+
+In templates, use bracket access for optional assigns to avoid `KeyError` when `current_scope` may be absent:
+
+```heex
 <%= if assigns[:current_scope] && @current_scope.user do %>
   <p>Welcome, <%= @current_scope.user.email %></p>
 <% end %>
@@ -176,3 +186,31 @@ describe "redirect_if_authenticated" do
   end
 end
 ```
+
+---
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Check auth with an ad-hoc `if` inside `mount/3` | Use `on_mount` hooks referenced by `live_session` |
+| `{:halt, socket}` with no redirect or flash | Redirect with a `put_flash` message before halting |
+| Read `@current_scope.user` directly in templates | Guard with `assigns[:current_scope] && @current_scope.user` |
+| Duplicate auth logic across every LiveView | Define hooks once in `UserAuth`, wire them in the router |
+| Pull `user_token` out of the session by hand | Build the scope via `mount_current_scope/2` |
+| `import Phoenix.Controller` without excluding conflicts | `import Phoenix.Controller, except: [redirect: 2, put_flash: 3]` |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| phoenix-scopes | phoenix-liveview-auth | phoenix-authorization-patterns |
+| phoenix-liveview-essentials | phoenix-liveview-auth | phoenix-auth-customization |
+
+**Companion skills:**
+- `phoenix-scopes` — Scope struct setup (required predecessor)
+- `phoenix-authorization-patterns` — access control after authentication
+- `phoenix-liveview-essentials` — LiveView callback lifecycle reference
+- `phoenix-auth-customization` — extending `phx.gen.auth` with custom fields

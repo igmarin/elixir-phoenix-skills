@@ -50,10 +50,6 @@ defmodule MyApp.Scope do
 
   def can?(%__MODULE__{permissions: perms}, action) when is_list(perms), do: action in perms
   def can?(%__MODULE__{}, _action), do: false
-
-  defp permissions_for(:admin), do: [:read, :write, :delete, :manage_users]
-  defp permissions_for(:editor), do: [:read, :write]
-  defp permissions_for(_), do: []
 end
 ```
 
@@ -144,49 +140,94 @@ end
 
 Always test both authenticated and unauthenticated paths.
 
-### Unit Tests for Scope Predicates
+### Context / unit test — scope-based filtering
 
 ```elixir
-defmodule MyApp.ScopeTest do
-  use ExUnit.Case, async: true
+defmodule MyApp.BlogTest do
+  use MyApp.DataCase, async: true
 
-  describe "authenticated?/1" do
-    test "returns true for scope with user" do
-      scope = %MyApp.Scope{user: build(:user)}
-      assert Scope.authenticated?(scope) == true
+  alias MyApp.{Blog, Scope}
+
+  describe "list_user_posts/1" do
+    test "returns only posts owned by the scope's user" do
+      owner = insert(:user)
+      other = insert(:user)
+      mine = insert(:post, user: owner)
+      _theirs = insert(:post, user: other)
+
+      scope = Scope.for_user(owner)
+      results = Blog.list_user_posts(scope)
+
+      assert Enum.map(results, & &1.id) == [mine.id]
     end
 
-    test "returns false for anonymous scope" do
-      assert Scope.authenticated?(Scope.anonymous()) == false
+    test "anonymous scope sees no user-scoped posts" do
+      insert(:post)
+      assert Blog.list_user_posts(Scope.anonymous()) == []
     end
   end
 
-  describe "can?/2" do
-    test "returns true when permission is present" do
-      scope = %MyApp.Scope{permissions: [:read, :write]}
-      assert Scope.can?(scope, :read) == true
+  describe "Scope predicates" do
+    test "authenticated?/1 distinguishes a user from anonymous" do
+      assert Scope.authenticated?(Scope.for_user(insert(:user)))
+      refute Scope.authenticated?(Scope.anonymous())
     end
 
-    test "returns false when permission is absent or scope is anonymous" do
-      assert Scope.can?(%MyApp.Scope{permissions: [:read]}, :delete) == false
-      assert Scope.can?(Scope.anonymous(), :read) == false
+    test "can?/2 checks the scope's permission list" do
+      scope = %Scope{permissions: [:delete]}
+      assert Scope.can?(scope, :delete)
+      refute Scope.can?(scope, :publish)
+      refute Scope.can?(Scope.anonymous(), :delete)
     end
   end
 end
 ```
 
-### LiveView Tests
+### LiveView test — scope-based access control
 
 ```elixir
-describe "DashboardLive" do
-  test "shows dashboard content for authenticated user", %{conn: conn} do
+defmodule MyAppWeb.DashboardLiveTest do
+  use MyAppWeb.ConnCase, async: true
+
+  import Phoenix.LiveViewTest
+
+  test "authenticated user reaches the dashboard", %{conn: conn} do
     conn = log_in_user(conn, insert(:user))
-    assert {:ok, _, html} = live(conn, "/dashboard")
-    assert html =~ "Welcome"
+
+    {:ok, _view, html} = live(conn, ~p"/dashboard")
+
+    assert html =~ "Dashboard"
   end
 
-  test "redirects to login when unauthenticated", %{conn: conn} do
-    assert {:error, {:redirect, %{to: "/login"}}} = live(conn, "/dashboard")
+  test "unauthenticated request is redirected to login", %{conn: conn} do
+    assert {:error, {:redirect, %{to: "/login"}}} = live(conn, ~p"/dashboard")
   end
 end
 ```
+
+---
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| `@current_scope` in templates (crashes when unauthenticated) | `assigns[:current_scope]` bracket access, then guard |
+| Assume a scope always has a user | Handle `Scope.anonymous()` (`user: nil`) explicitly |
+| Test only the logged-in path | Test both authenticated and unauthenticated flows |
+| Pass raw `user` to context functions | Pass the `scope` so auth context travels with the call |
+| Scatter permission checks with `if user.role == ...` | Centralize checks in `Scope.can?/2` |
+| Leave `@current_user` references after migrating | Replace with `@current_scope.user` (and `assigns[:current_scope]` for optional reads) |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| phoenix-liveview-essentials | phoenix-scopes | phoenix-authorization-patterns |
+| phoenix-liveview-auth | phoenix-scopes | testing-essentials |
+
+**Companion skills:**
+- `phoenix-liveview-auth` — authentication generators and `on_mount` hooks
+- `phoenix-authorization-patterns` — role/permission enforcement built on scopes
+- `phoenix-liveview-essentials` — LiveView lifecycle the scope assigns plug into

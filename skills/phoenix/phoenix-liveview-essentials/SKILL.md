@@ -42,11 +42,14 @@ Use this skill before writing ANY LiveView module or `.heex` template.
 4. **Add `handle_event/3`** — implement user interactions with proper error handling
 5. **Verify static render** — confirm no `KeyError` before WebSocket connects
 
+**Test templates:** copy-paste starting points live in the skill's assets —
+[`assets/liveview_test_template.md`](assets/liveview_test_template.md) for full-page
+`Phoenix.LiveViewTest` cases and [`assets/component_test_template.md`](assets/component_test_template.md)
+for function-component tests.
+
 ---
 
 ## Critical Concept: Two-Phase Rendering
-
-LiveView renders twice per page load:
 
 - **Phase 1 — Disconnected:** HTTP request; `connected?(socket)` is `false`; side effects won't work.
 - **Phase 2 — Connected:** WebSocket established; `connected?(socket)` is `true`; events and live updates work.
@@ -135,8 +138,6 @@ end
 
 ## Handle Params
 
-Called in BOTH render phases on URL changes. Place URL-dependent assigns here so they are available in both static and connected renders.
-
 ```elixir
 @impl true
 def handle_params(%{"id" => id}, _uri, socket) do
@@ -159,33 +160,44 @@ end
 
 ## Socket Assigns
 
+Always produce a new socket with `assign/3`, `assign/2`, or `update/3` — never mutate `socket.assigns` in place.
+
+❌ **Bad — mutating `socket.assigns` directly (won't compile / won't render):**
 ```elixir
-# Single assign
-socket = assign(socket, :count, 0)
-
-# Multiple assigns
-socket = assign(socket, count: 0, name: "User", active: true)
-
-# Update existing assign
-socket = update(socket, :count, &(&1 + 1))
-```
-
-**In render/1** — direct access is safe when initialized in mount:
-
-```elixir
-@impl true
-def render(assigns) do
-  ~H"""
-  <p>Count: <%= @count %></p>
-  """
+def handle_info({:count_update, n}, socket) do
+  socket.assigns[:count] = n
+  {:noreply, socket}
 end
 ```
 
-**In helper functions** — use `Map.get` for optional assigns:
-
+✅ **Good — single `assign/3` returns a new socket:**
 ```elixir
-defp format_user(socket) do
-  case Map.get(socket.assigns, :current_user) do
+socket = assign(socket, :count, 0)
+```
+
+✅ **Good — set multiple assigns in one call:**
+```elixir
+socket = assign(socket, count: 0, name: "User", active: true)
+```
+
+✅ **Good — use `update/3` for an incremental change to an existing assign:**
+```elixir
+socket = update(socket, :count, &(&1 + 1))
+```
+
+**Safe access in helper functions** — reading a maybe-missing key directly raises `KeyError`; use `Map.get/3` with a default:
+
+❌ **Bad — directly reading a possibly-missing assign:**
+```elixir
+defp format_user(assigns) do
+  assigns.current_user.name
+end
+```
+
+✅ **Good — `Map.get(assigns, :optional_key, default)` for optional assigns:**
+```elixir
+defp format_user(assigns) do
+  case Map.get(assigns, :current_user, nil) do
     nil -> "Guest"
     user -> user.name
   end
@@ -286,15 +298,42 @@ end
 
 ---
 
-See `../../../agents/liveview-checklist.md` for a step-by-step LiveView development checklist. Related skills: `liveview-streams`, `phoenix-pubsub-patterns`, `phoenix-liveview-auth`, `phoenix-scopes`, `testing-essentials`.
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Omit `@impl true` on callbacks | Add `@impl true` before every `mount`/`handle_event`/`handle_info`/`handle_params` |
+| Access an assign in `render/1` that was never initialized | Initialize every rendered assign in `mount/3` (or `handle_params/3`) |
+| Subscribe/start timers on the static render | Guard side effects with `if connected?(socket)` |
+| Mutate `socket.assigns` directly | Use `assign/2,3` or `update/3` to return a new socket |
+| Read a maybe-missing assign with `assigns.key` in a helper | Use `Map.get(assigns, :key, default)` |
+| Query `Repo` directly inside the LiveView | Call context functions (`Posts.list_posts/0`) |
+| Nested `case` for multi-step fallible work | Use `with` and assign errors to the socket |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| elixir-essentials | phoenix-liveview-essentials | apply-phoenix-liveview-conventions |
+| None (always first) | phoenix-liveview-essentials | liveview-streams |
+
+**Companion skills:**
+- `apply-phoenix-liveview-conventions` — enforce these patterns on new/changed LiveView code
+- `liveview-streams` — efficient rendering for large collections (100+ items)
+- `phoenix-pubsub-patterns` — real-time updates via PubSub subscriptions
+- `phoenix-scopes` — scope-based authentication inside LiveViews
+- `testing-essentials` — `Phoenix.LiveViewTest` coverage
+
+---
+
+See the `liveview-checklist` agent file for a step-by-step LiveView development checklist. Related skills: `liveview-streams`, `phoenix-pubsub-patterns`, `phoenix-liveview-auth`, `phoenix-scopes`, `testing-essentials`.
 
 ---
 
 ## When Not to Use
 
-- **Do not invoke this skill** for static HTML pages without LiveView — use standard Phoenix controller/view patterns instead
-- **Do not use this skill** for channel/websocket work — use `phoenix-channels-essentials` instead
-- **Do not invoke this skill** for large collection rendering (100+ items) — use `liveview-streams` instead for DOM efficiency
-- **Do not use this skill** for file upload patterns — use `phoenix-uploads` instead
-- **Do not invoke this skill** if you are working with authentication — use `phoenix-liveview-auth` and `phoenix-scopes` instead
-- **Do not use this skill** for simple form handling without LiveView — standard Phoenix controller patterns are more appropriate
+- **Static HTML pages without LiveView** — use standard Phoenix controller/view patterns instead
+- **Large collection rendering (100+ items)** — use `liveview-streams` instead for DOM efficiency
+- **File upload patterns** — use `phoenix-uploads` instead

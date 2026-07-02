@@ -40,7 +40,9 @@ Triages and decomposes any Elixir/Phoenix request into ordered sub-tasks, then d
 
 ### Core Skills Catalog
 
-The eight most-used skills are listed here. For the full catalog of all available skills, see `directory.json` at the repository root.
+The eight most-used skills are listed here. For the full catalog of all available skills, see `directory.json` at the repository root. If `directory.json` is unavailable, treat this table as the authoritative reference and fall back to `elixir-essentials` for any skill not listed here.
+
+> The machine-readable routing map for all skills lives in [`assets/skill-map.json`](assets/skill-map.json) — consult it when programmatically resolving `category/name` targets.
 
 | Skill | Use when... | Notes |
 | ----- | ----------- | ----- |
@@ -61,15 +63,15 @@ The eight most-used skills are listed here. For the full catalog of all availabl
 Priority: TDD → Planning → Implementation → Quality → Review.
 ```
 
-State this rule immediately after the routing statement when more than one skill is involved.
+State an instance-specific chain immediately after the routing statement when more than one skill is involved (see **Output Style**).
 
 **Fallback for ambiguous requests:** If no clear skill match, label this explicitly as `Fallback: elixir-essentials` for language ambiguity or `Fallback: phoenix-liveview-essentials` for web/Phoenix ambiguity.
 
-### Decomposition Examples
+### Decomposition Example
 
-These examples show the routing statement format and skill-chain ordering. Apply the canonical priority rule from **Skill Priority** above when sequencing sub-tasks.
+This example shows the routing statement format and skill-chain ordering, applying the canonical priority rule from **Skill Priority** above.
 
-**Example 1 — "I need to add user notifications to my Phoenix app. Users should receive an email when a job completes, and I want a live counter on the dashboard."**
+**"I need to add user notifications to my Phoenix app. Users should receive an email when a job completes, and I want a live counter on the dashboard."**
 
 Sub-tasks in priority order (touches background jobs, email delivery, LiveView UI, and the data layer):
 - `skills/testing/testing-essentials` — write failing tests for job completion callback and email dispatch first (TDD gate).
@@ -85,18 +87,6 @@ Next skill: skills/testing/testing-essentials
 This request spans jobs, email, data, and LiveView. Starting with failing tests for the job completion callback.
 
 Priority: TDD → oban-essentials → elixir-essentials → ecto-essentials → phoenix-liveview-essentials → code-quality.
-```
-
-**Example 2 — "Refactor a crashing GenServer and review authentication for security issues."**
-
-Sub-tasks: `security-essentials` (audit auth first) → `testing-essentials` (reproduce crash) → `otp-essentials` (fix GenServer) → `code-quality` (final pass).
-
-```text
-Next skill: skills/security/security-essentials
-
-Authentication touches security boundaries; audit that first before addressing the GenServer crash.
-
-Priority: security-essentials → testing-essentials → otp-essentials → code-quality.
 ```
 
 ### Common Skill Chains
@@ -121,7 +111,7 @@ Next skill: skills/testing/testing-essentials
 This is a feature request. I will start by writing a failing test.
 ```
 
-When multiple skills apply, immediately follow the routing line with one concise priority/chain statement:
+When multiple skills apply, immediately follow the routing line with one concise instance-specific priority/chain statement (derived from the canonical rule in **Skill Priority**):
 
 ```text
 Next skill: skills/security/security-essentials
@@ -137,11 +127,14 @@ Priority: security-essentials > code-quality; Chain: security-essentials then co
 
 ## When Not to Use
 
-- **Do not invoke this skill** for simple, single-concern requests that clearly map to one skill (e.g., "write a test for this function" → use `testing-essentials` directly)
-- **Do not invoke this skill** if the request is a direct question about Elixir syntax or Phoenix patterns — route to the specific skill instead
-- **Do not invoke this skill** if you already know all the skills needed and just need implementation guidance — use the specific skill directly
-- **Do not route through this skill** when the user explicitly names a target skill (e.g., "use the oban-essentials skill")
+- **Do not invoke this skill** for simple, single-concern requests that clearly map to one skill (e.g., "write a test for this function" → use `testing-essentials` directly), or if the request is a direct question about Elixir syntax or Phoenix patterns.
+- **Do not invoke this skill** if you already know all the skills needed and just need implementation guidance, or if the user explicitly names a target skill (e.g., "use the oban-essentials skill").
+- Use `elixir-essentials` alone for Elixir language guidance; use `testing-essentials` alone when the test approach is already decided.
 
-**Use `elixir-essentials` alone** if you only need Elixir language guidance without orchestration.
+---
 
-**Use `testing-essentials` alone** if the test approach is already decided and you just need to write the spec.
+## Error Recovery
+
+- **No skill clearly matches** → route to the fallback and label it explicitly: `Fallback: elixir-essentials` for language ambiguity, `Fallback: phoenix-liveview-essentials` for web/Phoenix ambiguity.
+- **`directory.json` is unavailable** → treat the Core Skills Catalog above as authoritative and route from it.
+- **Multiple concerns with no obvious order** → apply the canonical priority (TDD → Planning → Implementation → Quality → Review) and state the instance-specific chain on the line after the routing statement.

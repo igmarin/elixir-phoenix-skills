@@ -42,23 +42,6 @@ Follow this sequence when adding caching to a feature:
 
 ---
 
-## Error Handling
-
-Cachex operations return `{:ok, result}` or `{:error, reason}`. Always handle errors gracefully:
-
-```elixir
-def get_user(id) do
-  case Cachex.fetch(:my_cache, "user:#{id}", fn _ ->
-    {:commit, Repo.get(User, id)}
-  end) do
-    {:ok, user} -> user
-    {:error, _} -> Repo.get(User, id)  # Fallback to database
-  end
-end
-```
-
----
-
 ## Setup
 
 ```elixir
@@ -80,13 +63,8 @@ defmodule MyApp.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      # Basic cache with 1000 entry limit
       {Cachex, name: :my_cache, limit: 1000},
-      
-      # Cache with stats enabled for monitoring
       {Cachex, name: :stats_cache, limit: 5000, stats: true},
-      
-      # Cache with TTL and LRW eviction policy
       {Cachex,
        name: :ttl_cache,
        limit: 10_000,
@@ -115,13 +93,14 @@ Cachex.put(:my_cache, "session:abc", data, ttl: :timer.minutes(30))
 # Atomic delete — returns {:ok, true | false}; false means key was absent
 Cachex.del(:my_cache, "user:123")
 
-# Wipe entire cache
 Cachex.clear(:my_cache)
 ```
 
 ---
 
 ## Get-or-Set Pattern
+
+Use `Cachex.fetch/3` as the canonical atomic cache-aside pattern. Handle `{:error, reason}` to fall back to the database on cache failures:
 
 ```elixir
 {status, value} =
@@ -133,6 +112,17 @@ Cachex.clear(:my_cache)
 case status do
   :ok -> IO.puts("Cache hit")
   :commit -> IO.puts("Cache miss - computed and cached")
+end
+```
+
+**With error fallback to database:**
+
+```elixir
+case Cachex.fetch(:my_cache, "user:#{id}", fn _ ->
+  {:commit, Repo.get(User, id)}
+end) do
+  {:ok, user} -> user
+  {:error, _} -> Repo.get(User, id)  # Fallback to database
 end
 ```
 
@@ -187,6 +177,8 @@ children = [
 
 ## Cache Invalidation
 
+Call `Cachex.del/2` after any data mutation. For reads, use the `Cachex.fetch/3` pattern from **Get-or-Set Pattern**.
+
 ```elixir
 defmodule MyApp.Accounts do
   def update_user(user, attrs) do
@@ -201,14 +193,6 @@ defmodule MyApp.Accounts do
 
       {:ok, updated_user}
     end
-  end
-
-  def get_user(id) do
-    Cachex.fetch(:my_cache, "user:#{id}", fn _key ->
-      user = Repo.get(User, id)
-      {:commit, user, ttl: :timer.minutes(5)}
-    end)
-    |> elem(1)
   end
 end
 ```
@@ -225,16 +209,17 @@ end
 ```
 
 **Interpret hit rate:**
-- `> 80%` — excellent, cache is very effective
-- `60-80%` — good, normal for read-heavy workloads
-- `< 60%` — investigate TTL values and check for over-invalidation
-- `< 20%` — cache may be ineffective; revisit TTL strategy and key design before deploying to production
+
+| Hit Rate | Assessment | Action |
+|----------|------------|--------|
+| `> 80%` | Excellent | No action needed |
+| `60–80%` | Good | Normal for read-heavy workloads |
+| `< 60%` | Investigate | Check TTL values and over-invalidation |
+| `< 20%` | Ineffective | Revisit TTL strategy and key design before deploying |
 
 ---
 
 ## Telemetry Integration
-
-Emit telemetry events for cache operations to monitor in production:
 
 ```elixir
 defmodule MyApp.Telemetry do
@@ -312,3 +297,30 @@ end
 
 defp primary_node, do: Application.fetch_env!(:my_app, :primary_cache_node)
 ```
+
+---
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Cache entries with no TTL | Set a TTL on every entry unless the data is truly immutable |
+| Check-then-set with `get` + `put` (race condition) | Use `Cachex.fetch/3` for atomic get-or-set |
+| Leave stale data after a write | Call `Cachex.del/2` after any mutation |
+| Crash the request when the cache errors | Fall back to the database on `{:error, _}` |
+| Ship without `stats: true` | Enable stats and check `hit_rate` before/after tuning |
+| Assume a local cache is shared across nodes | Broadcast invalidations (PubSub) or read from an authoritative node |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| ecto-essentials | cachex-caching | telemetry-essentials |
+| elixir-essentials | cachex-caching | deployment-gotchas |
+
+**Companion skills:**
+- `telemetry-essentials` — emit and monitor cache hit/miss metrics
+- `ecto-essentials` — the database layer cache-aside falls back to
+- `phoenix-pubsub-patterns` — broadcast cache invalidation across nodes

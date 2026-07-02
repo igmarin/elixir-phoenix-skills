@@ -42,6 +42,17 @@ Follow these steps in order when constructing a new API endpoint:
 
 ## API Pipeline Setup
 
+❌ **Bad — one mixed pipeline (drags CSRF/session into JSON) and header-based versioning:**
+```elixir
+scope "/api", MyAppWeb do
+  pipe_through :browser  # CSRF + session cookies on a JSON API
+
+  # version selected from a header — invisible and hard to cache
+  resources "/posts", PostController
+end
+```
+
+✅ **Good — a dedicated `:api` pipeline with a versioned URL prefix:**
 ```elixir
 defmodule MyAppWeb.Router do
   use MyAppWeb, :router
@@ -75,6 +86,21 @@ end
 
 ## Controller Pattern
 
+❌ **Bad — no `action_fallback`, error handling duplicated inline, unstructured error body:**
+```elixir
+def create(conn, %{"post" => post_params}) do
+  case Blog.create_post(post_params) do
+    {:ok, post} ->
+      json(conn, %{data: post})
+
+    {:error, _changeset} ->
+      # plain string, no status control, inconsistent shape
+      json(conn, %{error: "could not create"})
+  end
+end
+```
+
+✅ **Good — `action_fallback` handles every `{:error, _}`; actions stay focused on the happy path:**
 ```elixir
 defmodule MyAppWeb.API.V1.PostController do
   use MyAppWeb, :controller
@@ -179,6 +205,19 @@ defmodule MyAppWeb.Plugs.ApiAuth do
   end
 end
 ```
+
+---
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Route JSON through the `:browser` pipeline | Use a dedicated `:api` pipeline (`plug :accepts, ["json"]`) |
+| Version via a custom header | Version via URL prefix (`/api/v1/`) — visible and cacheable |
+| Handle `{:error, _}` inline in every action | Set `action_fallback` and return `{:ok, _}`/`{:error, _}` |
+| Return `changeset` or a bare string on error | Render structured JSON (`%{errors: %{...}}`) with a proper status |
+| Return an unbounded `index` collection | Paginate with `page`/`per_page`, cap `per_page` |
+| Trust or echo a missing/invalid token | Reject in the auth plug with `401` + JSON body and `halt()` |
 
 ---
 

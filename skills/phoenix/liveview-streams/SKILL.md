@@ -17,9 +17,9 @@ metadata:
 
 # LiveView Streams
 
-## RULES — Non-Obvious Constraints
+## RULES — Follow these with no exceptions
 
-1. **Use streams for collections with 100+ items** — regular assigns re-render the entire list on every change
+1. **Use streams for collections with 100+ items** — smaller lists use regular assigns
 2. **Use `stream_insert/3` and `stream_delete/3` for incremental updates** — never replace the entire stream assign
 3. **Use `phx-update="stream"` in templates** — required for stream DOM patching; missing this causes full re-renders
 4. **Combine with pagination or infinite scroll** — do not stream unlimited items
@@ -93,9 +93,7 @@ end
 </div>
 ```
 
-**Verify after adding the template:** Open browser DevTools → Network → WS frames. Confirm incoming frames contain targeted patch operations for individual items, not full list replacements. If you see full re-renders, check:
-- `phx-update="stream"` is present on the container `<div>`
-- `id={dom_id}` is present on each item element
+> If items re-render fully instead of patching, see the **Debugging Checklist** below.
 
 ---
 
@@ -138,7 +136,7 @@ end
 </div>
 ```
 
-**Verify after implementing load_more:** Trigger the event and confirm in DevTools WS frames that only the new batch of items is appended, not the entire list. If DOM IDs collide across pages, items will overwrite each other — ensure your ID scheme is globally unique.
+> Ensure DOM IDs are globally unique across pages — collisions cause items to overwrite each other. See the **Debugging Checklist** below if patches are not targeted.
 
 ---
 
@@ -185,10 +183,10 @@ def handle_event("filter", %{"status" => status}, socket) do
   {:noreply, stream(socket, :posts, Blog.list_posts_by_status(status), reset: true)}
 end
 
-# Sorting
+# Sorting — always re-query from the data source
 def handle_event("sort", %{"column" => col}, socket) do
   direction = if socket.assigns.sort_direction == :asc, do: :desc, else: :asc
-  sorted = Enum.sort_by(socket.assigns.posts, &Map.get(&1, String.to_existing_atom(col)), direction)
+  sorted = Blog.list_posts(sort_by: String.to_existing_atom(col), direction: direction)
 
   {:noreply,
    socket
@@ -244,3 +242,33 @@ If stream patching is not working as expected, check for:
 - DOM ID collisions caused by non-unique item IDs
 - Using `stream_insert` without proper `dom_id` configuration
 - Forgetting to call `stream_configure` before `stream` when using custom IDs
+
+**To verify:** Open browser DevTools → Network → WS frames. Confirm incoming frames contain targeted patch operations for individual items, not full list replacements.
+
+---
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Assign a large list with `assign(:posts, ...)` | Use `stream(socket, :posts, ...)` for 100+ items |
+| Replace the whole stream to add/remove one item | Use `stream_insert/3` and `stream_delete/3` |
+| Omit `phx-update="stream"` on the container | Add `phx-update="stream"` — required for DOM patching |
+| Leave off `id={dom_id}` on stream items | Set `id={dom_id}` on every item element |
+| Reuse non-unique DOM IDs across pages | Generate globally-unique IDs via `stream_configure/3` |
+| Filter/sort by re-inserting into the existing stream | Re-query and `stream(..., reset: true)` |
+| Stream an unbounded collection | Combine with pagination or infinite scroll |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| phoenix-liveview-essentials | liveview-streams | phoenix-pubsub-patterns |
+| apply-phoenix-liveview-conventions | liveview-streams | testing-essentials |
+
+**Companion skills:**
+- `phoenix-liveview-essentials` — LiveView callback lifecycle and assigns
+- `phoenix-pubsub-patterns` — stream updates driven by real-time broadcasts
+- `testing-essentials` — assert stream contents with `Phoenix.LiveViewTest`

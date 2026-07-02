@@ -18,6 +18,10 @@ metadata:
 ---
 # LiveView Persona
 
+Orchestrates full LiveView feature development — contract, failing test, implementation with streams, and a quality gate — for new or refactored LiveViews.
+
+## Agent Phases
+
 ### Phase 1: Context & Contract
 
 1. Define the LiveView's purpose and URL (via `live "/path"` in router).
@@ -29,6 +33,8 @@ metadata:
 - [ ] Module name, file path, and route pattern decided
 - [ ] Assigns shape documented (keys, types, streams if applicable)
 - [ ] All events listed
+
+**If gate fails:** The contract is incomplete — resolve the assigns shape and event list before writing tests.
 
 ---
 
@@ -65,13 +71,15 @@ end
 - [ ] Test file exists and covers mount, key assigns, and at least one event
 - [ ] `mix test` confirms tests fail (module not yet implemented)
 
+**If gate fails:** A test that does not fail proves nothing — fix it to fail for the intended reason before implementing.
+
 ---
 
 ### Phase 3: Implementation
 
 1. Implement `mount/3`: assign all documented keys, use `stream/3` for collections >10 items.
 2. Implement `handle_event/3` for each listed event; update socket with `assign/2` or `stream_insert/3`.
-3. Implement `render/1` (or `.html.heex` template): use bracket access (`@items[id]`) in templates, not dot access.
+3. Implement `render/1` (or `.html.heex` template): use bracket access (`@items[id]`) in templates for optional or stream-derived keys, not dot access.
 4. For large collections always use streams — never assign a full list to socket assigns.
 
 **Minimal LiveView module:**
@@ -123,8 +131,10 @@ end
 **HARD GATE — Implementation Complete:**
 - [ ] `mount/3` sets all documented assigns and streams
 - [ ] All listed events implemented
-- [ ] Template uses bracket access for stream items; `phx-update="stream"` on stream containers
+- [ ] Template uses bracket access for optional/stream-derived keys; `phx-update="stream"` on stream containers
 - [ ] `mix test` passes
+
+**If gate fails:** Implementation is incomplete — do not run the quality gate until every listed event works and tests pass.
 
 ---
 
@@ -132,23 +142,13 @@ end
 
 Run these checks before considering the LiveView done.
 
-**Assigns bloat check** — bad vs. good:
-
-```elixir
-# ❌ Assigns bloat — storing a full list
-assign(socket, :items, Catalog.list_items())   # grows unbounded
-
-# ✅ Correct — use a stream for collections
-stream(socket, :items, Catalog.list_items())   # server memory stays flat
-```
-
-**Bracket access in templates** — bad vs. good:
+**Bracket access in templates** — applies to optional or stream-derived keys only; use dot access for required, always-present assigns:
 
 ```heex
-<%# ❌ Dot access fails when key may be absent %>
+<%# ❌ Dot access fails when key may be absent or is stream-derived %>
 <%= @user.name %>
 
-<%# ✅ Bracket access is safe %>
+<%# ✅ Bracket access is safe for optional or dynamic keys %>
 <%= @user[:name] %>
 ```
 
@@ -166,3 +166,54 @@ stream(socket, :items, Catalog.list_items())   # server memory stays flat
 - [ ] All checklist items above confirmed
 - [ ] No compiler warnings related to the new LiveView module
 - [ ] Peer review or self-review of assigns shape against original contract (Phase 1)
+
+**If gate fails:** The LiveView is not done — fix assigns bloat, stream usage, or unsafe access before shipping.
+
+---
+
+## Output Style
+
+When completing a LiveView feature, output MUST follow this structure:
+
+```markdown
+# LiveView Report — [Module Name]
+
+## Contract
+- Module / file / route: <MyAppWeb.ItemLive> / <path> / <~p"/items">
+- Assigns shape: <key: type, ...> (streams: <list>)
+- Events: <handle_event / handle_info / handle_params list>
+
+## Test
+- File: <test path>
+- RED: <failure confirming module missing>
+- GREEN: <tests pass after implementation>
+
+## Implementation
+- mount/3: <assigns + streams set>
+- Events implemented: <list>
+- Streams used for collections >10 items: ✓
+
+## Quality Gate
+- No raw list assigns for large collections: ✓
+- Bracket access for optional/stream-derived keys: ✓
+- No business logic in render/1: ✓
+- Assigns count within budget (~8): ✓
+- mix test: ✓ (<n> tests, 0 failures)
+
+## Verdict
+APPROVE / REQUEST_CHANGES — <one-line reason>
+```
+
+---
+
+## Error Recovery
+
+**Test won't fail (Phase 2):** The route or module may already exist. Point the test at the new behavior and confirm it fails for the intended reason.
+
+**`KeyError` on an assign in the template:** A required key was not assigned, or an optional key used dot access. Assign it in `mount/3`, or switch to bracket access (`@item[:key]`) for optional/stream-derived keys.
+
+**Stream items don't update:** The container is missing `phx-update="stream"` or the child `id={dom_id}`. Add both and use `stream_insert/3` in the event handler.
+
+**Assigns bloat / slow diffs:** A full collection was assigned instead of streamed. Convert collections >10 items to `stream/3`, and extract sub-state into a function component if assigns exceed ~8 keys.
+
+**`handle_event` returns a bare socket:** Wrap it as `{:noreply, socket}` (or `{:reply, map, socket}`) — LiveView callbacks must return a tagged tuple.
