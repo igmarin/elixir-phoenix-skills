@@ -87,7 +87,7 @@ each skill gets evaluated/deepened against:
 | PR | Scope | Security fix? | FP/quality pass? | Status |
 |----|-------|:--:|:--:|--------|
 | 1 | `.github/review-prompt.md` | guardrail only | guardrail only | [opened (#17)](https://github.com/igmarin/elixir-phoenix-skills/pull/17) |
-| 2 | `skills/integrations/`, `skills/quality/`, `skills/infrastructure/`, `skills/phoenix/` | yes (5 files) | audited, already compliant | opened |
+| 2 | `skills/integrations/`, `skills/quality/`, `skills/infrastructure/`, `skills/phoenix/` | yes (5 files) | audited, already compliant | [opened (#18)](https://github.com/igmarin/elixir-phoenix-skills/pull/18) |
 | 3 | `skills/auth/` | — | yes | pending |
 | 4 | `skills/database/` | — | yes | pending |
 | 5 | `skills/frameworks/` | — | yes | pending |
