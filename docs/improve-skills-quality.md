@@ -86,7 +86,7 @@ each skill gets evaluated/deepened against:
 
 | PR | Scope | Security fix? | FP/quality pass? | Status |
 |----|-------|:--:|:--:|--------|
-| 1 | `.github/review-prompt.md` | guardrail only | guardrail only | pending |
+| 1 | `.github/review-prompt.md` | guardrail only | guardrail only | [opened (#17)](https://github.com/igmarin/elixir-phoenix-skills/pull/17) |
 | 2 | `skills/integrations/`, `skills/quality/`, `skills/infrastructure/`, `skills/phoenix/` | yes (5 files) | yes (all skills in these 4 categories) | pending |
 | 3 | `skills/auth/` | — | yes | pending |
 | 4 | `skills/database/` | — | yes | pending |
@@ -122,7 +122,7 @@ lands — they are filled in as each PR is opened and merged, not before.
 
 | PR | Iterations to APPROVE | Notes |
 |----|------------------------|-------|
-| 1  | — | |
+| 1  | 2 | First run APPROVE with 3 non-blocking suggestions; incorporated them, re-ran with `--no-cache`, still APPROVE, 0 issues. |
 | 2  | — | |
 | 3  | — | |
 | 4  | — | |
