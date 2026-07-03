@@ -33,7 +33,8 @@ Use this skill before modifying ANY deployment or release configuration.
 2. Run migrations (bin/my_app eval "MyApp.Release.migrate()")
 3. Start app (bin/my_app start)
 4. Verify /health returns HTTP 200 and {"database": "connected"}
-5. If health check fails → rollback: bin/my_app eval "MyApp.Release.rollback(MyApp.Repo, <version>)"
+5. If the health check fails, an operator reviews the failure and runs the rollback
+   manually: bin/my_app eval "MyApp.Release.rollback(MyApp.Repo, <version>)"
 ```
 
 
@@ -163,6 +164,11 @@ mix phx.gen.secret
 
 ## 6. Health Endpoints
 
+The health check below is a **read-only liveness probe**: it runs a single `SELECT 1`
+to confirm the database connection is alive and reports the result. It does not write,
+migrate, or delete anything — it only informs an external load balancer or operator
+whether the release is ready to serve traffic.
+
 ✅ **Good — queries the database:**
 ```elixir
 defmodule MyAppWeb.HealthController do
@@ -214,7 +220,7 @@ end
 | Run `mix ecto.migrate` against a release | Run `bin/my_app eval "MyApp.Release.migrate()"` |
 | Forget `PHX_SERVER=true` and get no HTTP server | Set `server: true` / `PHX_SERVER=true` in runtime config |
 | Build the release before `mix assets.deploy` | Run `mix assets.deploy` first, then `mix release` |
-| Ship a `/health` that returns 200 without checking the DB | Query the database in the health endpoint |
+| Ship a `/health` that returns 200 without checking the DB | Run a read-only `SELECT 1` liveness check in the health endpoint |
 | Leave `:debug` logging on in prod (leaks PII/params) | Use `config :logger, level: :info` in production |
 
 ---

@@ -168,6 +168,11 @@ defp count_per_category(groups), do: Enum.map(groups, fn {cat, items} -> {cat, E
 
 #### Extract Context Module Boundary
 
+Move the welcome-email side effect behind an internal `Mail` context module, keeping
+`Accounts` decoupled from the `Mailer` adapter. `Mail.send_welcome/1` still calls the
+same internal Swoosh adapter — no new destination or external transmission is
+introduced, only a context boundary:
+
 ```elixir
 # Before: Accounts calls mailer directly
 defmodule MyApp.Accounts do
@@ -176,7 +181,7 @@ defmodule MyApp.Accounts do
   end
 end
 
-# After: delegate through a Mail context
+# After: delegate welcome-email delivery to the internal Mail context
 defmodule MyApp.Accounts do
   alias MyApp.Mail
 

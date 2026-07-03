@@ -237,7 +237,7 @@ end
 | ❌ Don't | ✅ Do |
 |----------|-------|
 | Assume the Plug pipeline authenticated the socket | Verify the token in `connect/3` — channels bypass Plug |
-| Join any topic without checking membership | Authorize the topic in `join/3` before `{:ok, socket}` |
+| Join any topic without checking membership | Add a membership guard clause in `join/3` that must pass before returning `{:ok, socket}` |
 | Put business logic inside `handle_in` | Delegate to context modules; keep channels thin |
 | Silently drop client messages | Return `{:reply, :ok, socket}` or `{:reply, {:error, reason}, socket}` |
 | Trust raw client payloads | Sanitize/validate (`String.slice`, `String.trim`) before broadcasting |
