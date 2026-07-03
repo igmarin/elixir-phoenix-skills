@@ -88,7 +88,7 @@ each skill gets evaluated/deepened against:
 |----|-------|:--:|:--:|--------|
 | 1 | `.github/review-prompt.md` | guardrail only | guardrail only | [opened (#17)](https://github.com/igmarin/elixir-phoenix-skills/pull/17) |
 | 2 | `skills/integrations/`, `skills/quality/`, `skills/infrastructure/`, `skills/phoenix/` | yes (5 files) | audited, already compliant | [opened (#18)](https://github.com/igmarin/elixir-phoenix-skills/pull/18) |
-| 3 | `skills/database/` | yes (1 real bug: `get_field` on non-changeset) | audited, 1 genuine fix | opened |
+| 3 | `skills/database/` | yes (1 real bug: `get_field` on non-changeset) | audited, 1 genuine fix | [opened (#19)](https://github.com/igmarin/elixir-phoenix-skills/pull/19) |
 | 4 | `skills/personas/` | yes (1 finding: `setup` deploy step) | audited, 1 genuine fix | pending |
 | 5 | `skills/tooling/` | yes (1 finding: `mix-tasks-generators` cleanup task) | audited, 1 genuine fix | pending |
 | — | `skills/auth/` | audited, already compliant | audited, already compliant | no PR needed (see below) |
