@@ -88,20 +88,43 @@ each skill gets evaluated/deepened against:
 |----|-------|:--:|:--:|--------|
 | 1 | `.github/review-prompt.md` | guardrail only | guardrail only | [opened (#17)](https://github.com/igmarin/elixir-phoenix-skills/pull/17) |
 | 2 | `skills/integrations/`, `skills/quality/`, `skills/infrastructure/`, `skills/phoenix/` | yes (5 files) | audited, already compliant | [opened (#18)](https://github.com/igmarin/elixir-phoenix-skills/pull/18) |
-| 3 | `skills/auth/` | — | yes | pending |
-| 4 | `skills/database/` | — | yes | pending |
-| 5 | `skills/frameworks/` | — | yes | pending |
-| 6 | `skills/fundamentals/` | — | yes | pending |
-| 7 | `skills/orchestration/` | — | yes | pending |
-| 8 | `skills/personas/` | — | yes | pending |
-| 9 | `skills/security/` | — | yes | pending |
-| 10 | `skills/testing/` | — | yes | pending |
-| 11 | `skills/tooling/` | — | yes | pending |
+| 3 | `skills/database/` | yes (1 real bug: `get_field` on non-changeset) | audited, 1 genuine fix | [opened (#19)](https://github.com/igmarin/elixir-phoenix-skills/pull/19) |
+| 4 | `skills/personas/` | yes (1 finding: `setup` deploy step) | audited, 1 genuine fix | opened |
+| 5 | `skills/tooling/` | yes (1 finding: `mix-tasks-generators` cleanup task) | audited, 1 genuine fix | opened |
+| — | `skills/auth/` | audited, already compliant | audited, already compliant | no PR needed (see below) |
+| — | `skills/frameworks/` | audited, already compliant | audited, already compliant | no PR needed (see below) |
+| — | `skills/fundamentals/` | audited, already compliant | audited, already compliant | no PR needed (see below) |
+| — | `skills/orchestration/` | audited, already compliant | audited, already compliant | no PR needed (see below) |
+| — | `skills/security/` | audited, already compliant | audited, already compliant | no PR needed (see below) |
+| — | `skills/testing/` | audited, already compliant | audited, already compliant | no PR needed (see below) |
 
 PR #2 is intentionally the largest (4 categories bundled) because the security fixes and
 the quality pass on those categories are the same effort and should be reviewed together.
 Status and the Verdict log below are placeholders (`pending`, `—`) until each PR actually
 lands — they are filled in as each PR is opened and merged, not before.
+
+**Deviation from the original 11-PR plan:** after auditing the remaining 9 categories
+(4 parallel read-only reviews against Section 3 + Section 9 of `review-prompt.md`), only
+3 of the 9 categories (`database`, `personas`, `tooling`) had a genuine, concrete gap.
+The other 6 (`auth`, `frameworks`, `fundamentals`, `orchestration`, `security`,
+`testing`) were already fully compliant — opening a PR with zero content changes would
+add process noise without value, so those are recorded here as audited-clean instead of
+as empty PRs. This keeps with the instruction to focus on genuine quality, not manufacture
+busywork.
+
+### Audited-clean categories (no PR opened)
+
+| Category | Files reviewed | Outcome |
+|----------|-----------------|---------|
+| `skills/auth/` | phoenix-auth-customization, phoenix-authorization-patterns, phoenix-liveview-auth (+ asset) | Fully compliant — explicit immutability, `example.com` domains already used, no autonomous phrasing. |
+| `skills/frameworks/` | ash-framework | Fully compliant — immutable state updates, pattern-matched error handling. |
+| `skills/fundamentals/` | elixir-essentials, otp-essentials, typespec-dialyzer | Fully compliant — "let it crash" demonstrated, no mutation, no try/rescue-as-control-flow. |
+| `skills/orchestration/` | elixir-skill-router (+ asset) | Fully compliant — no code examples to violate the criteria; HARD-GATE/Output Style/Error Recovery all present. |
+| `skills/security/` | security-essentials (+ asset) | Fully compliant — already uses `example.com`, no autonomous phrasing. |
+| `skills/testing/` | benchee-profiling, property-based-testing, testing-essentials (+ assets) | Fully compliant — `Enum` used appropriately for the small collections shown. |
+
+(`skills/personas/` had 8 of 9 files fully compliant — only `setup/SKILL.md` needed a
+fix, folded into PR #4 below.)
 
 ### PR #2 audit outcome
 
@@ -119,6 +142,34 @@ evidence rather than silently skipped.
 **One-line summary:** all 18 non-flagged files in `integrations`, `quality`,
 `infrastructure`, and `phoenix` passed the immutability/Enum-vs-Stream/try-rescue/
 type-tag-dispatch audit with zero changes required.
+
+### PR #3-5 audit outcome (remaining categories)
+
+Four parallel read-only audits covered the remaining 9 categories against Section 3 +
+Section 9 of `review-prompt.md`. Three genuine findings, each folded into its own PR:
+
+- **PR #3 (`database`)** — `skills/database/ecto-essentials/assets/changeset_snippets.ex`:
+  `trimmed_changeset/2` called `Ecto.Changeset.get_field/2` on `post` (the raw struct
+  argument passed into the function), but `get_field/2,3` requires an
+  `%Ecto.Changeset{}`. As written this would raise a `FunctionClauseError` if copy-pasted
+  and run. Fixed by switching to `update_change/3`, which correctly operates on the
+  changeset built by the preceding `cast/3` in the pipe and only touches fields that were
+  actually submitted. This is a real bug fix, not a stylistic change.
+- **PR #4 (`personas`)** — `skills/personas/setup/SKILL.md`: the `<DEPLOY_CLI>`
+  placeholder in the CI workflow example didn't make explicit that a human supplies and
+  approves the deploy command. Reworded the inline comments and added a note that the
+  `deploy-production` job's GitHub `environment: production` gate requires human approval
+  before the agent-authored workflow can execute it.
+- **PR #5 (`tooling`)** — `skills/tooling/mix-tasks-generators/SKILL.md`: the "Cleanup"
+  Mix task pattern described `Repo.delete_all/1` running "conditionally" without saying
+  what the condition was. Reworded to require an explicit operator confirmation
+  (`--force` flag or interactive prompt) before the delete executes, and added a
+  Common-Task-Patterns note that destructive tasks must never delete unconditionally
+  based on the task's own judgment.
+
+The other 6 categories (`auth`, `frameworks`, `fundamentals`, `orchestration`,
+`security`, `testing`) and 8 of 9 files in `personas` needed no changes — see the
+"Audited-clean categories" table above.
 
 ### Per-PR workflow (repeated for every row above)
 
@@ -141,15 +192,9 @@ type-tag-dispatch audit with zero changes required.
 |----|------------------------|-------|
 | 1  | 2 | First run APPROVE with 3 non-blocking suggestions; incorporated them, re-ran with `--no-cache`, still APPROVE, 0 issues. |
 | 2  | 3 | First run APPROVE with 2 minor wording suggestions; second run (after incorporating) APPROVE with 2 more minor suggestions; third run (after incorporating those) APPROVE with 0 suggestions. |
-| 3  | — | |
-| 4  | — | |
-| 5  | — | |
-| 6  | — | |
-| 7  | — | |
-| 8  | — | |
-| 9  | — | |
-| 10 | — | |
-| 11 | — | |
+| 3 (database) | 2 | First run APPROVE with 2 minor suggestions; incorporated the code-comment suggestion, re-ran, APPROVE with 0 suggestions. |
+| 4 (personas) | — | |
+| 5 (tooling) | — | |
 
 ## Housekeeping per PR
 

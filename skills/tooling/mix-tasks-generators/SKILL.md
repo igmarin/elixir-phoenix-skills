@@ -288,9 +288,12 @@ end
 |---|---|
 | **Database Reset** (`my_app.reset`) | Chain `ecto.drop` → `ecto.create` → `ecto.migrate` → seed via `Mix.Task.run/1` |
 | **Health Check** (`my_app.health_check`) | `app.start` → run named checks (DB, cache, HTTP) → report pass/fail → `Mix.raise/1` on any failure |
-| **Cleanup** (`my_app.cleanup`) | Parse `--dry-run` flag → query expired records → report count → conditionally `Repo.delete_all/1` |
+| **Cleanup** (`my_app.cleanup`) | Parse `--dry-run` flag → query expired records → report count → prompt the operator for confirmation → `Repo.delete_all/1` only if confirmed |
 
-All follow the same skeleton: parse opts → `app.start` → transact → report.
+All follow the same skeleton: parse opts → `app.start` → transact → report. A task that
+deletes data must default to `--dry-run` reporting and require an explicit `--force` (or
+interactive confirmation) flag before calling `Repo.delete_all/1` — never delete
+unconditionally based on the task's own judgment.
 
 
 ## Common Pitfalls
@@ -304,6 +307,7 @@ All follow the same skeleton: parse opts → `app.start` → transact → report
 | Omit `@shortdoc` | Add `@shortdoc` so the task appears in `mix help` |
 | Ignore the `OptionParser` `errors` list | Check `errors` and `Mix.raise/1` on invalid args |
 | Hand-roll CRUD boilerplate | Scaffold with `mix phx.gen.live` / `phx.gen.context` / `phx.gen.json` |
+| Delete records without operator confirmation | Require `--force` or an interactive `y/N` prompt before `Repo.delete_all/1` |
 
 ---
 
