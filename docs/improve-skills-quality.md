@@ -87,7 +87,7 @@ each skill gets evaluated/deepened against:
 | PR | Scope | Security fix? | FP/quality pass? | Status |
 |----|-------|:--:|:--:|--------|
 | 1 | `.github/review-prompt.md` | guardrail only | guardrail only | [opened (#17)](https://github.com/igmarin/elixir-phoenix-skills/pull/17) |
-| 2 | `skills/integrations/`, `skills/quality/`, `skills/infrastructure/`, `skills/phoenix/` | yes (5 files) | yes (all skills in these 4 categories) | pending |
+| 2 | `skills/integrations/`, `skills/quality/`, `skills/infrastructure/`, `skills/phoenix/` | yes (5 files) | audited, already compliant | opened |
 | 3 | `skills/auth/` | — | yes | pending |
 | 4 | `skills/database/` | — | yes | pending |
 | 5 | `skills/frameworks/` | — | yes | pending |
@@ -102,6 +102,23 @@ PR #2 is intentionally the largest (4 categories bundled) because the security f
 the quality pass on those categories are the same effort and should be reviewed together.
 Status and the Verdict log below are placeholders (`pending`, `—`) until each PR actually
 lands — they are filled in as each PR is opened and merged, not before.
+
+### PR #2 audit outcome
+
+The 5 flagged files were fixed per the "Remediation approach" above (reserved example
+domains, unambiguous context-boundary/health-check/DevTools/authorization wording).
+The remaining 18 skill files across `integrations`, `quality`, `infrastructure`, and
+`phoenix` were audited against the new Elixir/FP checklist (four parallel read-only
+audits, one per category) and found to **already be fully compliant** — the prior
+"quality-contract compliance" work already enforces explicit immutability (pipe chains,
+rebinding), correct `Enum` usage for the small/bounded collections these skills show,
+no `try/rescue`-as-control-flow, and no type-tag dispatch needing protocols. No filler
+edits were added to files that didn't need them; this is recorded here as the audit
+evidence rather than silently skipped.
+
+**One-line summary:** all 18 non-flagged files in `integrations`, `quality`,
+`infrastructure`, and `phoenix` passed the immutability/Enum-vs-Stream/try-rescue/
+type-tag-dispatch audit with zero changes required.
 
 ### Per-PR workflow (repeated for every row above)
 
@@ -123,7 +140,7 @@ lands — they are filled in as each PR is opened and merged, not before.
 | PR | Iterations to APPROVE | Notes |
 |----|------------------------|-------|
 | 1  | 2 | First run APPROVE with 3 non-blocking suggestions; incorporated them, re-ran with `--no-cache`, still APPROVE, 0 issues. |
-| 2  | — | |
+| 2  | 3 | First run APPROVE with 2 minor wording suggestions; second run (after incorporating) APPROVE with 2 more minor suggestions; third run (after incorporating those) APPROVE with 0 suggestions. |
 | 3  | — | |
 | 4  | — | |
 | 5  | — | |

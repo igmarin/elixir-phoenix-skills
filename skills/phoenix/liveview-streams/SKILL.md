@@ -228,7 +228,10 @@ If stream patching is not working as expected, check for:
 - Using `stream_insert` without proper `dom_id` configuration
 - Forgetting to call `stream_configure` before `stream` when using custom IDs
 
-**Verify with DevTools:** Open browser DevTools → Network → WS frames. Confirm incoming frames contain targeted patch operations for individual items, not full list replacements. If you see full re-renders, the first two checklist items above are the most common cause.
+**Manual verification step:** Open your browser's DevTools panel → Network tab → WS
+frames. Confirm incoming frames contain targeted patch operations for individual items,
+not full list replacements. If you see full re-renders, the first two checklist items
+above are the most common cause.
 
 
 ## Common Pitfalls

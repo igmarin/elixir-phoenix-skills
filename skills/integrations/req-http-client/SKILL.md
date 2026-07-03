@@ -123,7 +123,7 @@ Checkpoint: confirm a `{:ok, body}` tuple is returned; check logs for retry warn
 
 ```elixir
 # Automatic retries for transient failures
-Req.get!("https://api.your-app.test/data",
+Req.get!("https://api.example.com/data",
   retry: :transient,           # Retry on 5xx and network errors
   retry_delay: &(&1 * 1000),   # Exponential backoff: 1s, 2s, 4s, ...
   max_retries: 3,              # Max 3 retries
@@ -131,7 +131,7 @@ Req.get!("https://api.your-app.test/data",
 )
 
 # Custom retry logic (e.g. also retry on 429)
-Req.get!("https://api.your-app.test/data",
+Req.get!("https://api.example.com/data",
   retry: fn response ->
     case response do
       %{status: 429} -> true
@@ -146,14 +146,18 @@ Req.get!("https://api.your-app.test/data",
 
 ## Streaming Responses
 
+Prefer `into:` over loading the full response into memory — this is Req's built-in
+streaming support, and it's the right tool whenever a response body could be large or
+unbounded:
+
 ```elixir
 # Stream large responses to a file
-Req.get!("https://api.your-app.test/large-file",
+Req.get!("https://api.example.com/large-file",
   into: File.stream!("download.txt")
 )
 
 # Stream with a callback
-Req.get!("https://api.your-app.test/stream",
+Req.get!("https://api.example.com/stream",
   into: fn {:data, data}, {req, resp} ->
     IO.puts("Received #{byte_size(data)} bytes")
     {:cont, {req, resp}}
