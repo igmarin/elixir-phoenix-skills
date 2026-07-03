@@ -194,6 +194,32 @@ defmodule MyApp.Accounts do
 end
 ```
 
+> **Side-effect boundary — do not mask I/O.** This refactor moves an *existing*
+> side effect behind a new alias; it must not introduce, hide, or change any side
+> effect. Before merging the extraction:
+>
+> 1. **Document the I/O boundary.** `Mail.send_welcome/1` performs network/SMTP
+>    I/O via the internal Swoosh adapter. Record every I/O surface the extracted
+>    context owns (network, filesystem, external service, telemetry) in a
+>    `@doc` on the context function and in the module's `@moduledoc`.
+> 2. **Prove the surface is unchanged.** The extracted `Mail.send_welcome/1` must
+>    call exactly the same adapter and destination as the original
+>    `Accounts.send_welcome_email/1`. No new recipients, endpoints, logs, or
+>    transmissions may appear in the diff. Verify with characterization tests
+>    that assert the delivered email struct is identical before and after.
+> 3. **Audit the new alias.** `alias MyApp.Mail` is a new dependency edge from
+>    `Accounts` to `Mail`. Confirm `MyApp.Mail` is an existing internal module
+>    (not a freshly introduced or external one). Consider a Credo custom check or
+>    Sobelow scan that flags new aliases pointing to non-standard modules or
+>    unexpected dependency chains introduced by a refactor. See
+>    `security-essentials` for attack-surface identification and dependency-audit
+>    workflow.
+> 4. **Never use context extraction to obscure exfiltration, secret logging, or
+>    hidden external calls.** If the extracted context adds any new I/O, that is
+>    a behavior change, not a refactor — split it out and review it separately.
+>    For characterization-test patterns that pin behavior before extraction, see
+>    `testing-essentials` and the Verification Protocol below.
+
 ### 5. Verification Protocol
 
 This is the single authoritative source for all verification rules.
@@ -214,6 +240,7 @@ This is the single authoritative source for all verification rules.
 | Break the public interface silently | Keep interfaces stable; document the shim and its removal |
 | Test only at the end of the refactor | Run `mix test` after every step; stop and undo on failure |
 | Paste fabricated or "expected" test output | Label only actual run output as `Observed output` |
+| Use context extraction to hide new/changed I/O (exfiltration, secret logs, new endpoints) | Document every I/O boundary the extracted context owns; prove the side-effect surface is unchanged via characterization tests |
 
 ## Integration
 
