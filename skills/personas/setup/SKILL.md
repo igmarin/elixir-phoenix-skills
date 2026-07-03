@@ -83,7 +83,7 @@ jobs:
         env:
           MIX_ENV: staging
           DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
-      - run: <DEPLOY_CLI>   # e.g. flyctl deploy, gigalixir releases deploy
+      - run: <DEPLOY_CLI>   # operator-supplied deploy command, e.g. flyctl deploy, gigalixir releases deploy
 
   deploy-production:
     runs-on: ubuntu-latest
@@ -100,10 +100,10 @@ jobs:
         env:
           MIX_ENV: prod
           DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
-      - run: <DEPLOY_CLI>   # same CLI as staging, targeting production
+      - run: <DEPLOY_CLI>   # operator-supplied deploy command, same CLI as staging, targeting production
 ```
 
-> Fill in `<DEPLOY_CLI>` with your deployment command (e.g., `flyctl deploy`, `gigalixir releases deploy`, or a custom Docker push). Replace secret names to match your repository settings.
+> Fill in `<DEPLOY_CLI>` with your deployment command (e.g., `flyctl deploy`, `gigalixir releases deploy`, or a custom Docker push). Replace secret names to match your repository settings. This is a `deploy-production` job gated by GitHub's `environment: production` — a human approves the run before it executes; the agent must never bypass that gate.
 
 
 ### Phase 3: Environment Validation
