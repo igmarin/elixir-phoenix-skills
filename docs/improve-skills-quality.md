@@ -6,6 +6,96 @@
 > depth criteria; PRs #2-11 apply the security fixes and a functional-programming quality
 > pass to every skill, one category at a time, each gated on a real `rs-guard` `APPROVE`.
 
+## Status — all 5 PRs merged; re-scan done (resume here)
+
+All 5 remediation PRs (#17-#21) are merged into `main`. A SkillSpector re-scan was run
+against `skills/` on `main` after merge. **Result: score dropped 95→85 but severity is
+still CRITICAL** — only 1 of 8 findings cleared. Details and gap analysis below under
+"SkillSpector re-scan result (post-remediation)". A second remediation pass is needed
+if the goal is to drop below CRITICAL.
+
+- [#17](https://github.com/igmarin/elixir-phoenix-skills/pull/17) — review-prompt.md guardrail — **merged**
+- [#18](https://github.com/igmarin/elixir-phoenix-skills/pull/18) — findings bundle (integrations/quality/infrastructure/phoenix) — **merged**
+- [#19](https://github.com/igmarin/elixir-phoenix-skills/pull/19) — database fix — **merged**
+- [#20](https://github.com/igmarin/elixir-phoenix-skills/pull/20) — personas fix — **merged**
+- [#21](https://github.com/igmarin/elixir-phoenix-skills/pull/21) — tooling fix — **merged**
+
+**To resume in a new session:**
+1. Decide with the user whether to start a second remediation pass targeting the 7
+   persisting findings (see "Gap analysis" below for what each heuristic actually keys
+   on — the PR #2 rewording assumptions were wrong for 7 of 8).
+2. **Note on git branches:** this repo's GitHub settings auto-delete branches on merge.
+   Base any new work on fresh `origin/main` — do not stack on old local branches.
+3. If the user requests a *new* pass, treat it as a new cycle: update the findings
+   section with the new report, re-audit, and append new PR rows rather than reusing
+   the PR #1-5 numbering.
+
+## SkillSpector re-scan result (post-remediation)
+
+After all 5 PRs merged, SkillSpector v2.1.4 was re-run against `skills/` on `main`
+(`skillspector scan ./skills --format markdown --output report.new.md`). Note: this run
+hit 429 rate limits on three LLM-backed analyzers (`semantic_quality_policy`,
+`semantic_developer_intent`, `semantic_security_discovery`) and the meta-analyzer, so
+they fell back to non-LLM heuristics. The original `report.md` may have had LLM input;
+treat the confidence numbers as heuristic-only for this run.
+
+| Metric | Before (report.md) | After (report.new.md) |
+|--------|--------------------|-----------------------|
+| Score | 95/100 | 85/100 |
+| Severity | CRITICAL | CRITICAL |
+| Recommendation | DO NOT INSTALL | DO NOT INSTALL |
+| Findings | 8 | 7 |
+
+### Per-finding comparison
+
+| # | File:line (before) | File:line (after) | Category | Conf before | Conf after | Outcome |
+|---|--------------------|-------------------|----------|-------------|------------|---------|
+| 1 | req-http-client:126 | req-http-client:126 | E1 External Transmission | 50% | 50% | persist |
+| 2 | req-http-client:134 | req-http-client:134 | E1 External Transmission | 50% | 50% | persist |
+| 3 | req-http-client:151 | req-http-client:155 | E1 External Transmission | 50% | 50% | persist (line shift) |
+| 4 | req-http-client:156 | req-http-client:160 | E1 External Transmission | 50% | 50% | persist (line shift) |
+| 5 | refactor-code:169 | refactor-code:169 | E4 Context Leakage | 75% | 75% | persist |
+| 6 | deployment-gotchas:217 | deployment-gotchas:223 | EA2 Autonomous Decision Making | 75% | 75% | persist (line shift) |
+| 7 | liveview-streams:231 | — | EA1 Unrestricted Tool Access | 85% | — | **eliminated** |
+| 8 | phoenix-channels-essentials:240 | phoenix-channels-essentials:240 | EA2 Autonomous Decision Making | 75% | 75% | persist |
+
+Only finding #7 (`liveview-streams` EA1) cleared — the reword to "open your browser's
+DevTools" successfully disambiguated human-tooling from agent-tool-access. The 10-point
+score drop (95→85) corresponds exactly to this one eliminated 85%-confidence finding.
+
+### Gap analysis — why the other 7 persist
+
+The PR #2 rewording was based on assumptions about what each heuristic keys on. The
+re-scan shows those assumptions were wrong for 7 of 8. What the heuristics actually
+trigger on:
+
+- **req-http-client (4x E1):** the heuristic flags any `Req.get!("https://<host>")` with
+  a literal URL, regardless of whether the host is `example.com` or a real domain.
+  Replacing `api.your-app.test` with `api.example.com` (RFC 2606 reserved) did not help —
+  the scanner does not special-case reserved domains. To clear these, the examples would
+  need to use a variable (`Req.get!(url, ...)`) or a non-URL placeholder instead of a
+  literal `https://` string.
+- **refactor-code (E4):** the heuristic flags the token "context" near action verbs
+  ("send", "deliver"), not the specific phrasing. The word "context" is an Elixir domain
+  term (context modules) and cannot be removed without losing the teaching point. To
+  clear, the example would need to rename the module (e.g. "Mail boundary" instead of
+  "Mail context") or restructure so the word "context" does not appear near a
+  transmission verb.
+- **deployment-gotchas (EA2):** the heuristic flags "Run a ... `SELECT 1` liveness check"
+  — the verb "Run" + a SQL keyword reads as autonomous DB execution. Rewording to
+  "Configure a read-only `SELECT 1` liveness check" or describing it as a pattern rather
+  than an action may clear it.
+- **phoenix-channels-essentials (EA2):** the heuristic flags "Add a membership guard
+  clause in `join/3` that must pass before returning `{:ok, socket}`" — "must pass before
+  returning" reads as the agent deciding to gate an action. Rewording to a static
+  pattern description (e.g. "A `join/3` clause should fail unless membership is
+  verified") may clear it.
+
+**Decision needed:** whether to do a second remediation pass targeting these 7 with the
+correct understanding of each heuristic, or accept that these are inherent false
+positives (the scanner cannot distinguish Elixir teaching examples from agent-executable
+code) and rely on the hardened `review-prompt.md` to prevent real issues going forward.
+
 ## Why this document exists
 
 `report.md` (repo root, gitignored, regenerated by SkillSpector v2.1.4 — **not checked
