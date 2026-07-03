@@ -80,13 +80,15 @@ defmodule MyApp.Blog.Post do
     end
   end
 
-  # --- Safe String Casting with put_change ---
+  # --- Safe String Trimming with update_change ---
+  # update_change/3 operates on the changeset built by cast/3, not the raw struct —
+  # get_field/2 would raise if called directly on `post` instead of a changeset.
 
   def trimmed_changeset(post, attrs) do
     post
     |> cast(attrs, [:title, :body])
-    |> put_change(:title, String.trim(get_field(post, :title) || ""))
-    |> put_change(:body, String.trim(get_field(post, :body) || ""))
+    |> update_change(:title, &String.trim/1)
+    |> update_change(:body, &String.trim/1)
     |> validate_required([:title, :body])
   end
 
