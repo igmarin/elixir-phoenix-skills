@@ -74,11 +74,18 @@ Every skill directory must contain a `SKILL.md` file with valid YAML frontmatter
 - RULES sections must be machine-checkable (e.g. "Always add `@impl true`") — not vague ("write good code")
 - Code snippets must avoid leaking production patterns: no hardcoded IPs, ports, or internal hostnames; no fixed API keys or tokens
 
+- Immutability must be explicit — no example should read as mutating a struct, map, or list in place; every transformation returns a new value that is rebound
+- Collection examples must use the right tool for the job: `Stream` (laziness) for large/infinite/composed transformations, `Enum` for small, eagerly-evaluated collections — flag `Enum` chains that should be `Stream` and vice versa
+- Polymorphism examples should prefer `defprotocol`/`@callback`-based behaviours over conditional dispatch on a type tag (e.g. `case type do :a -> ... :b -> ... end`) when the domain has more than 2-3 variants
+- No example may use `try/rescue` as control flow for an expected, matchable failure state — pattern matching or tagged tuples must be used instead
+
 **Suggestions:**
 
 - Examples that touch database operations should show `Repo` calls via a context module, not direct Repo usage in controllers/LiveViews
 - OTP examples (GenServer, Supervisor, Task) should demonstrate the "let it crash" philosophy and proper supervision tree patterns
 - Telemetry examples should attach handlers in `start/2` and detach in `stop/1`
+- Recursive or accumulator-based solutions should be shown (over manual index loops) for tree/graph/parser-style problems
+- `@spec`/`@type` guidance in examples should stay consistent with `typespec-dialyzer` and not contradict default Credo checks
 
 ---
 
@@ -165,6 +172,53 @@ Every skill directory must contain a `SKILL.md` file with valid YAML frontmatter
 - New personas should be documented in `README.md` Personas table
 - Skills with non-trivial setup or prerequisites should link to the relevant `agents/` guide file
 - `CLAUDE.md.template` should reflect new or changed skill names if they appear in the template's skill usage guide or workflow sections
+
+---
+
+## 9. Agentic Skill Security (SkillSpector Alignment)
+
+This repository is scanned by SkillSpector, an automated agentic-skill security scanner
+that flags four risk categories: **External Transmission** (E1), **Context Leakage**
+(E4), **Autonomous Decision Making** (EA2), and **Unrestricted Tool Access** (EA1).
+Because every skill in this repo is static Markdown teaching material (no executable
+scripts, no tool-calling code), a well-written skill should never trigger a *real*
+finding in these categories — but ambiguous wording can still trip the scanner's
+heuristics. Treat a SkillSpector finding as a signal to remove ambiguity at the source,
+not as noise to ignore.
+
+**Blocking:**
+
+- Example external hosts/URLs in code samples must use an RFC 2606-reserved
+  documentation domain (`example.com`, `example.org`, `example.net`, or a subdomain of
+  one of these, e.g. `api.example.com`) — never an ad-hoc host like `your-app.test`,
+  `*.internal`, or a real-looking production domain. This is what SkillSpector's
+  "External Transmission" (E1) check flags on, and reserved domains make clear the
+  request is illustrative, not a real network call
+- Prose describing a destructive, irreversible, or high-impact operation (deleting data,
+  running migrations against production, deploying, force-pushing) must frame it as a
+  step a human runs and reviews — never phrase it as something an agent "automatically",
+  "silently", or "autonomously" does. This addresses "Autonomous Decision Making" (EA2)
+- No skill may claim or imply blanket/unrestricted tool access (e.g. "the agent can run
+  any command needed"). Tool references must be scoped to the skill's stated purpose.
+  This addresses "Unrestricted Tool Access" (EA1)
+- Refactoring/context-boundary examples that use verbs like "send", "transmit", "post",
+  or "export" must make the destination and payload unambiguous in the surrounding prose
+  (e.g. "delegates welcome-email delivery to the internal `Mail` context", not just "send
+  the email") so the example cannot be misread as exfiltrating session or conversation
+  data. This addresses "Context Leakage" (E4)
+- Instructions that reference "tools" a human uses (browser DevTools, `mix` tasks run by
+  a developer, IDE features) must say so explicitly (e.g. "open your browser's DevTools")
+  rather than using an unqualified "tool"/"DevTools" reference that could be conflated
+  with agent tool access
+
+**Suggestions:**
+
+- If a SkillSpector finding is reviewed and determined to be a false positive, record the
+  file, line, category, and rationale in `docs/improve-skills-quality.md` (or the
+  repository's active findings tracker) rather than silently dismissing it
+- Prefer precise, technical verbs over generic action verbs in Common Pitfalls/example
+  prose (e.g. "delegate to", "authorize", "validate") over ambiguous ones ("send",
+  "handle", "process") when describing internal, non-networked operations
 
 ---
 
