@@ -1,5 +1,4 @@
 .DS_Store
-tessl_generations.log
 
 
 # rs-guard CI artifacts (downloaded by scripts/rs-guard-install.sh)
