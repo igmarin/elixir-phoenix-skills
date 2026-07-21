@@ -1,0 +1,87 @@
+# Skill Taxonomy
+
+Domain-first organization for `elixir-phoenix-skills`. Place skills by **what they teach**, not by “quality vs feature.”
+
+## Why domain-first
+
+| Benefit | Effect for agents and humans |
+|---------|------------------------------|
+| **Context precision** | Loading `database/` brings Ecto rules without unrelated workflow prose |
+| **Clearer routing** | Router maps intent → one domain folder; fewer competing retrievals |
+| **Scalable maintenance** | New LiveView guidance lives under `phoenix/` only |
+
+## Tree
+
+```text
+skills/
+├── elixir-core/       # Pure FP, OTP, typespecs, Dialyzer
+├── phoenix/           # LiveView, controllers, channels, Phoenix conventions
+├── database/          # Ecto, migrations, changesets, Multi, Ecto conventions
+├── auth/              # Scopes, phx.gen.auth, policies
+├── security/          # Cross-cutting hardening (OWASP, secrets)
+├── infrastructure/    # Oban, Broadway, Cachex, deployment-gotchas
+├── integrations/      # Req, Swoosh, Gettext
+├── frameworks/        # Ash and niche frameworks
+├── testing/           # ExUnit, property-based tests
+├── performance/       # Benchee + Telemetry
+├── quality/           # Credo, code-quality, refactor, atomic review rules
+├── tooling/           # Mix tasks and generators
+├── playbooks/         # Multi-step HITL orchestrations
+└── orchestration/     # elixir-skill-router only (meta-routing)
+```
+
+## Folder responsibilities
+
+| Folder | Owns | Does not own |
+|--------|------|--------------|
+| `elixir-core/` | Language, OTP, types | Framework APIs |
+| `phoenix/` | HTTP/LiveView/channels conventions | Auth scopes (→ `auth/`) |
+| `database/` | Ecto schemas, queries, Multi | Job workers (→ `infrastructure/`) |
+| `auth/` | AuthN/AuthZ, Scopes | Generic OWASP (→ `security/`) |
+| `security/` | Risk-focused hardening | Credo style (→ `quality/`) |
+| `infrastructure/` | Runtime engines & deploy | Profiling metrics (→ `performance/`) |
+| `integrations/` | Boundary adapters (HTTP, mail, i18n) | Domain business rules |
+| `frameworks/` | Ash (or similar) as a stack | Phoenix/Ecto defaults |
+| `testing/` | Pass/fail test patterns | Benchmarks (→ `performance/`) |
+| `performance/` | Measure & observe runtime | Job pipeline design |
+| `quality/` | Static analysis, refactor, **atomic** review rules | Full review **workflow** (→ `playbooks/`) |
+| `tooling/` | Mix CLI / generators | App business logic |
+| `playbooks/` | Sequenced phases, hard gates, HITL | Deep domain teaching (link atomics) |
+| `orchestration/` | Which skill/playbook to load | Implementing features |
+
+## Skill kinds
+
+| Kind | `type` frontmatter | Role |
+|------|--------------------|------|
+| Atomic | `atomic` | Teach one domain well (rules + examples + assets) |
+| Playbook | `playbook` | Multi-step process with gates and human checkpoints |
+| Orchestrator | `orchestrator` | Route only; never implement |
+
+## Migration matrix (completed in Phase 1 / #26)
+
+| Existing path | New path |
+|---------------|----------|
+| `fundamentals/*` | `elixir-core/*` |
+| `personas/*` | `playbooks/*` |
+| `quality/apply-phoenix-liveview-conventions` | `phoenix/apply-phoenix-liveview-conventions` |
+| `quality/apply-phoenix-controller-conventions` | `phoenix/apply-phoenix-controller-conventions` |
+| `quality/apply-ecto-conventions` | `database/apply-ecto-conventions` |
+| `phoenix/phoenix-scopes` | `auth/phoenix-scopes` |
+| `infrastructure/telemetry-essentials` | `performance/telemetry-essentials` |
+| `testing/benchee-profiling` | `performance/benchee-profiling` |
+
+## Placement checklist
+
+When adding a skill:
+
+1. What domain does a developer search for first? → that folder.
+2. Is it a multi-step process with approvals? → `playbooks/`.
+3. Is it only “which skill next?” → `orchestration/`.
+4. Is it style/static analysis without owning a domain? → `quality/`.
+5. Prefer **one** home; link from others via Integration tables.
+
+## Catalog sources of truth
+
+- Paths: `directory.json`
+- Install groupings: `skills.sh.json`
+- Router map: `skills/orchestration/elixir-skill-router/assets/skill-map.json`
