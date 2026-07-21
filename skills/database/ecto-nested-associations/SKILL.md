@@ -20,9 +20,9 @@ metadata:
 
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Build changesets/Multi in pure-ish functions; run `Repo` once at the context edge.
+
 ## RULES — Follow these with no exceptions
 
-**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
 **1.** **Use `cast_assoc/3` for has_many/has_one** — never manually insert children in a separate step
 **2.** **Use `Ecto.Multi` for operations spanning multiple unrelated tables** — do NOT use `Ecto.Multi` for nested associations
 **3.** **Set `on_delete` explicitly in migrations** — `:delete_all` for owned children, `:nothing` for independent entities

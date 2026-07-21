@@ -19,9 +19,9 @@ Use this skill when extending `phx.gen.auth` with custom fields.
 
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Authorization decisions should be pure checks on scope/user data; persist only at the edge.
+
 ## RULES — Follow these with no exceptions
 
-**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
 **1.** **Never modify generated auth migrations** — create separate migrations for custom fields
 **2.** **Update `registration_changeset` to cast and validate new fields** — don't create a separate changeset
 **3.** **Update test fixtures when adding required fields** — missing fixture fields cause cryptic test failures

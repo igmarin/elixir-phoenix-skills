@@ -20,6 +20,7 @@ metadata:
 
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Enforce FCIS in reviews/refactors: fat LiveViews and mixed Repo+math are defects.
+
 ## RULES — Follow these with no exceptions
 
 **1.** **Always run `mix credo gen.config` first** — never hand-craft .credo.exs from scratch

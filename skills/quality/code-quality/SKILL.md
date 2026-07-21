@@ -20,6 +20,7 @@ metadata:
 
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Enforce FCIS in reviews/refactors: fat LiveViews and mixed Repo+math are defects.
+
 ## RULES — Follow these with no exceptions
 
 **1.** **Duplicated functions must be extracted** — when 2+ modules share >70% similar implementations, create a shared module

@@ -19,9 +19,9 @@ Use this skill before writing ANY LiveView module or `.heex` template.
 
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Keep LiveView/controller callbacks thin; delegate business rules to contexts/pure modules.
+
 ## RULES — Follow these with no exceptions
 
-**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
 **1.** **Always add `@impl true`** before every callback (mount, handle_event, handle_info, render)
 **2.** **Initialize assigns before they're accessed in render/1** — use mount/3 for static defaults, handle_params/3 for URL-dependent assigns
 **3.** **Check `connected?(socket)`** before PubSub subscriptions, timers, or side effects
@@ -38,13 +38,14 @@ Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineer
 
 LiveView callbacks are the **imperative shell**. Delegate business rules to contexts/pure modules; only assign results and handle UI errors here.
 
-❌ **Bad:** heavy logic in `handle_event/3`
+❌ **Bad:** heavy logic in `handle_event/3` (also uses legacy `current_user` — prefer `current_scope`)
 
 ```elixir
 @impl true
 def handle_event("save", %{"post" => params}, socket) do
   title = String.trim(params["title"] || "")
   status = if params["publish"] == "true", do: "published", else: "draft"
+  # legacy assign shape — do not copy; use current_scope in real apps
   {:ok, post} = Repo.insert(%Post{title: title, status: status, user_id: socket.assigns.current_user.id})
   {:noreply, assign(socket, :post, post)}
 end

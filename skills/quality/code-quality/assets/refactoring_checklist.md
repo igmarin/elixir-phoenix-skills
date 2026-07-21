@@ -1,3 +1,5 @@
+> **FCIS:** Prefer extracting pure modules from fat LiveViews/controllers/workers; characterization tests first.
+
 # Complexity Thresholds
 
 | Metric | Threshold | Action |

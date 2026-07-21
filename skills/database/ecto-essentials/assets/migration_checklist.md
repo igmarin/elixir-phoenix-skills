@@ -1,3 +1,5 @@
+> **FCIS:** Migrations are schema/edge ops. Keep data backfills separate from schema changes; business rules stay in pure modules/contexts.
+
 # Ecto Migration Checklist
 
 ## Before Generating Migration

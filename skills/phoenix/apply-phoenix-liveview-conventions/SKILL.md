@@ -24,11 +24,10 @@ Use this skill when writing new LiveView modules or modifying existing LiveView 
 **Precondition:** Invoke `phoenix-liveview-essentials` before this skill for the full callback lifecycle reference.
 
 
-
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Keep LiveView/controller callbacks thin; delegate business rules to contexts/pure modules.
+
 ## RULES — Follow these with no exceptions
 
-**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
 **1.** **Always add `@impl true`** before every callback (`mount/3`, `handle_event/3`, `handle_info/2`, `handle_params/3`, `render/1`)
 **2.** **Initialize every assign to a safe default in `mount/3`** — the disconnected render must never raise `KeyError`
 **3.** **Guard side effects with `if connected?(socket)`** — PubSub subscriptions, timers, and async work run only when the WebSocket is connected
@@ -50,7 +49,7 @@ LiveView callbacks are the **imperative shell**. Delegate business rules to cont
 def handle_event("save", %{"post" => params}, socket) do
   title = String.trim(params["title"] || "")
   status = if params["publish"] == "true", do: "published", else: "draft"
-  {:ok, post} = Repo.insert(%Post{title: title, status: status, user_id: socket.assigns.current_user.id})
+  {:ok, post} = Repo.insert(%Post{title: title, status: status, user_id: socket.assigns.current_user.id  # legacy — prefer current_scope})
   {:noreply, assign(socket, :post, post)}
 end
 ```

@@ -1,3 +1,5 @@
+> **FCIS:** Components render assigns; keep them free of Repo/business branching. Test presentation, not domain rules.
+
 # LiveComponent Test Templates
 
 ## Stateless Component Test

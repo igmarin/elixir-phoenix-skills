@@ -1,3 +1,5 @@
+> **FCIS:** Channel tests exercise the socket edge. Business outcomes should come from context/pure modules under test elsewhere.
+
 # Phoenix Channel Test Template
 
 Copy-paste starting point for `Phoenix.ChannelTest`. Covers the three core moves:

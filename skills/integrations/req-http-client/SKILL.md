@@ -21,9 +21,9 @@ metadata:
 
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. HTTP/email/i18n adapters are edges; keep request building and response mapping pure where possible.
+
 ## RULES — Follow these with no exceptions
 
-**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
 **1.** **Always build a configured base client with `Req.new/1`** — set `base_url`, `receive_timeout`, and default headers once, then reuse it for every call instead of re-passing options
 **2.** **Use the non-bang `Req.get/1` / `Req.post/1` in application code** — pattern match `{:ok, %{status: _, body: _}}` / `{:error, _}`; reserve the `!` variants for scripts and tests
 **3.** **Match status codes explicitly** — handle `404`, `429`, and `status >= 500` distinctly; never collapse every non-200 into one branch

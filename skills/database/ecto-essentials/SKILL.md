@@ -19,9 +19,9 @@ Use this skill before modifying ANY schema, query, or migration.
 
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Build changesets/Multi in pure-ish functions; run `Repo` once at the context edge.
+
 ## RULES — Follow these with no exceptions
 
-**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
 **1.** **Add database constraints** (unique_index, foreign_key, check_constraint) AND changeset validations — both layers are required
 **2.** **Add indexes** on foreign keys and frequently queried fields — never omit indexes on foreign keys
 **3.** **Parameterize all user input in queries** — never interpolate values into SQL fragments, always use `^`
@@ -53,7 +53,7 @@ defmodule MyApp.Orders.Pricing do
 end
 
 def apply_discount(order_id, pct) do
-  with {:ok, order} <- fetch_order(order_id) do
+  with {:ok, order} <- fetch_order(order_id) do  # context helper: Repo.get → tagged tuple
     total = order |> Pricing.total() |> Pricing.with_discount(pct)
 
     order

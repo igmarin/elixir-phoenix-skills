@@ -20,9 +20,9 @@ metadata:
 
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Keep LiveView/controller callbacks thin; delegate business rules to contexts/pure modules.
+
 ## RULES — Follow these with no exceptions
 
-**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
 **1.** **Use streams for collections with 100+ items; combine with pagination or infinite scroll** — smaller lists use regular assigns; never stream unlimited items
 **2.** **Use `stream_insert/3` and `stream_delete/3` for incremental updates** — never replace the entire stream assign
 **3.** **Use `phx-update="stream"` in templates** — required for stream DOM patching; missing this causes full re-renders

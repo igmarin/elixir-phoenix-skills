@@ -17,9 +17,9 @@ metadata:
 
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Prefer testing pure core without Repo; use DataCase only for true persistence boundaries.
+
 ## RULES — Follow these with no exceptions
 
-**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
 **1.** **Follow the project's existing test setup patterns** — don't inline DataCase/ConnCase boilerplate that the project already abstracts away
 **2.** **Use `async: true` only when safe** — avoid for DB contexts with shared rows, LiveView, `Application.put_env`, and external services
 **3.** **Define test data in fixtures** (`test/support/`) — never build it inline across multiple tests

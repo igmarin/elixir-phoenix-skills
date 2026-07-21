@@ -1,3 +1,5 @@
+> **FCIS security:** Parse/allowlist at the boundary; never trust raw maps deep in pure core; no `String.to_atom/1` on user input.
+
 # Elixir Security Checklist
 
 ## Input Validation

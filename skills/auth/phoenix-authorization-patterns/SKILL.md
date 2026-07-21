@@ -18,9 +18,9 @@ metadata:
 
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Authorization decisions should be pure checks on scope/user data; persist only at the edge.
+
 ## RULES — Follow these with no exceptions
 
-**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
 **1.** **Always authorize on the server in event handlers** — never rely on UI-only checks
 **2.** **Verify resource ownership by comparing `current_scope.user.id` against the resource's `user_id`** — never trust client-sent user IDs
 **3.** **Use policy modules for complex authorization** — don't inline permission checks in LiveViews or controllers

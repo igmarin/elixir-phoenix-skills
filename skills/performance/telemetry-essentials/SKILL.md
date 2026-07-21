@@ -19,6 +19,7 @@ Use this skill before writing ANY telemetry, logging, or metrics code.
 
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Measure pure functions and edge paths separately; keep benchmarks free of accidental I/O.
+
 ## RULES — Follow these with no exceptions
 
 **1.** **Use structured logging (`Logger.info("action", key: value)`)** — never string interpolation in log messages

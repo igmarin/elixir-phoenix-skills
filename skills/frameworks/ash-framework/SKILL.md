@@ -21,6 +21,7 @@ metadata:
 
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Prefer Ash actions as explicit boundaries; avoid ad-hoc side effects inside pure computations.
+
 ## RULES — Follow these with no exceptions
 
 **1.** **Use `use Ash.Resource` for domain resources** — never manually implement protocols

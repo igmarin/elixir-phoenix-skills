@@ -1,3 +1,5 @@
+> **FCIS:** Red-green against pure modules when possible; integration tests cover the imperative shell separately.
+
 # TDD Checklist
 
 Before writing any implementation code, verify:

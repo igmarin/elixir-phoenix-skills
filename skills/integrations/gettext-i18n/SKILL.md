@@ -29,7 +29,6 @@ Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineer
 
 ## RULES — Follow these with no exceptions
 
-**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
 **1.** **Wrap only user-facing strings** — translate UI text, never log-only or internal error messages
 **2.** **Use domain contexts with `dgettext/2`** — `dgettext("errors", "Not found")` keeps error strings in a separate `.po` domain from default content
 **3.** **Use `ngettext/3` for anything countable** — never build plurals by hand; plural rules vary by locale

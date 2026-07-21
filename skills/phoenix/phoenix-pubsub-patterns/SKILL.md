@@ -19,9 +19,9 @@ Use this skill before writing ANY PubSub or real-time broadcast code.
 
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Keep LiveView/controller callbacks thin; delegate business rules to contexts/pure modules.
+
 ## RULES — Follow these with no exceptions
 
-**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
 **1.** **Subscribe inside `if connected?(socket)`** — never subscribe on the static render, or the disconnected and connected phases both subscribe and you get duplicate messages
 **2.** **Broadcast from context modules, not LiveViews** — keep real-time logic in the business layer
 **3.** **Only broadcast on success** — pattern-match `{:ok, result}` in a private `broadcast/2` and pass `{:error, changeset}` through untouched

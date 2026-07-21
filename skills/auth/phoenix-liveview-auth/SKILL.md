@@ -22,9 +22,9 @@ Use this skill before writing ANY `on_mount` hook or LiveView auth code.
 
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Authorization decisions should be pure checks on scope/user data; persist only at the edge.
+
 ## RULES — Follow these with no exceptions
 
-**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
 **1.** **Use `on_mount` callbacks** — never check auth in `mount/3` directly
 **2.** **`:halt` must redirect with a flash message** — never silently drop the connection
 **3.** **Define `on_mount` hooks once, reference via `live_session` in router** — never duplicate auth logic across LiveView modules

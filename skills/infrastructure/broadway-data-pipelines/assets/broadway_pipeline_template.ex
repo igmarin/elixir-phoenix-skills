@@ -1,3 +1,4 @@
+# FCIS: handle_message/handle_batch are edges — parse/validate, call pure transforms, then emit/ack.
 # Broadway pipeline template — copy into lib/my_app/message_pipeline.ex and adapt.
 # Add {:broadway, "~> 1.0"} (plus a producer library) to mix.exs, then add this
 # module to your application's supervision tree.

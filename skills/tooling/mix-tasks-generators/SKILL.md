@@ -22,6 +22,7 @@ metadata:
 
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Generators should emit FCIS-shaped code (thin edges, pure helpers).
+
 ## RULES — Follow these with no exceptions
 
 **1.** **Always call `Mix.Task.run("app.start")` first** — tasks that access the database or Repo need the app started

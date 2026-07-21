@@ -19,9 +19,9 @@ Use this skill before modifying ANY deployment or release configuration.
 
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Workers and pipelines are edges: fetch IDs, call pure core, return tagged tuples.
+
 ## RULES — Follow these with no exceptions
 
-**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
 **1.** **Use `runtime.exs` for all secrets and URLs; never hardcode secrets — use `System.get_env!/1`** — see §1 & §5
 **2.** **Run migrations via release commands (`bin/migrate`)** — see §2
 **3.** **Set `PHX_HOST` and `PHX_SERVER=true`** — see §3

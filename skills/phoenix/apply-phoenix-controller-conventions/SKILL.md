@@ -24,7 +24,6 @@ Use this skill when writing new Phoenix controller modules or modifying existing
 **Precondition:** Invoke `phoenix-liveview-essentials` before this skill if the feature uses LiveView; for traditional request/response, use this skill directly.
 
 
-
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Keep LiveView/controller callbacks thin; delegate business rules to contexts/pure modules.
 ## Quick Reference
 
@@ -41,7 +40,6 @@ Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineer
 
 ## RULES — Follow these with no exceptions
 
-**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
 **1.** **Keep controllers thin** — never put business logic in controllers; delegate to context modules
 **2.** **Use `plug` guards for authentication and resource loading** — chain with `when action not in [...]` opt-out pattern
 **3.** **Always validate and authorize** every action that touches access-controlled resources

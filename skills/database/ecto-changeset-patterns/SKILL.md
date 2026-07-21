@@ -17,9 +17,9 @@ metadata:
 
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Build changesets/Multi in pure-ish functions; run `Repo` once at the context edge.
+
 ## RULES — Follow these with no exceptions
 
-**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
 **1.** **Define separate named changesets per operation** — `registration_changeset`, `email_changeset`, `password_changeset`, etc.
 **2.** **Never require foreign key fields in `cast_assoc` child changesets** — `cast_assoc` sets them automatically
 **3.** **Compose changesets with pipes** — each validation step is a separate, reusable function

@@ -46,6 +46,8 @@ After green tests + linters pass + docs updated:
 
 ## RULES — Follow these with no exceptions
 
+Also flag **FCIS violations**: fat LiveViews/controllers, or `Repo` mixed into pure calculations (see `docs/fcis-engineering-rules.md`).
+
 **1.** **Ground every finding in a real `file:line`** from the actual branch diff — never present a simulated review as real
 **2.** **Use only three severity labels** — `Critical`, `Suggestion`, `Nice to have`; invent no others
 **3.** **Flag every Always Critical occurrence** — `Repo` in LiveViews, `String.to_atom/1` on user input, unparameterized queries, missing `@impl true`, missing `connected?` guard, bang functions in application logic, and `raise` for expected errors

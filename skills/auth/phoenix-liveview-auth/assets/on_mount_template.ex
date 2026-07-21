@@ -1,3 +1,4 @@
+# FCIS: on_mount is an auth edge — load scope/session, then assign; no business rules here.
 # LiveView on_mount Authentication Templates
 #
 # Copy-paste on_mount hook templates for LiveView authentication.

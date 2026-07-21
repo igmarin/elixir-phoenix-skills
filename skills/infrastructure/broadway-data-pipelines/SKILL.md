@@ -20,9 +20,9 @@ metadata:
 
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Workers and pipelines are edges: fetch IDs, call pure core, return tagged tuples.
+
 ## RULES — Follow these with no exceptions
 
-**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
 **1.** **Use `Broadway.Message.failed/2` for errors** — never raise in `handle_message/3`
 **2.** **Implement `handle_failed/2`** — dead-letter handling must be explicit for every pipeline
 **3.** **Configure supervision options in start_link** — set `:max_restarts`, `:max_seconds` for production resilience

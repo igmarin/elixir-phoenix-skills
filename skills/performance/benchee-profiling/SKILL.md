@@ -21,6 +21,7 @@ metadata:
 
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Measure pure functions and edge paths separately; keep benchmarks free of accidental I/O.
+
 ## RULES — Follow these with no exceptions
 
 **1.** **Profile first** — run `:fprof` or `:eprof` and verify the output explicitly names the expected slow call site; re-run with a larger workload if ambiguous

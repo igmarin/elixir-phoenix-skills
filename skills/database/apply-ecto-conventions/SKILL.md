@@ -24,11 +24,10 @@ Use this skill when writing or reviewing Ecto database code to ensure consistent
 **Precondition:** Invoke `ecto-essentials` before this skill for the full Ecto reference.
 
 
-
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Build changesets/Multi in pure-ish functions; run `Repo` once at the context edge.
+
 ## RULES — Follow these with no exceptions
 
-**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
 **1.** **Never call Repo from LiveViews or controllers** — all database operations belong in context modules
 **2.** **Prefer non-bang functions** in application logic (`Repo.get/1`, `Repo.insert/1`) — use bang only in tests
 **3.** **Parameterize all user input in queries** — use `^` for interpolation, never string concatenation in `fragment`
@@ -64,7 +63,7 @@ defmodule MyApp.Orders.Pricing do
 end
 
 def apply_discount(order_id, pct) do
-  with {:ok, order} <- fetch_order(order_id) do
+  with {:ok, order} <- fetch_order(order_id) do  # context helper: Repo.get → tagged tuple
     total = order |> Pricing.total() |> Pricing.with_discount(pct)
 
     order

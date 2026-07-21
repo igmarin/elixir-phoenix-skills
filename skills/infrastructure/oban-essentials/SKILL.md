@@ -31,7 +31,6 @@ When setting up a new Oban worker, follow these steps in order:
 
 ## RULES — Follow these with no exceptions
 
-**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
 **1.** **Use `Oban.Worker` with explicit `queue` and `max_attempts`** — never rely on defaults — see [Worker Definition](#worker-definition)
 **2.** **Make workers idempotent** — the same job may execute more than once, so guard side effects — see [Idempotency](#idempotency)
 **3.** **Never put large data in job args** — store IDs and fetch fresh data in the worker — see [Job Args Best Practices](#job-args-best-practices)

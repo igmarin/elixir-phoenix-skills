@@ -20,6 +20,7 @@ Use this skill before writing ANY security-sensitive code.
 
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Parse/allowlist at the boundary; never trust raw maps deep in core.
+
 ## RULES — Follow these with no exceptions
 
 **1.** **Never call `String.to_atom/1` on user input** — use `String.to_existing_atom/1` or a whitelist `case` ([Atom Table Exhaustion](#atom-table-exhaustion))

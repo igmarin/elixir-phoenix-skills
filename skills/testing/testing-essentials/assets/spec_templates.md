@@ -1,3 +1,5 @@
+> **FCIS:** Prefer pure-core unit tests without Repo; use DataCase only for true persistence boundaries.
+
 # ExUnit Test Templates
 
 ## Context Module Test (DataCase)

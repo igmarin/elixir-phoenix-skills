@@ -19,9 +19,9 @@ metadata:
 
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Workers and pipelines are edges: fetch IDs, call pure core, return tagged tuples.
+
 ## RULES — Follow these with no exceptions
 
-**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
 **1.** **Set a TTL on every cached entry** — never cache indefinitely unless the data is truly immutable
 **2.** **Enable `stats: true`** — required to measure cache effectiveness via `hit_rate`
 **3.** **Use cache warmers for startup** — pre-populate expensive data when the application starts
