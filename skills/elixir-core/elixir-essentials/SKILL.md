@@ -127,7 +127,7 @@ end
 
 ```elixir
 def create_post(params) do
-  with {:ok, attrs} <- validate(params),
+  with {:ok, attrs} <- validate(params)  # pure/context helper — not shown,
        {:ok, post} <- Repo.insert(Post.changeset(%Post{}, attrs)) do
     {:ok, post}
   end

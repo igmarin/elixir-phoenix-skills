@@ -173,7 +173,7 @@ defp count_per_category(groups), do: Enum.map(groups, fn {cat, items} -> {cat, E
 
 #### Extract Context Module Boundary
 
-Move the welcome-email side effect behind an internal `Mail` context module (Phoenix bounded context — not LLM prompt context), keeping
+Move the welcome-email side effect behind an internal `Mail` context module (an internal Phoenix context module, not an LLM/agent context), keeping
 `Accounts` decoupled from the `Mailer` adapter. `Mail.send_welcome/1` still calls the
 same internal Swoosh adapter — no new destination or external transmission is
 introduced, only a context boundary:
