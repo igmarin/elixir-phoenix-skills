@@ -4,245 +4,170 @@ type: atomic
 tags: [atomic]
 license: MIT
 description: >
-  MANDATORY for ALL OTP work. Invoke before writing GenServer, Supervisor, Task, or Agent modules.
-  Covers GenServer public API patterns, fast init with handle_continue, call vs cast, handle_info,
-  supervision strategies, DynamicSupervisor, Tasks, Agent, Registry, ETS, and process linking.
-  Trigger words: GenServer, Supervisor, OTP, Task, Agent, Registry, ETS, process, supervision.
-
+  MANDATORY for ALL OTP work. Invoke before writing GenServer, Supervisor, Task, or Agent
+  modules. Processes are for concurrency, state, and isolation — not code organization.
+  Keep callbacks thin; pure modules do the work (FCIS). Covers GenServer API, handle_continue,
+  call vs cast, supervision, Task, Agent, Registry, ETS. Trigger words: GenServer, Supervisor,
+  OTP, Task, Agent, Registry, ETS, process, supervision, thin callbacks.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # OTP Essentials
 
-Use this skill before writing ANY GenServer, Supervisor, Task, or Agent module.
+Use before any GenServer, Supervisor, Task, Agent, Registry, or ETS work.
+
+Processes **isolate and schedule work**. Modules organize code. Put business logic in pure modules; call them from thin callbacks.
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md).
+
+## Quick Reference
+
+| Concern | Do this |
+|---------|---------|
+| Process purpose | Concurrency / state / isolation — not module layout |
+| Callbacks | Thin; pure modules compute |
+| Startup I/O | `handle_continue`, not blocking `init/1` |
+| Naming | Registry, not dynamic atoms |
+| Batch tasks | Handle `async_stream` `{:exit, _}` |
+| ETS | `:protected`; writes via owner |
+
 
 ## RULES — Follow these with no exceptions
 
-1. **Always use `@impl true`** before GenServer/Agent callbacks (init, handle_call, handle_cast, handle_info, terminate)
-2. **Keep `init/1` fast** — no blocking calls, no DB queries; use `handle_continue` for expensive setup
-3. **Always define a public API wrapping GenServer calls** — callers should never use `GenServer.call(pid, ...)` directly
-4. **Use `Task.async`/`Task.await` with bounded timeouts** — never `Task.async` without a corresponding `Task.await` or `Task.yield`
-5. **Name processes via Registry, not atoms** — the atom table is finite and never garbage collected
-6. **Supervisors own process lifecycle** — never start unsupervised long-running processes
-7. **Handle `:DOWN` messages** from monitored processes — don't let them go unhandled
-8. **Use `Task.Supervisor`** for fire-and-forget supervised work
-9. **Prefer ETS over a bottleneck GenServer** for shared read-heavy state — one GenServer serializes all access
+1. **Processes are not modules** — never invent a GenServer just to “group functions”
+2. **Thin callbacks** — `handle_call` / `handle_cast` / `handle_info` / `perform` only coordinate; pure code computes
+3. **Fast `init/1`** — defer heavy work with `{:ok, state, {:continue, term}}`
+4. **Public API module** — callers use `MyApp.Foo.do_thing/1`, never raw `GenServer.call/2`
+5. **`@impl true`** on every callback
+6. **Supervise everything long-lived** — no orphan processes
+7. **Registry over dynamic atoms** for process names
+8. **ETS**: owner process + `:protected` (or deliberate design); reads can bypass GenServer; writes serialized
+9. **Handle `async_stream` exits** — match `{:ok, _}` and `{:exit, reason}`
+10. **Let it crash** under a supervisor — avoid blanket `try/rescue` in callbacks
 
+## Thin GenServer (FCIS)
 
-## GenServer
+❌ **Bad:** business logic inside the callback
 
-### Public API Pattern
-
-Always wrap GenServer calls behind a public module API.
-
-❌ **Bad — leaks GenServer implementation:**
 ```elixir
-GenServer.call(MyApp.Cache, {:get, key})
+@impl true
+def handle_call({:quote, items}, _from, state) do
+  total =
+    Enum.reduce(items, 0, fn item, acc ->
+      if item.active, do: acc + item.price, else: acc
+    end)
+
+  {:reply, total, state}
+end
 ```
 
-✅ **Good — public API hides the GenServer:**
+✅ **Good:** pure module + thin callback
+
 ```elixir
-defmodule MyApp.Cache do
+defmodule MyApp.Pricing do
+  def quote(items), do: Enum.reduce(items, 0, &(&1.price + &2))
+end
+
+defmodule MyApp.QuoteServer do
   use GenServer
 
-  # --- Public API ---
-
-  def start_link(opts) do
-    name = Keyword.get(opts, :name, __MODULE__)
-    GenServer.start_link(__MODULE__, opts, name: name)
-  end
-
-  def get(key, server \\ __MODULE__) do
-    GenServer.call(server, {:get, key})
-  end
-
-  def put(key, value, server \\ __MODULE__) do
-    GenServer.cast(server, {:put, key, value})
-  end
-
-  # --- Callbacks ---
+  def start_link(opts), do: GenServer.start_link(__MODULE__, opts, name: __MODULE__)
+  def quote(items), do: GenServer.call(__MODULE__, {:quote, items})
 
   @impl true
-  def init(_opts) do
-    {:ok, %{}}
-  end
+  def init(_opts), do: {:ok, %{}}
 
   @impl true
-  def handle_call({:get, key}, _from, state) do
-    {:reply, Map.get(state, key), state}
-  end
-
-  @impl true
-  def handle_cast({:put, key, value}, state) do
-    {:noreply, Map.put(state, key, value)}
+  def handle_call({:quote, items}, _from, state) do
+    {:reply, MyApp.Pricing.quote(items), state}
   end
 end
 ```
 
-### Fast Init with handle_continue
+## GenServer skeleton
 
-Never block in `init/1`. Use `handle_continue` for expensive setup.
+```elixir
+defmodule MyApp.Counter do
+  use GenServer
 
-❌ **Bad — blocks the supervisor:**
+  # --- Client API ---
+  def start_link(opts \\ []), do: GenServer.start_link(__MODULE__, 0, Keyword.put_new(opts, :name, __MODULE__))
+  def value, do: GenServer.call(__MODULE__, :value)
+  def increment, do: GenServer.cast(__MODULE__, :increment)
+
+  # --- Server ---
+  @impl true
+  def init(count), do: {:ok, count}
+
+  @impl true
+  def handle_call(:value, _from, count), do: {:reply, count, count}
+
+  @impl true
+  def handle_cast(:increment, count), do: {:noreply, count + 1}
+end
+```
+
+| Call style | When |
+|------------|------|
+| `call` | Need a reply or ordering with backpressure |
+| `cast` | Fire-and-forget; client must not depend on completion |
+| `handle_info` | Messages from monitors, timers, other processes |
+
+## `handle_continue` for heavy startup
+
+❌ **Bad:** block `init/1` with I/O
+
 ```elixir
 @impl true
 def init(opts) do
-  data = MyApp.Repo.all(MyApp.Item)  # Blocks!
-  {:ok, %{items: data}}
+  {:ok, %{data: Loader.load!(opts)}}  # delays process start / supervision
 end
 ```
 
-✅ **Good — returns immediately:**
+✅ **Good:** continue after the process is up
+
 ```elixir
 @impl true
 def init(opts) do
-  {:ok, %{items: []}, {:continue, :load_data}}
+  {:ok, %{opts: opts}, {:continue, :load}}
 end
 
 @impl true
-def handle_continue(:load_data, state) do
-  data = MyApp.Repo.all(MyApp.Item)
-  {:noreply, %{state | items: data}}
+def handle_continue(:load, state) do
+  data = Loader.load!(state.opts)
+  {:noreply, Map.put(state, :data, data)}
 end
 ```
 
-### call vs cast
+## Supervision
 
 ```elixir
-# call — synchronous, caller waits for reply (use for reads, queries)
-def get_count(server \\ __MODULE__) do
-  GenServer.call(server, :get_count)
-end
+children = [
+  {Registry, keys: :unique, name: MyApp.Registry},
+  MyApp.Repo,
+  {MyApp.QuoteServer, []},
+  {Task.Supervisor, name: MyApp.TaskSupervisor}
+]
 
-@impl true
-def handle_call(:get_count, _from, state) do
-  {:reply, state.count, state}
-end
-
-# cast — asynchronous (use for writes, side effects)
-def increment(server \\ __MODULE__) do
-  GenServer.cast(server, :increment)
-end
-
-@impl true
-def handle_cast(:increment, state) do
-  {:noreply, %{state | count: state.count + 1}}
-end
+opts = [strategy: :one_for_one, name: MyApp.Supervisor]
+Supervisor.start_link(children, opts)
 ```
 
-### handle_info
-
-```elixir
-@impl true
-def init(_opts) do
-  Process.send_after(self(), :tick, 1_000)
-  {:ok, %{count: 0}}
-end
-
-@impl true
-def handle_info(:tick, state) do
-  Process.send_after(self(), :tick, 1_000)
-  {:noreply, %{state | count: state.count + 1}}
-end
-```
-
-
-## Supervisors
-
-### Supervision Strategies
-
-| Strategy | Behaviour |
-|---|---|
-| `:one_for_one` | Restart only the failed child (most common) |
-| `:one_for_all` | Restart ALL children when one fails |
-| `:rest_for_one` | Restart failed child and all children started after it |
-
-```elixir
-Supervisor.start_link(children, strategy: :one_for_one)
-```
-
-### Application Supervision Tree
-
-```elixir
-defmodule MyApp.Application do
-  use Application
-
-  @impl true
-  def start(_type, _args) do
-    children = [
-      MyApp.Repo,
-      {Phoenix.PubSub, name: MyApp.PubSub},
-      MyApp.Cache,
-      MyAppWeb.Endpoint
-    ]
-
-    opts = [strategy: :one_for_one, name: MyApp.Supervisor]
-    Supervisor.start_link(children, opts)
-  end
-end
-```
-
-### DynamicSupervisor for Runtime Children
-
-```elixir
-defmodule MyApp.RoomSupervisor do
-  use DynamicSupervisor
-
-  def start_link(init_arg) do
-    DynamicSupervisor.start_link(__MODULE__, init_arg, name: __MODULE__)
-  end
-
-  @impl true
-  def init(_init_arg) do
-    DynamicSupervisor.init(strategy: :one_for_one)
-  end
-
-  def start_room(room_id) do
-    spec = {MyApp.Room, room_id: room_id}
-    DynamicSupervisor.start_child(__MODULE__, spec)
-  end
-
-  def stop_room(pid) do
-    DynamicSupervisor.terminate_child(__MODULE__, pid)
-  end
-end
-```
-
-### Supervision Tree Setup Workflow
-
-When wiring up a new supervision tree, follow this sequence:
-
-1. **Define children** — list in dependency order (dependencies first)
-2. **Choose strategy** — `one_for_one` unless children are interdependent
-3. **Add to `Application.start/2`** — or to a parent supervisor's child list
-4. **Verify startup** — run `mix run --no-halt` or `iex -S mix` and confirm no crashes
-5. **Inspect with Observer** — `:observer.start()` in IEx to view the live supervision tree
-6. **Check child counts** — `Supervisor.count_children(MyApp.Supervisor)` confirms expected active/specs counts
-7. **Test restart behavior** — `Process.exit(pid, :kill)` and confirm the supervisor restarts the child
-
-```elixir
-# Quick verification in IEx
-iex> Supervisor.which_children(MyApp.Supervisor)
-# [{MyApp.Cache, #PID<0.200.0>, :worker, [MyApp.Cache]}, ...]
-
-iex> Supervisor.count_children(MyApp.Supervisor)
-# %{active: 3, specs: 3, supervisors: 0, workers: 3}
-```
-
+Prefer `:one_for_one` unless children are tightly coupled (`:rest_for_one` / `:one_for_all` with care).
 
 ## Tasks
 
-### async/await for Concurrent Work
+❌ **Bad:** ignore failures from `async_stream`
 
 ```elixir
-# Parallel fetch with bounded timeout
-task1 = Task.async(fn -> fetch_user_profile(user_id) end)
-task2 = Task.async(fn -> fetch_user_posts(user_id) end)
-
-profile = Task.await(task1, 5_000)
-posts = Task.await(task2, 5_000)
+user_ids
+|> Task.async_stream(&fetch_user/1, max_concurrency: 4, timeout: 10_000)
+|> Enum.map(fn {:ok, result} -> result end)
 ```
 
-### async_stream for Batch Processing
+✅ **Good:** handle exits and timeouts
 
 ```elixir
 user_ids
@@ -250,60 +175,47 @@ user_ids
 |> Enum.reduce([], fn
   {:ok, result}, acc -> [result | acc]
   {:exit, reason}, acc ->
-    # Log and skip failed/timed-out tasks; do not crash the collector
     require Logger
-    Logger.warning("async_stream task failed: #{inspect(reason)}")
+    Logger.warning("task failed: #{inspect(reason)}")
     acc
 end)
 |> Enum.reverse()
 ```
 
-### Supervised Tasks
-
 ```elixir
-# Add to your supervision tree
-{Task.Supervisor, name: MyApp.TaskSupervisor}
+# One-off async
+task = Task.async(fn -> fetch_profile(user_id) end)
+profile = Task.await(task, 5_000)
 
-# Start supervised tasks
-Task.Supervisor.start_child(MyApp.TaskSupervisor, fn ->
-  send_welcome_email(user)
-end)
+# Supervised fire-and-forget
+Task.Supervisor.start_child(MyApp.TaskSupervisor, fn -> send_email(user) end)
 ```
 
-
-## Agent
-
-Use Agent for simple state that doesn't need the full GenServer pattern:
+## Agent (simple state only)
 
 ```elixir
 defmodule MyApp.Counter do
   use Agent
-
-  def start_link(initial_value),
-    do: Agent.start_link(fn -> initial_value end, name: __MODULE__)
-
+  def start_link(v \\ 0), do: Agent.start_link(fn -> v end, name: __MODULE__)
   def value, do: Agent.get(__MODULE__, & &1)
   def increment, do: Agent.update(__MODULE__, &(&1 + 1))
 end
 ```
 
+Use Agent for trivial state; use GenServer when you need timeouts, multi-message protocols, or clear OTP semantics.
 
-## Process Naming
-
-### Registry (preferred)
+## Registry
 
 ```elixir
-# In application supervision tree
+# supervision tree
 {Registry, keys: :unique, name: MyApp.Registry}
 
-# In GenServer start_link
 def start_link(room_id) do
   GenServer.start_link(__MODULE__, room_id,
     name: {:via, Registry, {MyApp.Registry, {:room, room_id}}}
   )
 end
 
-# Lookup
 def get_room(room_id) do
   case Registry.lookup(MyApp.Registry, {:room, room_id}) do
     [{pid, _}] -> {:ok, pid}
@@ -312,24 +224,17 @@ def get_room(room_id) do
 end
 ```
 
+## ETS (read-heavy shared state)
 
-## ETS for Shared Read-Heavy State
-
-A GenServer owns the ETS table (ensuring cleanup on crash) while reads bypass it entirely.
+Owner GenServer creates a **`:protected`** named table; readers call `:ets` directly; writers go through the server.
 
 ```elixir
 defmodule MyApp.EtsCache do
   use GenServer
-
   @table :my_app_cache
 
-  # --- Public API ---
+  def start_link(opts), do: GenServer.start_link(__MODULE__, opts, name: __MODULE__)
 
-  def start_link(opts) do
-    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
-  end
-
-  # Reads go directly to ETS — no GenServer roundtrip
   def get(key) do
     case :ets.lookup(@table, key) do
       [{^key, value}] -> {:ok, value}
@@ -337,16 +242,12 @@ defmodule MyApp.EtsCache do
     end
   end
 
-  # Writes go through the GenServer to serialize mutations
   def put(key, value), do: GenServer.call(__MODULE__, {:put, key, value})
-  def delete(key), do: GenServer.call(__MODULE__, {:delete, key})
-
-  # --- Callbacks ---
 
   @impl true
   def init(_opts) do
-    table = :ets.new(@table, [:named_table, :set, :protected, read_concurrency: true])
-    {:ok, %{table: table}}
+    :ets.new(@table, [:named_table, :set, :protected, read_concurrency: true])
+    {:ok, %{}}
   end
 
   @impl true
@@ -354,37 +255,20 @@ defmodule MyApp.EtsCache do
     :ets.insert(@table, {key, value})
     {:reply, :ok, state}
   end
-
-  @impl true
-  def handle_call({:delete, key}, _from, state) do
-    :ets.delete(@table, key)
-    {:reply, :ok, state}
-  end
 end
 ```
 
-**Key ETS options:**
-
-| Option | Meaning |
-|---|---|
-| `:set` / `:bag` | Unique keys vs. duplicate keys allowed |
-| `:public` / `:protected` | Any process reads/writes vs. owner writes, all read |
-| `read_concurrency: true` | Optimise for concurrent reads |
-| `write_concurrency: true` | Optimise for concurrent writes (trades some read performance) |
-
-
-## Common Pitfalls
+## Common pitfalls
 
 | ❌ Don't | ✅ Do |
 |----------|-------|
-| Block in `init/1` with DB queries or heavy setup | Return fast and defer expensive work to `handle_continue` |
-| Wrap every failure in defensive `try`/`rescue` | Let it crash and rely on the supervisor to restart cleanly |
-| Start long-running processes unsupervised | Put them under a supervisor that owns their lifecycle |
-| Register processes with dynamically-built atoms | Use `Registry` — the atom table is finite and never GC'd |
-| Expose `GenServer.call(pid, ...)` to callers | Wrap calls behind a public module API |
-| Serialize read-heavy shared state through one GenServer | Read directly from ETS; funnel only writes through the server |
-| Leave `:DOWN`/monitor messages unhandled | Handle them explicitly in `handle_info` |
-
+| GenServer per context “for architecture” | Plain modules; process only if you need concurrency/state |
+| Fat `handle_call` with business rules | Pure module + one-line callback |
+| Block in `init/1` | `handle_continue` |
+| Dynamic atom process names | `Registry` |
+| `:public` ETS writes from anywhere | `:protected` + owner writes |
+| `async_stream` only matching `{:ok, _}` | Handle `{:exit, reason}` |
+| Unsupervised long-running tasks | `Task.Supervisor` / app tree |
 
 ## Integration
 
