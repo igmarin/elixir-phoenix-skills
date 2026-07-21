@@ -45,14 +45,16 @@ end
 **Asset impact:** Teach dispatch through function heads so the runtime chooses the clause.
 
 ```elixir
+# Pure response mapper (not a behaviour callback — no @impl needed)
+
 # ❌
-def handle(%{status: s} = r) do
+def handle_response(%{status: s} = r) do
   if s == 200, do: {:ok, r.body}, else: {:error, :bad_status}
 end
 
 # ✅
-def handle(%{status: 200, body: body}), do: {:ok, body}
-def handle(%{status: status}), do: {:error, {:bad_status, status}}
+def handle_response(%{status: 200, body: body}), do: {:ok, body}
+def handle_response(%{status: status}), do: {:error, {:bad_status, status}}
 ```
 
 ### 3. Railway-oriented flow via tagged tuples and `with`

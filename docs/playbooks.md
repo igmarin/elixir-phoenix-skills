@@ -62,7 +62,19 @@ type: playbook
 tags: [playbooks]
 license: MIT
 description: >
-  … Trigger words: …
+  Orchestrates the Elixir TDD cycle with hard gates and human approval before
+  implementation. Trigger words: tdd, red-green-refactor, test first, failing test.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
+  entry_point: true
+  phases: [context, red, hitl-approve, green, refactor, quality-gate]
+  hard_gates: [test-fails-right-reason, suite-green]
+  dependencies:
+    source: self
+    skills:
+      - testing-essentials
+      - elixir-essentials
 ---
 ```
 
