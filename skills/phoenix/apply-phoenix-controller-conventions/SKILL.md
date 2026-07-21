@@ -1,16 +1,16 @@
 ---
 name: apply-phoenix-controller-conventions
 type: atomic
-tags: [atomic, quality]
+tags: [atomic, phoenix]
 license: MIT
 description: >
   Use when writing new controller code in Phoenix applications. Enforces consistent
   patterns for RESTful routing, plug pipeline ordering, action methods, strong
   parameters, content negotiation, fallback controllers, and error handling.
-  Covers resource routing, before_action, conn.assigns, json/html rendering,
+  Covers resource routing, controller plugs, conn.assigns, json/html rendering,
   and authentication plugs.
   Trigger words: phoenix controller conventions, controller patterns, phoenix
-  router, plug pipeline, before_action, fallback controller, strong params,
+  router, plug pipeline, controller plugs, fallback controller, strong params,
   phoenix routes, action fallback.
 ---
 
@@ -27,7 +27,7 @@ Use this skill when writing new Phoenix controller modules or modifying existing
 |---------|------------|
 | Routes | `resources` for RESTful; `scope` for grouping |
 | Controllers | Thin — delegate business logic to contexts |
-| before_action | For auth, resource loading; return `conn` |
+| Controller plugs | For auth, resource loading; halt or return `conn` |
 | Strong params | Use `changeset` validation or `cast/4` in context |
 | Content type | Pipeline `:browser` for HTML; `:api` for JSON |
 | Error handling | Use `FallbackController` for structured errors |
@@ -47,16 +47,18 @@ Use this skill when writing new Phoenix controller modules or modifying existing
 
 ## Routing Conventions
 
-✅ **RESTful resources with shallow nesting:**
+✅ **RESTful resources with explicit shallow-style split** (Phoenix has no `shallow: true`):
 ```elixir
 scope "/", MyAppWeb do
   pipe_through :browser
 
+  # Collection under parent
   resources "/users", UserController do
-    resources "/posts", PostController, only: [:index, :show], shallow: true
+    resources "/posts", PostController, only: [:index, :new, :create]
   end
 
-  resources "/posts", PostController, only: [:index, :show]
+  # Member routes at top level
+  resources "/posts", PostController, only: [:show, :edit, :update, :delete]
 end
 ```
 

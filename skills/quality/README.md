@@ -16,7 +16,7 @@ Skills for maintaining high engineering standards, code quality, and architectur
 
 ## Quality Playbook
 
-The **[quality](../../playbooks/quality/SKILL.md)** playbook orchestrates these skills in a three-phase production-readiness loop:
+The **[quality](../playbooks/quality/SKILL.md)** playbook orchestrates these skills in a three-phase production-readiness loop:
 
 1. **Phase 1 — Conventions Review** — Run `mix format`, `mix credo --strict`, `mix dialyzer`, `mix hex.audit`
 2. **Phase 2 — Refactoring** — Extract violations with characterization tests

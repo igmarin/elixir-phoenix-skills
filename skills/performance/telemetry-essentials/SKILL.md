@@ -96,7 +96,7 @@ defmodule MyApp.Telemetry do
 
   def handle_event([:my_app, :orders, :created], measurements, metadata, _config) do
     Logger.info("Order created",
-      total_cents: measurements.count,
+      total_cents: measurements.total_cents,
       user_id: metadata.user_id
     )
   end

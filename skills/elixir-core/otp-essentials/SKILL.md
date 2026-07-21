@@ -246,8 +246,16 @@ posts = Task.await(task2, 5_000)
 
 ```elixir
 user_ids
-|> Task.async_stream(&fetch_user/1, max_concurrency: 4, timeout: 10_000)
-|> Enum.map(fn {:ok, result} -> result end)
+|> Task.async_stream(&fetch_user/1, max_concurrency: 4, timeout: 10_000, on_timeout: :kill_task)
+|> Enum.reduce([], fn
+  {:ok, result}, acc -> [result | acc]
+  {:exit, reason}, acc ->
+    # Log and skip failed/timed-out tasks; do not crash the collector
+    require Logger
+    Logger.warning("async_stream task failed: #{inspect(reason)}")
+    acc
+end)
+|> Enum.reverse()
 ```
 
 ### Supervised Tasks
@@ -337,7 +345,7 @@ defmodule MyApp.EtsCache do
 
   @impl true
   def init(_opts) do
-    table = :ets.new(@table, [:named_table, :set, :public, read_concurrency: true])
+    table = :ets.new(@table, [:named_table, :set, :protected, read_concurrency: true])
     {:ok, %{table: table}}
   end
 

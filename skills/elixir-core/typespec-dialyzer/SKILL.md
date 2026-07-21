@@ -29,6 +29,7 @@ description: >
 ```elixir
 defmodule MyApp.Accounts do
   alias MyApp.Accounts.User
+  alias MyApp.Repo
 
   @spec get_user(integer()) :: User.t() | nil
   def get_user(id) do
@@ -55,12 +56,13 @@ defmodule MyApp.Accounts.User do
     id: integer() | nil,
     email: String.t(),
     username: String.t(),
-    role: role(),
-    inserted_at: DateTime.t(),
-    updated_at: DateTime.t()
+    role: String.t() | nil,
+    inserted_at: NaiveDateTime.t() | nil,
+    updated_at: NaiveDateTime.t() | nil
   }
 
-  @type role :: :admin | :editor | :viewer
+  # Prefer Ecto.Enum + @type role :: :admin | :editor | :viewer when the field is an enum.
+  @type role :: String.t()
 
   @typedoc """
   Attributes for creating or updating a user.
@@ -115,6 +117,14 @@ end
 ]
 ```
 
+### Configure ignore file (mix.exs)
+
+```elixir
+# config/config.exs or project config for Dialyxir
+config :dialyxir,
+  ignore_warnings: ".dialyzer_ignore.exs"
+```
+
 ### Run Dialyzer
 
 ```bash
@@ -124,8 +134,8 @@ mix dialyzer
 # Format output
 mix dialyzer --format short
 
-# Ignore warnings file
-mix dialyzer --ignore-file .dialyzer_ignore.exs
+# Generate ignore-file entries from current warnings
+mix dialyzer --format ignore_file
 ```
 
 

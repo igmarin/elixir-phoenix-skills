@@ -167,13 +167,14 @@ jobs:
       - name: Run benchmarks
         run: |
           mix deps.get
-          MIX_ENV=prod mix run bench/suite.exs --output results.json
+          # Write JSON via Benchee.Formatters.JSON in suite.exs (not a mix run flag)
+          MIX_ENV=prod mix run bench/suite.exs
 
       - name: Store results
         uses: actions/upload-artifact@v3
         with:
           name: benchmark-results
-          path: results.json
+          path: bench/results.json
 ```
 
 ### Regression Comparison Script
@@ -191,10 +192,16 @@ results =
     formatters: [{Benchee.Formatters.Console, comparison: true}]
   )
 
+scenario_ips = fn suite ->
+  suite.scenarios
+  |> hd()
+  |> then(fn scenario -> scenario.run_time_data.statistics.ips end)
+end
+
+current_ips = scenario_ips.(results)
+
 if File.exists?(baseline_file) do
   baseline = File.read!(baseline_file) |> Jason.decode!()
-
-  current_ips = results.scenarios |> hd() |> Map.get(:ips)
   baseline_ips = baseline["ips"]
 
   regression = (baseline_ips - current_ips) / baseline_ips * 100
@@ -204,7 +211,7 @@ if File.exists?(baseline_file) do
   end
 end
 
-File.write!(baseline_file, Jason.encode!(%{ips: results.scenarios |> hd() |> Map.get(:ips)}))
+File.write!(baseline_file, Jason.encode!(%{ips: current_ips}))
 ```
 
 ### Memory Profiling

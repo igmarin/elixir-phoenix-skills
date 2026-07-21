@@ -186,7 +186,7 @@ def get_username(%User{name: name}), do: name
 |----------|-------|
 | Nest `case`/`if` for sequential fallible steps | Chain them with a single `with` |
 | Write defensive code for impossible states | Trust your types and let it crash |
-| Call `String.to_atom/1` on user input | Use `String.to_existing_atom/1` or keep strings (atom table is finite) |
+| Call `String.to_atom/1` on user input | Prefer strings; only convert with an allowlist (or `to_existing_atom/1` after allowlist) — unknown values raise `ArgumentError` |
 | Return bare values or raise for expected failures | Return `{:ok, result}` / `{:error, reason}` tuples |
 | Chain 3+ `Enum.map`/`filter` passes over a list | Use a single `for` comprehension |
 | Mutate data in place | Return new immutable values from each transformation |

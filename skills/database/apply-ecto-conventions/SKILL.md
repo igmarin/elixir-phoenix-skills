@@ -2,7 +2,7 @@
 name: apply-ecto-conventions
 type: atomic
 license: MIT
-tags: [atomic, quality]
+tags: [atomic, database]
 description: >
   Use when writing or reviewing Ecto database code in Elixir applications.
   Enforces consistent patterns for Repo queries, changeset composition,
@@ -208,8 +208,8 @@ from(u in User, where: u.status == ^status and u.name == ^name)
 ```elixir
 def list_users(filters) do
   Enum.reduce(filters, User, fn
-    {:status, status}, q -> where(q, status: ^status)
-    {:search, term}, q -> where(q, ilike: [name: ^"%#{term}%"])
+    {:status, status}, q -> where(q, [u], u.status == ^status)
+    {:search, term}, q -> where(q, [u], ilike(u.name, ^"%#{term}%"))
     _, q -> q
   end)
   |> Repo.all()
@@ -260,6 +260,8 @@ def list_posts, do: Repo.all(Post)
 ✅ **Good — offset/limit pagination with composite index:**
 ```elixir
 def list_posts(page \\ 1, per_page \\ 20) do
+  page = max(page, 1)
+  per_page = per_page |> max(1) |> min(100)
   offset = (page - 1) * per_page
 
   Post
