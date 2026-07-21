@@ -99,6 +99,22 @@ def main() -> int:
         if name not in mapped:
             err(f"playbook not in skill-map mappings: {name} ({folder})")
 
+
+    # summary field counts vs disk (playbooks/atomics)
+    summary = dj.get("summary") or ""
+    pb_disk = len(list((ROOT / "skills/playbooks").glob("*/SKILL.md")))
+    m_pb = re.search(r"(\d+)\s+playbooks?", summary)
+    if m_pb and int(m_pb.group(1)) != pb_disk:
+        err(f"directory.json summary playbooks {m_pb.group(1)} != disk {pb_disk}")
+    m_at = re.search(r"(\d+)\s+atomic skills?", summary)
+    atomics_disk = sum(
+        1
+        for p in (ROOT / "skills").rglob("SKILL.md")
+        if "playbooks" not in p.parts and "orchestration" not in p.parts
+    )
+    if m_at and int(m_at.group(1)) != atomics_disk:
+        err(f"directory.json summary atomics {m_at.group(1)} != disk {atomics_disk}")
+
     # README total if present
     readme = (ROOT / "README.md").read_text()
     m = re.search(r"\*\*(\d+) skills total\*\*", readme)
