@@ -1,129 +1,161 @@
 ---
 name: elixir-essentials
 type: atomic
-tags: [atomic]
+tags: [atomic, elixir-core]
 license: MIT
 description: >
   MANDATORY for ALL Elixir code changes. Invoke before writing any .ex or .exs file.
-  Covers pattern matching, pipe operator, with statements, error handling with tagged tuples,
-  guards, list comprehensions, naming conventions, and the "let it crash" philosophy.
-  Trigger words: elixir, pattern matching, pipe, with, error handling, tagged tuples, guards.
-
+  Enforces pragmatic Functional Core, Imperative Shell (FCIS): pure core modules,
+  pattern matching, tagged tuples + with, linear pipes, explicit structs at boundaries,
+  and thin edges. No monads or academic FP. Trigger words: elixir, FCIS, pattern matching,
+  pipe, with, error handling, tagged tuples, guards, pure functions.
 ---
 
 # Elixir Essentials
 
-Use this skill before writing ANY `.ex` or `.exs` file.
+Use this skill before writing **any** `.ex` or `.exs` file.
 
-## RULES — Follow these with no exceptions
+Canonical standard: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md).
 
-1. **Use pattern matching over if/else** for control flow and data extraction
-2. **Use `@impl true`** before every callback function (mount, handle_event, handle_info, etc.)
-3. **Produce `{:ok, result} | {:error, reason}` tuples** for fallible operations
-4. **Use `with` for 2+ sequential fallible operations** instead of nested case
-5. **Use the pipe operator** for 2+ chained transformations
-6. **Never nest if/else statements** — use case, cond, or multi-clause functions
-7. **Use `?` suffix for predicate functions**, `!` suffix for dangerous functions
-8. **Never write defensive code for impossible states** — let it crash
-9. **Use `@doc` and `@moduledoc`** for all public APIs
-10. **Prefer immutability** — never mutate data in place
-11. **Don't** use `String.to_atom/1` on user input (atom table exhaustion)
-12. **Prefer `for` comprehensions** before chaining 3+ Enum operations
+## RULES — no exceptions
 
+1. **Functional Core, Imperative Shell** — pure functions for rules/transforms; DB/HTTP/process/IO only at edges
+2. **Pattern match and guards** over nested `if` / `unless` / deep `case`
+3. **Tagged tuples** — fallible ops return `{:ok, result} | {:error, reason}`; chain with `with`
+4. **Linear pipes** — subject first; named steps; no `|> case do` or pipes into anonymous fns
+5. **Parse at the boundary** — coerce maps into structs/changesets before pure core
+6. **`@impl true`** on every behaviour callback
+7. **Immutability** — never mutate data in place
+8. **Predicates end with `?`**, bang (`!`) only for dangerous/raising ops
+9. **No `String.to_atom/1` on user input** — prefer strings; allowlist before any atom conversion
+10. **No monads / category-theory libs** — idiomatic Elixir only
+11. **`@doc` / `@moduledoc`** on public APIs
+12. **Prefer `for`** over chaining 3+ `Enum` passes when one pass is clearer
 
-## Pattern Matching
-
-✅ **Good — prefer multi-clause functions with pattern matching over if/else:**
-```elixir
-def handle_response(%{status: 200, body: body}), do: {:ok, body}
-def handle_response(%{status: 404}), do: {:error, :not_found}
-def handle_response(_), do: {:error, :unknown}
-```
-
-## Pipe Operator
+## 1. Functional Core, Imperative Shell
 
 ```elixir
-def process_user(user) do
-  user
-  |> validate_user()
-  |> transform_user()
-  |> save_user()
+# ✅ Pure core — no Repo, no HTTP, no process
+defmodule MyApp.Orders.Pricing do
+  def total(%{lines: lines}), do: Enum.reduce(lines, 0, &(&1.amount + &2))
+
+  def discount(total, :vip) when total > 100, do: div(total, 10)
+  def discount(_total, _tier), do: 0
+end
+
+# ✅ Shell — side effects at the edge
+defmodule MyApp.Orders do
+  alias MyApp.Orders.Pricing
+
+  def checkout(order_id) do
+    with {:ok, order} <- fetch(order_id),
+         total <- Pricing.total(order),
+         {:ok, charge} <- Payments.charge(order, total) do
+      {:ok, charge}
+    end
+  end
 end
 ```
 
-## With Statement
+## 2. Pattern matching & guards
 
-❌ **Bad (nested case):**
 ```elixir
+# ❌
+def handle_response(%{status: s} = r) do
+  if s == 200, do: {:ok, r.body}, else: {:error, :bad_status}
+end
+
+# ✅ multi-clause (pure mapper — not a behaviour callback)
+def handle_response(%{status: 200, body: body}), do: {:ok, body}
+def handle_response(%{status: 404}), do: {:error, :not_found}
+def handle_response(%{status: status}), do: {:error, {:bad_status, status}}
+
+def calculate(x) when is_integer(x) and x > 0, do: x * 2
+def calculate(_), do: {:error, :invalid_input}
+```
+
+## 3. Railway flow: tagged tuples + `with`
+
+```elixir
+# ❌ nested case
 def create_post(params) do
-  case validate_params(params) do
-    {:ok, valid_params} ->
-      case create_changeset(valid_params) do
-        {:ok, changeset} ->
-          Repo.insert(changeset)
+  case validate(params) do
+    {:ok, attrs} ->
+      case Repo.insert(change_post(attrs)) do
+        {:ok, post} -> {:ok, post}
         error -> error
       end
     error -> error
   end
 end
-```
 
-✅ **Good (with):**
-```elixir
+# ✅
 def create_post(params) do
-  with {:ok, valid_params} <- validate_params(params),
-       {:ok, changeset} <- create_changeset(valid_params),
-       {:ok, post} <- Repo.insert(changeset) do
+  with {:ok, attrs} <- validate(params),
+       {:ok, post} <- Repo.insert(change_post(attrs)) do
     {:ok, post}
   end
 end
-```
 
-### With Statement — Inline Error Handling
-
-```elixir
-def transfer_money(from_id, to_id, amount) do
-  with {:ok, from_account} <- get_account(from_id),
-       {:ok, to_account} <- get_account(to_id),
-       :ok <- validate_balance(from_account, amount),
-       {:ok, _} <- debit(from_account, amount),
-       {:ok, _} <- credit(to_account, amount) do
-    {:ok, :transfer_complete}
+# Optional else for normalized edge messages
+def transfer(from_id, to_id, amount) do
+  with {:ok, from} <- get_account(from_id),
+       {:ok, to} <- get_account(to_id),
+       :ok <- ensure_funds(from, amount),
+       {:ok, _} <- debit(from, amount),
+       {:ok, _} <- credit(to, amount) do
+    {:ok, :complete}
   else
-    {:error, :insufficient_funds} ->
-      {:error, "Not enough money in account"}
-
-    {:error, :not_found} ->
-      {:error, "Account not found"}
-
-    error ->
-      {:error, "Transfer failed: #{inspect(error)}"}
+    {:error, :insufficient_funds} -> {:error, :insufficient_funds}
+    {:error, :not_found} -> {:error, :not_found}
+    other -> {:error, {:transfer_failed, other}}
   end
 end
 ```
 
-## Guards
+## 4. Pipe linearity
 
 ```elixir
-def calculate(x) when is_integer(x) and x > 0 do
-  x * 2
+# ❌
+params
+|> case do
+  %{"id" => id} -> Repo.get(User, id)
+  _ -> nil
 end
 
-def calculate(_), do: {:error, :invalid_input}
+# ✅
+params
+|> Map.fetch!("id")
+|> Users.get()
 ```
 
-## List Comprehensions
+Pipes should read as **one subject transformed**. Extract named functions instead of long anonymous steps.
 
-❌ **Bad (multiple passes):**
+## 5. Explicit shapes at the boundary
+
 ```elixir
-list
-|> Enum.map(&transform/1)
-|> Enum.filter(&valid?/1)
-|> Enum.map(&format/1)
+# Parse untyped input once, then work on known data
+def register(params) when is_map(params) do
+  case Registration.changeset(params) |> Ecto.Changeset.apply_action(:insert) do
+    {:ok, data} -> create_user(data)   # core sees a known shape
+    {:error, cs} -> {:error, cs}
+  end
+end
 ```
 
-✅ **Good (single pass):**
+## Naming
+
+| Element | Convention | Example |
+|---------|------------|---------|
+| Modules | `PascalCase` | `MyApp.Accounts.User` |
+| Functions / vars | `snake_case` | `create_user/1` |
+| Predicates | end with `?` | `valid?/1` |
+| Raising | end with `!` | `get_user!/1` — avoid in app logic |
+
+## List work
+
 ```elixir
+# Prefer one pass when chaining map+filter+map
 for item <- list,
     transformed = transform(item),
     valid?(transformed) do
@@ -131,66 +163,27 @@ for item <- list,
 end
 ```
 
-## Naming Conventions
-
-| Element | Convention | Example |
-|---------|-----------|-------|
-| Module names | `PascalCase` | `MyApp.Accounts.User` |
-| Function names | `snake_case` | `create_user/1` |
-| Variables | `snake_case` | `user_name` |
-| Atoms | `:snake_case` | `:not_found` |
-| Predicate functions | end with `?` | `valid?`, `empty?` |
-| Dangerous functions | end with `!` | `save!`, `update!` |
-
-## Tagged Tuples for Error Handling
-
-```elixir
-def fetch_user(id) do
-  case Repo.get(User, id) do
-    nil -> {:error, :not_found}
-    user -> {:ok, user}
-  end
-end
-
-# Usage
-case fetch_user(123) do
-  {:ok, user} -> IO.puts("Found: #{user.name}")
-  {:error, :not_found} -> IO.puts("User not found")
-end
-```
-
-## Bang Functions
-
-Use `!` suffix for functions that raise on failure. Prefer the non-bang variant in application logic; use bang in tests or when failure is truly unrecoverable.
-
-## Early Returns
-
-```elixir
-def process_data(nil), do: {:error, :no_data}
-def process_data([]), do: {:error, :empty_list}
-def process_data(data) when is_list(data) do
-  {:ok, Enum.map(data, &transform/1)}
-end
-```
-
-## Avoid Defensive Programming
-
-✅ **Good (trust your types):**
-```elixir
-def get_username(%User{name: name}), do: name
-```
-
-## Common Pitfalls
+## Atoms & user input
 
 | ❌ Don't | ✅ Do |
 |----------|-------|
-| Nest `case`/`if` for sequential fallible steps | Chain them with a single `with` |
-| Write defensive code for impossible states | Trust your types and let it crash |
-| Call `String.to_atom/1` on user input | Prefer strings; only convert with an allowlist (or `to_existing_atom/1` after allowlist) — unknown values raise `ArgumentError` |
-| Return bare values or raise for expected failures | Return `{:ok, result}` / `{:error, reason}` tuples |
-| Chain 3+ `Enum.map`/`filter` passes over a list | Use a single `for` comprehension |
-| Mutate data in place | Return new immutable values from each transformation |
-| Skip `@impl true` on callbacks | Annotate every callback with `@impl true` |
+| `String.to_atom(user_input)` | Keep strings, or allowlist then convert |
+| Blind `to_existing_atom/1` on arbitrary input | Allowlist first — unknown values raise `ArgumentError` |
+
+## Let it crash
+
+Do not write defensive code for impossible states after you have validated at the boundary. Supervisors recover process failures; pure code should not hide bugs with broad `rescue`.
+
+## Common pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Business math mixed with `Repo` | Pure module + thin context shell |
+| Nested `if` / `case` for sequential fallible steps | `with` + tagged tuples |
+| `|> case do` | Named step or multi-clause function |
+| Mutate maps/lists in place | Return new values |
+| Skip `@impl true` on callbacks | Annotate every callback |
+| Monads / custom FP frameworks | Idiomatic Elixir |
 
 ## Integration
 
@@ -198,17 +191,6 @@ def get_username(%User{name: name}), do: name
 |-------------|------------|-----------|
 | None (always first) | elixir-essentials | otp-essentials |
 | None (always first) | elixir-essentials | testing-essentials |
+| None (always first) | elixir-essentials | typespec-dialyzer |
 
-**Companion skills:**
-- `otp-essentials` — processes, GenServer, and supervision
-- `typespec-dialyzer` — static typing and Dialyzer analysis
-- `testing-essentials` — ExUnit and TDD workflow
-- `code-quality` — Credo/Dialyzer/format loop before PR
-
-
-## When Not to Use
-
-- Phoenix/LiveView application context — use the relevant Phoenix/LiveView skill instead
-- OTP patterns (GenServer, Supervisor, Agent) — use `otp-essentials` instead
-- Database operations — use `ecto-essentials` instead
-- Type specifications or Dialyzer integration — use `typespec-dialyzer` instead
+**See also:** `docs/fcis-engineering-rules.md`, `otp-essentials`, domain skills (Ecto/LiveView/Oban keep edges thin).

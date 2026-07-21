@@ -103,6 +103,7 @@ Key skills include `assets/` with templates, checklists, and code snippets:
 
 | Skill | Assets |
 |-------|--------|
+| `elixir-essentials` | `fcis_checklist.md` |
 | `testing-essentials` | `spec_templates.md`, `tdd_checklist.md` |
 | `code-quality` | `refactoring_checklist.md` |
 | `code-review` | `checklist.md` |

@@ -1,40 +1,52 @@
 ---
 name: typespec-dialyzer
 type: atomic
-tags: [atomic]
+tags: [atomic, elixir-core]
 license: MIT
 description: >
   Use when adding type safety to Elixir code, writing public functions, or refactoring.
-  Covers @spec, @type, Dialyxir setup, typespec best practices, and CI integration.
-  Supports incremental adoption and catching type errors before production.
-  Trigger words: typespec, @spec, @type, Dialyzer, Dialyxir, type safety, type checking.
-
+  Specs document FCIS boundaries: pure core inputs/outputs and edge effects via tagged tuples.
+  Covers @spec, @type, Dialyxir setup, ignore files, CI PLT cache. Trigger words: typespec,
+  @spec, @type, Dialyzer, Dialyxir, type safety, type checking.
 ---
 
 # TypeSpec & Dialyzer
 
-## RULES — Follow these with no exceptions
+Types make **data shapes and railway returns** explicit — especially at module boundaries — so pure core and shell stay honest.
 
-1. **Run Dialyzer in CI** — catch type errors before they reach production
-2. **Start with core modules** — add typespecs incrementally, don't try to type everything at once
-3. **Never ignore Dialyzer warnings without documenting why** — use `.dialyzer_ignore.exs`
-4. **Add `@spec` to every public function** — document argument and return types at the boundary
-5. **Define `@type t` for structs and schemas** — give each module a canonical type callers can reference
-6. **Use `@opaque` for encapsulated types** — hide the internal representation from callers
-7. **Cache the PLT in CI** — never rebuild the persistent lookup table on every run
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md).
 
+## RULES — no exceptions
 
-## Basic TypeSpecs
+1. **`@spec` every public function** — especially context/shell APIs and pure core entry points
+2. **`@type t` for structs/schemas** — match real field types (`NaiveDateTime.t() | nil` for default timestamps)
+3. **Tagged-tuple success typing** — `{:ok, t()} | {:error, reason()}` for fallible ops
+4. **Run Dialyzer in CI** with PLT cache
+5. **Never ignore warnings silently** — document in `.dialyzer_ignore.exs` via `ignore_warnings` config
+6. **Incremental adoption** — core modules first
+7. **No `any()` as a habit** — prefer unions and parameterized result types
+8. **Specs match reality** — do not widen past success typing to silence Dialyzer
+
+## Specs at the FCIS boundary
 
 ```elixir
-defmodule MyApp.Accounts do
+defmodule MyApp.Orders.Pricing do
+  @type line :: %{amount: non_neg_integer()}
+  @type order :: %{lines: [line()]}
+
+  @doc "Pure core — no side effects."
+  @spec total(order()) :: non_neg_integer()
+  def total(%{lines: lines}), do: Enum.reduce(lines, 0, &(&1.amount + &2))
+end
+
+defmodule MyApp.Orders do
   alias MyApp.Accounts.User
   alias MyApp.Repo
 
-  @spec get_user(integer()) :: User.t() | nil
-  def get_user(id) do
-    Repo.get(User, id)
-  end
+  @type id :: pos_integer()
+
+  @spec get_user(id()) :: User.t() | nil
+  def get_user(id), do: Repo.get(User, id)
 
   @spec create_user(map()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
   def create_user(attrs) do
@@ -45,45 +57,40 @@ defmodule MyApp.Accounts do
 end
 ```
 
-
-## Custom Types
+## Struct types that match the schema
 
 ```elixir
 defmodule MyApp.Accounts.User do
   use Ecto.Schema
 
   @type t :: %__MODULE__{
-    id: integer() | nil,
-    email: String.t(),
-    username: String.t(),
-    role: String.t() | nil,
-    inserted_at: NaiveDateTime.t() | nil,
-    updated_at: NaiveDateTime.t() | nil
-  }
+          id: integer() | nil,
+          email: String.t(),
+          username: String.t(),
+          role: String.t() | nil,
+          inserted_at: NaiveDateTime.t() | nil,
+          updated_at: NaiveDateTime.t() | nil
+        }
 
-  # Prefer Ecto.Enum + @type role :: :admin | :editor | :viewer when the field is an enum.
+  # When using Ecto.Enum, prefer: @type role :: :admin | :editor | :viewer
   @type role :: String.t()
 
-  @typedoc """
-  Attributes for creating or updating a user.
-  """
   @type attrs :: %{
-    optional(:email) => String.t(),
-    optional(:username) => String.t(),
-    optional(:role) => role(),
-    optional(:password) => String.t()
-  }
+          optional(:email) => String.t(),
+          optional(:username) => String.t(),
+          optional(:role) => role(),
+          optional(:password) => String.t()
+        }
 
   schema "users" do
     field :email, :string
     field :username, :string
     field :role, :string
     field :password, :string, virtual: true
-
     timestamps()
   end
 
-  @spec changeset(t(), attrs()) :: Ecto.Changeset.t(t())
+  @spec changeset(t(), map()) :: Ecto.Changeset.t()
   def changeset(user, attrs) do
     user
     |> cast(attrs, [:email, :username, :role, :password])
@@ -92,140 +99,76 @@ defmodule MyApp.Accounts.User do
 end
 ```
 
-
-## Dialyxir Setup
-
-### Add to mix.exs
+## Result types (railway)
 
 ```elixir
-defp deps do
-  [
-    {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
-  ]
-end
-```
+@type result(ok, err) :: {:ok, ok} | {:error, err}
 
-### Create .dialyzer_ignore.exs
+@spec divide(number(), number()) :: result(float(), :division_by_zero)
+def divide(_n, 0), do: {:error, :division_by_zero}
+def divide(n, d), do: {:ok, n / d}
 
-```elixir
-[
-  # Ignore specific warnings
-  {"lib/my_app/legacy_module.ex", :unknown_type},
-  
-  # Ignore by pattern
-  ~r/unknown_function/,
-]
-```
-
-### Configure ignore file (mix.exs)
-
-```elixir
-# config/config.exs or project config for Dialyxir
-config :dialyxir,
-  ignore_warnings: ".dialyzer_ignore.exs"
-```
-
-### Run Dialyzer
-
-```bash
-# First run builds the PLT
-mix dialyzer
-
-# Format output
-mix dialyzer --format short
-
-# Generate ignore-file entries from current warnings
-mix dialyzer --format ignore_file
-```
-
-
-## Interpreting and Fixing Dialyzer Errors
-
-When Dialyzer reports errors, follow this cycle: **read → locate → fix → rerun**.
-
-### Example Dialyzer Output
-
-```text
-lib/my_app/accounts.ex:12:no_return
-Function create_user/1 has no local return.
-
-lib/my_app/accounts.ex:20:call
-The call MyApp.Accounts.get_user(<<"admin">>) will never return since the success
-typing is (integer()) and the contract is (integer()) :: User.t() | nil.
-```
-
-### Common Error Types and Fixes
-
-| Error | Meaning | Fix |
-|-------|---------|-----|
-| `no_return` | Function always raises or crashes | Widen return type or fix crash path |
-| `call` | Argument type doesn't match `@spec` | Fix call site type or update spec |
-| `contract_subtype` | Return type narrower than spec | Widen spec or remove unused clauses |
-| `unknown_type` | Referenced type doesn't exist | Add `@type` or fix module alias |
-| `unmatched_return` | Return value not handled by caller | Handle all branches explicitly |
-
-### Fix-then-Rerun Cycle
-
-```bash
-# 1. Run with short format for readable output
-mix dialyzer --format short
-
-# 2. Fix the flagged function — correct the @spec or the implementation
-# 3. Rerun to confirm fix and check for cascading errors
-mix dialyzer --format short
-
-# 4. If a warning is a known false positive, document and suppress it
-#    Add the entry to .dialyzer_ignore.exs in Elixir tuple syntax, then:
-mix dialyzer --ignore-file .dialyzer_ignore.exs
-```
-
-
-## TypeSpec Best Practices
-
-### Union Types
-
-```elixir
 @type status :: :active | :inactive | :suspended
-
 @spec update_status(User.t(), status()) :: {:ok, User.t()} | {:error, atom()}
 ```
 
-### Parameterized Types
-
-```elixir
-@type result(success, error) :: {:ok, success} | {:error, error}
-
-@spec divide(number(), number()) :: result(float(), :division_by_zero)
-def divide(_num, 0), do: {:error, :division_by_zero}
-def divide(num, denom), do: {:ok, num / denom}
-```
-
-### Opaque Types
+## Opaque types for encapsulation
 
 ```elixir
 defmodule MyApp.Token do
   @opaque t :: %__MODULE__{value: String.t(), expires_at: DateTime.t()}
-
   defstruct [:value, :expires_at]
 
   @spec new(String.t(), DateTime.t()) :: t()
-  def new(value, expires_at) do
-    %__MODULE__{value: value, expires_at: expires_at}
-  end
+  def new(value, expires_at), do: %__MODULE__{value: value, expires_at: expires_at}
 end
 ```
 
+## Dialyxir setup
 
-## CI Integration
-
-```yaml
-# .github/workflows/ci.yml
-- name: Dialyzer
-  run: |
-    mix dialyzer --format short
+```elixir
+# mix.exs deps
+{:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
 ```
 
-### Cache PLT for Faster CI
+```elixir
+# config/config.exs (or config/dev.exs)
+config :dialyxir,
+  ignore_warnings: ".dialyzer_ignore.exs"
+```
+
+```elixir
+# .dialyzer_ignore.exs
+[
+  {"lib/my_app/legacy_module.ex", :unknown_type},
+  ~r/unknown_function/
+]
+```
+
+```bash
+mix dialyzer                 # builds PLT on first run
+mix dialyzer --format short
+mix dialyzer --format ignore_file   # generate ignore entries
+```
+
+Do **not** pass a non-existent `--ignore-file` flag to `mix dialyzer`; configure `ignore_warnings` instead.
+
+## Reading errors
+
+| Error | Meaning | Fix |
+|-------|---------|-----|
+| `no_return` | Always raises/crashes | Fix path or return type |
+| `call` | Arg does not match spec | Fix caller or spec |
+| `contract_subtype` | Narrower return than spec | Align spec/impl |
+| `unknown_type` | Missing `@type` / alias | Define or import type |
+| `unmatched_return` | Caller ignores returns | Pattern match all branches |
+
+```bash
+mix dialyzer --format short
+# fix → rerun until clean or documented ignore
+```
+
+## CI + PLT cache
 
 ```yaml
 - name: Cache PLT
@@ -239,21 +182,16 @@ end
   run: mix dialyzer --format short
 ```
 
----
-
-## Common Pitfalls
+## Common pitfalls
 
 | ❌ Don't | ✅ Do |
 |----------|-------|
-| Try to type the whole codebase at once | Adopt incrementally, starting with core modules |
-| Silence Dialyzer warnings inline | Document and suppress via `.dialyzer_ignore.exs` |
-| Skip Dialyzer in CI | Run `mix dialyzer --format short` in CI |
-| Write `any()` specs everywhere | Use precise union and parameterized types |
-| Widen a `@spec` past the real success typing | Match the spec to what the function actually returns |
-| Rebuild the PLT on every CI run | Cache `priv/plts` keyed on `mix.lock` |
-| Leave public functions unspecced | Add `@spec` at every public boundary |
-
----
+| Spec `map()` everywhere at the core | Parse to struct/typed attrs at the edge |
+| `DateTime.t()` for default `timestamps()` | `NaiveDateTime.t() \| nil` (or match your schema) |
+| Atom role type with `:string` field | String type or `Ecto.Enum` + atom type together |
+| `any()` to silence Dialyzer | Fix types or document ignore |
+| Rebuild PLT every CI run | Cache `priv/plts` on `mix.lock` |
+| Untyped public context APIs | `@spec` with `{:ok, _} \| {:error, _}` |
 
 ## Integration
 
@@ -262,6 +200,4 @@ end
 | elixir-essentials | typespec-dialyzer | code-quality |
 | ecto-essentials | typespec-dialyzer | testing-essentials |
 
-**Companion skills:**
-- `code-quality` — Credo and static analysis alongside Dialyzer
-- `credo-config` — configure Credo checks that complement typespecs
+**Companion:** `code-quality`, `credo-config`.
