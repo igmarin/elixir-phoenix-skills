@@ -100,18 +100,44 @@ def main() -> int:
             err(f"playbook not in skill-map mappings: {name} ({folder})")
 
 
-    # summary field counts vs disk (playbooks/atomics)
-    summary = dj.get("summary") or ""
+    # Inventory counts: prefer structured inventory; also check summary prose
     pb_disk = len(list((ROOT / "skills/playbooks").glob("*/SKILL.md")))
-    m_pb = re.search(r"(\d+)\s+playbooks?", summary)
-    if m_pb and int(m_pb.group(1)) != pb_disk:
-        err(f"directory.json summary playbooks {m_pb.group(1)} != disk {pb_disk}")
-    m_at = re.search(r"(\d+)\s+atomic skills?", summary)
     atomics_disk = sum(
         1
         for p in (ROOT / "skills").rglob("SKILL.md")
         if "playbooks" not in p.parts and "orchestration" not in p.parts
     )
+    orch_disk = sum(
+        1
+        for p in (ROOT / "skills").rglob("SKILL.md")
+        if "orchestration" in p.parts
+    )
+    inv = dj.get("inventory") or {}
+    if inv:
+        if inv.get("playbooks") != pb_disk:
+            err(f"inventory.playbooks {inv.get('playbooks')} != disk {pb_disk}")
+        if inv.get("atomic") != atomics_disk:
+            err(f"inventory.atomic {inv.get('atomic')} != disk {atomics_disk}")
+        if inv.get("orchestrators") != orch_disk:
+            err(f"inventory.orchestrators {inv.get('orchestrators')} != disk {orch_disk}")
+        if inv.get("total") != len(dj.get("skills", {})):
+            err(
+                f"inventory.total {inv.get('total')} != directory skills "
+                f"{len(dj.get('skills', {}))}"
+            )
+        pb_ids = set(inv.get("playbook_ids") or [])
+        pb_dir = {
+            name
+            for name, meta in dj.get("skills", {}).items()
+            if "/playbooks/" in meta.get("path", "")
+        }
+        if pb_ids != pb_dir:
+            err(f"inventory.playbook_ids mismatch: {sorted(pb_ids ^ pb_dir)}")
+    summary = dj.get("summary") or ""
+    m_pb = re.search(r"(\d+)\s+playbooks?", summary)
+    if m_pb and int(m_pb.group(1)) != pb_disk:
+        err(f"directory.json summary playbooks {m_pb.group(1)} != disk {pb_disk}")
+    m_at = re.search(r"(\d+)\s+atomic skills?", summary)
     if m_at and int(m_at.group(1)) != atomics_disk:
         err(f"directory.json summary atomics {m_at.group(1)} != disk {atomics_disk}")
 
