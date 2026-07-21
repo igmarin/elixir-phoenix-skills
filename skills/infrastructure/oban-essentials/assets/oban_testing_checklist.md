@@ -1,3 +1,5 @@
+> **FCIS:** Assert on worker return tuples and context calls. Domain rules under test should live in pure modules, not only inside `perform/1`.
+
 # Oban Testing Checklist
 
 Use `Oban.Testing` with `testing: :inline` (or `:manual`) in `config/test.exs`.

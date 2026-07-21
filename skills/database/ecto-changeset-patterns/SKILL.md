@@ -8,21 +8,58 @@ description: >
   cast_assoc, or conditional validation. Covers separate changesets per operation, cast_assoc pitfalls,
   composition, conditional validation with opts, field transformations, and uniqueness validation.
   Trigger words: changeset, cast_assoc, validation, separate changesets, conditional validation, update_change.
-
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Ecto Changeset Patterns
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Build changesets/Multi in pure-ish functions; run `Repo` once at the context edge.
+
 ## RULES — Follow these with no exceptions
 
-1. **Define separate named changesets per operation** — `registration_changeset`, `email_changeset`, `password_changeset`, etc.
-2. **Never require foreign key fields in `cast_assoc` child changesets** — `cast_assoc` sets them automatically
-3. **Compose changesets with pipes** — each validation step is a separate, reusable function
-4. **Always pair `unsafe_validate_unique` with `unique_constraint`** — fast UI feedback plus race-safe enforcement
-5. **Use `update_change/3` for field transformations** — trim, downcase, and slugify inside the changeset
-6. **Accept `opts \\ []` for conditional validation** — toggle hashing or uniqueness checks per call site
-7. **Validate at the changeset level, not in context functions** — keep validation next to the schema
+**1.** **Define separate named changesets per operation** — `registration_changeset`, `email_changeset`, `password_changeset`, etc.
+**2.** **Never require foreign key fields in `cast_assoc` child changesets** — `cast_assoc` sets them automatically
+**3.** **Compose changesets with pipes** — each validation step is a separate, reusable function
+**4.** **Always pair `unsafe_validate_unique` with `unique_constraint`** — fast UI feedback plus race-safe enforcement
+**5.** **Use `update_change/3` for field transformations** — trim, downcase, and slugify inside the changeset
+**6.** **Accept `opts \\ []` for conditional validation** — toggle hashing or uniqueness checks per call site
+**7.** **Validate at the changeset level, not in context functions** — keep validation next to the schema
 
+
+## FCIS at this boundary
+
+Changeset functions should be pure data transformers (attrs in → changeset out). Persist with `Repo` in the context, not inside the schema module beyond optional helpers.
+
+❌ **Bad:** schema function performs inserts
+
+```elixir
+def create(attrs) do
+  %Post{}
+  |> changeset(attrs)
+  |> Repo.insert()
+end
+```
+
+✅ **Good:** schema builds; context persists
+
+```elixir
+# schema
+def changeset(post, attrs) do
+  post
+  |> cast(attrs, [:title, :body])
+  |> validate_required([:title, :body])
+end
+
+# context shell
+def create_post(attrs) do
+  %Post{}
+  |> Post.changeset(attrs)
+  |> Repo.insert()
+end
+```
 
 ## Workflow: Building a New Schema
 

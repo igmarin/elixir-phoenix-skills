@@ -1,3 +1,4 @@
+# FCIS: mailer modules are delivery edges — build email structs from known data; pure formatting helpers stay side-effect free.
 # Swoosh Mailer + Email Builder Template
 #
 # Copy-paste templates for a Swoosh Mailer module and an email-builder module.

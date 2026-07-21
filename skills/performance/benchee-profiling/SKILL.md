@@ -12,19 +12,25 @@ description: >
 
   benchee.run, benchee.measure, fprof, eprof, profile, ips, runtime, memory_time, warmup,
   batch_size, inputs, regression, baseline, performance comparison.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Benchee Profiling
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Measure pure functions and edge paths separately; keep benchmarks free of accidental I/O.
+
 ## RULES — Follow these with no exceptions
 
-1. **Profile first** — run `:fprof` or `:eprof` and verify the output explicitly names the expected slow call site; re-run with a larger workload if ambiguous
-2. **Write a comparative benchmark** — implement at least 2 alternative approaches using Benchee, ensuring implementations do the same thing; benchmark in `MIX_ENV=prod` for realistic results
-3. **Use multiple inputs** — test with small, medium, and large realistic data sizes to catch size-dependent behavior
-4. **Warm up before measuring** — use `warmup: 2` and `time: 10`; repeat 3–5 times to rule out variance; if results are within noise (< 5% difference), run 3 additional times
-5. **Validate improvement** — confirm the faster approach wins across all input sizes
-6. **Save baseline and check regressions** — write results to `bench/baseline.json`; raise an error if performance degrades more than 10% (compare against the previous 3 baselines before raising to rule out noise)
-7. **Separate I/O benchmarks** — never benchmark network or disk I/O in the same run as compute benchmarks
+**1.** **Profile first** — run `:fprof` or `:eprof` and verify the output explicitly names the expected slow call site; re-run with a larger workload if ambiguous
+**2.** **Write a comparative benchmark** — implement at least 2 alternative approaches using Benchee, ensuring implementations do the same thing; benchmark in `MIX_ENV=prod` for realistic results
+**3.** **Use multiple inputs** — test with small, medium, and large realistic data sizes to catch size-dependent behavior
+**4.** **Warm up before measuring** — use `warmup: 2` and `time: 10`; repeat 3–5 times to rule out variance; if results are within noise (< 5% difference), run 3 additional times
+**5.** **Validate improvement** — confirm the faster approach wins across all input sizes
+**6.** **Save baseline and check regressions** — write results to `bench/baseline.json`; raise an error if performance degrades more than 10% (compare against the previous 3 baselines before raising to rule out noise)
+**7.** **Separate I/O benchmarks** — never benchmark network or disk I/O in the same run as compute benchmarks
 
 
 ## Setup

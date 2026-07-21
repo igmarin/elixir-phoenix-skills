@@ -8,7 +8,9 @@ description: >
   Covers Req setup, request patterns, error handling, retries, timeouts, and testing with Req.Test.
   Req is the modern HTTP client for Elixir, replacing HTTPoison and Tesla.
   Trigger words: Req, HTTP client, HTTP request, API integration, external API, HTTPoison replacement.
-
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Req HTTP Client
@@ -17,18 +19,50 @@ description: >
 
 ---
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. HTTP/email/i18n adapters are edges; keep request building and response mapping pure where possible.
+
 ## RULES — Follow these with no exceptions
 
-1. **Always build a configured base client with `Req.new/1`** — set `base_url`, `receive_timeout`, and default headers once, then reuse it for every call instead of re-passing options
-2. **Use the non-bang `Req.get/1` / `Req.post/1` in application code** — pattern match `{:ok, %{status: _, body: _}}` / `{:error, _}`; reserve the `!` variants for scripts and tests
-3. **Match status codes explicitly** — handle `404`, `429`, and `status >= 500` distinctly; never collapse every non-200 into one branch
-4. **Enable `retry: :transient` only for idempotent requests** — Req retries 5xx and network errors with backoff; never blindly retry non-idempotent writes
-5. **Set an explicit `receive_timeout`** — never rely on infinite defaults for calls to external services
-6. **Stub every external call in tests with `Req.Test`** — the suite must never hit a real API
-7. **Stream large responses with `into:`** — write to `File.stream!/1` or a callback instead of loading the full payload into memory
+**1.** **Always build a configured base client with `Req.new/1`** — set `base_url`, `receive_timeout`, and default headers once, then reuse it for every call instead of re-passing options
+**2.** **Use the non-bang `Req.get/1` / `Req.post/1` in application code** — pattern match `{:ok, %{status: _, body: _}}` / `{:error, _}`; reserve the `!` variants for scripts and tests
+**3.** **Match status codes explicitly** — handle `404`, `429`, and `status >= 500` distinctly; never collapse every non-200 into one branch
+**4.** **Enable `retry: :transient` only for idempotent requests** — Req retries 5xx and network errors with backoff; never blindly retry non-idempotent writes
+**5.** **Set an explicit `receive_timeout`** — never rely on infinite defaults for calls to external services
+**6.** **Stub every external call in tests with `Req.Test`** — the suite must never hit a real API
+**7.** **Stream large responses with `into:`** — write to `File.stream!/1` or a callback instead of loading the full payload into memory
 
 See [`assets/req_client_snippets.ex`](assets/req_client_snippets.ex) for a copy-paste base client and wrapper module.
 
+
+## FCIS at this boundary
+
+Build requests and map responses in pure functions; perform I/O in a thin client module.
+
+❌ **Bad:** business branching mixed with HTTP side effects inline
+
+```elixir
+def import_user(id) do
+  {:ok, %{status: 200, body: body}} = Req.get("https://api.example.com/users/#{id}")
+  rank = if body["score"] > 10, do: :gold, else: :silver
+  Repo.insert!(%User{external_id: id, rank: rank})
+end
+```
+
+✅ **Good:** pure map + thin client + context edge
+
+```elixir
+def rank_from_payload(%{"score" => score}) when score > 10, do: :gold
+def rank_from_payload(_), do: :silver
+
+def import_user(id) do
+  with {:ok, body} <- API.Client.fetch_user(id),
+       rank <- rank_from_payload(body),
+       {:ok, user} <- Accounts.upsert_external(id, rank) do
+    {:ok, user}
+  end
+end
+```
 
 ## End-to-End Workflow
 

@@ -1,3 +1,5 @@
+> **FCIS:** Flag fat LiveViews/controllers and Repo mixed into calculations — pure core, side effects at edges (`docs/fcis-engineering-rules.md`).
+
 # Code Review Checklist — Elixir/Phoenix
 
 Detailed per-area review criteria. Use with `skills/quality/code-review/SKILL.md`.

@@ -1,3 +1,4 @@
+# FCIS: keep JSON mapping pure; perform Req calls in a thin client module.
 # Req HTTP Client Snippets
 #
 # Copy-paste templates for a configured Req base client and a thin wrapper module.

@@ -8,21 +8,26 @@ description: >
   handlers, Logger calls, or metrics code. Covers structured logging, :telemetry basics, Ecto events,
   Phoenix events, LiveDashboard, custom business metrics, and external tool integration.
   Trigger words: telemetry, logging, Logger, metrics, LiveDashboard, observability, structured logging.
-
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Telemetry Essentials
 
 Use this skill before writing ANY telemetry, logging, or metrics code.
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Measure pure functions and edge paths separately; keep benchmarks free of accidental I/O.
+
 ## RULES — Follow these with no exceptions
 
-1. **Use structured logging (`Logger.info("action", key: value)`)** — never string interpolation in log messages
-2. **Attach telemetry handlers in `Application.start/2`** — not in modules that may restart, and never in GenServer `init`
-3. **Use `Ecto.Repo` telemetry events for query monitoring** — Ecto already emits events; don't manually instrument queries
-4. **Use `Phoenix.LiveDashboard` in dev/staging** — free observability with zero code
-5. **Tag telemetry events with metadata (user_id, request_id)** — without correlation IDs, traces are useless
-6. **Never log at `:debug` level in production** — it includes query parameters and PII; use `:info` level instead
+**1.** **Use structured logging (`Logger.info("action", key: value)`)** — never string interpolation in log messages
+**2.** **Attach telemetry handlers in `Application.start/2`** — not in modules that may restart, and never in GenServer `init`
+**3.** **Use `Ecto.Repo` telemetry events for query monitoring** — Ecto already emits events; don't manually instrument queries
+**4.** **Use `Phoenix.LiveDashboard` in dev/staging** — free observability with zero code
+**5.** **Tag telemetry events with metadata (user_id, request_id)** — without correlation IDs, traces are useless
+**6.** **Never log at `:debug` level in production** — it includes query parameters and PII; use `:info` level instead
 
 
 ## Structured Logging

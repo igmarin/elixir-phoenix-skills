@@ -1,3 +1,4 @@
+# FCIS: perform/1 is an edge — fetch by id, call context/pure modules, return tuples.
 # Oban worker template — copy into lib/my_app/workers/ and adapt.
 # Add {:oban, "~> 2.17"} to mix.exs and configure the queue in config/config.exs.
 

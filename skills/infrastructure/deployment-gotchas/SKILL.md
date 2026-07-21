@@ -8,22 +8,27 @@ description: >
   Covers runtime.exs vs config.exs, release migrations, PHX_HOST/PHX_SERVER, asset deployment,
   secret management, health endpoints, and production log levels.
   Trigger words: deployment, release, runtime.exs, config, migration, PHX_HOST, Docker, health check, secrets.
-
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Deployment Gotchas
 
 Use this skill before modifying ANY deployment or release configuration.
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Workers and pipelines are edges: fetch IDs, call pure core, return tagged tuples.
+
 ## RULES — Follow these with no exceptions
 
-1. **Use `runtime.exs` for all secrets and URLs; never hardcode secrets — use `System.get_env!/1`** — see §1 & §5
-2. **Run migrations via release commands (`bin/migrate`)** — see §2
-3. **Set `PHX_HOST` and `PHX_SERVER=true`** — see §3
-4. **Run `mix assets.deploy` before building the release** — see §4
-5. **Add a `/health` endpoint that queries the database** — see §6
-6. **Use `config :logger, level: :info` in production** — see §7
-7. **Use Docker multi-stage builds** for Elixir releases — see §4
+**1.** **Use `runtime.exs` for all secrets and URLs; never hardcode secrets — use `System.get_env!/1`** — see §1 & §5
+**2.** **Run migrations via release commands (`bin/migrate`)** — see §2
+**3.** **Set `PHX_HOST` and `PHX_SERVER=true`** — see §3
+**4.** **Run `mix assets.deploy` before building the release** — see §4
+**5.** **Add a `/health` endpoint that queries the database** — see §6
+**6.** **Use `config :logger, level: :info` in production** — see §7
+**7.** **Use Docker multi-stage builds** for Elixir releases — see §4
 
 
 ## End-to-End Deployment Workflow

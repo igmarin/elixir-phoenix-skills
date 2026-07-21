@@ -8,20 +8,46 @@ description: >
   Covers DataCase/ConnCase setup, fixture patterns, LiveView tests, changeset tests,
   async safety, setup chaining, timestamp testing, and TDD workflow.
   Trigger words: test, mix test, DataCase, ConnCase, fixture, LiveView test, assert, ExUnit.
-
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Testing Essentials
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Prefer testing pure core without Repo; use DataCase only for true persistence boundaries.
+
 ## RULES — Follow these with no exceptions
 
-1. **Follow the project's existing test setup patterns** — don't inline DataCase/ConnCase boilerplate that the project already abstracts away
-2. **Use `async: true` only when safe** — avoid for DB contexts with shared rows, LiveView, `Application.put_env`, and external services
-3. **Define test data in fixtures** (`test/support/`) — never build it inline across multiple tests
-4. **Use `has_element?/2` and `element/2` for LiveView assertions** — not `html =~ "text"` for structure checks
-5. **Always test the unauthorized case** for any protected resource
-6. **Never hardcode dates** — use relative timestamps to prevent flaky tests
+**1.** **Follow the project's existing test setup patterns** — don't inline DataCase/ConnCase boilerplate that the project already abstracts away
+**2.** **Use `async: true` only when safe** — avoid for DB contexts with shared rows, LiveView, `Application.put_env`, and external services
+**3.** **Define test data in fixtures** (`test/support/`) — never build it inline across multiple tests
+**4.** **Use `has_element?/2` and `element/2` for LiveView assertions** — not `html =~ "text"` for structure checks
+**5.** **Always test the unauthorized case** for any protected resource
+**6.** **Never hardcode dates** — use relative timestamps to prevent flaky tests
 
+
+## FCIS at this boundary
+
+Prefer unit-testing pure core without the database. Use `DataCase` for true persistence; use plain ExUnit for pure modules.
+
+❌ **Bad:** every pure calculation goes through Repo
+
+```elixir
+test "discount" do
+  order = insert(:order)
+  assert Orders.apply_discount(order.id, 10).total == 90
+end
+```
+
+✅ **Good:** pure core test is side-effect free
+
+```elixir
+test "discount" do
+  assert Pricing.with_discount(100, 10) == 90
+end
+```
 
 ## Workflow: Writing a New Test File
 

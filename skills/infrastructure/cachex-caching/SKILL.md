@@ -10,19 +10,25 @@ description: >
   Trigger words: Cachex, caching, cache, TTL, ETS, distributed cache, cache warmer, cache warmup,
 
   cache invalidation, cache hits, cache misses, Cachex.fetch, Cachex.put, Cachex.get.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Cachex Caching
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Workers and pipelines are edges: fetch IDs, call pure core, return tagged tuples.
+
 ## RULES — Follow these with no exceptions
 
-1. **Set a TTL on every cached entry** — never cache indefinitely unless the data is truly immutable
-2. **Enable `stats: true`** — required to measure cache effectiveness via `hit_rate`
-3. **Use cache warmers for startup** — pre-populate expensive data when the application starts
-4. **Use `Cachex.fetch/3` for get-or-set** — atomic cache-aside avoids the dogpile/race on concurrent misses
-5. **Invalidate with `Cachex.del/2` after every mutation** — stale entries outlive the source of truth otherwise
-6. **Handle the `{:error, reason}` tuple from every Cachex call** — fall back to the database; a cache failure must never break the request
-7. **Bound the cache with `:limit` and an eviction policy** — unbounded caches leak memory
+**1.** **Set a TTL on every cached entry** — never cache indefinitely unless the data is truly immutable
+**2.** **Enable `stats: true`** — required to measure cache effectiveness via `hit_rate`
+**3.** **Use cache warmers for startup** — pre-populate expensive data when the application starts
+**4.** **Use `Cachex.fetch/3` for get-or-set** — atomic cache-aside avoids the dogpile/race on concurrent misses
+**5.** **Invalidate with `Cachex.del/2` after every mutation** — stale entries outlive the source of truth otherwise
+**6.** **Handle the `{:error, reason}` tuple from every Cachex call** — fall back to the database; a cache failure must never break the request
+**7.** **Bound the cache with `:limit` and an eviction policy** — unbounded caches leak memory
 
 
 ## End-to-End Workflow

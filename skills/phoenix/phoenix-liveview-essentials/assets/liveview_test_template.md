@@ -1,3 +1,5 @@
+> FCIS: assert on context results and assigns — LiveView tests should not require business logic inside the LiveView module.
+
 # LiveView Test Templates
 
 ## Full Page LiveView Test

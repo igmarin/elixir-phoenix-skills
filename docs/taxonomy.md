@@ -85,3 +85,20 @@ When adding a skill:
 - Paths: `directory.json`
 - Install groupings: `skills.sh.json`
 - Router map: `skills/orchestration/elixir-skill-router/assets/skill-map.json`
+
+## Skill frontmatter schema
+
+Atomic skills use YAML frontmatter consumed by catalogs and agent loaders:
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| `name` | yes | Skill id (matches folder) |
+| `type` | yes | `atomic`, `playbook`, or `orchestrator` |
+| `tags` | yes | e.g. `[atomic]` |
+| `license` | yes | Usually `MIT` |
+| `description` | yes | Triggers + when to use |
+| `metadata.version` | yes | Semver string, e.g. `"1.0.0"` |
+| `metadata.user-invocable` | atomic (recommended) | String `"true"` when agents may invoke the skill directly. Required for atomics in this library; playbooks/orchestrators should set it when user-invocable, optional otherwise. |
+
+Playbooks may also define `metadata.phases`, `metadata.hard_gates`, and `metadata.dependencies` (see [playbooks.md](playbooks.md)).
+

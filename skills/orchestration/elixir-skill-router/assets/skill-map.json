@@ -1,4 +1,5 @@
 {
+  "fcis_note": "Routing metadata only. Domain pure-core rules live in atomic skills + docs/fcis-engineering-rules.md. Consumers should ignore unknown top-level keys.",
   "mappings": [
     {
       "intent": "core Elixir patterns",

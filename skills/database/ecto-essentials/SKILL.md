@@ -8,19 +8,62 @@ description: >
   Covers schema definition, changesets, query composition, preloading, transactions,
   associations, migrations, upserts, dynamic queries, and the context pattern.
   Trigger words: Ecto, schema, changeset, migration, Repo, query, preload, association, belongs_to, has_many, Elixir database.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Ecto Essentials
 
 Use this skill before modifying ANY schema, query, or migration.
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Build changesets/Multi in pure-ish functions; run `Repo` once at the context edge.
+
 ## RULES — Follow these with no exceptions
 
-1. **Add database constraints** (unique_index, foreign_key, check_constraint) AND changeset validations — both layers are required
-2. **Add indexes** on foreign keys and frequently queried fields — never omit indexes on foreign keys
-3. **Parameterize all user input in queries** — never interpolate values into SQL fragments, always use `^`
-4. **Never combine schema changes and data backfill** in the same migration
+**1.** **Add database constraints** (unique_index, foreign_key, check_constraint) AND changeset validations — both layers are required
+**2.** **Add indexes** on foreign keys and frequently queried fields — never omit indexes on foreign keys
+**3.** **Parameterize all user input in queries** — never interpolate values into SQL fragments, always use `^`
+**4.** **Never combine schema changes and data backfill** in the same migration
 
+
+## FCIS at this boundary
+
+Ecto is the persistence edge. Prefer pure functions that **build** changesets/queries/Multi; execute with `Repo` once in the context shell.
+
+❌ **Bad:** mix calculation with inserts
+
+```elixir
+def apply_discount(order_id, pct) do
+  order = Repo.get!(Order, order_id)
+  total = Enum.reduce(order.lines, 0, &(&1.amount + &2))
+  order
+  |> Ecto.Changeset.change(total: div(total * (100 - pct), 100))
+  |> Repo.update!()
+end
+```
+
+✅ **Good:** pure pricing + thin context
+
+```elixir
+defmodule MyApp.Orders.Pricing do
+  def total(%{lines: lines}), do: Enum.reduce(lines, 0, &(&1.amount + &2))
+  def with_discount(total, pct) when pct in 0..100, do: div(total * (100 - pct), 100)
+end
+
+def apply_discount(order_id, pct) do
+  with {:ok, order} <- fetch_order(order_id) do  # context helper: Repo.get → tagged tuple
+    total = order |> Pricing.total() |> Pricing.with_discount(pct)
+
+    order
+    |> Order.changeset(%{total: total})
+    |> Repo.update()
+  end
+end
+```
+
+Use realistic names: `Post.changeset/2`, not placeholders like `change_post/1`.
 
 ## Schema Definition
 

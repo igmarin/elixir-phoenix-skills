@@ -8,26 +8,63 @@ description: >
   Covers the two-phase rendering lifecycle, mount/handle_event/handle_info/handle_params callbacks,
   socket assigns, streams, components, form binding, error handling, and PubSub integration.
   Trigger words: LiveView, live_view, mount, handle_event, handle_info, render, HEEx, socket, assign.
-
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Phoenix LiveView Essentials
 
 Use this skill before writing ANY LiveView module or `.heex` template.
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Keep LiveView/controller callbacks thin; delegate business rules to contexts/pure modules.
+
 ## RULES — Follow these with no exceptions
 
-1. **Always add `@impl true`** before every callback (mount, handle_event, handle_info, render)
-2. **Initialize assigns before they're accessed in render/1** — use mount/3 for static defaults, handle_params/3 for URL-dependent assigns
-3. **Check `connected?(socket)`** before PubSub subscriptions, timers, or side effects
-4. **Use `Map.get(assigns, :key, default)`** for optional assigns in helper functions
-5. **Return proper tuples** — `{:ok, socket}` from mount, `{:noreply, socket}` from handle_event
-6. **Use `with` for error handling** in event handlers — assign errors to socket, don't crash
-7. **Never use `auto_upload: true` with form submission** — manual uploads are required to control when files are consumed relative to form data
-8. **Check `core_components.ex` for existing components** before creating custom ones
-9. **Never query the database directly from LiveViews** — call context functions instead
-10. **Use streams for large collections** — see `liveview-streams` skill for details
+**1.** **Always add `@impl true`** before every callback (mount, handle_event, handle_info, render)
+**2.** **Initialize assigns before they're accessed in render/1** — use mount/3 for static defaults, handle_params/3 for URL-dependent assigns
+**3.** **Check `connected?(socket)`** before PubSub subscriptions, timers, or side effects
+**4.** **Use `Map.get(assigns, :key, default)`** for optional assigns in helper functions
+**5.** **Return proper tuples** — `{:ok, socket}` from mount, `{:noreply, socket}` from handle_event
+**6.** **Use `with` for error handling** in event handlers — assign errors to socket, don't crash
+**7.** **Never use `auto_upload: true` with form submission** — manual uploads are required to control when files are consumed relative to form data
+**8.** **Check `core_components.ex` for existing components** before creating custom ones
+**9.** **Never query the database directly from LiveViews** — call context functions instead
+**10.** **Use streams for large collections** — see `liveview-streams` skill for details
 
+
+## FCIS at this boundary
+
+LiveView callbacks are the **imperative shell**. Delegate business rules to contexts/pure modules; only assign results and handle UI errors here.
+
+❌ **Bad:** heavy logic in `handle_event/3` (also uses legacy `current_user` — prefer `current_scope`)
+
+```elixir
+@impl true
+def handle_event("save", %{"post" => params}, socket) do
+  title = String.trim(params["title"] || "")
+  status = if params["publish"] == "true", do: "published", else: "draft"
+  # legacy assign shape — do not copy; use current_scope in real apps
+  {:ok, post} = Repo.insert(%Post{title: title, status: status, user_id: socket.assigns.current_user.id})
+  {:noreply, assign(socket, :post, post)}
+end
+```
+
+✅ **Good:** thin event → context → assign
+
+```elixir
+@impl true
+def handle_event("save", %{"post" => params}, socket) do
+  case Blog.create_post(socket.assigns.current_scope, params) do
+    {:ok, post} ->
+      {:noreply, socket |> assign(:post, post) |> put_flash(:info, "Saved")}
+
+    {:error, %Ecto.Changeset{} = changeset} ->
+      {:noreply, assign(socket, :form, to_form(changeset))}
+  end
+end
+```
 
 ## Recommended Build Order
 

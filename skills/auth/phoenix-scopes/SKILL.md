@@ -12,17 +12,23 @@ description: >
   scope-based auth, roles, permissions, or migrating from current_user to the new scope-based model.
   Trigger words: Scope, current_scope, scopes, phoenix scopes, role, roles, permission, permissions,
   authorization, authorize, can?, authenticated?, anonymous, on_mount, require_scope.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Phoenix Scopes
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Authorization decisions should be pure checks on scope/user data; persist only at the edge.
+
 ## RULES — Follow these with no exceptions
 
-1. **Use bracket access in templates** — `assigns[:current_scope]` prevents crashes when unauthenticated
-2. **Test both authenticated and unauthenticated states** — scope-based auth has two distinct code paths
-3. **Define `anonymous/0` for the unauthenticated case** — return a Scope with `user: nil`
-4. **Pass `scope` to context functions, not a bare `user`** — centralizes authorization and enables tenant/permission checks
-5. **Guard mutating events with `Scope.can?/2`** — enforce authorization server-side; never rely on hidden UI controls
+**1.** **Use bracket access in templates** — `assigns[:current_scope]` prevents crashes when unauthenticated
+**2.** **Test both authenticated and unauthenticated states** — scope-based auth has two distinct code paths
+**3.** **Define `anonymous/0` for the unauthenticated case** — return a Scope with `user: nil`
+**4.** **Pass `scope` to context functions, not a bare `user`** — centralizes authorization and enables tenant/permission checks
+**5.** **Guard mutating events with `Scope.can?/2`** — enforce authorization server-side; never rely on hidden UI controls
 
 
 ## Scope Struct Definition

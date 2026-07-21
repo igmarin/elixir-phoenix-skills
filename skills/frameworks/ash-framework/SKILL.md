@@ -12,18 +12,24 @@ description: >
 
   Ash domain, Ash policy, Ash extension, ash_postgres, ash_phoenix, Ash.JsonApi, AshQuery,
   AshChangeset, use Ash.Resource, use Ash.Domain.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Ash Framework
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Prefer Ash actions as explicit boundaries; avoid ad-hoc side effects inside pure computations.
+
 ## RULES — Follow these with no exceptions
 
-1. **Use `use Ash.Resource` for domain resources** — never manually implement protocols
-2. **Define actions explicitly** — don't rely on `defaults [:read, :create]` without understanding what they expose
-3. **Add policies for authorization** — every resource with sensitive data must have explicit policy blocks
-4. **Use `Ash.Changeset.for_create/3` and `Ash.Changeset.for_update/3`** — not bare struct manipulation
-5. **Run `mix ash_postgres.generate_migrations` before manual migration** — let Ash generate the schema
-6. **Verify resource loads** — run `mix compile` and confirm no `Spark.Error.DslError` before proceeding
+**1.** **Use `use Ash.Resource` for domain resources** — never manually implement protocols
+**2.** **Define actions explicitly** — don't rely on `defaults [:read, :create]` without understanding what they expose
+**3.** **Add policies for authorization** — every resource with sensitive data must have explicit policy blocks
+**4.** **Use `Ash.Changeset.for_create/3` and `Ash.Changeset.for_update/3`** — not bare struct manipulation
+**5.** **Run `mix ash_postgres.generate_migrations` before manual migration** — let Ash generate the schema
+**6.** **Verify resource loads** — run `mix compile` and confirm no `Spark.Error.DslError` before proceeding
 
 
 ## End-to-End Workflow

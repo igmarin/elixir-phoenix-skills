@@ -11,16 +11,22 @@ description: >
   Trigger words: Phoenix JSON API, API pipeline, FallbackController, paginated API, Bearer token plug,
 
   API versioning, Elixir API controller, action_fallback.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Phoenix JSON API
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Keep LiveView/controller callbacks thin; delegate business rules to contexts/pure modules.
+
 ## RULES — Follow these with no exceptions
 
-1. **Use the `:api` pipeline** — don't mix HTML and JSON pipelines; API routes skip CSRF and sessions
-2. **Render errors as structured JSON** — `{:error, changeset}` must become `{"errors": {...}}`
-3. **Version APIs via URL prefix (`/api/v1/`)** — not headers; URL versioning is visible and cacheable
-4. **Use `FallbackController` for consistent error handling** — every action returns `{:ok, result}` or `{:error, reason}`
+**1.** **Use the `:api` pipeline** — don't mix HTML and JSON pipelines; API routes skip CSRF and sessions
+**2.** **Render errors as structured JSON** — `{:error, changeset}` must become `{"errors": {...}}`
+**3.** **Version APIs via URL prefix (`/api/v1/`)** — not headers; URL versioning is visible and cacheable
+**4.** **Use `FallbackController` for consistent error handling** — every action returns `{:ok, result}` or `{:error, reason}`
 
 
 ## Build Workflow

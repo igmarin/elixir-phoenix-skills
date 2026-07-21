@@ -8,11 +8,15 @@ description: >
   adding translations or supporting multiple languages. Covers Gettext setup, translation functions,
   pluralization, locale management, and .po/.pot file workflows.
   Trigger words: gettext, i18n, internationalization, translation, locale, pluralization, multiple languages.
-
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Gettext Internationalization
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. HTTP/email/i18n adapters are edges; keep request building and response mapping pure where possible.
 ## End-to-End Workflow
 
 1. **Add Gettext calls** — wrap strings with `gettext/1`, `dgettext/2`, or `ngettext/3` in templates, LiveView, and controllers
@@ -25,13 +29,13 @@ description: >
 
 ## RULES — Follow these with no exceptions
 
-1. **Wrap only user-facing strings** — translate UI text, never log-only or internal error messages
-2. **Use domain contexts with `dgettext/2`** — `dgettext("errors", "Not found")` keeps error strings in a separate `.po` domain from default content
-3. **Use `ngettext/3` for anything countable** — never build plurals by hand; plural rules vary by locale
-4. **Pass interpolations as bindings** — `gettext("Hello %{name}", name: name)`, never `gettext("Hello #{name}")`, which breaks extraction
-5. **Re-run `mix gettext.extract --merge` after adding calls** — keep `.pot`/`.po` files in sync before committing
-6. **Set the locale per request** — call `Gettext.put_locale/2` from a plug (and on LiveView `mount`); never rely on the default
-7. **Validate locale input against an allowlist** — only `put_locale` supported locales; reject arbitrary values from params
+**1.** **Wrap only user-facing strings** — translate UI text, never log-only or internal error messages
+**2.** **Use domain contexts with `dgettext/2`** — `dgettext("errors", "Not found")` keeps error strings in a separate `.po` domain from default content
+**3.** **Use `ngettext/3` for anything countable** — never build plurals by hand; plural rules vary by locale
+**4.** **Pass interpolations as bindings** — `gettext("Hello %{name}", name: name)`, never `gettext("Hello #{name}")`, which breaks extraction
+**5.** **Re-run `mix gettext.extract --merge` after adding calls** — keep `.pot`/`.po` files in sync before committing
+**6.** **Set the locale per request** — call `Gettext.put_locale/2` from a plug (and on LiveView `mount`); never rely on the default
+**7.** **Validate locale input against an allowlist** — only `put_locale` supported locales; reject arbitrary values from params
 
 
 ## Setup

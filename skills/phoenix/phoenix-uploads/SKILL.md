@@ -8,20 +8,25 @@ description: >
   Covers manual uploads, upload configuration, file validation, safe filenames, static paths,
   and template patterns.
   Trigger words: upload, file upload, allow_upload, consume_uploaded_entries, static_paths, file serving.
-
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Phoenix File Uploads
 
 Use this skill before implementing ANY file upload functionality.
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Keep LiveView/controller callbacks thin; delegate business rules to contexts/pure modules.
+
 ## RULES — Follow these with no exceptions
 
-1. **Use manual uploads (NOT `auto_upload: true`)** for form submission patterns
-2. **Always add upload directory to `static_paths()`** — files won't be accessible without this
-3. **Handle upload errors** — display `error_to_string/1` output in templates
-4. **Validate file types server-side** — never trust client MIME types
-5. **Restart server after changing `static_paths()`** — changes don't apply until restart
+**1.** **Use manual uploads (NOT `auto_upload: true`)** for form submission patterns
+**2.** **Always add upload directory to `static_paths()`** — files won't be accessible without this
+**3.** **Handle upload errors** — display `error_to_string/1` output in templates
+**4.** **Validate file types server-side** — never trust client MIME types
+**5.** **Restart server after changing `static_paths()`** — changes don't apply until restart
 
 
 ## Implementation Workflow

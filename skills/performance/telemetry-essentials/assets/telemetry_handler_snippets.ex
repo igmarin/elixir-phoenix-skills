@@ -1,3 +1,4 @@
+# FCIS: handlers are edges — keep them thin (log/metric); never put domain business rules in attach callbacks.
 # Telemetry handler template — copy into lib/my_app/telemetry_handlers.ex and adapt.
 # Attach handlers once when the app boots; detach them on shutdown so hot code
 # reloads and test runs don't leave stale handlers registered.

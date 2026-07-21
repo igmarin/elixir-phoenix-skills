@@ -9,18 +9,24 @@ description: >
   authorization, and authorization testing. Use when writing permission checks, policy modules,
   or role-based access controls, or when addressing authorization, access control, permission,
   policy, role, owner, scoped query, or IDOR concerns.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Phoenix Authorization Patterns
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Authorization decisions should be pure checks on scope/user data; persist only at the edge.
+
 ## RULES — Follow these with no exceptions
 
-1. **Always authorize on the server in event handlers** — never rely on UI-only checks
-2. **Verify resource ownership by comparing `current_scope.user.id` against the resource's `user_id`** — never trust client-sent user IDs
-3. **Use policy modules for complex authorization** — don't inline permission checks in LiveViews or controllers
-4. **Add `data-confirm` attribute for destructive UI actions** — client-side confirmation before server round-trip
-5. **Test both authorized and unauthorized paths** — every `handle_event` that mutates data needs an authz test
-6. **Scope queries to the current user in contexts** — `where(user_id: ^user_id)` prevents IDOR vulnerabilities
+**1.** **Always authorize on the server in event handlers** — never rely on UI-only checks
+**2.** **Verify resource ownership by comparing `current_scope.user.id` against the resource's `user_id`** — never trust client-sent user IDs
+**3.** **Use policy modules for complex authorization** — don't inline permission checks in LiveViews or controllers
+**4.** **Add `data-confirm` attribute for destructive UI actions** — client-side confirmation before server round-trip
+**5.** **Test both authorized and unauthorized paths** — every `handle_event` that mutates data needs an authz test
+**6.** **Scope queries to the current user in contexts** — `where(user_id: ^user_id)` prevents IDOR vulnerabilities
 
 
 ## Authorization Workflow for a New Resource

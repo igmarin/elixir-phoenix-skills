@@ -8,13 +8,17 @@ description: >
   Covers worker definition, enqueuing, return values, queue configuration, idempotency,
   unique jobs, scheduled/recurring jobs, pruning, testing with Oban.Testing, and arg best practices.
   Trigger words: Oban, worker, job, queue, enqueue, perform, cron, idempotent, background job.
-
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Oban Essentials
 
 Use this skill before writing ANY Oban worker or enqueuing jobs.
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Workers and pipelines are edges: fetch IDs, call pure core, return tagged tuples.
 ## End-to-End Workflow
 
 When setting up a new Oban worker, follow these steps in order:
@@ -27,13 +31,44 @@ When setting up a new Oban worker, follow these steps in order:
 
 ## RULES — Follow these with no exceptions
 
-1. **Use `Oban.Worker` with explicit `queue` and `max_attempts`** — never rely on defaults — see [Worker Definition](#worker-definition)
-2. **Make workers idempotent** — the same job may execute more than once, so guard side effects — see [Idempotency](#idempotency)
-3. **Never put large data in job args** — store IDs and fetch fresh data in the worker — see [Job Args Best Practices](#job-args-best-practices)
-4. **Use `Oban.insert/1` (not `Oban.insert!/1`)** — handle the error tuple instead of raising — see [Enqueuing Jobs](#enqueuing-jobs)
-5. **Enqueue from contexts, not LiveViews** — keep the web layer thin — see [Enqueuing from Contexts](#enqueuing-from-contexts)
-6. **Return one of `{:ok, _}`, `{:error, _}`, `{:cancel, _}`, `{:snooze, _}` from `perform/1`** — never raise for expected failures — see [Return Values](#return-values)
+**1.** **Use `Oban.Worker` with explicit `queue` and `max_attempts`** — never rely on defaults — see [Worker Definition](#worker-definition)
+**2.** **Make workers idempotent** — the same job may execute more than once, so guard side effects — see [Idempotency](#idempotency)
+**3.** **Never put large data in job args** — store IDs and fetch fresh data in the worker — see [Job Args Best Practices](#job-args-best-practices)
+**4.** **Use `Oban.insert/1` (not `Oban.insert!/1`)** — handle the error tuple instead of raising — see [Enqueuing Jobs](#enqueuing-jobs)
+**5.** **Enqueue from contexts, not LiveViews** — keep the web layer thin — see [Enqueuing from Contexts](#enqueuing-from-contexts)
+**6.** **Return one of `{:ok, _}`, `{:error, _}`, `{:cancel, _}`, `{:snooze, _}` from `perform/1`** — never raise for expected failures — see [Return Values](#return-values)
 
+
+## FCIS at this boundary
+
+`perform/1` is an **edge runner**: load by ID, call pure/context functions, return Oban-tagged results. Do not bury domain rules only inside the worker.
+
+❌ **Bad:** worker owns complex domain state
+
+```elixir
+def perform(%Oban.Job{args: %{"order_id" => id}}) do
+  order = Repo.get!(Order, id)
+  total = Enum.reduce(order.lines, 0, &(&1.amount + &2))
+  # ad-hoc retries / partial updates mixed here...
+  Repo.update!(Ecto.Changeset.change(order, total: total, shipped: true))
+  :ok
+end
+```
+
+✅ **Good:** fetch → domain → tuple
+
+```elixir
+@impl Oban.Worker
+def perform(%Oban.Job{args: %{"order_id" => id}}) do
+  with {:ok, order} <- Orders.fetch(id),
+       {:ok, order} <- Orders.mark_shipped(order) do
+    {:ok, order.id}
+  else
+    {:error, :not_found} -> {:cancel, "order missing"}
+    {:error, reason} -> {:error, reason}
+  end
+end
+```
 
 ## Worker Definition
 

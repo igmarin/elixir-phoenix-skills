@@ -12,6 +12,9 @@ description: >
   command output under the Observed output label.
   Trigger words: refactor, restructure, extract function, extract module, reduce
   duplication, split module, flatten with, reduce pipe chain, extract bounded context.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Refactor Code
@@ -20,6 +23,8 @@ Use this skill when the task is to change structure without changing intended be
 
 **Core principle:** Small, reversible steps over large rewrites. Separate design improvement from behavior change.
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Enforce FCIS in reviews/refactors: fat LiveViews and mixed Repo+math are defects.
 ## Quick Reference
 
 | Step | Action | Verification |
@@ -44,14 +49,14 @@ NEVER fabricate test output — label only actual run output as Observed output.
 
 ## RULES — Follow these with no exceptions
 
-1. **Write characterization tests before touching any production file** — they must pass on the current, un-refactored code first
-2. **Never mix behavior changes with structural refactors in the same step** — finish the structural change, then apply behavior changes separately with their own test
-3. **Refactor one boundary per step** — never extract two abstractions at once
-4. **Keep public interfaces stable** — document any compatibility shim and its removal condition
-5. **Run `mix test` after every step** — if it fails, STOP, undo the step, and investigate
-6. **Run the full `mix test` suite at the end** before declaring the refactor complete
-7. **Label only actual run output as `Observed output`** — never fabricate output or substitute "Expected"/"Planned" output
-8. **Report at least two `Observed output` entries** at different sequence points
+**1.** **Write characterization tests before touching any production file** — they must pass on the current, un-refactored code first
+**2.** **Never mix behavior changes with structural refactors in the same step** — finish the structural change, then apply behavior changes separately with their own test
+**3.** **Refactor one boundary per step** — never extract two abstractions at once
+**4.** **Keep public interfaces stable** — document any compatibility shim and its removal condition
+**5.** **Run `mix test` after every step** — if it fails, STOP, undo the step, and investigate
+**6.** **Run the full `mix test` suite at the end** before declaring the refactor complete
+**7.** **Label only actual run output as `Observed output`** — never fabricate output or substitute "Expected"/"Planned" output
+**8.** **Report at least two `Observed output` entries** at different sequence points
 
 ## Core Process
 
