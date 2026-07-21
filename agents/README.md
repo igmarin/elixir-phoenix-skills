@@ -14,6 +14,6 @@ They are **not** agent skills (no `SKILL.md` frontmatter, not listed in `directo
 
 1. **Skills + playbooks** under `skills/` (and `docs/fcis-engineering-rules.md`) win on conflicts.
 2. These guides supply extra examples and checklists only.
-3. Prefer FCIS: pure core, thin LiveView/controller/worker edges.
+3. Prefer **FCIS** (Functional Core, Imperative Shell): pure core, thin LiveView/controller/worker edges — see [`docs/fcis-engineering-rules.md`](../docs/fcis-engineering-rules.md).
 
 When in doubt, follow the skill `SKILL.md`, not this folder.
