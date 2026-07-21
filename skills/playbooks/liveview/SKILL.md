@@ -1,13 +1,13 @@
 ---
 name: liveview
-type: persona
-tags: [personas]
+type: playbook
+tags: [playbooks]
 license: MIT
 description: >
   Orchestrates LiveView feature development with hard gates: define mount/3 contract and assigns shape → write failing LiveView test using live_isolated or live/2 → implement mount, handle_event, and render with streams for collections → verify full LiveView lifecycle (mount→render→event→update) → quality gate (no assigns bloat, streams for >10 items, bracket access in templates); phases context→test design→implementation→quality. Use when building a new LiveView, adding features to an existing LiveView, or refactoring LiveView code. Trigger: create LiveView, new LiveView page, add LiveView feature, LiveView component, LiveView event, handle_event, mount.
 ---
 
-# LiveView Persona
+# LiveView Playbook
 
 ## Agent Phases
 

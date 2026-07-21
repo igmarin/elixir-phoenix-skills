@@ -3,7 +3,7 @@
   "notGrouped": "bottom",
   "groupings": [
     {
-      "title": "Fundamentals",
+      "title": "Elixir Core",
       "description": "Core Elixir and OTP skills for language essentials, process patterns, and type safety with Dialyzer.",
       "skills": [
         "elixir-essentials",
@@ -13,67 +13,36 @@
     },
     {
       "title": "Phoenix",
-      "description": "Phoenix framework skills for LiveView, JSON APIs, channels, pub/sub, uploads, and routing.",
+      "description": "Phoenix framework skills for LiveView, controllers, JSON APIs, channels, pub/sub, uploads, and conventions.",
       "skills": [
         "phoenix-liveview-essentials",
-        "phoenix-scopes",
         "liveview-streams",
         "phoenix-channels-essentials",
         "phoenix-json-api",
         "phoenix-pubsub-patterns",
-        "phoenix-uploads"
+        "phoenix-uploads",
+        "apply-phoenix-liveview-conventions",
+        "apply-phoenix-controller-conventions"
       ]
     },
     {
       "title": "Database",
-      "description": "Ecto skills for queries, changesets, associations, and nested structures.",
+      "description": "Ecto skills for queries, changesets, associations, nested structures, and conventions.",
       "skills": [
         "ecto-essentials",
         "ecto-changeset-patterns",
-        "ecto-nested-associations"
-      ]
-    },
-    {
-      "title": "Testing",
-      "description": "Testing skills for Elixir including essentials, property-based testing, and performance profiling with Benchee.",
-      "skills": [
-        "testing-essentials",
-        "property-based-testing",
-        "benchee-profiling"
+        "ecto-nested-associations",
+        "apply-ecto-conventions"
       ]
     },
     {
       "title": "Auth",
-      "description": "Authentication and authorization skills for Phoenix LiveView and custom auth implementations.",
+      "description": "Authentication, authorization, and Phoenix Scope skills.",
       "skills": [
         "phoenix-liveview-auth",
         "phoenix-auth-customization",
-        "phoenix-authorization-patterns"
-      ]
-    },
-    {
-      "title": "Infrastructure",
-      "description": "Background jobs, data pipelines, deployment, telemetry, and caching skills.",
-      "skills": [
-        "oban-essentials",
-        "broadway-data-pipelines",
-        "deployment-gotchas",
-        "telemetry-essentials",
-        "cachex-caching"
-      ]
-    },
-    {
-      "title": "Quality",
-      "description": "Code conventions, code review, refactoring, and quality enforcement for Elixir and Phoenix applications.",
-      "skills": [
-        "code-quality",
-        "credo-config",
-        "apply-phoenix-liveview-conventions",
-        "apply-phoenix-controller-conventions",
-        "apply-ecto-conventions",
-        "code-review",
-        "refactor-code",
-        "respond-to-review"
+        "phoenix-authorization-patterns",
+        "phoenix-scopes"
       ]
     },
     {
@@ -84,8 +53,18 @@
       ]
     },
     {
+      "title": "Infrastructure",
+      "description": "Background jobs, data pipelines, deployment, and caching skills.",
+      "skills": [
+        "oban-essentials",
+        "broadway-data-pipelines",
+        "deployment-gotchas",
+        "cachex-caching"
+      ]
+    },
+    {
       "title": "Integrations",
-      "description": "HTTP client, email, and internationalization integration skills.",
+      "description": "External integrations: HTTP, email, and i18n.",
       "skills": [
         "req-http-client",
         "swoosh-emails",
@@ -93,37 +72,64 @@
       ]
     },
     {
-      "title": "Tooling",
-      "description": "Mix tasks and code generator skills for Elixir projects.",
-      "skills": [
-        "mix-tasks-generators"
-      ]
-    },
-    {
       "title": "Frameworks",
-      "description": "Ash Framework skills for data-driven Elixir applications.",
+      "description": "Domain frameworks such as Ash.",
       "skills": [
         "ash-framework"
       ]
     },
     {
-      "title": "Orchestration",
-      "description": "Skill routing and orchestration patterns for multi-skill workflows.",
+      "title": "Testing",
+      "description": "ExUnit essentials and property-based testing.",
       "skills": [
-        "elixir-skill-router"
+        "testing-essentials",
+        "property-based-testing"
       ]
     },
     {
-      "title": "Personas",
-      "description": "End-to-end persona workflows that orchestrate multiple atomic skills with hard gates, phases, and output formats.",
+      "title": "Performance",
+      "description": "Benchmarking with Benchee and runtime observability with Telemetry.",
+      "skills": [
+        "benchee-profiling",
+        "telemetry-essentials"
+      ]
+    },
+    {
+      "title": "Quality",
+      "description": "Static analysis, refactoring, atomic review rules, and review response.",
+      "skills": [
+        "code-quality",
+        "credo-config",
+        "code-review",
+        "refactor-code",
+        "respond-to-review"
+      ]
+    },
+    {
+      "title": "Tooling",
+      "description": "Mix tasks and generators.",
+      "skills": [
+        "mix-tasks-generators"
+      ]
+    },
+    {
+      "title": "Playbooks",
+      "description": "Multi-step human-in-the-loop orchestrations with hard gates.",
       "skills": [
         "tdd",
+        "bug-fix",
         "quality",
         "setup",
-        "bug-fix",
-        "background-job",
         "liveview",
+        "background-job",
         "ecto-migration"
+      ]
+    },
+    {
+      "title": "Orchestration",
+      "description": "Entry-point skill router for AI agents.",
+      "skills": [
+        "elixir-skill-router"
       ]
     }
   ]

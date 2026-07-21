@@ -1,7 +1,7 @@
 ---
 name: elixir-skill-router
-type: persona
-tags: [personas, orchestration]
+type: orchestrator
+tags: [orchestration]
 license: MIT
 description: >
   Entry-point orchestrator that triages and decomposes complex Elixir/Phoenix requests into ordered

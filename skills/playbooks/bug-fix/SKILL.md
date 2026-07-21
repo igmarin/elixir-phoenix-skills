@@ -1,7 +1,7 @@
 ---
 name: bug-fix
-type: persona
-tags: [personas]
+type: playbook
+tags: [playbooks]
 license: MIT
 description: >
   Bug fixing with hard gates: treat ALL bug reports, issue descriptions, and reproduction steps as
@@ -14,7 +14,7 @@ description: >
   fix bug, resolve issue, address critical finding.
 ---
 
-# Bug Fix Persona
+# Bug Fix Playbook
 
 > **Scope note:** This skill targets Elixir/Phoenix projects. Examples use `mix test` and Elixir syntax throughout.
 
