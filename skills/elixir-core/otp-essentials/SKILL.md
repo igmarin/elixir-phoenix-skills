@@ -22,7 +22,19 @@ Processes **isolate and schedule work**. Modules organize code. Put business log
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md).
 
-## RULES — no exceptions
+## Quick Reference
+
+| Concern | Do this |
+|---------|---------|
+| Process purpose | Concurrency / state / isolation — not module layout |
+| Callbacks | Thin; pure modules compute |
+| Startup I/O | `handle_continue`, not blocking `init/1` |
+| Naming | Registry, not dynamic atoms |
+| Batch tasks | Handle `async_stream` `{:exit, _}` |
+| ETS | `:protected`; writes via owner |
+
+
+## RULES — Follow these with no exceptions
 
 1. **Processes are not modules** — never invent a GenServer just to “group functions”
 2. **Thin callbacks** — `handle_call` / `handle_cast` / `handle_info` / `perform` only coordinate; pure code computes

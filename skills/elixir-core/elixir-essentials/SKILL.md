@@ -22,7 +22,20 @@ Canonical standard: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engine
 
 **Quick reference:** [FCIS checklist](assets/fcis_checklist.md) — run before shipping `.ex` / `.exs` files.
 
-## RULES — no exceptions
+## Quick Reference
+
+| Concern | Do this |
+|---------|---------|
+| Business rules | Pure modules — no `Repo` / HTTP / process sends |
+| Fallible flows | `{:ok, _} \| {:error, _}` + `with` |
+| Control flow | Multi-clause + guards, not nested `if` |
+| Transforms | Linear pipes; named steps |
+| External input | Parse to struct/changeset at the edge |
+| Callbacks | `@impl true`; keep thin |
+| Checklist | [assets/fcis_checklist.md](assets/fcis_checklist.md) |
+
+
+## RULES — Follow these with no exceptions
 
 1. **Functional Core, Imperative Shell** — pure functions for rules/transforms; DB/HTTP/process/IO only at edges
 2. **Pattern match and guards** over nested `if` / `unless` / deep `case`

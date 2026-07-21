@@ -19,7 +19,18 @@ Types make **data shapes and railway returns** explicit — especially at module
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md).
 
-## RULES — no exceptions
+## Quick Reference
+
+| Concern | Do this |
+|---------|---------|
+| Public APIs | `@spec` at every public boundary |
+| Structs | `@type t` matches schema (incl. nilable timestamps) |
+| Fallible ops | `{:ok, t()} \| {:error, reason()}` |
+| Dialyzer ignores | `ignore_warnings` config, not fake CLI flags |
+| CI | Run Dialyzer; cache PLT on `mix.lock` |
+
+
+## RULES — Follow these with no exceptions
 
 1. **`@spec` every public function** — especially context/shell APIs and pure core entry points
 2. **`@type t` for structs/schemas** — match real field types (`NaiveDateTime.t() | nil` for default timestamps)
