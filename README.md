@@ -173,6 +173,12 @@ Every skill includes an Integration table showing predecessor and successor skil
 ```
 
 
+
+## Companion guides
+
+Long-form checklists live under [`agents/`](agents/README.md) (Ecto, LiveView, testing, project structure).  
+They support the skills; **skills and playbooks take precedence** if anything conflicts.
+
 ## Documentation standards
 
 Contributor and agent standards for this library:

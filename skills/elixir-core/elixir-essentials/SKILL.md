@@ -37,18 +37,18 @@ Canonical standard: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engine
 
 ## RULES — Follow these with no exceptions
 
-1. **Functional Core, Imperative Shell** — pure functions for rules/transforms; DB/HTTP/process/IO only at edges
-2. **Pattern match and guards** over nested `if` / `unless` / deep `case`
-3. **Tagged tuples** — fallible ops return `{:ok, result} | {:error, reason}`; chain with `with`
-4. **Linear pipes** — subject first; named steps; no `|> case do` or pipes into anonymous fns
-5. **Parse at the boundary** — coerce maps into structs/changesets before pure core
-6. **`@impl true`** on every behaviour callback
-7. **Immutability** — never mutate data in place
-8. **Predicates end with `?`**, bang (`!`) only for dangerous/raising ops
-9. **No `String.to_atom/1` on user input** — prefer strings; allowlist before any atom conversion
-10. **No monads / category-theory libs** — idiomatic Elixir only
-11. **`@doc` / `@moduledoc`** on public APIs
-12. **Prefer `for`** over chaining 3+ `Enum` passes when one pass is clearer
+**1.** **Functional Core, Imperative Shell** — pure functions for rules/transforms; DB/HTTP/process/IO only at edges
+**2.** **Pattern match and guards** over nested `if` / `unless` / deep `case`
+**3.** **Tagged tuples** — fallible ops return `{:ok, result} | {:error, reason}`; chain with `with`
+**4.** **Linear pipes** — subject first; named steps; no `|> case do` or pipes into anonymous fns
+**5.** **Parse at the boundary** — coerce maps into structs/changesets before pure core
+**6.** **`@impl true`** on every behaviour callback
+**7.** **Immutability** — never mutate data in place
+**8.** **Predicates end with `?`**, bang (`!`) only for dangerous/raising ops
+**9.** **No `String.to_atom/1` on user input** — prefer strings; allowlist before any atom conversion
+**10.** **No monads / category-theory libs** — idiomatic Elixir only
+**11.** **`@doc` / `@moduledoc`** on public APIs
+**12.** **Prefer `for`** over chaining 3+ `Enum` passes when one pass is clearer
 
 ## 1. Functional Core, Imperative Shell
 
@@ -114,7 +114,7 @@ def calculate(_), do: {:error, :invalid_input}
 def create_post(params) do
   case validate(params) do
     {:ok, attrs} ->
-      case Repo.insert(change_post(attrs)) do
+      case Repo.insert(Post.changeset(%Post{}, attrs)) do
         {:ok, post} -> {:ok, post}
         error -> error
       end
@@ -128,7 +128,7 @@ end
 ```elixir
 def create_post(params) do
   with {:ok, attrs} <- validate(params),
-       {:ok, post} <- Repo.insert(change_post(attrs)) do
+       {:ok, post} <- Repo.insert(Post.changeset(%Post{}, attrs)) do
     {:ok, post}
   end
 end

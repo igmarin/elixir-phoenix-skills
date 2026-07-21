@@ -20,6 +20,8 @@ metadata:
 ---
 
 
+Examples use `base_url` / `url` variables or `https://api.example.com` as placeholders only — never commit real host secrets.
+
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. HTTP/email/i18n adapters are edges; keep request building and response mapping pure where possible.
 
 ## RULES — Follow these with no exceptions
@@ -157,7 +159,8 @@ Checkpoint: confirm a `{:ok, body}` tuple is returned; check logs for retry warn
 
 ```elixir
 # Automatic retries for transient failures
-Req.get!("https://api.example.com/data",
+url = "https://api.example.com/data"  # placeholder host
+Req.get!(url,
   retry: :transient,           # Retry on 5xx and network errors
   retry_delay: &(&1 * 1000),   # Exponential backoff: 1s, 2s, 4s, ...
   max_retries: 3,              # Max 3 retries

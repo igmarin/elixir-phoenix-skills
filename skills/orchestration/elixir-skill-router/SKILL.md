@@ -3,6 +3,9 @@ name: elixir-skill-router
 type: orchestrator
 tags: [orchestration]
 license: MIT
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 description: >
   Entry-point orchestrator that triages and decomposes complex Elixir/Phoenix requests into ordered
   sub-tasks, then delegates to the correct specialised skill — never implements directly.
@@ -23,6 +26,15 @@ description: >
 ```text
 Non-negotiable: no implementation code until a test exists, runs, and fails for the right reason (feature missing, not config/syntax).
 ```
+
+
+## Routing priority
+
+1. **Playbook** when the request is multi-step (TDD, bug fix, quality, setup, LiveView feature, Oban job, migration, PR review).
+2. **Atomic skill** when the request is a single domain (Ecto query, channel auth, Credo config).
+3. **Fallbacks:** language → `elixir-essentials`; web ambiguity → `phoenix-liveview-essentials`.
+
+See `assets/skill-map.json` (`mappings`, `defaults`, `disambiguation`).
 
 ## Core Process
 

@@ -32,14 +32,14 @@ Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineer
 
 ## RULES — Follow these with no exceptions
 
-1. **`@spec` every public function** — especially context/shell APIs and pure core entry points
-2. **`@type t` for structs/schemas** — match real field types (`NaiveDateTime.t() | nil` for default timestamps)
-3. **Tagged-tuple success typing** — `{:ok, t()} | {:error, reason()}` for fallible ops
-4. **Run Dialyzer in CI** with PLT cache
-5. **Never ignore warnings silently** — document in `.dialyzer_ignore.exs` via `ignore_warnings` config
-6. **Incremental adoption** — core modules first
-7. **No `any()` as a habit** — prefer unions and parameterized result types
-8. **Specs match reality** — do not widen past success typing to silence Dialyzer
+**1.** **`@spec` every public function** — especially context/shell APIs and pure core entry points
+**2.** **`@type t` for structs/schemas** — match real field types (`NaiveDateTime.t() | nil` for default timestamps)
+**3.** **Tagged-tuple success typing** — `{:ok, t()} | {:error, reason()}` for fallible ops
+**4.** **Run Dialyzer in CI** with PLT cache
+**5.** **Never ignore warnings silently** — document in `.dialyzer_ignore.exs` via `ignore_warnings` config
+**6.** **Incremental adoption** — core modules first
+**7.** **No `any()` as a habit** — prefer unions and parameterized result types
+**8.** **Specs match reality** — do not widen past success typing to silence Dialyzer
 
 ## Specs at the FCIS boundary
 

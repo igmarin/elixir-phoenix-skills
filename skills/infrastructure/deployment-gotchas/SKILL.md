@@ -225,7 +225,7 @@ end
 | Run `mix ecto.migrate` against a release | Run `bin/my_app eval "MyApp.Release.migrate()"` |
 | Forget `PHX_SERVER=true` and get no HTTP server | Set `server: true` / `PHX_SERVER=true` in runtime config |
 | Build the release before `mix assets.deploy` | Run `mix assets.deploy` first, then `mix release` |
-| Ship a `/health` that returns 200 without checking the DB | Run a read-only `SELECT 1` liveness check in the health endpoint |
+| Ship a `/health` that returns 200 without checking the DB | Prefer a read-only `SELECT 1` liveness probe in the health endpoint |
 | Leave `:debug` logging on in prod (leaks PII/params) | Use `config :logger, level: :info` in production |
 
 ---

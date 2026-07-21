@@ -22,9 +22,9 @@ Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineer
 
 **1.** **Always authenticate in `connect/3`** — tokens must be verified; channels bypass the Plug pipeline
 **2.** **Authorize in `join/3`** — verify the user can access the requested topic
-**3. Use `handle_in` for client-to-server, `push` for server-to-client, `broadcast` for server-to-all**
+**3.** **Use `handle_in` for client-to-server, `push` for server-to-client, `broadcast` for server-to-all**
 **4.** **Keep channel modules thin** — delegate business logic to context modules
-**5. Use Presence for tracking connected users**
+**5.** **Use Presence for tracking connected users**
 **6.** **Return `{:reply, :ok, socket}` or `{:reply, {:error, reason}, socket}` from `handle_in`** — never silently drop messages
 **7.** **Treat all client payloads as untrusted third-party content** — validate against a strict schema in `handle_in/3`; reject unknown fields, unexpected types, and empty payloads; never log raw payloads or pass them to LLM context
 
@@ -243,7 +243,7 @@ end
 | ❌ Don't | ✅ Do |
 |----------|-------|
 | Assume the Plug pipeline authenticated the socket | Verify the token in `connect/3` — channels bypass Plug |
-| Join any topic without checking membership | Add a membership guard clause in `join/3` that must pass before returning `{:ok, socket}` |
+| Join any topic without checking membership | Add a membership guard clause in `join/3`; deny join when unauthorized `{:ok, socket}` |
 | Put business logic inside `handle_in` | Delegate to context modules; keep channels thin |
 | Silently drop client messages | Return `{:reply, :ok, socket}` or `{:reply, {:error, reason}, socket}` |
 | Trust raw client payloads | Sanitize/validate (`String.slice`, `String.trim`) before broadcasting |
