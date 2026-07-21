@@ -99,6 +99,7 @@ Atomic skills use YAML frontmatter consumed by catalogs and agent loaders:
 | `description` | yes | Triggers + when to use |
 | `metadata.version` | yes | Semver string, e.g. `"1.0.0"` |
 | `metadata.user-invocable` | atomic (recommended) | String `"true"` when agents may invoke the skill directly. Required for atomics in this library; playbooks/orchestrators should set it when user-invocable, optional otherwise. |
+| `metadata.entry_point` | playbooks (recommended) | Boolean `true` when the skill is a multi-step entry workflow agents may start from (playbooks). Orchestrator is separate (`type: orchestrator`). Optional on atomics. |
 
-Playbooks may also define `metadata.phases`, `metadata.hard_gates`, and `metadata.dependencies` (see [playbooks.md](playbooks.md)).
+Playbooks may also define `metadata.entry_point`, `metadata.phases`, `metadata.hard_gates`, and `metadata.dependencies` (see [playbooks.md](playbooks.md)).
 

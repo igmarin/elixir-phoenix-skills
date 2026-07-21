@@ -62,7 +62,7 @@ npx skills add igmarin/elixir-phoenix-skills
 
 ## Skill Catalog
 
-The library contains **46 skills total** — 38 atomic skills, 8 playbooks, and 1 orchestrator — organized by category.
+The library contains **47 skills total** — 38 atomic skills, 8 playbooks, and 1 orchestrator — organized by category.
 
 ### Atomic Skills
 
