@@ -1,7 +1,7 @@
 ---
 name: elixir-essentials
 type: atomic
-tags: [atomic, elixir-core]
+tags: [atomic]
 license: MIT
 description: >
   MANDATORY for ALL Elixir code changes. Invoke before writing any .ex or .exs file.
@@ -9,6 +9,9 @@ description: >
   pattern matching, tagged tuples + with, linear pipes, explicit structs at boundaries,
   and thin edges. No monads or academic FP. Trigger words: elixir, FCIS, pattern matching,
   pipe, with, error handling, tagged tuples, guards, pure functions.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Elixir Essentials
@@ -16,6 +19,8 @@ description: >
 Use this skill before writing **any** `.ex` or `.exs` file.
 
 Canonical standard: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md).
+
+**Quick reference:** [FCIS checklist](assets/fcis_checklist.md) — run before shipping `.ex` / `.exs` files.
 
 ## RULES — no exceptions
 
@@ -34,8 +39,19 @@ Canonical standard: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engine
 
 ## 1. Functional Core, Imperative Shell
 
+❌ **Bad:** business rules mixed with side effects
+
 ```elixir
-# ✅ Pure core — no Repo, no HTTP, no process
+def checkout(order_id) do
+  order = Repo.get!(Order, order_id)
+  total = Enum.reduce(order.lines, 0, &(&1.amount + &2))
+  Payments.charge(order, total)
+end
+```
+
+✅ **Good:** pure core + thin shell
+
+```elixir
 defmodule MyApp.Orders.Pricing do
   def total(%{lines: lines}), do: Enum.reduce(lines, 0, &(&1.amount + &2))
 
@@ -43,7 +59,6 @@ defmodule MyApp.Orders.Pricing do
   def discount(_total, _tier), do: 0
 end
 
-# ✅ Shell — side effects at the edge
 defmodule MyApp.Orders do
   alias MyApp.Orders.Pricing
 
@@ -59,13 +74,17 @@ end
 
 ## 2. Pattern matching & guards
 
+❌ **Bad:** nested conditionals
+
 ```elixir
-# ❌
 def handle_response(%{status: s} = r) do
   if s == 200, do: {:ok, r.body}, else: {:error, :bad_status}
 end
+```
 
-# ✅ multi-clause (pure mapper — not a behaviour callback)
+✅ **Good:** multi-clause dispatch (pure mapper — not a behaviour callback)
+
+```elixir
 def handle_response(%{status: 200, body: body}), do: {:ok, body}
 def handle_response(%{status: 404}), do: {:error, :not_found}
 def handle_response(%{status: status}), do: {:error, {:bad_status, status}}
@@ -76,8 +95,9 @@ def calculate(_), do: {:error, :invalid_input}
 
 ## 3. Railway flow: tagged tuples + `with`
 
+❌ **Bad:** nested `case`
+
 ```elixir
-# ❌ nested case
 def create_post(params) do
   case validate(params) do
     {:ok, attrs} ->
@@ -88,16 +108,22 @@ def create_post(params) do
     error -> error
   end
 end
+```
 
-# ✅
+✅ **Good:** `with` for sequential fallible steps
+
+```elixir
 def create_post(params) do
   with {:ok, attrs} <- validate(params),
        {:ok, post} <- Repo.insert(change_post(attrs)) do
     {:ok, post}
   end
 end
+```
 
-# Optional else for normalized edge messages
+✅ **Good:** optional `else` for normalized edge errors
+
+```elixir
 def transfer(from_id, to_id, amount) do
   with {:ok, from} <- get_account(from_id),
        {:ok, to} <- get_account(to_id),
@@ -115,15 +141,19 @@ end
 
 ## 4. Pipe linearity
 
+❌ **Bad:** pipe into `case`
+
 ```elixir
-# ❌
 params
 |> case do
   %{"id" => id} -> Repo.get(User, id)
   _ -> nil
 end
+```
 
-# ✅
+✅ **Good:** linear named steps
+
+```elixir
 params
 |> Map.fetch!("id")
 |> Users.get()
@@ -133,11 +163,21 @@ Pipes should read as **one subject transformed**. Extract named functions instea
 
 ## 5. Explicit shapes at the boundary
 
+❌ **Bad:** untyped maps deep in core logic
+
 ```elixir
-# Parse untyped input once, then work on known data
+def register(params) do
+  email = params["email"]
+  create_user(%{email: email, role: String.to_atom(params["role"])})
+end
+```
+
+✅ **Good:** parse once, then use a known shape
+
+```elixir
 def register(params) when is_map(params) do
   case Registration.changeset(params) |> Ecto.Changeset.apply_action(:insert) do
-    {:ok, data} -> create_user(data)   # core sees a known shape
+    {:ok, data} -> create_user(data)
     {:error, cs} -> {:error, cs}
   end
 end
@@ -154,8 +194,18 @@ end
 
 ## List work
 
+❌ **Bad:** three passes over the same list
+
 ```elixir
-# Prefer one pass when chaining map+filter+map
+list
+|> Enum.map(&transform/1)
+|> Enum.filter(&valid?/1)
+|> Enum.map(&format/1)
+```
+
+✅ **Good:** one pass when clearer
+
+```elixir
 for item <- list,
     transformed = transform(item),
     valid?(transformed) do

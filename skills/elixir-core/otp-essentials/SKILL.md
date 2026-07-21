@@ -1,7 +1,7 @@
 ---
 name: otp-essentials
 type: atomic
-tags: [atomic, elixir-core]
+tags: [atomic]
 license: MIT
 description: >
   MANDATORY for ALL OTP work. Invoke before writing GenServer, Supervisor, Task, or Agent
@@ -9,6 +9,9 @@ description: >
   Keep callbacks thin; pure modules do the work (FCIS). Covers GenServer API, handle_continue,
   call vs cast, supervision, Task, Agent, Registry, ETS. Trigger words: GenServer, Supervisor,
   OTP, Task, Agent, Registry, ETS, process, supervision, thin callbacks.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # OTP Essentials
@@ -34,9 +37,24 @@ Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineer
 
 ## Thin GenServer (FCIS)
 
+❌ **Bad:** business logic inside the callback
+
+```elixir
+@impl true
+def handle_call({:quote, items}, _from, state) do
+  total =
+    Enum.reduce(items, 0, fn item, acc ->
+      if item.active, do: acc + item.price, else: acc
+    end)
+
+  {:reply, total, state}
+end
+```
+
+✅ **Good:** pure module + thin callback
+
 ```elixir
 defmodule MyApp.Pricing do
-  # Pure core
   def quote(items), do: Enum.reduce(items, 0, &(&1.price + &2))
 end
 
@@ -87,6 +105,17 @@ end
 
 ## `handle_continue` for heavy startup
 
+❌ **Bad:** block `init/1` with I/O
+
+```elixir
+@impl true
+def init(opts) do
+  {:ok, %{data: Loader.load!(opts)}}  # delays process start / supervision
+end
+```
+
+✅ **Good:** continue after the process is up
+
 ```elixir
 @impl true
 def init(opts) do
@@ -95,7 +124,7 @@ end
 
 @impl true
 def handle_continue(:load, state) do
-  data = Loader.load!(state.opts)  # side effect after process is up
+  data = Loader.load!(state.opts)
   {:noreply, Map.put(state, :data, data)}
 end
 ```
@@ -118,12 +147,17 @@ Prefer `:one_for_one` unless children are tightly coupled (`:rest_for_one` / `:o
 
 ## Tasks
 
-```elixir
-# One-off async
-task = Task.async(fn -> fetch_profile(user_id) end)
-profile = Task.await(task, 5_000)
+❌ **Bad:** ignore failures from `async_stream`
 
-# Batch with failure handling
+```elixir
+user_ids
+|> Task.async_stream(&fetch_user/1, max_concurrency: 4, timeout: 10_000)
+|> Enum.map(fn {:ok, result} -> result end)
+```
+
+✅ **Good:** handle exits and timeouts
+
+```elixir
 user_ids
 |> Task.async_stream(&fetch_user/1, max_concurrency: 4, timeout: 10_000, on_timeout: :kill_task)
 |> Enum.reduce([], fn
@@ -134,6 +168,12 @@ user_ids
     acc
 end)
 |> Enum.reverse()
+```
+
+```elixir
+# One-off async
+task = Task.async(fn -> fetch_profile(user_id) end)
+profile = Task.await(task, 5_000)
 
 # Supervised fire-and-forget
 Task.Supervisor.start_child(MyApp.TaskSupervisor, fn -> send_email(user) end)
@@ -182,12 +222,14 @@ defmodule MyApp.EtsCache do
   @table :my_app_cache
 
   def start_link(opts), do: GenServer.start_link(__MODULE__, opts, name: __MODULE__)
+
   def get(key) do
     case :ets.lookup(@table, key) do
       [{^key, value}] -> {:ok, value}
       [] -> {:error, :not_found}
     end
   end
+
   def put(key, value), do: GenServer.call(__MODULE__, {:put, key, value})
 
   @impl true

@@ -1,13 +1,16 @@
 ---
 name: typespec-dialyzer
 type: atomic
-tags: [atomic, elixir-core]
+tags: [atomic]
 license: MIT
 description: >
   Use when adding type safety to Elixir code, writing public functions, or refactoring.
   Specs document FCIS boundaries: pure core inputs/outputs and edge effects via tagged tuples.
   Covers @spec, @type, Dialyxir setup, ignore files, CI PLT cache. Trigger words: typespec,
   @spec, @type, Dialyzer, Dialyxir, type safety, type checking.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # TypeSpec & Dialyzer
@@ -28,6 +31,15 @@ Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineer
 8. **Specs match reality** — do not widen past success typing to silence Dialyzer
 
 ## Specs at the FCIS boundary
+
+❌ **Bad:** untyped public APIs
+
+```elixir
+def get_user(id), do: Repo.get(User, id)
+def create_user(attrs), do: %User{} |> User.changeset(attrs) |> Repo.insert()
+```
+
+✅ **Good:** explicit shapes and railway returns
 
 ```elixir
 defmodule MyApp.Orders.Pricing do
@@ -58,6 +70,17 @@ end
 ```
 
 ## Struct types that match the schema
+
+❌ **Bad:** types that lie about the schema
+
+```elixir
+@type t :: %__MODULE__{
+        role: :admin | :editor,          # field is :string
+        inserted_at: DateTime.t()        # timestamps() default is naive + nilable
+      }
+```
+
+✅ **Good:** align `@type t` with fields (or use `Ecto.Enum` + matching atom type)
 
 ```elixir
 defmodule MyApp.Accounts.User do
@@ -145,13 +168,19 @@ config :dialyxir,
 ]
 ```
 
+❌ **Bad:** non-existent CLI flag
+
+```bash
+mix dialyzer --ignore-file .dialyzer_ignore.exs
+```
+
+✅ **Good:** configure `ignore_warnings` and use supported formats
+
 ```bash
 mix dialyzer                 # builds PLT on first run
 mix dialyzer --format short
 mix dialyzer --format ignore_file   # generate ignore entries
 ```
-
-Do **not** pass a non-existent `--ignore-file` flag to `mix dialyzer`; configure `ignore_warnings` instead.
 
 ## Reading errors
 
