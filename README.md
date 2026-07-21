@@ -194,6 +194,7 @@ Contributor and agent standards for this library:
 | [docs/taxonomy.md](docs/taxonomy.md) | Domain-first folders, placement rules, migration matrix |
 | [docs/fcis-engineering-rules.md](docs/fcis-engineering-rules.md) | Pragmatic FCIS (pure core, tagged tuples, thin edges) |
 | [docs/playbooks.md](docs/playbooks.md) | Playbook template: phases, hard gates, HITL, mermaid |
+| [docs/skillspector.md](docs/skillspector.md) | Scanner false-positive policy (SkillSpector) |
 
 ## Installation
 

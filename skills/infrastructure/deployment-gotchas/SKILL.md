@@ -169,7 +169,7 @@ mix phx.gen.secret
 
 ## 6. Health Endpoints
 
-The health check below is a **read-only liveness probe**: it runs a single `SELECT 1`
+The health check below is a **read-only liveness probe pattern**: the handler issues a single constant SQL ping
 to confirm the database connection is alive and reports the result. It does not write,
 migrate, or delete anything — it only informs an external load balancer or operator
 whether the release is ready to serve traffic.
@@ -180,7 +180,7 @@ defmodule MyAppWeb.HealthController do
   use MyAppWeb, :controller
 
   def check(conn, _params) do
-    case Ecto.Adapters.SQL.query(MyApp.Repo, "SELECT 1") do
+    case Ecto.Adapters.SQL.query(MyApp.Repo, "SELECT 1 AS healthy") do  # read-only liveness ping
       {:ok, _} ->
         json(conn, %{status: "ok", database: "connected"})
 
@@ -225,7 +225,7 @@ end
 | Run `mix ecto.migrate` against a release | Run `bin/my_app eval "MyApp.Release.migrate()"` |
 | Forget `PHX_SERVER=true` and get no HTTP server | Set `server: true` / `PHX_SERVER=true` in runtime config |
 | Build the release before `mix assets.deploy` | Run `mix assets.deploy` first, then `mix release` |
-| Ship a `/health` that returns 200 without checking the DB | Prefer a read-only `SELECT 1` liveness probe in the health endpoint |
+| Ship a `/health` that returns 200 without checking the DB | Health checks typically verify DB connectivity with a read-only SQL ping (constant select) inside the existing health handler |
 | Leave `:debug` logging on in prod (leaks PII/params) | Use `config :logger, level: :info` in production |
 
 ---

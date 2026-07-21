@@ -243,7 +243,7 @@ end
 | ❌ Don't | ✅ Do |
 |----------|-------|
 | Assume the Plug pipeline authenticated the socket | Verify the token in `connect/3` — channels bypass Plug |
-| Join any topic without checking membership | Check membership in `join/3`; return `{:ok, socket}` when authorized, `{:error, %{reason: "unauthorized"}}` when not |
+| Join any topic without checking membership | `join/3` encodes authorization: allow with `{:ok, socket}`, deny with `{:error, %{reason: "unauthorized"}}` |
 | Put business logic inside `handle_in` | Delegate to context modules; keep channels thin |
 | Silently drop client messages | Return `{:reply, :ok, socket}` or `{:reply, {:error, reason}, socket}` |
 | Trust raw client payloads | Sanitize/validate (`String.slice`, `String.trim`) before broadcasting |

@@ -14,7 +14,7 @@ metadata:
 ---
 # Req HTTP Client
 
-Examples use `base_url` / `url` variables or `https://api.example.com` as placeholders only — never commit real host secrets.
+Examples resolve hosts via `Application.fetch_env!(:my_app, :api_base_url)` (or inject a base `Req` client) — never hard-code production hosts or secrets in source.
 
 Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. HTTP/email/i18n adapters are edges; keep request building and response mapping pure where possible.
 
@@ -41,7 +41,8 @@ Build requests and map responses in pure functions; perform I/O in a thin client
 
 ```elixir
 def import_user(id) do
-  {:ok, %{status: 200, body: body}} = Req.get("https://api.example.com/users/#{id}")
+  base_url = Application.fetch_env!(:my_app, :api_base_url)
+  {:ok, %{status: 200, body: body}} = Req.get(base_url <> "/users/#{id}")
   rank = if body["score"] > 10, do: :gold, else: :silver
   Repo.insert!(%User{external_id: id, rank: rank})
 end
@@ -155,7 +156,7 @@ Checkpoint: confirm a `{:ok, body}` tuple is returned; check logs for retry warn
 
 ```elixir
 # Automatic retries for transient failures
-url = "https://api.example.com/data"  # placeholder host
+url = Application.fetch_env!(:my_app, :api_base_url) <> "/data"
 Req.get!(url,
   retry: :transient,           # Retry on 5xx and network errors
   retry_delay: &(&1 * 1000),   # Exponential backoff: 1s, 2s, 4s, ...
@@ -164,7 +165,7 @@ Req.get!(url,
 )
 
 # Custom retry logic (e.g. also retry on 429)
-Req.get!("https://api.example.com/data",
+Req.get!(Application.fetch_env!(:my_app, :api_base_url) <> "/data",
   retry: fn response ->
     case response do
       %{status: 429} -> true
@@ -185,12 +186,12 @@ unbounded:
 
 ```elixir
 # Stream large responses to a file
-Req.get!("https://api.example.com/large-file",
+Req.get!(Application.fetch_env!(:my_app, :api_base_url) <> "/large-file",
   into: File.stream!("download.txt")
 )
 
 # Stream with a callback
-Req.get!("https://api.example.com/stream",
+Req.get!(Application.fetch_env!(:my_app, :api_base_url) <> "/stream",
   into: fn {:data, data}, {req, resp} ->
     IO.puts("Received #{byte_size(data)} bytes")
     {:cont, {req, resp}}
