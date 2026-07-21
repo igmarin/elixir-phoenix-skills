@@ -4,134 +4,104 @@ type: playbook
 tags: [playbooks]
 license: MIT
 description: >
-  Complete code quality loop for Elixir projects with hard gates: enforce formatting and linter compliance (mix format, mix credo must pass) → refactor only after characterization tests PASS on current code, verify behavior preserved after each extraction → generate @doc for all public APIs → NEVER open PR before formatter, credo, dialyzer, full test suite, and @doc coverage all pass; phases conventions review→refactoring→documentation. Use this composite end-to-end loop instead of individual refactoring or documentation skills when full three-phase production-readiness review is needed in one pass. Trigger: code review prep, before PR, full Elixir quality sweep, quality audit, production-ready review, end-to-end quality check.
+  Pre-PR quality loop with hard gates: mix format, credo, dialyzer, hex.audit, full tests →
+  optional FCIS-safe refactor with characterization tests and HITL → docs/specs on public APIs.
+  Trigger words: before PR, quality sweep, production readiness, credo, dialyzer, refactor for PR.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
+  entry_point: true
+  phases: "1 Conventions, 2 Refactor optional, 3 Docs"
+  hard_gates: "format-credo-dialyzer-audit, characterization-green, suite-and-docs"
+  dependencies:
+    source: self
+    skills:
+      - code-quality
+      - credo-config
+      - refactor-code
+      - typespec-dialyzer
 ---
 
 # Quality Playbook
 
-Orchestrates code quality checks, safe refactoring, and documentation updates across three phases.
+## When to use
 
-## Complexity Thresholds
+Before opening a PR or when asked for a full quality/production-readiness pass.
 
-Proceed to Phase 2 if any threshold is exceeded:
+## Atomic skills this playbook loads
 
-| Metric | Threshold | Action |
-|--------|-----------|--------|
-| Function Length | > 20 lines | Extract function or private helper |
-| Parameter Count | > 4 | Use keyword list or map |
-| Module Length | > 400 lines | Extract bounded context or sub-module |
-| Nesting Depth | > 3 levels | Extract function or use `with` |
-| Pipe Chain | > 5 pipes | Extract into named function |
+| Skill | Path | Role |
+|-------|------|------|
+| `code-quality` | `skills/quality/code-quality/` | Complexity/duplication |
+| `credo-config` | `skills/quality/credo-config/` | Credo setup |
+| `refactor-code` | `skills/quality/refactor-code/` | Safe extractions |
+| `typespec-dialyzer` | `skills/elixir-core/typespec-dialyzer/` | Specs/docs types |
 
-## Agent Phases
+## Flow
 
-### Phase 1: Conventions Review
+```mermaid
+flowchart TD
+  A[Run format credo dialyzer audit test] --> B{All green?}
+  B -->|No| C[Fix violations]
+  C --> A
+  B -->|Yes| D{Complexity over threshold?}
+  D -->|No| F[Docs and specs]
+  D -->|Yes| E[HITL refactor plan + characterize]
+  E --> F
+  F --> G[PR ready]
+```
 
-Run the following tools and address all violations:
+## Complexity thresholds (Phase 2 trigger)
+
+| Metric | Threshold |
+|--------|-----------|
+| Function length | > 20 lines |
+| Parameters | > 4 |
+| Module length | > 400 lines |
+| Nesting | > 3 |
+| Pipe chain | > 5 |
+
+## Phases
+
+### Phase 1 — Conventions
 
 ```bash
-mix format --check-formatted   # Formatting
-mix credo --strict             # Linting and complexity
-mix dialyzer                   # Type checking
-mix hex.audit                  # Dependency audit
+mix format --check-formatted
+mix credo --strict
+mix dialyzer
+mix hex.audit
+mix test
 ```
 
-**HARD GATE — NEVER open a PR before all four checks above pass**, plus `mix test` (full suite green) and `@doc`/`@spec` annotations on all public APIs (completed in Phase 3). Fix any failure before proceeding.
+**HARD GATE:** all commands exit 0 before Phase 2/PR.
 
-**If gate fails:** Fix the failing check — formatter, `credo`, `dialyzer`, `hex.audit`, or a red test — before doing anything else; do not open the PR until every command exits 0.
+### Phase 2 — Refactor (optional)
 
+Only if thresholds exceeded.
 
-### Phase 2: Refactoring (Optional)
+1. Characterization test (must be green on current code).
+2. **HUMAN-IN-THE-LOOP:** propose one extraction at a time; wait for approval.
+3. Apply one change; re-run tests.
+4. Prefer FCIS extractions (pure modules out of LiveViews/controllers/workers).
 
-**Decision Gate — Proceed if any threshold above is exceeded; otherwise skip to Phase 3.**
+**If red:** revert last change; smaller step.
 
-**TDD Enforcement — Before any code change:**
-1. Write characterization test documenting current behavior.
-2. **Verify PASSES** — `mix test test/path/to/file_test.exs`.
-3. **Checkpoint** — Propose specific refactoring (e.g., extract a private helper, introduce a `with` chain, replace positional args with a keyword list).
-4. Apply the single proposed change.
-5. **Re-validate** — `mix test test/path/to/file_test.exs` must still be green.
-6. **Repeat** steps 3–5 for each additional violation; do not batch multiple extractions in one step.
+### Phase 3 — Documentation
 
-**Error Recovery — If tests go red after a change:**
-- Revert the last change immediately.
-- Re-examine the characterization test to ensure it fully covers the behavior being touched.
-- Propose a smaller, safer extraction and repeat from step 3.
+- `@doc` + `@spec` on public APIs touched
+- No PR until docs + Phase 1 gate hold
 
+## Verification checklist
 
-### Phase 3: Documentation
+- [ ] Format / Credo / Dialyzer / audit / test green
+- [ ] Refactors (if any) HITL-approved and characterized
+- [ ] Public APIs documented
+- [ ] No FCIS violations introduced (fat edges)
 
-**Goal — All public API functions have `@doc` and `@spec` before merge.**
+## Error recovery
 
-1. Identify every public function (no leading `_`, not `defp`) in the changed modules.
-2. For each function missing `@doc`:
-   - Write a concise description of purpose and return value.
-   - Add at least one `## Examples` block with a `iex>` doctest where practical.
-3. For each function missing `@spec`:
-   - Derive the typespec from usage and dialyzer hints.
-   - Add `@spec` immediately above the function head.
-4. Run `mix dialyzer` once more to confirm new typespecs are consistent.
-5. Run `mix test` to verify doctests pass.
+Fix failing tool first; never open PR with a red gate.
 
+## Output style
 
-## Final Pre-PR Checklist
-
-Before opening a PR, confirm every item is green:
-
-| Check | Command | Must Pass |
-|-------|---------|----------|
-| Formatting | `mix format --check-formatted` | ✅ |
-| Linting | `mix credo --strict` | ✅ |
-| Type checking | `mix dialyzer` | ✅ |
-| Dependency audit | `mix hex.audit` | ✅ |
-| Full test suite | `mix test` | ✅ |
-| Doc/spec coverage | All public APIs annotated | ✅ |
-
-**Do not open the PR until every row is ✅.**
-
-
-## Output Style
-
-When completing a quality pass, output a report using this template:
-
-```markdown
-# Quality Report — [Module / Scope]
-
-## Conventions
-- mix format --check-formatted: ✓/✗
-- mix credo --strict: ✓/✗ (<n> issues)
-- mix dialyzer: ✓/✗
-- mix hex.audit: ✓/✗
-
-## Refactoring
-- Thresholds exceeded: <list or none>
-- Extractions applied: <list>, each re-validated green
-
-## Documentation
-- Public functions annotated: <n>/<n> @doc, <n>/<n> @spec
-- Doctests passing: ✓/✗
-
-## Full Suite
-- mix test: ✓/✗ (<n> tests, 0 failures)
-
-Verdict: <READY FOR PR / NOT READY — blocking check>
-```
-
-
-## Error Recovery
-
-**Tests go red after a refactoring extraction:**
-1. Revert the last change immediately.
-2. Widen the characterization test to cover the touched behavior, then propose a smaller extraction.
-
-**Credo flags an issue you believe is a false positive:**
-1. Do not blanket-disable the check; confirm with the user before suppressing anything.
-2. If the pattern is genuinely intentional, add a scoped `# credo:disable-for-next-line` with a justifying comment.
-
-**Dialyzer reports a contract or type error after you add an `@spec`:**
-1. Re-derive the spec from actual usage and dialyzer's hint.
-2. If the code is correct but the spec is wrong, fix the spec; if the spec exposed a real type bug, fix the code.
-
-**`mix hex.audit` reports a vulnerable dependency:**
-1. Bump the affected dependency to a patched version and re-run the audit.
-2. If no patched release exists, document the exposure and raise it with the user before opening the PR.
+Command results table, refactor list, docs remaining.

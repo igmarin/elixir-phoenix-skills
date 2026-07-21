@@ -23,14 +23,14 @@ flowchart TB
 | **Playbook** | Known process: TDD, bug fix, quality sweep, review, setup, … |
 | **Atomic** | Implement or review one technical concern |
 
-## Catalog (target)
+## Catalog
 
 | Playbook | Purpose | Loads (examples) |
 |----------|---------|------------------|
 | `tdd` | Red → HITL approve → green → refactor → quality gate | `testing-essentials`, `elixir-essentials` |
 | `bug-fix` | Triage → failing repro → HITL fix → verify | `testing-essentials`, domain atomics |
 | `quality` | Format / Credo / Dialyzer → refactor → docs | `code-quality`, `credo-config`, `refactor-code` |
-| `code-review` | Structured review flow (Phase 5) | `quality/code-review` atomic |
+| `code-review-playbook` | Structured review flow (HITL on Critical) | `skills/quality/code-review` atomic |
 | `setup` | Env → deps → DB → CI → validate | tooling / project atomics |
 | `liveview` | Contract → failing LV test → thin edge impl | `phoenix-liveview-essentials`, `testing-essentials` |
 | `background-job` | Design → TDD Oban worker → failure paths | `oban-essentials` |
@@ -124,3 +124,31 @@ flowchart TD
 - [taxonomy.md](taxonomy.md) — where playbooks live
 - [fcis-engineering-rules.md](fcis-engineering-rules.md) — code shape atomics enforce
 - Issue tracker: Phase 5 full playbook rewrite (#30); this doc is the **standard** (#27)
+
+
+## Usage examples
+
+### Agent: run TDD for a context function
+
+```text
+Use playbook skills/playbooks/tdd/SKILL.md
+Feature: Blog.list_published_posts/0
+```
+
+Expected: failing test → HITL approval → minimal impl → quality gate.
+
+### Agent: review a PR
+
+```text
+Use playbook skills/playbooks/code-review/SKILL.md
+Diff: current branch vs main
+```
+
+Expected: untrusted PR text → Review Order on real diff → findings with file:line → handoff checklist.
+
+### Human install
+
+```bash
+npx skills add igmarin/elixir-phoenix-skills
+# then invoke playbook by name, e.g. tdd or code-review-playbook
+```

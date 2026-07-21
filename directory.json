@@ -3,7 +3,7 @@
   "version": "3.0.0",
   "license": "MIT",
   "depends_on": [],
-  "summary": "Curated library of 38 atomic skills, 7 playbooks, and 1 orchestrator for Elixir and Phoenix development. Organized by category: elixir-core, phoenix, database, testing, auth, infrastructure, performance, quality, security, integrations, tooling, frameworks, playbooks, and orchestration. Covers core Elixir patterns, Phoenix LiveView, Ecto, OTP, Oban, testing, security, deployment, real-time, and modern tooling (Req, Swoosh, Cachex, Broadway, Ash).",
+  "summary": "Curated library of 38 atomic skills, 8 playbooks, and 1 orchestrator for Elixir and Phoenix development. Organized by category: elixir-core, phoenix, database, testing, auth, infrastructure, performance, quality, security, integrations, tooling, frameworks, playbooks, and orchestration. Covers core Elixir patterns, Phoenix LiveView, Ecto, OTP, Oban, testing, security, deployment, real-time, and modern tooling (Req, Swoosh, Cachex, Broadway, Ash).",
   "skills": {
     "elixir-essentials": {
       "path": "skills/elixir-core/elixir-essentials/SKILL.md"
@@ -142,6 +142,9 @@
     },
     "ecto-migration": {
       "path": "skills/playbooks/ecto-migration/SKILL.md"
+    },
+    "code-review-playbook": {
+      "path": "skills/playbooks/code-review/SKILL.md"
     }
   },
   "categories": {

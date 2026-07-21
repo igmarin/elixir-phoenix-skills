@@ -8,7 +8,7 @@ description: >
   sub-tasks, then delegates to the correct specialised skill — never implements directly.
   Enforces TDD discipline across all code-producing work. Priority order:
   TDD → Planning → Implementation → Quality → Review. First response
-  line MUST be "Next skill: skills/[category]/[name]". Falls back to `elixir-essentials`
+  line MUST be "Next skill: skills/[category]/[name]". Prefer playbooks for multi-step work (e.g. skills/playbooks/tdd, skills/playbooks/code-review). Falls back to `elixir-essentials`
   for language ambiguity or `phoenix-liveview-essentials` for web ambiguity. Use when scope is
   unclear, best approach uncertain, or request spans multiple concerns.
   Trigger words: where do I start, help me plan, break this down, best approach, not sure how,
@@ -25,6 +25,9 @@ Non-negotiable: no implementation code until a test exists, runs, and fails for 
 ```
 
 ## Core Process
+
+Prefer **playbooks** for multi-step flows (`tdd`, `bug-fix`, `quality`, `code-review-playbook`, `setup`, `liveview`, `background-job`, `ecto-migration`). Use atomics for single-domain implementation.
+
 
 Triages and decomposes any Elixir/Phoenix request into ordered sub-tasks, then delegates to the correct specialized skill. Identify the matching skill from the catalog below and route to it using the format defined in **Output Style**.
 

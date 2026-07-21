@@ -4,151 +4,120 @@ type: playbook
 tags: [playbooks]
 license: MIT
 description: >
-  Orchestrates the full Elixir TDD cycle with hard gates: test MUST exist, be run, and FAIL for the correct reason (e.g. function not defined, not syntax error) before any implementation code — proposes minimal implementation and waits for user approval → verifies test PASSES → runs full suite (mix format, mix credo, mix dialyzer, mix test) all green → produces @doc documentation and self-reviewed PR. Operates in four phases: context/test design → implementation → iterate → finish. Use when practicing test-driven development, red-green-refactor, TDD workflow, writing tests before code, adding tests first, or building an Elixir feature where specs must gate implementation.
+  Orchestrates the full Elixir TDD cycle with hard gates and human-in-the-loop approval:
+  write a failing test → confirm fail for the right reason → propose minimal impl → wait for
+  approval → green → refactor → quality gate. Trigger words: tdd, red-green-refactor, test first,
+  failing test, write tests before code.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
+  entry_point: true
+  phases: "1 Context & RED, 2 HITL approve & GREEN, 3 Refactor, 4 Quality gate"
+  hard_gates: "test-fails-right-reason, user-approval, target-test-green, suite-green"
+  dependencies:
+    source: self
+    skills:
+      - testing-essentials
+      - elixir-essentials
+      - typespec-dialyzer
 ---
 
 # TDD Playbook
 
-Orchestrates the full Elixir TDD cycle. Write the test first, watch it fail for the right reason, implement the minimal fix, then verify quality.
+## When to use
 
-## Agent Phases
+Building or changing Elixir behaviour where tests must gate implementation. Prefer pure-core unit tests first (FCIS); use DataCase only when persistence is the behaviour under test.
 
-### Phase 1: Context & Test Design
-1. **Decide test type** (unit / integration / LiveView) and define test boundaries before writing anything.
-2. **Write the minimal failing test** — see Example below.
-3. **Run**: `mix test test/path/to/file_test.exs` — confirm it FAILS.
+## Atomic skills this playbook loads
+
+| Skill | Path | Role |
+|-------|------|------|
+| `testing-essentials` | `skills/testing/testing-essentials/` | ExUnit patterns, fixtures |
+| `elixir-essentials` | `skills/elixir-core/elixir-essentials/` | FCIS language rules |
+| `typespec-dialyzer` | `skills/elixir-core/typespec-dialyzer/` | `@spec` on public APIs |
+
+Do **not** re-teach LiveView/Ecto here — load domain atomics when the feature needs them.
+
+## Flow
+
+```mermaid
+flowchart TD
+  A[Design minimal test] --> B{Fails for right reason?}
+  B -->|No| A
+  B -->|Yes| C[HITL: approve minimal impl]
+  C --> D[Implement]
+  D --> E{Target test green?}
+  E -->|No| D
+  E -->|Yes| F[Refactor if needed]
+  F --> G[Quality gate]
+  G --> H[Done]
+```
+
+## Phases
+
+### Phase 1 — Context & RED
+
+1. Decide test type (unit / DataCase / LiveView) and boundary.
+2. Write the **minimal** failing test.
+3. Run: `mix test path/to/file_test.exs`
 
 **HARD GATE — Test Feedback**
-- Test EXISTS and is RUN.
-- FAILS for correct reason (e.g., `** (UndefinedFunctionError) function MyApp.Blog.list_posts/0 is undefined`).
-- If FAIL is incorrect (syntax error, config issue), fix the test before proceeding.
 
-**If gate fails:** If the test fails for the wrong reason (syntax or config, not a missing function), fix the test until it fails because the implementation is absent — do not write implementation code yet.
+- Test exists and was run
+- Fails because behaviour is missing (e.g. `UndefinedFunctionError`), not syntax/config
 
-#### Example: Minimal Failing Test
-```elixir
-# test/my_app/blog_test.exs
-defmodule MyApp.BlogTest do
-  use MyApp.DataCase, async: true
+**If gate fails:** Fix the test setup until the failure reason is correct. Do not implement yet.
 
-  alias MyApp.Blog
+### Phase 2 — HITL approve & GREEN
 
-  describe "list_posts/0" do
-    test "returns all published posts" do
-      post = post_fixture(published: true)
-      assert Blog.list_posts() == [post]
-    end
-  end
-end
-```
+1. Propose the **minimal** implementation (no extra features).
+2. **HUMAN-IN-THE-LOOP — Implementation Proposal:** wait for **explicit user approval** before writing production files.
+3. Implement only what was approved.
+4. Run: `mix test path/to/file_test.exs` — must pass.
 
-Expected failure output:
-```
-** (UndefinedFunctionError) function MyApp.Blog.list_posts/0 is undefined or private
-```
+**HARD GATE — Green**
 
-### Phase 2: Implementation
-1. **Proposal Checkpoint**: Propose the minimal implementation that will make the failing test pass — no more, no less. Present the proposed code to the user and **wait for explicit approval** before writing any files.
-2. **On approval**: Write the implementation.
-3. **Run**: `mix test test/path/to/file_test.exs` — confirm the target test now PASSES.
+- Explicit approval recorded
+- Target test green; no new failures
 
-**HARD GATE — Implementation Verification**
-- Explicit user approval obtained for the proposed implementation before writing any files.
-- Target test PASSES.
-- No new test failures introduced.
-- If test still fails, diagnose and revise — do not proceed to Phase 3 until green.
+### Phase 3 — Refactor
 
-**If gate fails:** Diagnose the failing test and revise the implementation (re-seeking approval if the approach changes); do not advance to Phase 3 until the target test is green with no new failures.
+1. Refactor for clarity only (behaviour unchanged).
+2. Re-run target tests after each step.
+3. Repeat Phase 1–3 for the next behaviour slice.
 
-### Phase 3: Iterate
-1. **Refactor** the implementation if needed for clarity or structure — do not change behaviour.
-2. **Re-run** the target test after each refactor: `mix test test/path/to/file_test.exs`.
-3. **Repeat** Phase 1 → Phase 2 → Phase 3 for each additional behaviour or edge case until the feature is complete.
-4. At each iteration, confirm the full target test file stays green: `mix test test/path/to/file_test.exs`.
+### Phase 4 — Quality gate
 
-### Phase 4: Finish
-
-#### 4a. Quality Suite
-Run all four commands in order — **all must exit with 0**:
-```
+```bash
 mix format --check-formatted
 mix credo --strict
 mix dialyzer
 mix test
 ```
 
-#### 4b. Remediation (if any command fails)
-| Command | Action |
-|---|---|
-| `mix format` | Run `mix format`, re-check, then re-run `mix credo`, `mix dialyzer`, and `mix test` in case formatting changes introduced new issues. |
-| `mix credo` | Fix each flagged issue; do not suppress warnings without explicit user approval. |
-| `mix dialyzer` | Add or correct typespecs to resolve warnings. |
-| `mix test` | Diagnose regressions — do not proceed until all tests pass. |
+Add `@doc` / `@spec` on new public APIs. Self-review the branch diff (or run `code-review` playbook) before opening a PR.
 
-**HARD GATE — Quality Check**
-- All four mix commands exit with 0.
-- No warnings suppressed without explicit user approval.
+**HARD GATE — Suite**
 
-**If gate fails:** Apply the matching remediation from the table above, then re-run all four commands in order — finish only when each exits 0.
+- Format, Credo, Dialyzer, full `mix test` all exit 0
 
-#### 4c. Documentation & PR
-1. **Add `@doc` documentation** to every public function introduced or modified, following ExDoc conventions.
-2. **Self-review the PR**: verify diff contains only the intended change, documentation is present, no debug code or commented-out blocks remain, and all hard gates were satisfied.
-3. **Produce the PR** with a description that references the failing test, the minimal implementation, and the quality suite result.
+## Verification checklist
 
+- [ ] Failing test observed for the right reason before impl
+- [ ] User approved minimal implementation
+- [ ] Target tests green after impl and after each refactor
+- [ ] Quality commands green
+- [ ] Public APIs documented
 
-## Output Style
+## Error recovery
 
-When completing a TDD cycle, output a report using this template:
+| Problem | Action |
+|---------|--------|
+| Wrong-reason fail | Fix test/config; stay in Phase 1 |
+| Impl still red | Diagnose; re-propose if approach changes (HITL again) |
+| Refactor turns red | Revert last step; smaller extraction |
+| Quality red | Fix before PR; do not skip gates |
 
-```markdown
-# TDD Report — [Feature / Behavior]
+## Output style
 
-## Test Design
-- Type: <unit / integration / LiveView>
-- File: <test path>
-- RED: <exact failure, e.g. UndefinedFunctionError ...>
-
-## Implementation
-- Approval: <obtained>
-- Change: <file path + one-line summary>
-- GREEN: target test passes, no new failures
-
-## Quality Suite
-- mix format --check-formatted: ✓/✗
-- mix credo --strict: ✓/✗
-- mix dialyzer: ✓/✗
-- mix test: ✓/✗ (<n> tests, 0 failures)
-
-## Docs & PR
-- @doc added to new public functions: ✓/✗
-- Self-review complete: ✓/✗
-
-Verdict: <PASS / BLOCKED — reason>
-```
-
-
-## Error Recovery
-
-**Test fails for the wrong reason (syntax or config, not missing code):**
-1. Fix the test file or setup until the only failure is the undefined function or behavior.
-2. Re-confirm RED before proposing any implementation.
-
-**Test still fails after implementation:**
-1. Diagnose whether the test's expectation or the implementation is wrong.
-2. Revise the implementation (re-seeking approval if the approach changes); do not advance until green.
-
-**A Phase 3 refactor turns the suite red:**
-1. Revert the refactor immediately.
-2. Re-run the target test to confirm green, then attempt a smaller behavior-preserving change.
-
-**Quality suite fails (format / credo / dialyzer / test):**
-1. Apply the matching row from the Phase 4 remediation table.
-2. Re-run all four commands in order; fixing one may surface another, so treat the suite as passing only when every command exits 0.
-
-
-## Integration
-
-| Predecessor | This Playbook | Successor |
-|-------------|---------------|-----------|
-| `testing-essentials` (skill dependency — provides base test conventions and helpers) | tdd | None (standalone) |
+Report phase, gate status (pass/fail), commands run, and next action. Never skip HITL.
