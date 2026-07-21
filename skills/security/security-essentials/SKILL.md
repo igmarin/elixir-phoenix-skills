@@ -9,24 +9,28 @@ description: >
   arises. Covers atom exhaustion, SQL injection, open redirects, XSS, sensitive data in logs,
   timing attacks, CSRF, and dependency auditing.
   Trigger words: security, atom exhaustion, SQL injection, XSS, open redirect, timing attack, CSRF, Sobelow.
-
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Security Essentials
 
 Use this skill before writing ANY security-sensitive code.
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Parse/allowlist at the boundary; never trust raw maps deep in core.
 ## RULES — Follow these with no exceptions
 
-1. **Never call `String.to_atom/1` on user input** — use `String.to_existing_atom/1` or a whitelist `case` ([Atom Table Exhaustion](#atom-table-exhaustion))
-2. **Never interpolate user input into an Ecto `fragment` or raw SQL** — use `^value` bindings, `field/2`, or `$1`/`$2` placeholders ([SQL Injection](#sql-injection))
-3. **Never redirect to a user-controlled URL** — use `~p"..."` verified routes or a whitelist of allowed paths ([Open Redirects](#open-redirects))
-4. **Never render user content with `raw/1` in HEEx** — let auto-escaping run, or sanitize with `HtmlSanitizeEx` first ([Cross-Site Scripting (XSS)](#cross-site-scripting-xss))
-5. **Never log secrets** — log identifiers (`user_id`, `email`), never passwords, tokens, or PII ([Sensitive Data in Logs](#sensitive-data-in-logs))
-6. **Always compare tokens with `Plug.Crypto.secure_compare/2`** — never `==`, which leaks length/content via timing ([Timing Attacks](#timing-attacks))
-7. **Never disable Phoenix CSRF protection** — keep `:protect_from_forgery` in the browser pipeline and use `<.form>`, not raw `<form>` ([CSRF Protection](#csrf-protection))
-8. **Always authorize before returning a record** — verify ownership to prevent parameter tampering and IDOR ([Common Vulnerable Patterns](#common-vulnerable-patterns))
-9. **Always run `mix deps.audit && mix hex.audit && mix sobelow` before merge** — fail CI on any HIGH or CRITICAL finding ([Dependency Auditing](#dependency-auditing))
+**1.** **Never call `String.to_atom/1` on user input** — use `String.to_existing_atom/1` or a whitelist `case` ([Atom Table Exhaustion](#atom-table-exhaustion))
+**2.** **Never interpolate user input into an Ecto `fragment` or raw SQL** — use `^value` bindings, `field/2`, or `$1`/`$2` placeholders ([SQL Injection](#sql-injection))
+**3.** **Never redirect to a user-controlled URL** — use `~p"..."` verified routes or a whitelist of allowed paths ([Open Redirects](#open-redirects))
+**4.** **Never render user content with `raw/1` in HEEx** — let auto-escaping run, or sanitize with `HtmlSanitizeEx` first ([Cross-Site Scripting (XSS)](#cross-site-scripting-xss))
+**5.** **Never log secrets** — log identifiers (`user_id`, `email`), never passwords, tokens, or PII ([Sensitive Data in Logs](#sensitive-data-in-logs))
+**6.** **Always compare tokens with `Plug.Crypto.secure_compare/2`** — never `==`, which leaks length/content via timing ([Timing Attacks](#timing-attacks))
+**7.** **Never disable Phoenix CSRF protection** — keep `:protect_from_forgery` in the browser pipeline and use `<.form>`, not raw `<form>` ([CSRF Protection](#csrf-protection))
+**8.** **Always authorize before returning a record** — verify ownership to prevent parameter tampering and IDOR ([Common Vulnerable Patterns](#common-vulnerable-patterns))
+**9.** **Always run `mix deps.audit && mix hex.audit && mix sobelow` before merge** — fail CI on any HIGH or CRITICAL finding ([Dependency Auditing](#dependency-auditing))
 
 See [`assets/security_checklist.md`](assets/security_checklist.md) for a copy-paste pre-merge checklist covering input validation, auth, secrets, and production hardening.
 

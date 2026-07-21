@@ -11,17 +11,23 @@ description: >
 
   SQS, Kafka, RabbitMQ, broadway_sqs, broadway_kafka, handle_message, handle_batch, handle_failed,
   Broadway.start_link, Broadway.Message, push_message, dead letter queue, DLQ.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Broadway Data Pipelines
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Workers and pipelines are edges: fetch IDs, call pure core, return tagged tuples.
 ## RULES — Follow these with no exceptions
 
-1. **Use `Broadway.Message.failed/2` for errors** — never raise in `handle_message/3`
-2. **Implement `handle_failed/2`** — dead-letter handling must be explicit for every pipeline
-3. **Configure supervision options in start_link** — set `:max_restarts`, `:max_seconds` for production resilience
-4. **Test with `Broadway.Test.push_message/2`** — verify each message type including failures
-5. **Treat all producer payloads as untrusted** — validate `message.data` against a strict schema in `handle_message/3`; reject malformed, oversized, or unexpected payloads; never log raw payload contents
+**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
+**1.** **Use `Broadway.Message.failed/2` for errors** — never raise in `handle_message/3`
+**2.** **Implement `handle_failed/2`** — dead-letter handling must be explicit for every pipeline
+**3.** **Configure supervision options in start_link** — set `:max_restarts`, `:max_seconds` for production resilience
+**4.** **Test with `Broadway.Test.push_message/2`** — verify each message type including failures
+**5.** **Treat all producer payloads as untrusted** — validate `message.data` against a strict schema in `handle_message/3`; reject malformed, oversized, or unexpected payloads; never log raw payload contents
 
 
 ## End-to-End Setup Workflow

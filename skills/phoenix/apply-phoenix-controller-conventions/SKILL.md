@@ -12,6 +12,9 @@ description: >
   Trigger words: phoenix controller conventions, controller patterns, phoenix
   router, plug pipeline, controller plugs, fallback controller, strong params,
   phoenix routes, action fallback.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Apply Phoenix Controller Conventions
@@ -21,6 +24,8 @@ Use this skill when writing new Phoenix controller modules or modifying existing
 **Precondition:** Invoke `phoenix-liveview-essentials` before this skill if the feature uses LiveView; for traditional request/response, use this skill directly.
 
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Keep LiveView/controller callbacks thin; delegate business rules to contexts/pure modules.
 ## Quick Reference
 
 | Pattern | Convention |
@@ -36,14 +41,40 @@ Use this skill when writing new Phoenix controller modules or modifying existing
 
 ## RULES — Follow these with no exceptions
 
-1. **Keep controllers thin** — never put business logic in controllers; delegate to context modules
-2. **Use `plug` guards for authentication and resource loading** — chain with `when action not in [...]` opt-out pattern
-3. **Always validate and authorize** every action that touches access-controlled resources
-4. **Use `FallbackController` for JSON API error handling** — never inline catch-all `case` clauses in actions
-5. **Match content pipeline to format** — API pipeline (no session, no CSRF) for JSON; browser pipeline for HTML
-6. **Use `conn.assigns` for passing data between plugs and actions** — never use `Process` dictionaries
-7. **Never interpolate user input into redirect paths** — use `~p"..."` paths for verified routes
+**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
+**1.** **Keep controllers thin** — never put business logic in controllers; delegate to context modules
+**2.** **Use `plug` guards for authentication and resource loading** — chain with `when action not in [...]` opt-out pattern
+**3.** **Always validate and authorize** every action that touches access-controlled resources
+**4.** **Use `FallbackController` for JSON API error handling** — never inline catch-all `case` clauses in actions
+**5.** **Match content pipeline to format** — API pipeline (no session, no CSRF) for JSON; browser pipeline for HTML
+**6.** **Use `conn.assigns` for passing data between plugs and actions** — never use `Process` dictionaries
+**7.** **Never interpolate user input into redirect paths** — use `~p"..."` paths for verified routes
 
+
+## FCIS at this boundary
+
+Controllers are edges: cast params, call context, render. No business math or multi-step domain orchestration in the action body.
+
+❌ **Bad:** fat controller
+
+```elixir
+def create(conn, %{"post" => params}) do
+  params = Map.put(params, "slug", slugify(params["title"]))
+  {:ok, post} = Repo.insert(Post.changeset(%Post{}, params))
+  redirect(conn, to: ~p"/posts/#{post}")
+end
+```
+
+✅ **Good:** thin action
+
+```elixir
+def create(conn, %{"post" => params}) do
+  case Blog.create_post(conn.assigns.current_scope, params) do
+    {:ok, post} -> redirect(conn, to: ~p"/posts/#{post}")
+    {:error, changeset} -> render(conn, :new, form: to_form(changeset))
+  end
+end
+```
 
 ## Routing Conventions
 

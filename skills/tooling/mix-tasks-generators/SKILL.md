@@ -13,18 +13,23 @@ description: >
   phx.gen.live, phx.gen.auth, scaffold, seed data, ecto.setup, mix help, Mix.Project,
   OptionParser, @shortdoc, preferred_cli_env, alias, mix run, generator, phx.gen.html,
   phx.gen.context, phx.gen.json, phx.gen.channel.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Mix Tasks & Generators
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Generators should emit FCIS-shaped code (thin edges, pure helpers).
 ## RULES — Follow these with no exceptions
 
-1. **Always call `Mix.Task.run("app.start")` first** — tasks that access the database or Repo need the app started
-2. **Create custom tasks for project-specific workflows** — don't override standard Mix tasks
-3. **Register `preferred_cli_env` in mix.exs** — set environment for custom tasks (dev/test/prod)
-4. **Use transactions for data modifications** — wrap `Repo.insert_all`, `Repo.delete_all` in `Repo.transaction()`
-5. **Test custom tasks with `Mix.Project.in_project/4`** — ensure tasks work correctly in isolation
-6. **Follow `Mix.Tasks.Namespace.TaskName` naming** — file path must match: `lib/mix/tasks/namespace.task_name.ex`
+**1.** **Always call `Mix.Task.run("app.start")` first** — tasks that access the database or Repo need the app started
+**2.** **Create custom tasks for project-specific workflows** — don't override standard Mix tasks
+**3.** **Register `preferred_cli_env` in mix.exs** — set environment for custom tasks (dev/test/prod)
+**4.** **Use transactions for data modifications** — wrap `Repo.insert_all`, `Repo.delete_all` in `Repo.transaction()`
+**5.** **Test custom tasks with `Mix.Project.in_project/4`** — ensure tasks work correctly in isolation
+**6.** **Follow `Mix.Tasks.Namespace.TaskName` naming** — file path must match: `lib/mix/tasks/namespace.task_name.ex`
 
 
 ## End-to-End Workflow

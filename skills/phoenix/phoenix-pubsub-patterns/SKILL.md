@@ -8,22 +8,27 @@ description: >
   broadcast, or handle_info for real-time updates. Covers subscription patterns, broadcasting from
   contexts, topic naming, scoped broadcasting, immutable assign updates, and testing.
   Trigger words: PubSub, subscribe, broadcast, handle_info, real-time, topic, presence.
-
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Phoenix PubSub Patterns
 
 Use this skill before writing ANY PubSub or real-time broadcast code.
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Keep LiveView/controller callbacks thin; delegate business rules to contexts/pure modules.
 ## RULES — Follow these with no exceptions
 
-1. **Subscribe inside `if connected?(socket)`** — never subscribe on the static render, or the disconnected and connected phases both subscribe and you get duplicate messages
-2. **Broadcast from context modules, not LiveViews** — keep real-time logic in the business layer
-3. **Only broadcast on success** — pattern-match `{:ok, result}` in a private `broadcast/2` and pass `{:error, changeset}` through untouched
-4. **Update assigns immutably with `update/3`** in `handle_info/2` — never mutate `socket.assigns`
-5. **Match `subscribe` and `broadcast` topic strings exactly** — topics are case-sensitive and must be identical
-6. **Add a `handle_info/2` clause for every broadcast event** — an unhandled message crashes the LiveView; add a catch-all when other processes may send messages
-7. **Test the full cycle through the LiveView** — call the context function and assert the rendered view updates; don't test `PubSub.broadcast` in isolation
+**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
+**1.** **Subscribe inside `if connected?(socket)`** — never subscribe on the static render, or the disconnected and connected phases both subscribe and you get duplicate messages
+**2.** **Broadcast from context modules, not LiveViews** — keep real-time logic in the business layer
+**3.** **Only broadcast on success** — pattern-match `{:ok, result}` in a private `broadcast/2` and pass `{:error, changeset}` through untouched
+**4.** **Update assigns immutably with `update/3`** in `handle_info/2` — never mutate `socket.assigns`
+**5.** **Match `subscribe` and `broadcast` topic strings exactly** — topics are case-sensitive and must be identical
+**6.** **Add a `handle_info/2` clause for every broadcast event** — an unhandled message crashes the LiveView; add a catch-all when other processes may send messages
+**7.** **Test the full cycle through the LiveView** — call the context function and assert the rendered view updates; don't test `PubSub.broadcast` in isolation
 
 ---
 

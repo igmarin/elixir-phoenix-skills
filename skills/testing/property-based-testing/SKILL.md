@@ -8,16 +8,21 @@ description: >
   custom StreamData generators, writes ExUnitProperties tests, configures shrinking strategies, and
   creates property-based test patterns for data transformations, algorithms, and state machines.
   Trigger words: property-based testing, StreamData, ExUnitProperties, generators, fuzzing, shrinking.
-
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Property-Based Testing
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Prefer testing pure core without Repo; use DataCase only for true persistence boundaries.
 ## RULES — Follow these with no exceptions
 
-1. **Define properties, not examples** — state what should always be true, not specific inputs/outputs
-2. **Test invariants, not specific values** — "output length equals input length" not "output is [1, 2, 3]"
-3. **Leverage shrinking** — let StreamData find minimal failing cases; add constraints like `min_length: 1` or `integer(1..100)` when shrunk cases expose invalid generator inputs
+**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
+**1.** **Define properties, not examples** — state what should always be true, not specific inputs/outputs
+**2.** **Test invariants, not specific values** — "output length equals input length" not "output is [1, 2, 3]"
+**3.** **Leverage shrinking** — let StreamData find minimal failing cases; add constraints like `min_length: 1` or `integer(1..100)` when shrunk cases expose invalid generator inputs
 
 
 ## Setup

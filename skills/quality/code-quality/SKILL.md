@@ -11,19 +11,24 @@ description: >
 
   mix credo, abc complexity, function length, module length, refactor, extract function, shared code,
   code smell, technical debt, clean code.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Code Quality
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Enforce FCIS in reviews/refactors: fat LiveViews and mixed Repo+math are defects.
 ## RULES — Follow these with no exceptions
 
-1. **Duplicated functions must be extracted** — when 2+ modules share >70% similar implementations, create a shared module
-2. **Functions must stay below ABC complexity 30** — break complex functions into smaller helpers
-3. **Remove unused private functions after refactoring**
-4. **Duplicated templates must become components** — when 2+ HEEx files share >40% identical markup, extract to a function component
-5. **Address duplication before complexity** — extracting shared code first reduces overall complexity
-6. **Run `mix credo --strict` before any PR**
-7. **Run `mix sobelow` for security** — check after quality checks
+**1.** **Duplicated functions must be extracted** — when 2+ modules share >70% similar implementations, create a shared module
+**2.** **Functions must stay below ABC complexity 30** — break complex functions into smaller helpers
+**3. Remove unused private functions after refactoring**
+**4.** **Duplicated templates must become components** — when 2+ HEEx files share >40% identical markup, extract to a function component
+**5.** **Address duplication before complexity** — extracting shared code first reduces overall complexity
+**6. Run `mix credo --strict` before any PR**
+**7.** **Run `mix sobelow` for security** — check after quality checks
 
 
 ## End-to-End Workflow

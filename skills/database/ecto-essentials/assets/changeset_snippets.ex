@@ -1,3 +1,4 @@
+# FCIS note: these helpers build changesets only — call Repo in the context shell.
 # Ecto Changeset Snippets
 #
 # Copy-paste reference snippets. Grouped by pattern; each block is standalone.

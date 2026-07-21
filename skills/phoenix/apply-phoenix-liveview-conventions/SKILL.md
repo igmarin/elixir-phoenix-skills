@@ -12,6 +12,9 @@ description: >
 
   liveview patterns, follow phoenix best practices, heex component, liveview mount,
   handle_event convention, phoenix liveview.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Apply Phoenix LiveView Conventions
@@ -21,17 +24,51 @@ Use this skill when writing new LiveView modules or modifying existing LiveView 
 **Precondition:** Invoke `phoenix-liveview-essentials` before this skill for the full callback lifecycle reference.
 
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Keep LiveView/controller callbacks thin; delegate business rules to contexts/pure modules.
 ## RULES — Follow these with no exceptions
 
-1. **Always add `@impl true`** before every callback (`mount/3`, `handle_event/3`, `handle_info/2`, `handle_params/3`, `render/1`)
-2. **Initialize every assign to a safe default in `mount/3`** — the disconnected render must never raise `KeyError`
-3. **Guard side effects with `if connected?(socket)`** — PubSub subscriptions, timers, and async work run only when the WebSocket is connected
-4. **Return `{:noreply, socket}`** from `handle_event/3` and `handle_info/2` — never `{:reply, ...}` unless replying to a client push
-5. **Assign errors to the socket** via `put_flash` or changeset assigns — never `raise` inside a callback
-6. **Export reusable function components with `def`, not `defp`** — private components cannot be used across templates
-7. **Use `with` for 2+ sequential fallible operations** instead of nested `case`
-8. **Never query `Repo` directly from a LiveView** — delegate to context functions
+**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
+**1.** **Always add `@impl true`** before every callback (`mount/3`, `handle_event/3`, `handle_info/2`, `handle_params/3`, `render/1`)
+**2.** **Initialize every assign to a safe default in `mount/3`** — the disconnected render must never raise `KeyError`
+**3.** **Guard side effects with `if connected?(socket)`** — PubSub subscriptions, timers, and async work run only when the WebSocket is connected
+**4.** **Return `{:noreply, socket}`** from `handle_event/3` and `handle_info/2` — never `{:reply, ...}` unless replying to a client push
+**5.** **Assign errors to the socket** via `put_flash` or changeset assigns — never `raise` inside a callback
+**6.** **Export reusable function components with `def`, not `defp`** — private components cannot be used across templates
+**7.** **Use `with` for 2+ sequential fallible operations** instead of nested `case`
+**8.** **Never query `Repo` directly from a LiveView** — delegate to context functions
 
+
+## FCIS at this boundary
+
+LiveView callbacks are the **imperative shell**. Delegate business rules to contexts/pure modules; only assign results and handle UI errors here.
+
+❌ **Bad:** heavy logic in `handle_event/3`
+
+```elixir
+@impl true
+def handle_event("save", %{"post" => params}, socket) do
+  title = String.trim(params["title"] || "")
+  status = if params["publish"] == "true", do: "published", else: "draft"
+  {:ok, post} = Repo.insert(%Post{title: title, status: status, user_id: socket.assigns.current_user.id})
+  {:noreply, assign(socket, :post, post)}
+end
+```
+
+✅ **Good:** thin event → context → assign
+
+```elixir
+@impl true
+def handle_event("save", %{"post" => params}, socket) do
+  case Blog.create_post(socket.assigns.current_scope, params) do
+    {:ok, post} ->
+      {:noreply, socket |> assign(:post, post) |> put_flash(:info, "Saved")}
+
+    {:error, %Ecto.Changeset{} = changeset} ->
+      {:noreply, assign(socket, :form, to_form(changeset))}
+  end
+end
+```
 
 ## End-to-End Workflow — Creating or Modifying a LiveView
 

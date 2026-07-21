@@ -9,7 +9,9 @@ description: >
   Covers on_mount patterns, current_scope, import conflict resolution, safe template access,
   and testing auth redirects.
   Trigger words: on_mount, LiveView auth, current_scope, session, live_session, redirect_if_authenticated.
-
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Phoenix LiveView Authentication
@@ -18,14 +20,17 @@ Use this skill before writing ANY `on_mount` hook or LiveView auth code.
 
 > **Requires** `phoenix-scopes` for Scope struct setup. See `phoenix-authorization-patterns` for access control after authentication, and `phoenix-liveview-essentials` before writing any LiveView module.
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Authorization decisions should be pure checks on scope/user data; persist only at the edge.
 ## RULES — Follow these with no exceptions
 
-1. **Use `on_mount` callbacks** — never check auth in `mount/3` directly
-2. **`:halt` must redirect with a flash message** — never silently drop the connection
-3. **Define `on_mount` hooks once, reference via `live_session` in router** — never duplicate auth logic across LiveView modules
-4. **Resolve import conflicts with `import Phoenix.Controller, except: [redirect: 2, put_flash: 3]`** — so LiveView's `redirect/2` and `put_flash/3` take precedence
-5. **Use bracket access `assigns[:current_scope]` in templates that can render unauthenticated** — never `@current_scope` directly (raises `KeyError`)
-6. **Add `@impl true` to every LiveView callback** — including a `mount/3` that reads `socket.assigns.current_scope.user`
+**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
+**1.** **Use `on_mount` callbacks** — never check auth in `mount/3` directly
+**2.** **`:halt` must redirect with a flash message** — never silently drop the connection
+**3.** **Define `on_mount` hooks once, reference via `live_session` in router** — never duplicate auth logic across LiveView modules
+**4.** **Resolve import conflicts with `import Phoenix.Controller, except: [redirect: 2, put_flash: 3]`** — so LiveView's `redirect/2` and `put_flash/3` take precedence
+**5.** **Use bracket access `assigns[:current_scope]` in templates that can render unauthenticated** — never `@current_scope` directly (raises `KeyError`)
+**6.** **Add `@impl true` to every LiveView callback** — including a `mount/3` that reads `socket.assigns.current_scope.user`
 
 
 ## Implementation Workflow

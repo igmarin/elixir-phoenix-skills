@@ -11,16 +11,21 @@ description: >
   Trigger words: Credo, .credo.exs, linting, code style, static analysis, custom checks, credo.config,
 
   mix credo, code quality, lint, static analysis, format check.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Credo Configuration
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Enforce FCIS in reviews/refactors: fat LiveViews and mixed Repo+math are defects.
 ## RULES — Follow these with no exceptions
 
-1. **Always run `mix credo gen.config` first** — never hand-craft .credo.exs from scratch
-2. **Use `--strict` in CI** — enables additional checks that are disabled by default
-3. **Add inline disables sparingly** — document why each exception is necessary
-4. **Custom checks belong in `lib/credo/checks/`** — never inline them in application code
+**1.** **Always run `mix credo gen.config` first** — never hand-craft .credo.exs from scratch
+**2.** **Use `--strict` in CI** — enables additional checks that are disabled by default
+**3.** **Add inline disables sparingly** — document why each exception is necessary
+**4.** **Custom checks belong in `lib/credo/checks/`** — never inline them in application code
 
 
 ## Setup Workflow

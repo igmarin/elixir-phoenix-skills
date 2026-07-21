@@ -7,18 +7,23 @@ description: >
   Use when sending emails from Phoenix applications. Invoke before implementing email functionality.
   Covers Swoosh setup, email templates, delivery configuration, testing, and production adapters.
   Trigger words: email, Swoosh, mailer, email templates, SMTP, SendGrid, email testing.
-
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Swoosh Emails
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. HTTP/email/i18n adapters are edges; keep request building and response mapping pure where possible.
 ## RULES — Follow these with no exceptions
 
-1. **Define emails in separate modules** — `MyApp.Emails.UserEmail`, not inline in contexts
-2. **Use Phoenix components for email templates** — reuse UI components in emails
-3. **Configure delivery per environment** — Local adapter in dev/test, real adapter in prod
-4. **Test emails with Swoosh.TestAssertions** — assert emails were sent with correct content
-5. **Never send emails synchronously in web requests** — use Oban for async delivery; Task.start only for simple cases
+**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
+**1.** **Define emails in separate modules** — `MyApp.Emails.UserEmail`, not inline in contexts
+**2.** **Use Phoenix components for email templates** — reuse UI components in emails
+**3.** **Configure delivery per environment** — Local adapter in dev/test, real adapter in prod
+**4.** **Test emails with Swoosh.TestAssertions** — assert emails were sent with correct content
+**5.** **Never send emails synchronously in web requests** — use Oban for async delivery; Task.start only for simple cases
 
 
 ## Setup

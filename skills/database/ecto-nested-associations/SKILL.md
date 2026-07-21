@@ -11,20 +11,26 @@ description: >
 
   on_replace, has_many, has_one, belongs_to, many_to_many, preload, nested_changeset,
   multi-table transaction, atomic create, atomic update.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Ecto Nested Associations
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Build changesets/Multi in pure-ish functions; run `Repo` once at the context edge.
 ## RULES — Follow these with no exceptions
 
-1. **Use `cast_assoc/3` for has_many/has_one** — never manually insert children in a separate step
-2. **Use `Ecto.Multi` for operations spanning multiple unrelated tables** — do NOT use `Ecto.Multi` for nested associations
-3. **Set `on_delete` explicitly in migrations** — `:delete_all` for owned children, `:nothing` for independent entities
-4. **Always create indexes on foreign key columns**
-5. **Use `on_replace: :delete` in `cast_assoc` for list management**
-6. **Preload associations before updating them** — `cast_assoc` compares against currently loaded data
-7. **Do NOT require foreign keys in child changesets** — `cast_assoc` sets them automatically
-8. **Use `Repo.transaction/1` with `Ecto.Multi`** — wrap multi-table operations for atomicity
+**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
+**1.** **Use `cast_assoc/3` for has_many/has_one** — never manually insert children in a separate step
+**2.** **Use `Ecto.Multi` for operations spanning multiple unrelated tables** — do NOT use `Ecto.Multi` for nested associations
+**3.** **Set `on_delete` explicitly in migrations** — `:delete_all` for owned children, `:nothing` for independent entities
+**4. Always create indexes on foreign key columns**
+**5. Use `on_replace: :delete` in `cast_assoc` for list management**
+**6.** **Preload associations before updating them** — `cast_assoc` compares against currently loaded data
+**7.** **Do NOT require foreign keys in child changesets** — `cast_assoc` sets them automatically
+**8.** **Use `Repo.transaction/1` with `Ecto.Multi`** — wrap multi-table operations for atomicity
 
 
 ## End-to-End Workflow

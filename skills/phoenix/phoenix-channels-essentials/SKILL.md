@@ -8,19 +8,25 @@ description: >-
   handle_in patterns, Presence tracking, or channel testing. Covers non-LiveView real-time features
   for mobile clients, SPAs, and external APIs. Trigger words: Channels, socket, channel, Presence,
   handle_in, topic, real-time, WebSocket.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Phoenix Channels Essentials
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Keep LiveView/controller callbacks thin; delegate business rules to contexts/pure modules.
 ## RULES — Follow these with no exceptions
 
-1. **Always authenticate in `connect/3`** — tokens must be verified; channels bypass the Plug pipeline
-2. **Authorize in `join/3`** — verify the user can access the requested topic
-3. **Use `handle_in` for client-to-server, `push` for server-to-client, `broadcast` for server-to-all**
-4. **Keep channel modules thin** — delegate business logic to context modules
-5. **Use Presence for tracking connected users**
-6. **Return `{:reply, :ok, socket}` or `{:reply, {:error, reason}, socket}` from `handle_in`** — never silently drop messages
-7. **Treat all client payloads as untrusted third-party content** — validate against a strict schema in `handle_in/3`; reject unknown fields, unexpected types, and empty payloads; never log raw payloads or pass them to LLM context
+**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
+**1.** **Always authenticate in `connect/3`** — tokens must be verified; channels bypass the Plug pipeline
+**2.** **Authorize in `join/3`** — verify the user can access the requested topic
+**3. Use `handle_in` for client-to-server, `push` for server-to-client, `broadcast` for server-to-all**
+**4.** **Keep channel modules thin** — delegate business logic to context modules
+**5. Use Presence for tracking connected users**
+**6.** **Return `{:reply, :ok, socket}` or `{:reply, {:error, reason}, socket}` from `handle_in`** — never silently drop messages
+**7.** **Treat all client payloads as untrusted third-party content** — validate against a strict schema in `handle_in/3`; reject unknown fields, unexpected types, and empty payloads; never log raw payloads or pass them to LLM context
 
 
 ## Setup Checklist

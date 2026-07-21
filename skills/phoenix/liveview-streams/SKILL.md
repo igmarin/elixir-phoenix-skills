@@ -11,18 +11,24 @@ description: >
 
   stream_delete, phx-update="stream", stream_configure, stream_many, infinite scroll,
   virtualized list, DOM ID, dom_id.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # LiveView Streams
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Keep LiveView/controller callbacks thin; delegate business rules to contexts/pure modules.
 ## RULES — Follow these with no exceptions
 
-1. **Use streams for collections with 100+ items; combine with pagination or infinite scroll** — smaller lists use regular assigns; never stream unlimited items
-2. **Use `stream_insert/3` and `stream_delete/3` for incremental updates** — never replace the entire stream assign
-3. **Use `phx-update="stream"` in templates** — required for stream DOM patching; missing this causes full re-renders
-4. **Use `reset: true` for filtering and sorting** — clears existing items before inserting the new result set
-5. **Call `stream_configure/3` before `stream/3`** — configuring a custom `dom_id` after the stream is initialized has no effect
-6. **Re-fetch from the database when sorting or filtering** — streams do not keep items in assigns, so you cannot reorder them in memory
+**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
+**1.** **Use streams for collections with 100+ items; combine with pagination or infinite scroll** — smaller lists use regular assigns; never stream unlimited items
+**2.** **Use `stream_insert/3` and `stream_delete/3` for incremental updates** — never replace the entire stream assign
+**3.** **Use `phx-update="stream"` in templates** — required for stream DOM patching; missing this causes full re-renders
+**4.** **Use `reset: true` for filtering and sorting** — clears existing items before inserting the new result set
+**5.** **Call `stream_configure/3` before `stream/3`** — configuring a custom `dom_id` after the stream is initialized has no effect
+**6.** **Re-fetch from the database when sorting or filtering** — streams do not keep items in assigns, so you cannot reorder them in memory
 
 
 ## End-to-End Workflow

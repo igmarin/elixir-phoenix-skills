@@ -12,6 +12,9 @@ description: >
   Trigger words: ecto conventions, repo pattern, changeset, context module,
 
   preload, ecto query, database conventions, apply ecto patterns.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
 ---
 
 # Apply Ecto Conventions
@@ -21,17 +24,57 @@ Use this skill when writing or reviewing Ecto database code to ensure consistent
 **Precondition:** Invoke `ecto-essentials` before this skill for the full Ecto reference.
 
 
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Build changesets/Multi in pure-ish functions; run `Repo` once at the context edge.
 ## RULES — Follow these with no exceptions
 
-1. **Never call Repo from LiveViews or controllers** — all database operations belong in context modules
-2. **Prefer non-bang functions** in application logic (`Repo.get/1`, `Repo.insert/1`) — use bang only in tests
-3. **Parameterize all user input in queries** — use `^` for interpolation, never string concatenation in `fragment`
-4. **Always preload associations** outside loops to prevent N+1 queries
-5. **Add `foreign_key_constraint` and `unique_constraint`** in changesets to match database constraints
-6. **Use Ecto.Multi for 2+ related operations** — never chain multiple Repo calls in sequence without a transaction
-7. **Add indexes on foreign keys** and frequently queried columns
-8. **Never combine schema changes and data backfill** in the same migration
+**0. Functional Core, Imperative Shell** — pure domain logic; DB/HTTP/process I/O only at edges (see FCIS doc)
+**1.** **Never call Repo from LiveViews or controllers** — all database operations belong in context modules
+**2.** **Prefer non-bang functions** in application logic (`Repo.get/1`, `Repo.insert/1`) — use bang only in tests
+**3.** **Parameterize all user input in queries** — use `^` for interpolation, never string concatenation in `fragment`
+**4.** **Always preload associations** outside loops to prevent N+1 queries
+**5.** **Add `foreign_key_constraint` and `unique_constraint`** in changesets to match database constraints
+**6.** **Use Ecto.Multi for 2+ related operations** — never chain multiple Repo calls in sequence without a transaction
+**7.** **Add indexes on foreign keys** and frequently queried columns
+**8.** **Never combine schema changes and data backfill** in the same migration
 
+
+## FCIS at this boundary
+
+Ecto is the persistence edge. Prefer pure functions that **build** changesets/queries/Multi; execute with `Repo` once in the context shell.
+
+❌ **Bad:** mix calculation with inserts
+
+```elixir
+def apply_discount(order_id, pct) do
+  order = Repo.get!(Order, order_id)
+  total = Enum.reduce(order.lines, 0, &(&1.amount + &2))
+  order
+  |> Ecto.Changeset.change(total: div(total * (100 - pct), 100))
+  |> Repo.update!()
+end
+```
+
+✅ **Good:** pure pricing + thin context
+
+```elixir
+defmodule MyApp.Orders.Pricing do
+  def total(%{lines: lines}), do: Enum.reduce(lines, 0, &(&1.amount + &2))
+  def with_discount(total, pct) when pct in 0..100, do: div(total * (100 - pct), 100)
+end
+
+def apply_discount(order_id, pct) do
+  with {:ok, order} <- fetch_order(order_id) do
+    total = order |> Pricing.total() |> Pricing.with_discount(pct)
+
+    order
+    |> Order.changeset(%{total: total})
+    |> Repo.update()
+  end
+end
+```
+
+Use realistic names: `Post.changeset/2`, not placeholders like `change_post/1`.
 
 ## Review Workflow
 
