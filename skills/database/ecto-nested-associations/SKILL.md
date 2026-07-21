@@ -26,8 +26,8 @@ Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineer
 **1.** **Use `cast_assoc/3` for has_many/has_one** — never manually insert children in a separate step
 **2.** **Use `Ecto.Multi` for operations spanning multiple unrelated tables** — do NOT use `Ecto.Multi` for nested associations
 **3.** **Set `on_delete` explicitly in migrations** — `:delete_all` for owned children, `:nothing` for independent entities
-**4. Always create indexes on foreign key columns**
-**5. Use `on_replace: :delete` in `cast_assoc` for list management**
+**4.** **Always create indexes on foreign key columns**
+**5.** **Use `on_replace: :delete` in `cast_assoc` for list management**
 **6.** **Preload associations before updating them** — `cast_assoc` compares against currently loaded data
 **7.** **Do NOT require foreign keys in child changesets** — `cast_assoc` sets them automatically
 **8.** **Use `Repo.transaction/1` with `Ecto.Multi`** — wrap multi-table operations for atomicity

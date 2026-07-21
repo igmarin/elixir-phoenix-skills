@@ -36,16 +36,16 @@ Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineer
 
 ## RULES — Follow these with no exceptions
 
-1. **Processes are not modules** — never invent a GenServer just to “group functions”
-2. **Thin callbacks** — `handle_call` / `handle_cast` / `handle_info` / `perform` only coordinate; pure code computes
-3. **Fast `init/1`** — defer heavy work with `{:ok, state, {:continue, term}}`
-4. **Public API module** — callers use `MyApp.Foo.do_thing/1`, never raw `GenServer.call/2`
-5. **`@impl true`** on every callback
-6. **Supervise everything long-lived** — no orphan processes
-7. **Registry over dynamic atoms** for process names
-8. **ETS**: owner process + `:protected` (or deliberate design); reads can bypass GenServer; writes serialized
-9. **Handle `async_stream` exits** — match `{:ok, _}` and `{:exit, reason}`
-10. **Let it crash** under a supervisor — avoid blanket `try/rescue` in callbacks
+**1.** **Processes are not modules** — never invent a GenServer just to “group functions”
+**2.** **Thin callbacks** — `handle_call` / `handle_cast` / `handle_info` / `perform` only coordinate; pure code computes
+**3.** **Fast `init/1`** — defer heavy work with `{:ok, state, {:continue, term}}`
+**4.** **Public API module** — callers use `MyApp.Foo.do_thing/1`, never raw `GenServer.call/2`
+**5.** **`@impl true`** on every callback
+**6.** **Supervise everything long-lived** — no orphan processes
+**7.** **Registry over dynamic atoms** for process names
+**8.** **ETS**: owner process + `:protected` (or deliberate design); reads can bypass GenServer; writes serialized
+**9.** **Handle `async_stream` exits** — match `{:ok, _}` and `{:exit, reason}`
+**10.** **Let it crash** under a supervisor — avoid blanket `try/rescue` in callbacks
 
 ## Thin GenServer (FCIS)
 

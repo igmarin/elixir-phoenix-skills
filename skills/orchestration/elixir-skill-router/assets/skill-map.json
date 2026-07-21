@@ -13,6 +13,79 @@
       ]
     },
     {
+      "intent": "TDD feature cycle with hard gates",
+      "skill": "tdd",
+      "path": "skills/playbooks/tdd/SKILL.md",
+      "examples": [
+        "TDD this feature",
+        "write the test first",
+        "red green refactor",
+        "failing test then implement"
+      ]
+    },
+    {
+      "intent": "bug fix with reproduction test",
+      "skill": "bug-fix",
+      "path": "skills/playbooks/bug-fix/SKILL.md",
+      "examples": [
+        "fix this bug",
+        "production issue",
+        "regression",
+        "write a failing repro test"
+      ]
+    },
+    {
+      "intent": "pre-PR quality sweep",
+      "skill": "quality",
+      "path": "skills/playbooks/quality/SKILL.md",
+      "examples": [
+        "before PR quality check",
+        "run credo dialyzer format",
+        "production readiness pass"
+      ]
+    },
+    {
+      "intent": "project setup and bootstrap",
+      "skill": "setup",
+      "path": "skills/playbooks/setup/SKILL.md",
+      "examples": [
+        "setup the project",
+        "mix deps and ecto",
+        "onboard new machine",
+        "configure CI"
+      ]
+    },
+    {
+      "intent": "LiveView feature workflow",
+      "skill": "liveview",
+      "path": "skills/playbooks/liveview/SKILL.md",
+      "examples": [
+        "build a LiveView page",
+        "new LiveView feature",
+        "handle_event feature end to end"
+      ]
+    },
+    {
+      "intent": "Oban background job workflow",
+      "skill": "background-job",
+      "path": "skills/playbooks/background-job/SKILL.md",
+      "examples": [
+        "add an Oban worker",
+        "background job",
+        "enqueue job with tests"
+      ]
+    },
+    {
+      "intent": "safe Ecto migration workflow",
+      "skill": "ecto-migration",
+      "path": "skills/playbooks/ecto-migration/SKILL.md",
+      "examples": [
+        "write a migration",
+        "add column safely",
+        "expand contract migration"
+      ]
+    },
+    {
       "intent": "core Elixir patterns",
       "skill": "elixir-essentials",
       "path": "skills/elixir-core/elixir-essentials/SKILL.md",
@@ -340,32 +413,116 @@
         "Always Critical checklist",
         "Review severity labels only"
       ]
+    },
+    {
+      "intent": "Ecto conventions and Repo patterns",
+      "skill": "apply-ecto-conventions",
+      "path": "skills/database/apply-ecto-conventions/SKILL.md",
+      "examples": [
+        "ecto conventions",
+        "repo pattern",
+        "context query boundaries"
+      ]
+    },
+    {
+      "intent": "LiveView coding conventions",
+      "skill": "apply-phoenix-liveview-conventions",
+      "path": "skills/phoenix/apply-phoenix-liveview-conventions/SKILL.md",
+      "examples": [
+        "liveview conventions",
+        "assigns patterns",
+        "thin handle_event"
+      ]
+    },
+    {
+      "intent": "Phoenix controller conventions",
+      "skill": "apply-phoenix-controller-conventions",
+      "path": "skills/phoenix/apply-phoenix-controller-conventions/SKILL.md",
+      "examples": [
+        "controller conventions",
+        "plug pipeline",
+        "fallback controller"
+      ]
+    },
+    {
+      "intent": "safe refactoring with characterization tests",
+      "skill": "refactor-code",
+      "path": "skills/quality/refactor-code/SKILL.md",
+      "examples": [
+        "refactor this module",
+        "extract function safely",
+        "characterization test"
+      ]
+    },
+    {
+      "intent": "respond to PR review feedback",
+      "skill": "respond-to-review",
+      "path": "skills/quality/respond-to-review/SKILL.md",
+      "examples": [
+        "address review comments",
+        "respond to PR feedback",
+        "push back on review"
+      ]
     }
   ],
   "defaults": {
     "test_gate": "skills/testing/testing-essentials",
     "tdd_flow": [
+      "skills/playbooks/tdd",
       "skills/testing/testing-essentials",
-      "skills/quality/credo-config",
-      "skills/elixir-core/typespec-dialyzer"
+      "skills/elixir-core/elixir-essentials"
     ],
     "quality_flow": [
+      "skills/playbooks/quality",
       "skills/quality/code-quality",
-      "skills/quality/credo-config",
-      "skills/security/security-essentials"
+      "skills/quality/credo-config"
     ],
     "setup_flow": [
+      "skills/playbooks/setup",
       "skills/elixir-core/elixir-essentials",
-      "skills/phoenix/phoenix-liveview-essentials",
       "skills/database/ecto-essentials"
-    ]
+    ],
+    "bug_fix_flow": [
+      "skills/playbooks/bug-fix",
+      "skills/testing/testing-essentials"
+    ],
+    "review_flow": [
+      "skills/playbooks/code-review",
+      "skills/quality/code-review"
+    ],
+    "liveview_flow": [
+      "skills/playbooks/liveview",
+      "skills/phoenix/phoenix-liveview-essentials"
+    ],
+    "background_job_flow": [
+      "skills/playbooks/background-job",
+      "skills/infrastructure/oban-essentials"
+    ],
+    "migration_flow": [
+      "skills/playbooks/ecto-migration",
+      "skills/database/ecto-essentials"
+    ],
+    "language_fallback": "skills/elixir-core/elixir-essentials",
+    "web_fallback": "skills/phoenix/phoenix-liveview-essentials"
   },
   "disambiguation": {
     "auth_vs_scopes": "Use phoenix-liveview-auth for Phoenix 1.7 current_user-based auth; use phoenix-scopes for Phoenix 1.8+ Scope-based auth.",
     "testing_vs_property": "Use testing-essentials for example-based ExUnit tests; use property-based-testing when you need to verify invariants across random inputs.",
     "channels_vs_pubsub": "Use phoenix-channels-essentials for WebSocket channel logic; use phoenix-pubsub-patterns for broadcast/subscribe patterns within the server.",
     "ecto_vs_changesets": "Use ecto-essentials for basic CRUD and queries; use ecto-changeset-patterns when building complex validation pipelines.",
-    "oban_vs_broadway": "Use oban-essentials for discrete background jobs; use broadway-data-pipelines for continuous data stream processing."
+    "oban_vs_broadway": "Use oban-essentials for discrete background jobs; use broadway-data-pipelines for continuous data stream processing.",
+    "playbook_vs_atomic_review": {
+      "prefer": "code-review-playbook",
+      "when": "full PR/diff workflow with gates and handoff",
+      "alternate": "code-review",
+      "alternate_when": "only need severity rules / Always Critical checklist"
+    },
+    "playbook_vs_atomic_tdd": {
+      "prefer": "tdd",
+      "when": "end-to-end red-green-refactor with HITL",
+      "alternate": "testing-essentials",
+      "alternate_when": "only need ExUnit patterns, not the full playbook"
+    }
   },
   "categories": {
     "elixir-core": "skills/elixir-core/",

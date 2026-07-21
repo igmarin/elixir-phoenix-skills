@@ -103,3 +103,11 @@ Atomic skills use YAML frontmatter consumed by catalogs and agent loaders:
 
 Playbooks may also define `metadata.entry_point`, `metadata.phases`, `metadata.hard_gates`, and `metadata.dependencies` (see [playbooks.md](playbooks.md)).
 
+## Router skill-map
+
+`skills/orchestration/elixir-skill-router/assets/skill-map.json` maps intents → skills.
+
+- Prefer **playbook** mappings for multi-step work (`tdd`, `bug-fix`, `quality`, …).
+- Prefer **atomic** mappings for single-domain implementation.
+- `defaults` lists recommended skill paths for common flows.
+- `disambiguation` resolves playbook vs atomic collisions (e.g. review workflow vs review rules).
