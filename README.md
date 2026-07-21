@@ -2,7 +2,7 @@
 
 ![Elixir Phoenix Skills](https://github.com/user-attachments/assets/ac5da537-5062-4a67-a8a3-114129bc101a)
 
-A curated library of **public Elixir/Phoenix agent skills** — 38 atomic skills, 7 playbooks, and 1 entry-point orchestrator that teach AI tools how to write idiomatic Elixir code, test Phoenix applications, and follow production-minded conventions.
+A curated library of **public Elixir/Phoenix agent skills** — 38 atomic skills, 8 playbooks, and 1 orchestrator that teach AI tools how to write idiomatic Elixir code, test Phoenix applications, and follow production-minded conventions.
 
 The project is built around core Elixir principles:
 
@@ -20,7 +20,7 @@ This repo is one of 6 in a composable AI skill ecosystem:
 |------|------|
 | [`ruby-core-skills`](https://github.com/igmarin/ruby-core-skills) | 15 shared Ruby skills + process discipline |
 | [`rails-agent-skills`](https://github.com/igmarin/rails-agent-skills) | 28 atomic skills + 9 personas |
-| [**`elixir-phoenix-skills`**](https://github.com/igmarin/elixir-phoenix-skills) | 38 atomic skills + 7 playbooks + 1 orchestrator |
+| [**`elixir-phoenix-skills`**](https://github.com/igmarin/elixir-phoenix-skills) | 38 atomic skills + 8 playbooks + 1 orchestrator |
 | [`hanakai-yaku`](https://github.com/igmarin/hanakai-yaku) | 35 Hanami/dry-rb skills + 10 personas |
 | [`agnostic-planning-skills`](https://github.com/igmarin/agnostic-planning-skills) | 10 planning skills + 4 personas |
 | [`agent-mcp-runtime`](https://github.com/igmarin/agent-mcp-runtime) | Rust CLI runtime (pack resolution, MCP) |
@@ -62,7 +62,7 @@ npx skills add igmarin/elixir-phoenix-skills
 
 ## Skill Catalog
 
-The library contains **46 skills total** — 38 atomic skills, 7 playbooks, and 1 orchestrator — organized by category.
+The library contains **46 skills total** — 38 atomic skills, 8 playbooks, and 1 orchestrator — organized by category.
 
 ### Atomic Skills
 
@@ -83,17 +83,40 @@ The library contains **46 skills total** — 38 atomic skills, 7 playbooks, and 
 
 ### Playbooks (Workflow Orchestration)
 
-Playbooks orchestrate multiple atomic skills into end-to-end workflows with hard gates, phases, and human-in-the-loop checkpoints:
+Playbooks are sequenced multi-step flows with **hard gates** and **human-in-the-loop** checkpoints. They load atomic skills; they do not re-teach domain textbooks.
+
+See [docs/playbooks.md](docs/playbooks.md) for the full template and mermaid diagrams.
+
+```mermaid
+flowchart TB
+  Router[elixir-skill-router]
+  Router --> PB[playbooks]
+  Router --> Atomic[atomic skills]
+  PB --> Atomic
+  Atomic --> FCIS[docs/fcis-engineering-rules.md]
+```
 
 | Playbook | Path | Purpose |
 |----------|------|---------|
-| **tdd** | `skills/playbooks/tdd/` | Full TDD cycle with test-first discipline |
-| **quality** | `skills/playbooks/quality/` | Code quality loop before PR |
-| **setup** | `skills/playbooks/setup/` | Project setup and CI/CD configuration |
-| **bug-fix** | `skills/playbooks/bug-fix/` | Bug fixing with reproduction tests |
-| **background-job** | `skills/playbooks/background-job/` | Robust Oban job implementation |
-| **liveview** | `skills/playbooks/liveview/` | Full LiveView feature development |
-| **ecto-migration** | `skills/playbooks/ecto-migration/` | Safe migrations with expand-contract |
+| **tdd** | `skills/playbooks/tdd/` | RED → HITL approve → GREEN → quality gate |
+| **bug-fix** | `skills/playbooks/bug-fix/` | Triage → repro test → HITL fix → verify |
+| **quality** | `skills/playbooks/quality/` | Format/Credo/Dialyzer → optional refactor → docs |
+| **code-review-playbook** | `skills/playbooks/code-review/` | Diff review workflow (atomic rules at `quality/code-review`) |
+| **setup** | `skills/playbooks/setup/` | Toolchain → DB → tests → CI |
+| **liveview** | `skills/playbooks/liveview/` | Contract → failing LV test → thin-edge impl |
+| **background-job** | `skills/playbooks/background-job/` | Oban design → TDD worker → failure paths |
+| **ecto-migration** | `skills/playbooks/ecto-migration/` | Plan → migrate/rollback cycle → verify |
+
+#### Example: run the TDD playbook
+
+```text
+Next skill: skills/playbooks/tdd
+Feature: implement Blog.publish_post/1 with FCIS (pure core + context shell)
+```
+
+1. Write failing test → confirm right-reason fail  
+2. Propose minimal implementation → **wait for your approval**  
+3. Implement → green → quality gate  
 
 Entry routing lives under **orchestration** (`skills/orchestration/elixir-skill-router/`), not under playbooks.
 

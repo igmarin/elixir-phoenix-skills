@@ -2,6 +2,17 @@
   "fcis_note": "Routing metadata only. Domain pure-core rules live in atomic skills + docs/fcis-engineering-rules.md. Consumers should ignore unknown top-level keys.",
   "mappings": [
     {
+      "intent": "PR or diff code review workflow",
+      "skill": "code-review-playbook",
+      "path": "skills/playbooks/code-review/SKILL.md",
+      "examples": [
+        "Review my PR",
+        "Self-review before merge",
+        "Code review this diff",
+        "Walk the review order on my branch"
+      ]
+    },
+    {
       "intent": "core Elixir patterns",
       "skill": "elixir-essentials",
       "path": "skills/elixir-core/elixir-essentials/SKILL.md",
@@ -319,6 +330,15 @@
         "Ash resource definition",
         "Ash domain",
         "Ash policies"
+      ]
+    },
+    {
+      "intent": "atomic review rules checklist",
+      "skill": "code-review",
+      "path": "skills/quality/code-review/SKILL.md",
+      "examples": [
+        "Always Critical checklist",
+        "Review severity labels only"
       ]
     }
   ],

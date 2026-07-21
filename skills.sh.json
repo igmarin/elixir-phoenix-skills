@@ -114,11 +114,12 @@
     },
     {
       "title": "Playbooks",
-      "description": "Multi-step human-in-the-loop orchestrations with hard gates.",
+      "description": "Multi-step human-in-the-loop orchestrations with hard gates (TDD, review, setup, domain flows).",
       "skills": [
         "tdd",
         "bug-fix",
         "quality",
+        "code-review-playbook",
         "setup",
         "liveview",
         "background-job",

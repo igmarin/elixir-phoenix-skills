@@ -4,147 +4,90 @@ type: playbook
 tags: [playbooks]
 license: MIT
 description: >
-  Complete Elixir/Phoenix project setup loop with hard gates: verify Elixir/Erlang versions match .tool-versions, Hex and Rebar installed, database connection successful, all env vars loaded → configure CI/CD pipeline with testing and linting → validate end-to-end with mix deps.get, mix ecto.create, mix ecto.migrate, mix test, and write SETUP_CHECKLIST.md; phases context/onboarding→CI/CD configuration→environment validation. Use when starting a new Phoenix project, running `mix phx.new`, configuring mix.exs, setting up a development environment, or wiring up CI/CD for an Elixir project. Trigger: setup project, new Phoenix app, configure CI/CD, dev environment setup, mix phx.new, mix.exs setup, Elixir project bootstrap.
+  Project setup loop with hard gates: verify Elixir/Erlang versions, Hex/Rebar, env, database →
+  deps and migrate → test suite → CI config → optional HITL before destructive ops.
+  Trigger words: setup project, bootstrap, mix deps, ecto setup, CI, onboarding.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
+  entry_point: true
+  phases: "1 Toolchain, 2 App boot, 3 CI, 4 Validate"
+  hard_gates: "versions-match, db-connects, suite-green, ci-defined"
+  dependencies:
+    source: self
+    skills:
+      - mix-tasks-generators
+      - deployment-gotchas
+      - testing-essentials
 ---
 
-## Agent Phases
+# Setup Playbook
 
-### Phase 1: Context & Onboarding
+## When to use
 
-**Inline setup (always applicable):**
+New machine, new Phoenix app bootstrap, or repairing a broken local/CI environment.
+
+## Atomic skills this playbook loads
+
+| Skill | Path | Role |
+|-------|------|------|
+| `mix-tasks-generators` | `skills/tooling/mix-tasks-generators/` | Mix/generators |
+| `deployment-gotchas` | `skills/infrastructure/deployment-gotchas/` | Runtime config |
+| `testing-essentials` | `skills/testing/testing-essentials/` | Suite expectations |
+
+## Flow
+
+```mermaid
+flowchart TD
+  A[Check .tool-versions / OTP Elixir] --> B[Hex Rebar deps]
+  B --> C[Env + DB create migrate]
+  C --> D[mix test]
+  D --> E[CI workflow]
+  E --> F[SETUP_CHECKLIST]
+```
+
+## Phases
+
+### Phase 1 — Toolchain
+
+1. Confirm Elixir/Erlang match `.tool-versions` / `.elixir-version`.
+2. `mix local.hex --force` / `mix local.rebar --force` as needed.
+3. Copy `.env.example` → `.env` (never commit secrets).
+
+**HARD GATE:** versions match project files.
+
+### Phase 2 — App boot
+
 ```bash
-# Verify Elixir/Erlang versions match .tool-versions
-elixir --version
 mix deps.get
 mix ecto.create
 mix ecto.migrate
-mix test --seed 0
-mix compile --warnings-as-errors
-cp .env.example .env 2>/dev/null || true
+mix test
 ```
 
-**HARD GATE — Environment Check** (all items must pass before Phase 2):
-- [ ] Elixir version correct (check `.tool-versions` or `elixir_buildpack.config`)
-- [ ] Erlang/OTP version correct
-- [ ] Hex and Rebar installed (`mix local.hex`, `mix local.rebar`)
-- [ ] Database connection successful (`mix ecto.create` succeeds or DB already exists)
-- [ ] Runtime env vars are available from the shell or `.env`
-- [ ] Phoenix secret key base configured (`SECRET_KEY_BASE` env var)
-- [ ] All external CI actions pinned to immutable commit SHAs (never mutable tags like @v4)
+**HUMAN-IN-THE-LOOP:** before `ecto.drop`, production-like DB reset, or force-push — wait for approval.
 
-**If gate fails:** Fix the failing item above before proceeding to Phase 2.
+**HARD GATE:** DB connects; `mix test` green (or document known failures).
 
+### Phase 3 — CI
 
-### Phase 2: CI/CD Configuration
+Ensure CI runs format, credo, test (and dialyzer if project uses it). Pin actions by SHA when editing workflows.
 
-**Proceed only after environment check passes.**
+### Phase 4 — Validate
 
-#### `.github/workflows/ci.yml`
+Write/update `SETUP_CHECKLIST.md` with commands that worked.
 
-```yaml
-name: CI
-on: [push, pull_request]
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
-      - uses: erlef/setup-beam@5304e04ea2b355f03681464e683d92e3b2f18451
-        with:
-          elixir-version: "1.17.x"
-          otp-version: "27.x"
-      - run: mix deps.get
-      - run: mix compile --warnings-as-errors
-      - run: mix format --check-formatted
-      - run: mix credo --strict
-      - run: mix test --cover
-      - run: mix dialyzer
-```
+## Verification checklist
 
-#### `.github/workflows/cd.yml`
+- [ ] Tool versions verified
+- [ ] Deps + migrate + test succeed
+- [ ] CI covers quality gates
+- [ ] No secrets committed
 
-```yaml
-name: CD
-on:
-  push:
-    branches: [main]
-jobs:
-  deploy-staging:
-    runs-on: ubuntu-latest
-    environment: staging
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
-      - uses: erlef/setup-beam@5304e04ea2b355f03681464e683d92e3b2f18451
-        with:
-          elixir-version: "1.17.x"
-          otp-version: "27.x"
-      - run: mix deps.get
-      - run: mix ecto.migrate
-        env:
-          MIX_ENV: staging
-          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
-      - run: <DEPLOY_CLI>   # operator-supplied deploy command, e.g. flyctl deploy, gigalixir releases deploy
+## Error recovery
 
-  deploy-production:
-    runs-on: ubuntu-latest
-    environment: production
-    needs: deploy-staging
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
-      - uses: erlef/setup-beam@5304e04ea2b355f03681464e683d92e3b2f18451
-        with:
-          elixir-version: "1.17.x"
-          otp-version: "27.x"
-      - run: mix deps.get
-      - run: mix ecto.migrate
-        env:
-          MIX_ENV: prod
-          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
-      - run: <DEPLOY_CLI>   # operator-supplied deploy command, same CLI as staging, targeting production
-```
+Port/DB conflicts: document actual `DATABASE_URL`; do not invent credentials.
 
-> Fill in `<DEPLOY_CLI>` with your deployment command (e.g., `flyctl deploy`, `gigalixir releases deploy`, or a custom Docker push). Replace secret names to match your repository settings. This is a `deploy-production` job gated by GitHub's `environment: production` — a human approves the run before it executes; the agent must never bypass that gate.
+## Output style
 
-
-### Phase 3: Environment Validation
-
-**Verify everything works end-to-end:**
-
-Confirm every item in the Phase 1 HARD GATE checklist is still fully passing, then additionally verify:
-
-```bash
-# Start Phoenix server
-mix phx.server
-
-# CI simulation (if using act)
-act push
-```
-
-**Write `SETUP_CHECKLIST.md`** recording the final state of all Phase 1 HARD GATE items plus:
-- [ ] CI configured
-- [ ] Secrets configured
-- [ ] Phoenix server starts and serves pages
-
-
-## Output Style
-
-When completing project setup, output a **Setup Report** using this template:
-
-```
-Environment:  Elixir <ver> ✓/✗ | OTP <ver> ✓/✗ | DB <ver> <status> | Env vars: <source>
-Dependencies: deps.get <N> ✓/✗ | ecto.create ✓/✗ | ecto.migrate <N> ✓/✗ | mix test <N passed>/<N failed> ✓/✗
-CI/CD:        ci.yml ✓/✗ | cd.yml ✓/✗ | SHAs pinned ✓/✗ | Pipeline order confirmed ✓/✗
-Validation:   Server port <port> ✓/✗ | Full test suite ✓/✗ | SETUP_CHECKLIST.md written ✓/✗
-```
-
-
-## Error Recovery
-
-**System Modification Approval Gate (CRITICAL):**
-Before suggesting any action that modifies the host system: explain why it is needed, ask for explicit user confirmation, and only proceed if the user approves.
-
-**Non-obvious failure pointers:**
-- **Elixir version mismatch** → check `.tool-versions` and ensure the correct version is active via `asdf` or `mise` before retrying
-- **Database connection fails** → run `pg_isready` to confirm PostgreSQL is running; check `config/dev.exs` credentials and create any missing role
-- **Mix compile fails** → run `mix deps.get` and `mix deps.compile`; check for missing system libraries
-- **CI actions use mutable tags** → resolve SHA with `git ls-remote`, replace `@v4` with `@<full-sha>` in workflow files
+Checklist of commands with exit status.
