@@ -148,6 +148,17 @@ Every skill includes an Integration table showing predecessor and successor skil
 | elixir-essentials | testing-essentials | code-quality |
 ```
 
+
+## Documentation standards
+
+Contributor and agent standards for this library:
+
+| Doc | Purpose |
+|-----|---------|
+| [docs/taxonomy.md](docs/taxonomy.md) | Domain-first folders, placement rules, migration matrix |
+| [docs/fcis-engineering-rules.md](docs/fcis-engineering-rules.md) | Pragmatic FCIS (pure core, tagged tuples, thin edges) |
+| [docs/playbooks.md](docs/playbooks.md) | Playbook template: phases, hard gates, HITL, mermaid |
+
 ## Installation
 
 ```bash
