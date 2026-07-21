@@ -6,11 +6,30 @@ license: MIT
 metadata:
   version: "1.0.0"
   user-invocable: "true"
+  dependencies:
+    source: self
+    skills:
+      - tdd
+      - bug-fix
+      - quality
+      - code-review-playbook
+      - setup
+      - liveview
+      - background-job
+      - ecto-migration
+      - elixir-essentials
+      - phoenix-liveview-essentials
+      - testing-essentials
+      - ecto-essentials
+      - code-review
+      - code-quality
+      - credo-config
+      - oban-essentials
 description: >
   Entry-point orchestrator that triages and decomposes complex Elixir/Phoenix requests into ordered
   sub-tasks, then delegates to the correct specialised skill — never implements directly.
   Enforces TDD discipline across all code-producing work. Priority order:
-  TDD → Planning → Implementation → Quality → Review. First response line MUST be: Next skill: skills/[category]/[name] (exact prefix required). Prefer playbooks for multi-step work (e.g. skills/playbooks/tdd, skills/playbooks/code-review). Falls back to `elixir-essentials`
+  TDD → Planning → Implementation → Quality → Review. First response line MUST be "Next skill: skills/[category]/[name]". Prefer playbooks for multi-step work (e.g. skills/playbooks/tdd, skills/playbooks/code-review). Falls back to `elixir-essentials`
   for language ambiguity or `phoenix-liveview-essentials` for web ambiguity. Use when scope is
   unclear, best approach uncertain, or request spans multiple concerns.
   Trigger words: where do I start, help me plan, break this down, best approach, not sure how,

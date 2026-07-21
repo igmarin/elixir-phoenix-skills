@@ -176,8 +176,14 @@ Every skill includes an Integration table showing predecessor and successor skil
 
 ## Companion guides
 
-Long-form checklists live under [`agents/`](agents/README.md) (Ecto, LiveView, testing, project structure).  
-They support the skills; **skills and playbooks take precedence** if anything conflicts.
+Long-form checklists live under [`agents/`](agents/README.md). They support the skills; **skills and playbooks take precedence** if anything conflicts.
+
+| Guide | Pairs with |
+|-------|------------|
+| [ecto-conventions.md](agents/ecto-conventions.md) | `ecto-essentials`, `apply-ecto-conventions` |
+| [liveview-checklist.md](agents/liveview-checklist.md) | `phoenix-liveview-essentials`, `liveview` playbook |
+| [testing-guide.md](agents/testing-guide.md) | `testing-essentials`, `tdd` playbook |
+| [project-structure.md](agents/project-structure.md) | `setup` playbook |
 
 ## Documentation standards
 
