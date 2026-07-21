@@ -98,7 +98,7 @@ Atomic skills use YAML frontmatter consumed by catalogs and agent loaders:
 | `license` | yes | Usually `MIT` |
 | `description` | yes | Triggers + when to use |
 | `metadata.version` | yes | Semver string, e.g. `"1.0.0"` |
-| `metadata.user-invocable` | yes | String `"true"` when agents may invoke the skill directly |
+| `metadata.user-invocable` | atomic (recommended) | String `"true"` when agents may invoke the skill directly. Required for atomics in this library; playbooks/orchestrators should set it when user-invocable, optional otherwise. |
 
 Playbooks may also define `metadata.phases`, `metadata.hard_gates`, and `metadata.dependencies` (see [playbooks.md](playbooks.md)).
 

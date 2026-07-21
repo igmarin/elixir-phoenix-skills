@@ -25,10 +25,10 @@ Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engineer
 
 **1.** **Duplicated functions must be extracted** — when 2+ modules share >70% similar implementations, create a shared module
 **2.** **Functions must stay below ABC complexity 30** — break complex functions into smaller helpers
-**3. Remove unused private functions after refactoring**
+**3.** **Remove unused private functions after refactoring**
 **4.** **Duplicated templates must become components** — when 2+ HEEx files share >40% identical markup, extract to a function component
 **5.** **Address duplication before complexity** — extracting shared code first reduces overall complexity
-**6. Run `mix credo --strict` before any PR**
+**6.** **Run `mix credo --strict` before any PR**
 **7.** **Run `mix sobelow` for security** — check after quality checks
 
 
