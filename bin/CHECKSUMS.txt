@@ -1,6 +1,6 @@
 # rs-guard bundled binaries (v1.0.0)
 #
-# CI downloads v1.2.0 via scripts/rs-guard-install.sh (pinned in bin/rs-guard.manifest).
+# CI downloads v1.6.0 via scripts/rs-guard-install.sh (pinned in bin/rs-guard.manifest).
 # These binaries are bundled for local development only.
 # Source:  https://github.com/nebulaideas/rs-guard/releases/tag/v1.0.0
 #
