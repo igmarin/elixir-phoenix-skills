@@ -221,7 +221,7 @@ All standard CRUD functions (`list_*`, `get_*!`, `update_*`, `delete_*`) follow 
 
 ## Related Skills
 
-- **Prerequisite:** [elixir-essentials](../../fundamentals/elixir-essentials/SKILL.md) — core Elixir patterns before working with Ecto
+- **Prerequisite:** [elixir-essentials](../../elixir-core/elixir-essentials/SKILL.md) — core Elixir patterns before working with Ecto
 - **Next — changeset deep-dive:** [ecto-changeset-patterns](../ecto-changeset-patterns/SKILL.md) — advanced validations, custom constraints, and error formatting
 - **Next — testing:** [testing-essentials](../../testing/testing-essentials/SKILL.md) — testing Ecto contexts and migrations
 
@@ -231,7 +231,7 @@ All standard CRUD functions (`list_*`, `get_*!`, `update_*`, `delete_*`) follow 
 - Simple read-only schema inspection — use `mix ecto.schema` directly
 - Raw SQL queries that bypass Ecto entirely — write these in a dedicated repo method, not inline in contexts
 - Advanced nested association patterns — use `ecto-changeset-patterns` instead
-- Migration orchestration planning — use `ecto-migration` persona instead
+- Migration orchestration planning — use `ecto-migration` playbook instead
 
 
 ## Common Pitfalls

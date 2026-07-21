@@ -1,24 +1,24 @@
 {
   "name": "igmarin/elixir-phoenix-skills",
-  "version": "2.9.0",
+  "version": "3.0.0",
   "license": "MIT",
   "depends_on": [],
-  "summary": "Curated library of 38 atomic skills, 7 personas, and 1 orchestrator for Elixir and Phoenix development. Organized by category: fundamentals, phoenix, database, testing, auth, infrastructure, quality, security, integrations, tooling, frameworks, personas, and orchestration. Covers core Elixir patterns, Phoenix LiveView, Ecto, OTP, Oban, testing, security, deployment, real-time, and modern tooling (Req, Swoosh, Cachex, Broadway, Ash).",
+  "summary": "Curated library of 38 atomic skills, 7 playbooks, and 1 orchestrator for Elixir and Phoenix development. Organized by category: elixir-core, phoenix, database, testing, auth, infrastructure, performance, quality, security, integrations, tooling, frameworks, playbooks, and orchestration. Covers core Elixir patterns, Phoenix LiveView, Ecto, OTP, Oban, testing, security, deployment, real-time, and modern tooling (Req, Swoosh, Cachex, Broadway, Ash).",
   "skills": {
     "elixir-essentials": {
-      "path": "skills/fundamentals/elixir-essentials/SKILL.md"
+      "path": "skills/elixir-core/elixir-essentials/SKILL.md"
     },
     "otp-essentials": {
-      "path": "skills/fundamentals/otp-essentials/SKILL.md"
+      "path": "skills/elixir-core/otp-essentials/SKILL.md"
     },
     "typespec-dialyzer": {
-      "path": "skills/fundamentals/typespec-dialyzer/SKILL.md"
+      "path": "skills/elixir-core/typespec-dialyzer/SKILL.md"
     },
     "phoenix-liveview-essentials": {
       "path": "skills/phoenix/phoenix-liveview-essentials/SKILL.md"
     },
     "phoenix-scopes": {
-      "path": "skills/phoenix/phoenix-scopes/SKILL.md"
+      "path": "skills/auth/phoenix-scopes/SKILL.md"
     },
     "liveview-streams": {
       "path": "skills/phoenix/liveview-streams/SKILL.md"
@@ -51,7 +51,7 @@
       "path": "skills/testing/property-based-testing/SKILL.md"
     },
     "benchee-profiling": {
-      "path": "skills/testing/benchee-profiling/SKILL.md"
+      "path": "skills/performance/benchee-profiling/SKILL.md"
     },
     "phoenix-liveview-auth": {
       "path": "skills/auth/phoenix-liveview-auth/SKILL.md"
@@ -72,7 +72,7 @@
       "path": "skills/infrastructure/deployment-gotchas/SKILL.md"
     },
     "telemetry-essentials": {
-      "path": "skills/infrastructure/telemetry-essentials/SKILL.md"
+      "path": "skills/performance/telemetry-essentials/SKILL.md"
     },
     "cachex-caching": {
       "path": "skills/infrastructure/cachex-caching/SKILL.md"
@@ -84,10 +84,10 @@
       "path": "skills/quality/credo-config/SKILL.md"
     },
     "apply-phoenix-liveview-conventions": {
-      "path": "skills/quality/apply-phoenix-liveview-conventions/SKILL.md"
+      "path": "skills/phoenix/apply-phoenix-liveview-conventions/SKILL.md"
     },
     "apply-phoenix-controller-conventions": {
-      "path": "skills/quality/apply-phoenix-controller-conventions/SKILL.md"
+      "path": "skills/phoenix/apply-phoenix-controller-conventions/SKILL.md"
     },
     "code-review": {
       "path": "skills/quality/code-review/SKILL.md"
@@ -99,7 +99,7 @@
       "path": "skills/quality/respond-to-review/SKILL.md"
     },
     "apply-ecto-conventions": {
-      "path": "skills/quality/apply-ecto-conventions/SKILL.md"
+      "path": "skills/database/apply-ecto-conventions/SKILL.md"
     },
     "security-essentials": {
       "path": "skills/security/security-essentials/SKILL.md"
@@ -123,29 +123,29 @@
       "path": "skills/orchestration/elixir-skill-router/SKILL.md"
     },
     "tdd": {
-      "path": "skills/personas/tdd/SKILL.md"
+      "path": "skills/playbooks/tdd/SKILL.md"
     },
     "quality": {
-      "path": "skills/personas/quality/SKILL.md"
+      "path": "skills/playbooks/quality/SKILL.md"
     },
     "setup": {
-      "path": "skills/personas/setup/SKILL.md"
+      "path": "skills/playbooks/setup/SKILL.md"
     },
     "bug-fix": {
-      "path": "skills/personas/bug-fix/SKILL.md"
+      "path": "skills/playbooks/bug-fix/SKILL.md"
     },
     "background-job": {
-      "path": "skills/personas/background-job/SKILL.md"
+      "path": "skills/playbooks/background-job/SKILL.md"
     },
     "liveview": {
-      "path": "skills/personas/liveview/SKILL.md"
+      "path": "skills/playbooks/liveview/SKILL.md"
     },
     "ecto-migration": {
-      "path": "skills/personas/ecto-migration/SKILL.md"
+      "path": "skills/playbooks/ecto-migration/SKILL.md"
     }
   },
   "categories": {
-    "fundamentals": "skills/fundamentals/",
+    "elixir-core": "skills/elixir-core/",
     "phoenix": "skills/phoenix/",
     "database": "skills/database/",
     "testing": "skills/testing/",
@@ -156,8 +156,9 @@
     "integrations": "skills/integrations/",
     "tooling": "skills/tooling/",
     "frameworks": "skills/frameworks/",
-    "personas": "skills/personas/",
-    "orchestration": "skills/orchestration/"
+    "playbooks": "skills/playbooks/",
+    "orchestration": "skills/orchestration/",
+    "performance": "skills/performance/"
   },
   "deprecated_skills": {}
 }

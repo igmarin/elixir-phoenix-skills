@@ -2,7 +2,7 @@
 
 ![Elixir Phoenix Skills](https://github.com/user-attachments/assets/ac5da537-5062-4a67-a8a3-114129bc101a)
 
-A curated library of **public Elixir/Phoenix agent skills** — 38 atomic skills, 7 personas, and 1 entry-point orchestrator that teach AI tools how to write idiomatic Elixir code, test Phoenix applications, and follow production-minded conventions.
+A curated library of **public Elixir/Phoenix agent skills** — 38 atomic skills, 7 playbooks, and 1 entry-point orchestrator that teach AI tools how to write idiomatic Elixir code, test Phoenix applications, and follow production-minded conventions.
 
 The project is built around core Elixir principles:
 
@@ -20,7 +20,7 @@ This repo is one of 6 in a composable AI skill ecosystem:
 |------|------|
 | [`ruby-core-skills`](https://github.com/igmarin/ruby-core-skills) | 15 shared Ruby skills + process discipline |
 | [`rails-agent-skills`](https://github.com/igmarin/rails-agent-skills) | 28 atomic skills + 9 personas |
-| [**`elixir-phoenix-skills`**](https://github.com/igmarin/elixir-phoenix-skills) | 38 atomic skills + 7 personas + 1 orchestrator |
+| [**`elixir-phoenix-skills`**](https://github.com/igmarin/elixir-phoenix-skills) | 38 atomic skills + 7 playbooks + 1 orchestrator |
 | [`hanakai-yaku`](https://github.com/igmarin/hanakai-yaku) | 35 Hanami/dry-rb skills + 10 personas |
 | [`agnostic-planning-skills`](https://github.com/igmarin/agnostic-planning-skills) | 10 planning skills + 4 personas |
 | [`agent-mcp-runtime`](https://github.com/igmarin/agent-mcp-runtime) | Rust CLI runtime (pack resolution, MCP) |
@@ -62,38 +62,40 @@ npx skills add igmarin/elixir-phoenix-skills
 
 ## Skill Catalog
 
-The library contains **46 skills total** — 38 atomic skills, 7 personas, and 1 orchestrator — organized by category.
+The library contains **46 skills total** — 38 atomic skills, 7 playbooks, and 1 orchestrator — organized by category.
 
 ### Atomic Skills
 
 | Category | Skills | Path |
 |----------|--------|------|
-| **Fundamentals** | `elixir-essentials`, `otp-essentials`, `typespec-dialyzer` | `skills/fundamentals/` |
-| **Phoenix** | `phoenix-liveview-essentials`, `liveview-streams`, `phoenix-scopes`, `phoenix-channels-essentials`, `phoenix-json-api`, `phoenix-pubsub-patterns`, `phoenix-uploads` | `skills/phoenix/` |
-| **Database** | `ecto-essentials`, `ecto-changeset-patterns`, `ecto-nested-associations` | `skills/database/` |
-| **Testing** | `testing-essentials`, `property-based-testing`, `benchee-profiling` | `skills/testing/` |
-| **Auth** | `phoenix-liveview-auth`, `phoenix-auth-customization`, `phoenix-authorization-patterns` | `skills/auth/` |
-| **Infrastructure** | `oban-essentials`, `broadway-data-pipelines`, `deployment-gotchas`, `telemetry-essentials`, `cachex-caching` | `skills/infrastructure/` |
-| **Quality** | `code-quality`, `credo-config`, `apply-phoenix-liveview-conventions`, `apply-phoenix-controller-conventions`, `code-review`, `refactor-code`, `respond-to-review`, `apply-ecto-conventions` | `skills/quality/` |
+| **Elixir Core** | `elixir-essentials`, `otp-essentials`, `typespec-dialyzer` | `skills/elixir-core/` |
+| **Phoenix** | `phoenix-liveview-essentials`, `liveview-streams`, `phoenix-channels-essentials`, `phoenix-json-api`, `phoenix-pubsub-patterns`, `phoenix-uploads`, `apply-phoenix-liveview-conventions`, `apply-phoenix-controller-conventions` | `skills/phoenix/` |
+| **Database** | `ecto-essentials`, `ecto-changeset-patterns`, `ecto-nested-associations`, `apply-ecto-conventions` | `skills/database/` |
+| **Testing** | `testing-essentials`, `property-based-testing` | `skills/testing/` |
+| **Performance** | `benchee-profiling`, `telemetry-essentials` | `skills/performance/` |
+| **Auth** | `phoenix-liveview-auth`, `phoenix-auth-customization`, `phoenix-authorization-patterns`, `phoenix-scopes` | `skills/auth/` |
+| **Infrastructure** | `oban-essentials`, `broadway-data-pipelines`, `deployment-gotchas`, `cachex-caching` | `skills/infrastructure/` |
+| **Quality** | `code-quality`, `credo-config`, `code-review`, `refactor-code`, `respond-to-review` | `skills/quality/` |
 | **Security** | `security-essentials` | `skills/security/` |
 | **Integrations** | `req-http-client`, `swoosh-emails`, `gettext-i18n` | `skills/integrations/` |
 | **Tooling** | `mix-tasks-generators` | `skills/tooling/` |
 | **Frameworks** | `ash-framework` | `skills/frameworks/` |
 
-### Personas (Workflow Orchestration)
+### Playbooks (Workflow Orchestration)
 
-Personas orchestrate multiple atomic skills into end-to-end workflows with hard gates, phases, and output formats:
+Playbooks orchestrate multiple atomic skills into end-to-end workflows with hard gates, phases, and human-in-the-loop checkpoints:
 
-| Persona | Phases | Purpose |
-|---------|--------|---------|
-| **elixir-skill-router** | Triage → Delegate | Entry-point orchestrator that routes requests to the correct skill or persona |
-| **tdd** | Context → Test → RED → GREEN → REFACTOR → Quality Gate | Full TDD cycle with test-first discipline |
-| **quality** | Format → Credo → Dialyzer → Refactoring → Docs | Code quality loop before PR |
-| **setup** | Elixir/Erlang → Deps → DB → CI/CD → Validate | Project setup and CI/CD configuration |
-| **bug-fix** | Triage → Reproduce → Fix → Verify | Bug fixing with reproduction tests |
-| **background-job** | Design → TDD → Retry/Discard → Failure Testing → Monitoring | Robust Oban job implementation |
-| **liveview** | Contract → Test → Implementation → Quality | Full LiveView feature development |
-| **ecto-migration** | Plan → Implement → Verify → Deploy | Safe migrations with expand-contract |
+| Playbook | Path | Purpose |
+|----------|------|---------|
+| **tdd** | `skills/playbooks/tdd/` | Full TDD cycle with test-first discipline |
+| **quality** | `skills/playbooks/quality/` | Code quality loop before PR |
+| **setup** | `skills/playbooks/setup/` | Project setup and CI/CD configuration |
+| **bug-fix** | `skills/playbooks/bug-fix/` | Bug fixing with reproduction tests |
+| **background-job** | `skills/playbooks/background-job/` | Robust Oban job implementation |
+| **liveview** | `skills/playbooks/liveview/` | Full LiveView feature development |
+| **ecto-migration** | `skills/playbooks/ecto-migration/` | Safe migrations with expand-contract |
+
+Entry routing lives under **orchestration** (`skills/orchestration/elixir-skill-router/`), not under playbooks.
 
 ### Assets
 
@@ -121,7 +123,7 @@ Key skills include `assets/` with templates, checklists, and code snippets:
 Skills are designed to compose. A typical workflow chains from entry to quality gate:
 
 ```
-elixir-skill-router → tdd → quality → PR
+elixir-skill-router → tdd (playbook) → quality (playbook) → PR
 ```
 
 ### Common Chains
@@ -155,7 +157,7 @@ npx skills add igmarin/elixir-phoenix-skills
 # Or via GitHub CLI (v2.90.0+)
 gh skill install igmarin/elixir-phoenix-skills
 
-# Install a specific persona
+# Install a specific playbook
 gh skill install igmarin/elixir-phoenix-skills tdd --scope project
 ```
 
@@ -171,7 +173,7 @@ When contributing skills:
 - Follow the established skill format with RULES sections and 3-column Integration tables.
 - Include good/bad code examples for all major patterns.
 - Add `assets/` with templates, checklists, or snippets when the skill benefits from reusable artifacts.
-- Personas must include phases, hard gates, error recovery, and an output style section.
+- Playbooks must include phases, hard gates, error recovery, and an output style section.
 
 ## License
 

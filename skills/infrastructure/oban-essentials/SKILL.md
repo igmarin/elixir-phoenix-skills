@@ -288,6 +288,6 @@ SendReport.new(%{user_id: user.id, report_id: report.id})
 | elixir-essentials | oban-essentials | telemetry-essentials |
 
 **Companion skills:**
-- `background-job` — persona that orchestrates the full worker workflow
+- `background-job` — playbook that orchestrates the full worker workflow
 - `broadway-data-pipelines` — high-throughput pipelines fed by external message queues
 - `telemetry-essentials` — observe job execution and failures
