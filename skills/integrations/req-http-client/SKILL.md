@@ -187,17 +187,19 @@ unbounded:
 
 ```elixir
 # Stream large responses to a file
-Req.get!("https://api.example.com/large-file",
-  into: File.stream!("download.txt")
-)
+{:ok, _resp} =
+  Req.get("https://api.example.com/large-file",
+    into: File.stream!("download.txt")
+  )
 
 # Stream with a callback
-Req.get!("https://api.example.com/stream",
-  into: fn {:data, data}, {req, resp} ->
-    IO.puts("Received #{byte_size(data)} bytes")
-    {:cont, {req, resp}}
-  end
-)
+{:ok, _resp} =
+  Req.get("https://api.example.com/stream",
+    into: fn {:data, data}, {req, resp} ->
+      IO.puts("Received #{byte_size(data)} bytes")
+      {:cont, {req, resp}}
+    end
+  )
 ```
 
 ---
