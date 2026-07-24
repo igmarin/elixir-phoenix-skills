@@ -217,7 +217,7 @@ streaming support, and it's the right tool whenever a response body could be lar
 unbounded:
 
 ```elixir
-# Stream large responses to a file
+# Stream large responses to a file. File-write errors (e.g., disk full) propagate as {:error, reason}.
 case Req.get("https://api.example.com/large-file",
        into: File.stream!("download.txt")
      ) do

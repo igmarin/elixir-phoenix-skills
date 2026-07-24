@@ -79,6 +79,9 @@ defmodule MyAppWeb.PostLive.Index do
       {:error, :not_found} ->
         {:noreply, put_flash(socket, :error, "Post not found")}
 
+      {:error, %Ecto.Changeset{}} ->
+        {:noreply, put_flash(socket, :error, "Could not delete post")}
+
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Could not delete post")}
     end
