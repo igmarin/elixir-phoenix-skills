@@ -89,6 +89,7 @@ def mount(_params, _session, socket) do
     socket
     |> assign(:user, nil)
     |> assign(:loading, false)
+    |> assign(:post_id, nil)
     |> assign(:data, [])
 
   if connected?(socket) do
