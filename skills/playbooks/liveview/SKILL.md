@@ -12,7 +12,7 @@ metadata:
   user-invocable: "true"
   entry_point: true
   phases: "Phase 1: Contract, Phase 2: RED test, Phase 3: HITL impl, Phase 4: Verify, Phase 5: Quality"
-  hard_gates: "LiveView contract, Test fails for right reason, Thin handle_event and handle_info, User approval and green suite"
+  hard_gates: "LiveView contract, Test fails for right reason, Thin handle_event and handle_info, Lifecycle green, User approval and green suite"
   dependencies:
     source: self
     skills:
@@ -99,6 +99,14 @@ Write `live/2` or `live_isolated` test; run until fail is “missing behaviour�
 
 - Mount → render → event → update path green
 - `connected?` for side effects; streams for large lists
+
+**HARD GATE — Lifecycle green:**
+
+- [ ] Mount → render → event → update path is green.
+- [ ] Side effects are guarded by `connected?(socket)`.
+- [ ] Streams are used for large collections.
+
+**If gate fails:** Extract heavy logic from callbacks; re-test the lifecycle path.
 
 ### Phase 5 — Quality
 

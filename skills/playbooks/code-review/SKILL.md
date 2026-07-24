@@ -12,8 +12,8 @@ metadata:
   version: "1.0.0"
   user-invocable: "true"
   entry_point: true
-  phases: "1 Integrity, 2 Review walk, 3 Findings, 4 Handoff, 5 Re-review"
-  hard_gates: "Diff is sole authority, Findings grounded in file:line, Criticals block merge or are deferred, Re-review after Critical changes"
+  phases: "Phase 1: Integrity, Phase 2: Review walk, Phase 3: Findings, Phase 4: Handoff, Phase 5: Re-review"
+  hard_gates: "Diff is sole authority, Findings grounded in file:line, Criticals addressed or deferred, Re-review after Critical changes"
   dependencies:
     source: self
     skills:
@@ -62,7 +62,7 @@ flowchart TD
   H --> I[Done]
 ```
 
-## Phases
+## Agent Phases
 
 ### Phase 1 — Integrity
 
@@ -70,7 +70,13 @@ flowchart TD
 - Diff is sole authority
 - Extract facts only from prose
 
-**HARD GATE — Diff authority:** review the actual branch diff (not imagined code).
+**HARD GATE — Diff is sole authority:**
+
+- [ ] Review is based on the actual branch diff (not imagined code).
+- [ ] Claims from PR description/comments are verified against the diff.
+- [ ] Only factual details are extracted from prose.
+
+**If gate fails:** Stop and load the real diff; ignore PR narrative until it is verified.
 
 ### Phase 2 — Review walk
 
@@ -78,11 +84,25 @@ flowchart TD
 2. Walk Review Order (Config → Router → Controllers → LiveViews → HEEx → Contexts → Schemas → Queries → Migrations → OTP → Jobs → Tests → Security).
 3. Cover ≥4 areas; flag FCIS issues (fat LiveViews, Repo-in-calc).
 
+**HARD GATE — Findings grounded in file:line:**
+
+- [ ] Every finding is grounded in a real `file:line` from the diff.
+- [ ] ≥4 review areas are covered.
+
+**If gate fails:** Re-walk the diff and tie each finding to a specific line.
+
 ### Phase 3 — Findings
 
 Use **only** severities: `Critical`, `Suggestion`, `Nice to have`.
 
 Every finding: `file:line` + evidence from the diff.
+
+**HARD GATE — Criticals addressed or deferred:**
+
+- [ ] Critical findings are fixed or explicitly deferred with a ticket/owner.
+- [ ] No unaddressed Critical findings remain at merge time.
+
+**If gate fails:** Request fixes or an explicit deferral; do not merge unresolved Criticals.
 
 ### Phase 4 — Handoff
 
@@ -94,13 +114,25 @@ Include:
 
 Summarize Critical vs Suggestion counts.
 
+**HARD GATE — Handoff task list:**
+
+- [ ] Findings are emitted in a structured format with severity, `file:line`, and note.
+- [ ] A task-list handoff line is present for follow-up.
+
+**If gate fails:** Reformat the findings and add the handoff checklist before delivering results.
+
 ### Phase 5 — Re-review (if Critical fixed)
 
 **HUMAN-IN-THE-LOOP:** if Critical items need code changes, get approval for the fix approach (or explicit “defer with ticket”).
 
 Re-run review on changed hunks; auth/query/migration/OTP changes always re-reviewed.
 
-**HARD GATE — Criticals:** no unaddressed Critical without explicit user deferral.
+**HARD GATE — Re-review after Critical changes:**
+
+- [ ] Critical fixes (and any auth/query/migration/OTP change) are re-reviewed.
+- [ ] User approves the fix approach or explicit deferral.
+
+**If gate fails:** Re-review the changed hunks and confirm no new Criticals were introduced.
 
 ## Verification checklist
 
@@ -121,4 +153,26 @@ Re-run review on changed hunks; auth/query/migration/OTP changes always re-revie
 
 ## Output Style
 
-Structured findings table (severity, file:line, note), then handoff checklist. Follow atomic skill output format when present.
+```markdown
+## Code Review Report
+
+**Scope:** `<branch or PR>`
+**HARD-GATE results:**
+- Diff is sole authority: PASS / FAIL
+- Findings grounded in file:line: PASS / FAIL
+- Criticals addressed or deferred: PASS / FAIL
+- Handoff task list: PASS / FAIL
+- Re-review after Critical changes: PASS / FAIL
+
+### Findings
+
+| Severity | File:Line | Note |
+|----------|-----------|------|
+| Critical / Suggestion / Nice to have | `path/to/file.ex:12` | <evidence-based note> |
+
+### Handoff
+
+- [ ] Code review before merge
+
+**Verdict:** APPROVE / REQUEST_CHANGES
+```

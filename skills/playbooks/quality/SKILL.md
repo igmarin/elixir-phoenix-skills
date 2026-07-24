@@ -11,7 +11,7 @@ metadata:
   version: "1.0.0"
   user-invocable: "true"
   entry_point: true
-  phases: "1 Conventions, 2 Refactor optional, 3 Docs"
+  phases: "Phase 1: Conventions, Phase 2: Refactor optional, Phase 3: Docs"
   hard_gates: "Quality commands exit 0, Refactor green tests and user approval, No simulated green gates"
   dependencies:
     source: self
@@ -67,7 +67,7 @@ flowchart TD
 | Nesting | > 3 |
 | Pipe chain | > 5 |
 
-## Phases
+## Agent Phases
 
 ### Phase 1 — Conventions
 
@@ -79,7 +79,15 @@ mix hex.audit
 mix test
 ```
 
-**HARD GATE:** all commands exit 0 before Phase 2/PR.
+**HARD GATE — Quality commands exit 0:**
+
+- [ ] `mix format --check-formatted` exits 0.
+- [ ] `mix credo --strict` exits 0.
+- [ ] `mix dialyzer` exits 0.
+- [ ] `mix hex.audit` exits 0.
+- [ ] `mix test` exits 0.
+
+**If gate fails:** Fix the reported violations and re-run the quality commands before continuing.
 
 ### Phase 2 — Refactor (optional)
 
@@ -90,12 +98,25 @@ Only if thresholds exceeded.
 3. Apply one change; re-run tests.
 4. Prefer FCIS extractions (pure modules out of LiveViews/controllers/workers).
 
-**If red:** revert last change; smaller step.
+**HARD GATE — Refactor green tests and user approval:**
+
+- [ ] A characterization test exists and passes on the current code.
+- [ ] User approves each extraction before it is applied.
+- [ ] Tests remain green after each change.
+
+**If gate fails:** Revert the last change and take a smaller extraction step.
 
 ### Phase 3 — Documentation
 
 - `@doc` + `@spec` on public APIs touched
 - No PR until docs + Phase 1 gate hold
+
+**HARD GATE — No simulated green gates:**
+
+- [ ] Public APIs touched have `@doc` and `@spec`.
+- [ ] No gate is skipped or declared green from simulated output.
+
+**If gate fails:** Add missing docs/specs or re-run the actual quality commands.
 
 ## Verification checklist
 
@@ -110,4 +131,25 @@ Fix failing tool first; never open PR with a red gate.
 
 ## Output Style
 
-Command results table, refactor list, docs remaining.
+```markdown
+## Quality Report
+
+**Scope:** `<branch or PR>`
+**Quality command results:**
+| Command | Exit | Notes |
+|---------|------|-------|
+| `mix format --check-formatted` | 0 / non-zero | |
+| `mix credo --strict` | 0 / non-zero | |
+| `mix dialyzer` | 0 / non-zero | |
+| `mix hex.audit` | 0 / non-zero | |
+| `mix test` | 0 / non-zero | |
+
+**HARD-GATE results:**
+- Quality commands exit 0: PASS / FAIL
+- Refactor green tests and user approval: PASS / FAIL (N/A if no refactor)
+- No simulated green gates: PASS / FAIL
+
+**Refactors applied:** <list with file:line>
+**Docs/specs added:** <list>
+**Verdict:** APPROVE / REQUEST_CHANGES
+```
