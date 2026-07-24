@@ -89,6 +89,7 @@ def mount(_params, _session, socket) do
     socket
     |> assign(:user, nil)
     |> assign(:loading, false)
+    |> assign(:post_id, nil)
     |> assign(:data, [])
 
   if connected?(socket) do
@@ -157,13 +158,32 @@ Called in BOTH render phases on URL changes. Place URL-dependent assigns here so
 ```elixir
 @impl true
 def handle_params(%{"id" => id}, _uri, socket) do
-  post = Posts.get_post!(id)
+  # Posts.get_post/1 is expected to return the post or nil.
+  # If your context returns {:ok, post} / {:error, :not_found}, match that shape instead.
+  case Posts.get_post(id) do
+    nil ->
+      {:noreply, push_navigate(socket, to: ~p"/posts")}
 
-  if connected?(socket) do
-    Phoenix.PubSub.subscribe(MyApp.PubSub, "post:#{id}")
+    post ->
+      old_id = socket.assigns[:post_id]
+
+      socket =
+        if connected?(socket) and not is_nil(old_id) and old_id != post.id do
+          Phoenix.PubSub.unsubscribe(MyApp.PubSub, "post:#{old_id}")
+          socket
+        else
+          socket
+        end
+
+      if connected?(socket) do
+        Phoenix.PubSub.subscribe(MyApp.PubSub, "post:#{post.id}")
+      end
+
+      {:noreply,
+       socket
+       |> assign(:post, post)
+       |> assign(:post_id, post.id)}
   end
-
-  {:noreply, assign(socket, :post, post)}
 end
 
 @impl true

@@ -2,7 +2,7 @@
 name: respond-to-review
 type: atomic
 license: MIT
-tags: [atomic, quality]
+tags: [atomic]
 description: >
   Use when responding to code review feedback on Elixir/Phoenix pull requests.
   Covers evaluating suggestions for correctness, verifying against actual code,

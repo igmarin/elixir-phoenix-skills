@@ -1,7 +1,7 @@
 ---
 name: apply-phoenix-liveview-conventions
 type: atomic
-tags: [atomic, phoenix]
+tags: [atomic]
 license: MIT
 description: >
   Use when writing new LiveView code in Phoenix applications. Enforces consistent patterns

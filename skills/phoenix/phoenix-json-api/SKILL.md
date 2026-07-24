@@ -110,8 +110,8 @@ defmodule MyAppWeb.API.V1.PostController do
   action_fallback MyAppWeb.FallbackController
 
   def index(conn, params) do
-    page = Map.get(params, "page", "1") |> String.to_integer()
-    per_page = Map.get(params, "per_page", "20") |> String.to_integer() |> min(100)
+    page = parse_int(params["page"], 1)
+    per_page = parse_int(params["per_page"], 20) |> min(100)
 
     {posts, total} = Blog.list_posts(page: page, per_page: per_page)
 
@@ -140,6 +140,16 @@ defmodule MyAppWeb.API.V1.PostController do
       inserted_at: post.inserted_at
     }
   end
+
+  defp parse_int(nil, default), do: default
+  defp parse_int(value, default) when is_binary(value) do
+    case value |> String.trim() |> Integer.parse() do
+      {n, ""} -> max(n, 1)
+      _ -> default
+    end
+  end
+  defp parse_int(value, default) when is_integer(value), do: max(value, 1)
+  defp parse_int(_, default), do: default
 end
 ```
 

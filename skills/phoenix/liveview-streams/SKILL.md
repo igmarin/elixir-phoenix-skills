@@ -61,15 +61,30 @@ defmodule MyAppWeb.PostLive.Index do
 
   @impl true
   def handle_event("create", %{"post" => params}, socket) do
-    {:ok, post} = Blog.create_post(params)
-    {:noreply, stream_insert(socket, :posts, post, at: 0)}
+    case Blog.create_post(params) do
+      {:ok, post} ->
+        {:noreply, stream_insert(socket, :posts, post, at: 0)}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply, assign(socket, :form, to_form(changeset))}
+    end
   end
 
   @impl true
   def handle_event("delete", %{"id" => id}, socket) do
-    post = Blog.get_post!(id)
-    {:ok, _} = Blog.delete_post(post)
-    {:noreply, stream_delete(socket, :posts, post)}
+    with {:ok, post} <- Blog.fetch_post(id),
+         {:ok, _} <- Blog.delete_post(post) do
+      {:noreply, stream_delete(socket, :posts, post)}
+    else
+      {:error, :not_found} ->
+        {:noreply, put_flash(socket, :error, "Post not found")}
+
+      {:error, %Ecto.Changeset{}} ->
+        {:noreply, put_flash(socket, :error, "Could not delete post")}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Could not delete post")}
+    end
   end
 
   @impl true
@@ -148,6 +163,8 @@ def mount(_params, _session, socket) do
   {:ok,
    socket
    |> stream_configure(:posts, dom_id: &"post-#{&1.id}")
+   |> assign(:editing_id, nil)
+   |> assign(:form, nil)
    |> stream(:posts, Blog.list_posts())}
 end
 
@@ -194,14 +211,47 @@ end
 ## Edit-in-Place Pattern
 
 ```elixir
-def handle_event("save_edit", %{"id" => id, "post" => params}, socket) do
-  post = Blog.get_post!(id)
-  {:ok, updated_post} = Blog.update_post(post, params)
+@impl true
+def handle_event("start_edit", %{"id" => id}, socket) do
+  case Blog.fetch_post(id) do
+    {:ok, post} ->
+      {:noreply,
+       socket
+       |> assign(:editing_id, id)
+       |> assign(:form, to_form(Blog.change_post(post)))}
 
+    {:error, :not_found} ->
+      {:noreply, put_flash(socket, :error, "Post not found")}
+  end
+end
+
+@impl true
+def handle_event("save_edit", %{"id" => id, "post" => params}, socket) do
+  with {:ok, post} <- Blog.fetch_post(id),
+       {:ok, updated_post} <- Blog.update_post(post, params) do
+    {:noreply,
+     socket
+     |> assign(:editing_id, nil)
+     |> assign(:form, nil)
+     |> stream_insert(:posts, updated_post)}
+  else
+    {:error, :not_found} ->
+      {:noreply, put_flash(socket, :error, "Post not found")}
+
+    {:error, %Ecto.Changeset{} = changeset} ->
+      {:noreply,
+       socket
+       |> assign(:editing_id, id)
+       |> assign(:form, to_form(changeset))}
+  end
+end
+
+@impl true
+def handle_event("cancel_edit", _params, socket) do
   {:noreply,
    socket
    |> assign(:editing_id, nil)
-   |> stream_insert(:posts, updated_post)}
+   |> assign(:form, nil)}
 end
 ```
 
@@ -209,8 +259,9 @@ end
 <div id="posts" phx-update="stream">
   <div :for={{dom_id, post} <- @streams.posts} id={dom_id}>
     <%= if @editing_id == post.id do %>
-      <.form phx-submit="save_edit">
-        <input name="post[title]" value={post.title} />
+      <.form for={@form} phx-submit="save_edit">
+        <input type="hidden" name="id" value={post.id} />
+        <.input field={@form[:title]} type="text" label="Title" />
         <button type="submit">Save</button>
         <button type="button" phx-click="cancel_edit">Cancel</button>
       </.form>

@@ -3,6 +3,8 @@
 Long-form reference docs adapted from the community Elixir/Phoenix guide.  
 They are **not** agent skills (no `SKILL.md` frontmatter, not listed in `directory.json`).
 
+For the agent-facing source of truth, see [`AGENTS.md`](../AGENTS.md).
+
 | Guide | Use with skill |
 |-------|----------------|
 | [ecto-conventions.md](ecto-conventions.md) | `ecto-essentials`, `apply-ecto-conventions` |

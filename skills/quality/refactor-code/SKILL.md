@@ -2,7 +2,7 @@
 name: refactor-code
 type: atomic
 license: MIT
-tags: [atomic, quality]
+tags: [atomic]
 description: >
   Use when refactoring Elixir code to change structure without changing behavior.
   Must write characterization tests and verify they pass on the current code BEFORE

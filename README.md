@@ -51,6 +51,10 @@ Agent Skills are a lightweight, open format for extending AI agent capabilities 
 npx skills add igmarin/elixir-phoenix-skills
 ```
 
+### Agent guidance
+
+For AI agents working in this repo, see [`AGENTS.md`](AGENTS.md) — the single source of truth for repository conventions, validation commands, branch workflow, TDD/quality gates, and knowledge-base updates.
+
 ## Who This Is For
 
 | Reader | What you get |
