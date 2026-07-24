@@ -28,6 +28,7 @@ metadata:
 - Elixir/Erlang/OTP versions must match `.tool-versions` / `.elixir-version`.
 - `mix deps.get`, `mix ecto.create`, `mix ecto.migrate`, and `mix test` must succeed locally before CI is considered valid.
 - No secrets, tokens, or environment-specific URLs are committed.
+- CI workflow is defined and covers `mix format --check-formatted`, `mix credo --strict`, and `mix test` (plus `mix dialyzer` if the project uses it).
 
 ## When to use
 
@@ -92,7 +93,7 @@ Write/update `SETUP_CHECKLIST.md` with commands that worked.
 
 ## Error Recovery
 
-Port/DB conflicts: document actual `DATABASE_URL`; do not invent credentials.
+Port/DB conflicts: document only a redacted `DATABASE_URL` or non-sensitive connection details; never commit a credential-bearing URL.
 
 ## Output Style
 

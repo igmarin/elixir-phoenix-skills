@@ -69,15 +69,23 @@ defmodule MyApp.ApiClient.Streaming do
   @moduledoc "Stream large responses instead of loading them fully into memory."
 
   def download(url, path) do
-    Req.get!(url, into: File.stream!(path))
+    case Req.get(url, into: File.stream!(path)) do
+      {:ok, %{status: status}} when status in 200..299 -> :ok
+      {:ok, %{status: status}} -> {:error, {:http, status}}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   def stream_with_callback(url) do
-    Req.get!(url,
-      into: fn {:data, data}, {req, resp} ->
-        IO.puts("Received #{byte_size(data)} bytes")
-        {:cont, {req, resp}}
-      end
-    )
+    case Req.get(url,
+           into: fn {:data, data}, {req, resp} ->
+             IO.puts("Received #{byte_size(data)} bytes")
+             {:cont, {req, resp}}
+           end
+         ) do
+      {:ok, %{status: status}} when status in 200..299 -> :ok
+      {:ok, %{status: status}} -> {:error, {:http, status}}
+      {:error, reason} -> {:error, reason}
+    end
   end
 end

@@ -12,7 +12,7 @@ metadata:
   user-invocable: "true"
   entry_point: true
   phases: "1 Triage, 2 Reproduce, 3 HITL fix, 4 Verify"
-  hard_gates: "Input integrity"
+  hard_gates: "Input integrity, Understanding, Reproduction, User approval, Full suite green"
   dependencies:
     source: self
     skills:

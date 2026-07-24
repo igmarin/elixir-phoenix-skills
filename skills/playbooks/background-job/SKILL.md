@@ -12,7 +12,7 @@ metadata:
   user-invocable: "true"
   entry_point: true
   phases: "1 Design, 2 RED, 3 HITL impl, 4 Failure paths, 5 Monitor"
-  hard_gates: "Idempotency and error classification documented, Failing worker test right reason, Thin perform/1, Failure paths tested and user approval"
+  hard_gates: "Idempotency and error classification documented, Failing worker test right reason, Thin perform/1, Failure paths tested and user approval, Format Credo and full suite green"
   dependencies:
     source: self
     skills:
@@ -30,6 +30,7 @@ metadata:
 - A failing worker test exists and fails for the right reason before `perform/1` is written.
 - `perform/1` is a thin edge: fetch IDs → pure core → return tagged tuple.
 - Failure paths are tested; user approves the worker design.
+- `mix format --check-formatted`, `mix credo --strict`, and the full `mix test` suite are green before the PR is opened.
 
 ## When to use
 

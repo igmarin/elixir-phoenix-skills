@@ -162,11 +162,24 @@ def handle_params(%{"id" => id}, _uri, socket) do
       {:noreply, push_navigate(socket, to: ~p"/posts")}
 
     post ->
+      old_id = socket.assigns[:post_id]
+
+      socket =
+        if connected?(socket) and not is_nil(old_id) and old_id != post.id do
+          Phoenix.PubSub.unsubscribe(MyApp.PubSub, "post:#{old_id}")
+          socket
+        else
+          socket
+        end
+
       if connected?(socket) do
         Phoenix.PubSub.subscribe(MyApp.PubSub, "post:#{post.id}")
       end
 
-      {:noreply, assign(socket, :post, post)}
+      {:noreply,
+       socket
+       |> assign(:post, post)
+       |> assign(:post_id, post.id)}
   end
 end
 

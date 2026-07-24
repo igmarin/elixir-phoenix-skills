@@ -143,14 +143,27 @@ Checkpoint: confirm a `{:ok, body}` tuple is returned; check logs for retry warn
 
 ## Quick-Reference: Request Types
 
-> Use the non-bang `Req.get/2` and `Req.post/2` in application code. The bang (`!`) variants such as `Req.get!/2` are only for REPL/scripts where a crash is acceptable.
+> Use the non-bang `Req.get/2` and `Req.post/2` in application code. The bang (`!`) variants such as `Req.get!/2` are only for REPL/scripts where a crash is acceptable. Req returns `{:ok, response}` for HTTP-level responses (including 4xx/5xx) and `{:error, reason}` for transport failures, so always match on `status`.
 
-| Pattern | Example |
+```elixir
+case Req.get("https://api.example.com/users", params: %{page: 1}) do
+  {:ok, %{status: status, body: body}} when status in 200..299 ->
+    {:ok, body}
+
+  {:ok, %{status: status}} ->
+    {:error, {:http, status}}
+
+  {:error, reason} ->
+    {:error, reason}
+end
+```
+
+| Pattern | Example call |
 |---|---|
-| GET | `{:ok, resp} = Req.get("https://api.example.com/users", params: %{page: 1})` |
-| POST JSON | `{:ok, resp} = Req.post("https://api.example.com/users", json: %{name: "John"})` |
-| POST form | `{:ok, resp} = Req.post("https://api.example.com/login", form: [username: "john", password: "secret"])` |
-| With error handling | `{:ok, %{status: 200, body: body}} = Req.get("https://api.example.com/users")` / `{:error, reason}` |
+| GET | `Req.get("https://api.example.com/users", params: %{page: 1})` |
+| POST JSON | `Req.post("https://api.example.com/users", json: %{name: "John"})` |
+| POST form | `Req.post("https://api.example.com/login", form: [username: "john", password: "secret"])` |
+| With error handling | Wrap in `case` and pattern-match on `status` (see example above). |
 
 
 ## Retries
@@ -158,24 +171,42 @@ Checkpoint: confirm a `{:ok, body}` tuple is returned; check logs for retry warn
 ```elixir
 # Automatic retries for transient failures
 url = "https://api.example.com/data"  # placeholder host
-Req.get!(url,
-  retry: :transient,           # Retry on 5xx and network errors
-  retry_delay: &(&1 * 1000),   # Exponential backoff: 1s, 2s, 4s, ...
-  max_retries: 3,              # Max 3 retries
-  retry_log_level: :warning
-)
+case Req.get(url,
+       retry: :transient,           # Retry on 5xx and network errors
+       retry_delay: &(&1 * 1000),   # Exponential backoff: 1s, 2s, 4s, ...
+       max_retries: 3,              # Max 3 retries
+       retry_log_level: :warning
+     ) do
+  {:ok, %{status: status} = resp} when status in 200..299 ->
+    resp
+
+  {:ok, %{status: status}} ->
+    {:error, {:http, status}}
+
+  {:error, reason} ->
+    {:error, reason}
+end
 
 # Custom retry logic (e.g. also retry on 429)
-Req.get!("https://api.example.com/data",
-  retry: fn response ->
-    case response do
-      %{status: 429} -> true
-      %{status: s} when s >= 500 -> true
-      _ -> false
-    end
-  end,
-  max_retries: 3
-)
+case Req.get("https://api.example.com/data",
+       retry: fn response ->
+         case response do
+           %{status: 429} -> true
+           %{status: s} when s >= 500 -> true
+           _ -> false
+         end
+       end,
+       max_retries: 3
+     ) do
+  {:ok, %{status: status} = resp} when status in 200..299 ->
+    resp
+
+  {:ok, %{status: status}} ->
+    {:error, {:http, status}}
+
+  {:error, reason} ->
+    {:error, reason}
+end
 ```
 
 
@@ -187,19 +218,35 @@ unbounded:
 
 ```elixir
 # Stream large responses to a file
-{:ok, _resp} =
-  Req.get("https://api.example.com/large-file",
-    into: File.stream!("download.txt")
-  )
+case Req.get("https://api.example.com/large-file",
+       into: File.stream!("download.txt")
+     ) do
+  {:ok, %{status: status}} when status in 200..299 ->
+    :ok
+
+  {:ok, %{status: status}} ->
+    {:error, {:http, status}}
+
+  {:error, reason} ->
+    {:error, reason}
+end
 
 # Stream with a callback
-{:ok, _resp} =
-  Req.get("https://api.example.com/stream",
-    into: fn {:data, data}, {req, resp} ->
-      IO.puts("Received #{byte_size(data)} bytes")
-      {:cont, {req, resp}}
-    end
-  )
+case Req.get("https://api.example.com/stream",
+       into: fn {:data, data}, {req, resp} ->
+         IO.puts("Received #{byte_size(data)} bytes")
+         {:cont, {req, resp}}
+       end
+     ) do
+  {:ok, %{status: status}} when status in 200..299 ->
+    :ok
+
+  {:ok, %{status: status}} ->
+    {:error, {:http, status}}
+
+  {:error, reason} ->
+    {:error, reason}
+end
 ```
 
 ---

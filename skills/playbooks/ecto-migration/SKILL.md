@@ -13,7 +13,7 @@ metadata:
   user-invocable: "true"
   entry_point: true
   phases: "1 Plan, 2 Implement, 3 Migrate cycle, 4 Verify"
-  hard_gates: "Plan and rollback documented, No combined schema and data migrations, Migrate-rollback-migrate cycle green, Tests green and HITL approval"
+  hard_gates: "Plan and rollback documented, No combined schema and data migrations, Migrate-rollback-migrate cycle green, Failing schema test before migration and green after, Format Credo and full suite green, HITL approval for prod risk"
   dependencies:
     source: self
     skills:
@@ -28,7 +28,9 @@ metadata:
 - A migration plan and rollback story are documented before any migration is written.
 - Schema changes and data backfill are never combined in the same migration.
 - The `mix ecto.migrate` → `mix ecto.rollback` → `mix ecto.migrate` cycle must succeed.
-- Tests must be green and HITL approval obtained for production-impacting locks.
+- A test that depends on the new schema/constraint fails before the migration is applied and passes after.
+- `mix format --check-formatted`, `mix credo --strict`, and the full `mix test` suite are green.
+- HITL approval is obtained for production-impacting locks.
 
 ## When to use
 

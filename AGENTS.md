@@ -75,7 +75,7 @@ scripts/              # Validation scripts
 
 ## Validation
 
-Run these before every commit and before opening a PR:
+A developer should run these before every commit and before opening a PR:
 
 ```bash
 # 1. Catalog consistency
@@ -83,25 +83,27 @@ python3 scripts/validate-catalog.py
 
 # 2. External review of staged changes (dry-run)
 git diff --cached --unified=5 > /tmp/staged.diff
-./bin/rs-guard-<platform> --diff-file /tmp/staged.diff --dry-run
+./scripts/rs-guard-install.sh
+./rs-guard --diff-file /tmp/staged.diff --dry-run
 ```
 
-`rs-guard` uses the existing `.reviewer.toml` and `.github/review-prompt.md` files for its rules. The platform binary is in `bin/` (e.g., `rs-guard-macos-arm64`, `rs-guard-linux-x64`). CI downloads the correct one automatically via `scripts/rs-guard-install.sh`.
+`rs-guard` uses the existing `.reviewer.toml` and `.github/review-prompt.md` files for its rules. `scripts/rs-guard-install.sh` downloads the pinned `rs-guard` binary to the repository root; CI runs it as `./rs-guard`. The committed `bin/rs-guard-*` assets are the reference package cache, not the local runtime binary.
 
 ## Workflow
 
 1. **Branch** from `main`: `git checkout -b feature/<short-name>`.
 2. **Work in small commits** that reference an issue: `Closes #<issue>`.
-3. **Stage** changes and run `rs-guard` before each commit.
-4. **Validate** with `python3 scripts/validate-catalog.py`.
+3. **Stage** changes and run `rs-guard` on them before each commit.
+4. **Validate** with `python3 scripts/validate-catalog.py` before opening a PR.
 5. **Open a PR** and link all relevant issues. Wait for GitHub Actions (`catalog-validate.yml`, `rs-guard-review.yml`).
-6. **Address** review feedback with evidence or a documented reason.
+6. **Never commit secrets, tokens, or environment-specific URLs** — use redacted examples and `.env.example` files.
+7. **Address** review feedback with evidence or a documented reason.
 
 ## TDD and quality gates
 
-Every skill that produces code should assume the following gates:
+Every skill that produces code should assume the following gates are verified by a developer:
 
-- A developer writes a failing test and runs it before implementation.
+- A failing test is written and run before implementation.
 - `mix format --check-formatted` passes.
 - `mix credo --strict` passes.
 - `mix test` is green.
