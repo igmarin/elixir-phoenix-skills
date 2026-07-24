@@ -143,7 +143,7 @@ defmodule MyAppWeb.API.V1.PostController do
 
   defp parse_int(nil, default), do: default
   defp parse_int(value, default) when is_binary(value) do
-    case Integer.parse(value) do
+    case value |> String.trim() |> Integer.parse() do
       {n, ""} -> max(n, 1)
       _ -> default
     end

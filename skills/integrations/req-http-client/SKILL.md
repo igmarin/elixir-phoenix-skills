@@ -147,10 +147,10 @@ Checkpoint: confirm a `{:ok, body}` tuple is returned; check logs for retry warn
 
 | Pattern | Example |
 |---|---|
-| GET | `{:ok, resp} = Req.get(url, params: %{page: 1})` |
-| POST JSON | `{:ok, resp} = Req.post(url, json: %{name: "John"})` |
-| POST form | `{:ok, resp} = Req.post(url, form: [username: "john", password: "secret"])` |
-| With error handling | `{:ok, %{status: 200, body: body}} = Req.get(url)` / `{:error, reason}` |
+| GET | `{:ok, resp} = Req.get("https://api.example.com/users", params: %{page: 1})` |
+| POST JSON | `{:ok, resp} = Req.post("https://api.example.com/users", json: %{name: "John"})` |
+| POST form | `{:ok, resp} = Req.post("https://api.example.com/login", form: [username: "john", password: "secret"])` |
+| With error handling | `{:ok, %{status: 200, body: body}} = Req.get("https://api.example.com/users")` / `{:error, reason}` |
 
 
 ## Retries
