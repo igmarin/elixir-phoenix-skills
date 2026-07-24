@@ -114,10 +114,14 @@ Playbooks encode these gates as `## HARD-GATE` sections.
 After significant reorganization or new skills, regenerate the navigable knowledge graph if the optional `graphify` skill/CLI is available:
 
 ```bash
+# Re-extract the whole corpus and rebuild the graph
 graphify .
+
+# After extraction, regenerate clusters and the GRAPH_REPORT.md quickly
+graphify cluster-only .
 ```
 
-Then review `graphify-out/` and update `README.md` / `AGENTS.md` with any new cross-cutting skill relationships or stale path references.
+Outputs are `graphify-out/graph.json`, `graphify-out/GRAPH_REPORT.md`, and `graphify-out/graph.html`. Confirm freshness by comparing the `Built from commit` line in `GRAPH_REPORT.md` with the current `git rev-parse HEAD`, then update `README.md` / `AGENTS.md` with any new cross-cutting skill relationships or stale path references.
 
 ## Useful docs
 
