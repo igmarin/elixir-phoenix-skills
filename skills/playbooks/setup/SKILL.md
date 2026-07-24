@@ -6,7 +6,7 @@ license: MIT
 description: >
   Project setup loop with hard gates: verify Elixir/Erlang versions, Hex/Rebar, env, database →
   deps and migrate → test suite → CI config → optional HITL before destructive ops.
-  Trigger words: setup project, bootstrap, mix deps, ecto setup, CI, onboarding.
+  Trigger: setup project, bootstrap, mix deps, ecto setup, CI, onboarding.
 metadata:
   version: "1.0.0"
   user-invocable: "true"
@@ -22,6 +22,12 @@ metadata:
 ---
 
 # Setup Playbook
+
+## HARD-GATE
+
+- Elixir/Erlang/OTP versions must match `.tool-versions` / `.elixir-version`.
+- `mix deps.get`, `mix ecto.create`, `mix ecto.migrate`, and `mix test` must succeed locally before CI is considered valid.
+- No secrets, tokens, or environment-specific URLs are committed.
 
 ## When to use
 
@@ -84,10 +90,10 @@ Write/update `SETUP_CHECKLIST.md` with commands that worked.
 - [ ] CI covers quality gates
 - [ ] No secrets committed
 
-## Error recovery
+## Error Recovery
 
 Port/DB conflicts: document actual `DATABASE_URL`; do not invent credentials.
 
-## Output style
+## Output Style
 
 Checklist of commands with exit status.

@@ -6,7 +6,7 @@ license: MIT
 description: >
   Orchestrates the full Elixir TDD cycle with hard gates and human-in-the-loop approval:
   write a failing test → confirm fail for the right reason → propose minimal impl → wait for
-  approval → green → refactor → quality gate. Trigger words: tdd, red-green-refactor, test first,
+  approval → green → refactor → quality gate. Trigger: tdd, red-green-refactor, test first,
   failing test, write tests before code.
 metadata:
   version: "1.0.0"
@@ -23,6 +23,12 @@ metadata:
 ---
 
 # TDD Playbook
+
+## HARD-GATE
+
+- No implementation code is written until a test exists, is run, and fails for the right reason (missing behaviour, not syntax/config).
+- Implementation requires explicit user approval.
+- The quality gate (`mix format --check-formatted`, `mix credo --strict`, `mix dialyzer`, `mix test`) must pass before opening a PR.
 
 ## When to use
 
@@ -109,7 +115,7 @@ Add `@doc` / `@spec` on new public APIs. Self-review the branch diff (or run `co
 - [ ] Quality commands green
 - [ ] Public APIs documented
 
-## Error recovery
+## Error Recovery
 
 | Problem | Action |
 |---------|--------|
@@ -118,6 +124,6 @@ Add `@doc` / `@spec` on new public APIs. Self-review the branch diff (or run `co
 | Refactor turns red | Revert last step; smaller extraction |
 | Quality red | Fix before PR; do not skip gates |
 
-## Output style
+## Output Style
 
 Report phase, gate status (pass/fail), commands run, and next action. Never skip HITL.

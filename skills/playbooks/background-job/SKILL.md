@@ -6,7 +6,7 @@ license: MIT
 description: >
   Oban worker playbook with hard gates and HITL: design idempotency and error classes →
   failing worker test → thin perform/1 (FCIS edge) → retry/discard → failure tests → monitoring.
-  Trigger words: Oban, background job, worker, perform, enqueue, unique job.
+  Trigger: Oban, background job, worker, perform, enqueue, unique job.
 metadata:
   version: "1.0.0"
   user-invocable: "true"
@@ -23,6 +23,13 @@ metadata:
 ---
 
 # Background Job Playbook
+
+## HARD-GATE
+
+- Idempotency key and error classification are documented before implementation.
+- A failing worker test exists and fails for the right reason before `perform/1` is written.
+- `perform/1` is a thin edge: fetch IDs → pure core → return tagged tuple.
+- Failure paths are tested; user approves the worker design.
 
 ## When to use
 
@@ -82,10 +89,10 @@ Attach telemetry/logging for failures if production-bound.
 - [ ] No large payloads in args
 - [ ] Enqueue from context
 
-## Error recovery
+## Error Recovery
 
 Non-idempotent side effects → add guards/unique; re-test double perform.
 
-## Output style
+## Output Style
 
 Design table, test list, gate status.

@@ -6,7 +6,7 @@ license: MIT
 description: >
   LiveView feature playbook with hard gates and HITL: define mount/assigns contract → failing
   LiveView test → thin-edge implementation (FCIS) → lifecycle verify → quality gate.
-  Trigger words: new LiveView, LiveView feature, handle_event, live_isolated, HEEx page.
+  Trigger: new LiveView, LiveView feature, handle_event, live_isolated, HEEx page.
 metadata:
   version: "1.0.0"
   user-invocable: "true"
@@ -23,6 +23,13 @@ metadata:
 ---
 
 # LiveView Playbook
+
+## HARD-GATE
+
+- A LiveView contract and failing `live/2` or `live_isolated` test must exist before implementation.
+- The test must fail because behaviour is missing, not due to config/syntax.
+- `handle_event/3` and `handle_info/2` remain thin; no `Repo` calls inside LiveViews.
+- Implementation requires explicit user approval; full suite and Credo/format must pass.
 
 ## When to use
 
@@ -86,10 +93,10 @@ Write `live/2` or `live_isolated` test; run until fail is “missing behaviour�
 - [ ] No Repo/business soup in LiveView
 - [ ] Tests green
 
-## Error recovery
+## Error Recovery
 
 Fat LiveView after impl → extract pure/context module; re-test.
 
-## Output style
+## Output Style
 
 Contract summary, test command, gate status.

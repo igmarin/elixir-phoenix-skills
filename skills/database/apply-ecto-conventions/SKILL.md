@@ -2,7 +2,7 @@
 name: apply-ecto-conventions
 type: atomic
 license: MIT
-tags: [atomic, database]
+tags: [atomic]
 description: >
   Use when writing or reviewing Ecto database code in Elixir applications.
   Enforces consistent patterns for Repo queries, changeset composition,

@@ -7,7 +7,7 @@ description: >
   Safe migration playbook with hard gates and HITL for production risk: plan locks/rollback →
   implement schema-only migration → migrate/rollback/re-migrate → never mix backfill →
   expand-contract for NOT NULL → suite green.
-  Trigger words: migration, ecto.migrate, add column, index concurrently, expand-contract.
+  Trigger: migration, ecto.migrate, add column, index concurrently, expand-contract.
 metadata:
   version: "1.0.0"
   user-invocable: "true"
@@ -22,6 +22,13 @@ metadata:
 ---
 
 # Ecto Migration Playbook
+
+## HARD-GATE
+
+- A migration plan and rollback story are documented before any migration is written.
+- Schema changes and data backfill are never combined in the same migration.
+- The `mix ecto.migrate` → `mix ecto.rollback` → `mix ecto.migrate` cycle must succeed.
+- Tests must be green and HITL approval obtained for production-impacting locks.
 
 ## When to use
 
@@ -86,10 +93,10 @@ Update schemas/typespecs if columns changed.
 - [ ] Tests green
 - [ ] HITL for high-risk prod steps
 
-## Error recovery
+## Error Recovery
 
 Irreversible migration → stop; write compensating migration; do not force production.
 
-## Output style
+## Output Style
 
 Plan summary, migration paths, command results.

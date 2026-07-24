@@ -6,7 +6,7 @@ license: MIT
 description: >
   Pre-PR quality loop with hard gates: mix format, credo, dialyzer, hex.audit, full tests →
   optional FCIS-safe refactor with characterization tests and HITL → docs/specs on public APIs.
-  Trigger words: before PR, quality sweep, production readiness, credo, dialyzer, refactor for PR.
+  Trigger: before PR, quality sweep, production readiness, credo, dialyzer, refactor for PR.
 metadata:
   version: "1.0.0"
   user-invocable: "true"
@@ -23,6 +23,12 @@ metadata:
 ---
 
 # Quality Playbook
+
+## HARD-GATE
+
+- All quality commands (`mix format --check-formatted`, `mix credo --strict`, `mix dialyzer`, `mix hex.audit`, `mix test`) must exit 0 before a PR is opened.
+- Any refactor requires green characterization tests and explicit user approval.
+- No gate may be skipped or declared green from simulated output.
 
 ## When to use
 
@@ -98,10 +104,10 @@ Only if thresholds exceeded.
 - [ ] Public APIs documented
 - [ ] No FCIS violations introduced (fat edges)
 
-## Error recovery
+## Error Recovery
 
 Fix failing tool first; never open PR with a red gate.
 
-## Output style
+## Output Style
 
 Command results table, refactor list, docs remaining.

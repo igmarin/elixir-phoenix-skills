@@ -2,7 +2,7 @@
 name: code-review
 type: atomic
 license: MIT
-tags: [atomic, quality]
+tags: [atomic]
 description: >
   Reviews Elixir/Phoenix pull requests, diffs, and merge requests for quality,
   security, and conventions. Use when asked to do a PR review, review my diff,

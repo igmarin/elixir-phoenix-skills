@@ -1,7 +1,7 @@
 ---
 name: apply-phoenix-controller-conventions
 type: atomic
-tags: [atomic, phoenix]
+tags: [atomic]
 license: MIT
 description: >
   Use when writing new controller code in Phoenix applications. Enforces consistent
