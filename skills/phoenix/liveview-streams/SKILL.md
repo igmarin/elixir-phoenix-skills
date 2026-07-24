@@ -163,6 +163,8 @@ def mount(_params, _session, socket) do
   {:ok,
    socket
    |> stream_configure(:posts, dom_id: &"post-#{&1.id}")
+   |> assign(:editing_id, nil)
+   |> assign(:form, nil)
    |> stream(:posts, Blog.list_posts())}
 end
 

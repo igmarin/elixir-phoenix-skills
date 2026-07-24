@@ -170,7 +170,7 @@ end
 
 ```elixir
 # Automatic retries for transient failures
-url = "https://api.example.com/data"  # placeholder host
+url = "https://api.example.com/data"  # example.com used as RFC 2606 placeholder host
 case Req.get(url,
        retry: :transient,           # Retry on 5xx and network errors
        retry_delay: &(&1 * 1000),   # Exponential backoff: 1s, 2s, 4s, ...

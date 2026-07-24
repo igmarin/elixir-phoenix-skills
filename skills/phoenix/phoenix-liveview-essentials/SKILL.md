@@ -157,6 +157,8 @@ Called in BOTH render phases on URL changes. Place URL-dependent assigns here so
 ```elixir
 @impl true
 def handle_params(%{"id" => id}, _uri, socket) do
+  # Posts.get_post/1 is expected to return the post or nil.
+  # If your context returns {:ok, post} / {:error, :not_found}, match that shape instead.
   case Posts.get_post(id) do
     nil ->
       {:noreply, push_navigate(socket, to: ~p"/posts")}
