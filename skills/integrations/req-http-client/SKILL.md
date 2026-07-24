@@ -143,12 +143,14 @@ Checkpoint: confirm a `{:ok, body}` tuple is returned; check logs for retry warn
 
 ## Quick-Reference: Request Types
 
+> Use the non-bang `Req.get/2` and `Req.post/2` in application code. The bang (`!`) variants such as `Req.get!/2` are only for REPL/scripts where a crash is acceptable.
+
 | Pattern | Example |
 |---|---|
-| GET | `Req.get!(url, params: %{page: 1})` |
-| POST JSON | `Req.post!(url, json: %{name: "John"})` |
-| POST form | `Req.post!(url, form: [username: "john", password: "secret"])` |
-| With error handling | Use `Req.get/1` (not bang) and pattern match `{:ok, %{status: _, body: _}}` / `{:error, _}` |
+| GET | `{:ok, resp} = Req.get(url, params: %{page: 1})` |
+| POST JSON | `{:ok, resp} = Req.post(url, json: %{name: "John"})` |
+| POST form | `{:ok, resp} = Req.post(url, form: [username: "john", password: "secret"])` |
+| With error handling | `{:ok, %{status: 200, body: body}} = Req.get(url)` / `{:error, reason}` |
 
 
 ## Retries

@@ -61,15 +61,27 @@ defmodule MyAppWeb.PostLive.Index do
 
   @impl true
   def handle_event("create", %{"post" => params}, socket) do
-    {:ok, post} = Blog.create_post(params)
-    {:noreply, stream_insert(socket, :posts, post, at: 0)}
+    case Blog.create_post(params) do
+      {:ok, post} ->
+        {:noreply, stream_insert(socket, :posts, post, at: 0)}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply, assign(socket, :form, to_form(changeset))}
+    end
   end
 
   @impl true
   def handle_event("delete", %{"id" => id}, socket) do
-    post = Blog.get_post!(id)
-    {:ok, _} = Blog.delete_post(post)
-    {:noreply, stream_delete(socket, :posts, post)}
+    with {:ok, post} <- Blog.fetch_post(id),
+         {:ok, _} <- Blog.delete_post(post) do
+      {:noreply, stream_delete(socket, :posts, post)}
+    else
+      {:error, :not_found} ->
+        {:noreply, put_flash(socket, :error, "Post not found")}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Could not delete post")}
+    end
   end
 
   @impl true
@@ -195,13 +207,19 @@ end
 
 ```elixir
 def handle_event("save_edit", %{"id" => id, "post" => params}, socket) do
-  post = Blog.get_post!(id)
-  {:ok, updated_post} = Blog.update_post(post, params)
+  with {:ok, post} <- Blog.fetch_post(id),
+       {:ok, updated_post} <- Blog.update_post(post, params) do
+    {:noreply,
+     socket
+     |> assign(:editing_id, nil)
+     |> stream_insert(:posts, updated_post)}
+  else
+    {:error, :not_found} ->
+      {:noreply, put_flash(socket, :error, "Post not found")}
 
-  {:noreply,
-   socket
-   |> assign(:editing_id, nil)
-   |> stream_insert(:posts, updated_post)}
+    {:error, %Ecto.Changeset{} = changeset} ->
+      {:noreply, assign(socket, :form, to_form(changeset))}
+  end
 end
 ```
 

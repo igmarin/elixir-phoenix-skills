@@ -157,13 +157,17 @@ Called in BOTH render phases on URL changes. Place URL-dependent assigns here so
 ```elixir
 @impl true
 def handle_params(%{"id" => id}, _uri, socket) do
-  post = Posts.get_post!(id)
+  case Posts.get_post(id) do
+    nil ->
+      {:noreply, push_navigate(socket, to: ~p"/posts")}
 
-  if connected?(socket) do
-    Phoenix.PubSub.subscribe(MyApp.PubSub, "post:#{id}")
+    post ->
+      if connected?(socket) do
+        Phoenix.PubSub.subscribe(MyApp.PubSub, "post:#{post.id}")
+      end
+
+      {:noreply, assign(socket, :post, post)}
   end
-
-  {:noreply, assign(socket, :post, post)}
 end
 
 @impl true

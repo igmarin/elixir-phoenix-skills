@@ -166,13 +166,18 @@ defmodule MyApp.Workers.SendWelcomeEmail do
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"user_id" => user_id}}) do
-    user = Accounts.get_user!(user_id)
+    case Accounts.get_user(user_id) do
+      nil ->
+        {:cancel, "user #{user_id} not found"}
 
-    user
-    |> MyApp.Emails.UserEmail.welcome()
-    |> MyApp.Mailer.deliver()
+      user ->
+        email = MyApp.Emails.UserEmail.welcome(user)
 
-    {:ok, :sent}
+        case MyApp.Mailer.deliver(email) do
+          {:ok, _} -> {:ok, :sent}
+          {:error, reason} -> {:error, reason}
+        end
+    end
   end
 end
 
