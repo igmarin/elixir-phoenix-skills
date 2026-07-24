@@ -13,7 +13,7 @@ metadata:
   user-invocable: "true"
   entry_point: true
   phases: "Phase 1: Plan, Phase 2: Implement, Phase 3: Migrate cycle, Phase 4: Verify"
-  hard_gates: "Plan and rollback documented, No combined schema and data migrations, Failing schema test before migration, Migrate-rollback-migrate cycle green, Format Credo and full suite green, HITL approval for prod risk"
+  hard_gates: "Plan and rollback documented, No combined schema and data migrations, Migrate-rollback-migrate cycle green, Format Credo and full suite green"
   dependencies:
     source: self
     skills:

@@ -13,7 +13,7 @@ metadata:
   user-invocable: "true"
   entry_point: true
   phases: "Phase 1: Context and RED, Phase 2: HITL approve and GREEN, Phase 3: Refactor, Phase 4: Quality gate"
-  hard_gates: "Test fails for right reason, User approval, Quality gate green"
+  hard_gates: "Test fails for right reason, User approval, Refactor target tests green, Quality gate green"
   dependencies:
     source: self
     skills:
@@ -28,6 +28,7 @@ metadata:
 
 - No implementation code is written until a test exists, is run, and fails for the right reason (missing behaviour, not syntax/config).
 - Implementation requires explicit user approval.
+- Refactoring preserves behaviour and keeps target tests green.
 - The quality gate (`mix format --check-formatted`, `mix credo --strict`, `mix dialyzer`, `mix test`) must pass before opening a PR.
 
 ## When to use
@@ -94,7 +95,7 @@ flowchart TD
 2. Re-run target tests after each step.
 3. Repeat Phase 1–3 for the next behaviour slice.
 
-**HARD GATE — Quality gate green:**
+**HARD GATE — Refactor target tests green:**
 
 - [ ] Refactoring does not change behaviour; target tests remain green.
 
