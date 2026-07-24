@@ -13,7 +13,7 @@ metadata:
   user-invocable: "true"
   entry_point: true
   phases: "1 Context & RED, 2 HITL approve & GREEN, 3 Refactor, 4 Quality gate"
-  hard_gates: "test-fails-right-reason, user-approval, target-test-green, suite-green"
+  hard_gates: "Test fails for right reason, User approval, Quality gate green"
   dependencies:
     source: self
     skills:

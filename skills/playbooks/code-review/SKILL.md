@@ -13,7 +13,7 @@ metadata:
   user-invocable: "true"
   entry_point: true
   phases: "1 Integrity, 2 Review walk, 3 Findings, 4 Handoff, 5 Re-review"
-  hard_gates: "diff-is-authority, findings-grounded, criticals-addressed-or-blocked"
+  hard_gates: "Diff is sole authority, Findings grounded in file:line, Criticals block merge or are deferred, Re-review after Critical changes"
   dependencies:
     source: self
     skills:

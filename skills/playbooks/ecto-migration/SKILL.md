@@ -13,7 +13,7 @@ metadata:
   user-invocable: "true"
   entry_point: true
   phases: "1 Plan, 2 Implement, 3 Migrate cycle, 4 Verify"
-  hard_gates: "plan-reviewed, no-backfill-in-schema-migration, rollback-works, suite-green"
+  hard_gates: "Plan and rollback documented, No combined schema and data migrations, Migrate-rollback-migrate cycle green, Tests green and HITL approval"
   dependencies:
     source: self
     skills:

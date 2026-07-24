@@ -12,7 +12,7 @@ metadata:
   user-invocable: "true"
   entry_point: true
   phases: "1 Toolchain, 2 App boot, 3 CI, 4 Validate"
-  hard_gates: "versions-match, db-connects, suite-green, ci-defined"
+  hard_gates: "Versions match tool files, Local setup succeeds, No secrets committed, CI defined"
   dependencies:
     source: self
     skills:

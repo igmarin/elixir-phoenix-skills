@@ -12,7 +12,7 @@ metadata:
   user-invocable: "true"
   entry_point: true
   phases: "1 Contract, 2 RED test, 3 HITL impl, 4 Verify, 5 Quality"
-  hard_gates: "contract-defined, test-fails-right-reason, user-approval, lifecycle-green"
+  hard_gates: "LiveView contract and failing test, Test fails for right reason, Thin handle_event and handle_info, User approval and green suite"
   dependencies:
     source: self
     skills:

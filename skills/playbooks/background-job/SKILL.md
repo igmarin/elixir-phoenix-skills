@@ -12,7 +12,7 @@ metadata:
   user-invocable: "true"
   entry_point: true
   phases: "1 Design, 2 RED, 3 HITL impl, 4 Failure paths, 5 Monitor"
-  hard_gates: "idempotency-plan, test-fails-right-reason, user-approval, failure-tests-green"
+  hard_gates: "Idempotency and error classification documented, Failing worker test right reason, Thin perform/1, Failure paths tested and user approval"
   dependencies:
     source: self
     skills:

@@ -12,7 +12,7 @@ metadata:
   user-invocable: "true"
   entry_point: true
   phases: "1 Conventions, 2 Refactor optional, 3 Docs"
-  hard_gates: "format-credo-dialyzer-audit, characterization-green, suite-and-docs"
+  hard_gates: "Quality commands exit 0, Refactor green tests and user approval, No simulated green gates"
   dependencies:
     source: self
     skills:
