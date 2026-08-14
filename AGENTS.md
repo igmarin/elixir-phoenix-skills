@@ -117,7 +117,7 @@ After significant reorganization or new skills, regenerate the navigable knowled
 
 ```bash
 # Re-extract the whole corpus and rebuild the graph
-graphify .
+graphify extract . --backend deepseek --no-cluster
 
 # After extraction, regenerate clusters and the GRAPH_REPORT.md quickly
 graphify cluster-only .
@@ -143,3 +143,12 @@ All generated artifacts (skills, docs, commit messages, PRs) are in **English** 
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+## Code intelligence
+
+Use these tools before dumping whole files or grepping the tree.
+
+1. If `.codegraph/` exists, run `codegraph explore "<symbol or question>"` (or the CodeGraph MCP tools).
+2. If `graphify-out/graph.json` exists, use Graphify (`graphify explain`, `graphify path`, or the Graphify MCP).
+3. For a whole-repo pack, run `repomix` using `repomix.config.json`. Do not commit `repomix-output.*`.
+4. Regenerate Graphify with `graphify extract . --backend deepseek --no-cluster` (DeepSeek is the global LLM). Rust workspaces also pass `--cargo`.
