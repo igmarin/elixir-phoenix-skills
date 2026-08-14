@@ -83,13 +83,12 @@ defmodule MyApp.Workers.SendWelcomeEmail do
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"user_id" => user_id}}) do
-    case MyApp.Accounts.get_user(user_id) do
-      nil ->
-        {:cancel, "user #{user_id} not found"}
-
-      user ->
-        MyApp.Mailer.send_welcome(user)
-        {:ok, :sent}
+    with {:ok, user} <- MyApp.Accounts.fetch_user(user_id),
+         {:ok, result} <- MyApp.Accounts.send_welcome_if_needed(user) do
+      {:ok, result}
+    else
+      {:error, :not_found} -> {:cancel, "user #{user_id} not found"}
+      {:error, reason} -> {:error, reason}
     end
   end
 end
@@ -182,7 +181,7 @@ config :my_app, Oban,
 
 ## Idempotency
 
-❌ **Bad — sends duplicate emails on retry:**
+❌ **Bad — bang + `if` in the worker; duplicates on retry:**
 ```elixir
 @impl Oban.Worker
 def perform(%Oban.Job{args: %{"user_id" => user_id}}) do
@@ -192,19 +191,23 @@ def perform(%Oban.Job{args: %{"user_id" => user_id}}) do
 end
 ```
 
-✅ **Good — check if already processed:**
+✅ **Good — worker fetches; core decides; shell delivers:**
 ```elixir
-@impl Oban.Worker
-def perform(%Oban.Job{args: %{"user_id" => user_id}}) do
-  user = MyApp.Accounts.get_user!(user_id)
+# lib/my_app/accounts/welcome.ex
+defmodule MyApp.Accounts.Welcome do
+  def already_sent?(%{welcome_email_sent_at: nil}), do: false
+  def already_sent?(%{welcome_email_sent_at: _}), do: true
+end
 
-  if user.welcome_email_sent_at do
-    {:ok, :already_sent}
-  else
-    with {:ok, _} <- MyApp.Mailer.send_welcome(user),
-         {:ok, _} <- MyApp.Accounts.mark_welcome_sent(user) do
-      {:ok, :sent}
-    end
+# lib/my_app/accounts.ex
+def send_welcome_if_needed(user), do: deliver_welcome(user, Welcome.already_sent?(user))
+
+defp deliver_welcome(_user, true), do: {:ok, :already_sent}
+
+defp deliver_welcome(user, false) do
+  with {:ok, _} <- MyApp.Mailer.send_welcome(user),
+       {:ok, _} <- mark_welcome_sent(user) do
+    {:ok, :sent}
   end
 end
 ```
@@ -307,7 +310,7 @@ SendReport.new(%{user_id: user.id, report_id: report.id})
 | ❌ Don't | ✅ Do |
 |----------|-------|
 | `Oban.insert!/1` that raises on failure | `Oban.insert/1` and match `{:ok, job}` / `{:error, changeset}` |
-| Non-idempotent `perform/1` (re-sends on retry) | Guard with a "already processed" check before side effects |
+| Non-idempotent `perform/1` (re-sends on retry) | Core predicate (`Welcome.already_sent?/1`) + thin `perform/1` |
 | Store large payloads in `args` | Store IDs; fetch fresh data inside the worker |
 | Enqueue directly from a LiveView/controller | Enqueue from a context function |
 | `raise` for an expected failure | Return `{:error, reason}` (retry) or `{:cancel, reason}` (stop) |

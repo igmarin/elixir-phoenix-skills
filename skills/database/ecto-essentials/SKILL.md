@@ -63,7 +63,7 @@ def apply_discount(order_id, pct) do
 end
 ```
 
-Use realistic names: `Post.changeset/2`, not placeholders like `change_post/1`.
+Schema: `Post.changeset/2`. Context shell: `Blog.change_post/2` (wraps the schema changeset). LiveViews call the context, not `Post.changeset/2`.
 
 ## Schema Definition
 
@@ -97,21 +97,31 @@ See [`assets/changeset_snippets.ex`](assets/changeset_snippets.ex) for copy-past
 
 ## Query Composition
 
+Queries are data. Build them in `*_query/1` functions; execute once in the context shell.
+
 ```elixir
 import Ecto.Query
 
-def list_images_by_folder(folder_id) do
+def images_by_folder_query(folder_id) do
   Image
   |> where([i], i.folder_id == ^folder_id)
   |> order_by([i], desc: i.inserted_at)
+end
+
+def list_images_by_folder(folder_id) do
+  folder_id
+  |> images_by_folder_query()
   |> Repo.all()
 end
 
-def search_images(query_string) do
+def search_images_query(query_string) do
   search = "%#{query_string}%"
+  where(Image, [i], ilike(i.title, ^search))
+end
 
-  Image
-  |> where([i], ilike(i.title, ^search))
+def search_images(query_string) do
+  query_string
+  |> search_images_query()
   |> Repo.all()
 end
 ```
@@ -193,15 +203,16 @@ end
 ## Dynamic Queries
 
 ```elixir
-def list_images(filters) do
+def images_query(filters) do
   Enum.reduce(filters, Image, fn
     {:folder_id, id}, q -> where(q, [i], i.folder_id == ^id)
     {:search, term}, q -> where(q, [i], ilike(i.title, ^"%#{term}%"))
     {:content_type, ct}, q -> where(q, [i], i.content_type == ^ct)
     _, q -> q
   end)
-  |> Repo.all()
 end
+
+def list_images(filters), do: Repo.all(images_query(filters))
 ```
 
 ## Migrations
@@ -286,6 +297,7 @@ All standard CRUD functions (`list_*`, `get_*!`, `update_*`, `delete_*`) follow 
 | Leave foreign keys unindexed | `create index(:images, [:folder_id])` in the migration |
 | Access `image.folder` inside `Enum.each` (N+1) | `preload(:folder)` before `Repo.all/1` |
 | Call `Repo` directly from a LiveView or controller | Route all queries through a context module |
+| Mix query construction and `Repo.all` with no `*_query/1` | Return `Ecto.Query.t()` from `*_query/1`; execute in the shell |
 | Combine schema changes and data backfill in one migration | Split into separate migrations (expand → backfill → contract) |
 
 ---

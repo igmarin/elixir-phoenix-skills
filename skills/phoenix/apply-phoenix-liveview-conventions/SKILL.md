@@ -134,9 +134,9 @@ end
 ```elixir
 @impl true
 def handle_event("delete", %{"id" => id}, socket) do
-  case Posts.delete_post(id) do
+  case Blog.delete_post(socket.assigns.current_scope, id) do
     {:ok, _post} ->
-      {:noreply, assign(socket, :posts, Posts.list_posts())}
+      {:noreply, assign(socket, :posts, Blog.list_posts(socket.assigns.current_scope))}
 
     {:error, _reason} ->
       {:noreply, put_flash(socket, :error, "Could not delete post")}
@@ -209,13 +209,17 @@ end
 ```elixir
 @impl true
 def handle_params(%{"id" => id}, _uri, socket) do
-  post = Posts.get_post!(id)
+  case Blog.fetch_post(socket.assigns.current_scope, id) do
+    {:ok, post} ->
+      if connected?(socket) do
+        Phoenix.PubSub.subscribe(MyApp.PubSub, "post:#{post.id}")
+      end
 
-  if connected?(socket) do
-    Phoenix.PubSub.subscribe(MyApp.PubSub, "post:#{id}")
+      {:noreply, assign(socket, :post, post)}
+
+    {:error, :not_found} ->
+      {:noreply, push_navigate(socket, to: ~p"/posts")}
   end
-
-  {:noreply, assign(socket, :post, post)}
 end
 
 @impl true
@@ -315,15 +319,14 @@ end
 ```elixir
 @impl true
 def mount(_params, _session, socket) do
-  changeset = Post.changeset(%Post{}, %{})
-  {:ok, assign(socket, form: to_form(changeset))}
+  {:ok, assign(socket, form: to_form(Blog.change_post(%Post{})))}
 end
 
 @impl true
 def handle_event("validate", %{"post" => params}, socket) do
   changeset =
     %Post{}
-    |> Post.changeset(params)
+    |> Blog.change_post(params)
     |> Map.put(:action, :validate)
 
   {:noreply, assign(socket, form: to_form(changeset))}
@@ -331,7 +334,7 @@ end
 
 @impl true
 def handle_event("save", %{"post" => params}, socket) do
-  case Posts.create_post(params) do
+  case Blog.create_post(socket.assigns.current_scope, params) do
     {:ok, _post} ->
       {:noreply, put_flash(socket, :info, "Created!")}
 
@@ -396,6 +399,7 @@ end
 | Nest `case` for multi-step operations | Use `with` and handle failures in `else` |
 | `raise` on a failed operation inside a callback | Assign the error to the socket via `put_flash` |
 | Call `Repo` directly inside a LiveView | Delegate to a context function |
+| Call `Post.changeset/2` from the LiveView | Call `Blog.change_post/2` |
 
 ---
 

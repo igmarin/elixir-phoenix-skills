@@ -35,6 +35,8 @@ Detailed per-area review criteria. Use with `skills/quality/code-review/SKILL.md
 - [ ] All assigns initialized in mount (no `KeyError` on static render)
 - [ ] Errors assigned to socket with `put_flash`, never `raise`
 - [ ] No `Repo` calls — delegates to context modules
+- [ ] No pricing, eligibility, status transitions, or input shaping in `handle_event/3` — those belong in `MyApp.<Context>.<Concept>`
+- [ ] Forms use context `change_*` (`Blog.change_post/2`), not schema `changeset/2` in the LiveView
 - [ ] Form changesets use `Map.put(:action, :validate)` pattern
 - [ ] Streams used for collections over 100 items
 
@@ -47,8 +49,11 @@ Detailed per-area review criteria. Use with `skills/quality/code-review/SKILL.md
 
 ## Contexts
 
-- [ ] Clear module boundary — context is the sole persistence entry point
+- [ ] Context is the **shell** — fetch, persist, enqueue; not the home of business rules
+- [ ] Rules live in `MyApp.<Context>.<Concept>` (e.g. `MyApp.Orders.Pricing`, `MyApp.Blog.Publishing`)
 - [ ] Functions return `{:ok, result} | {:error, reason}` tuples
+- [ ] No `Repo` mixed with totals/discounts/eligibility in the same function
+- [ ] External maps parsed to struct/changeset before core
 - [ ] No context importing another context's internals
 - [ ] Public API is documented with `@doc`
 
@@ -87,6 +92,7 @@ Detailed per-area review criteria. Use with `skills/quality/code-review/SKILL.md
 ## Jobs (Oban)
 
 - [ ] Idempotent — checks if work already done before executing
+- [ ] `perform/1` is fetch-by-ID → core/context → tagged tuple (no domain rules only in the worker)
 - [ ] Args store IDs, not large data structures
 - [ ] Return values: `{:ok, _}` / `{:error, _}` / `{:cancel, _}` / `{:snooze, _}`
 - [ ] `max_attempts` and `queue` explicitly set

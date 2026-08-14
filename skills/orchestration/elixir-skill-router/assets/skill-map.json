@@ -467,6 +467,7 @@
   ],
   "defaults": {
     "test_gate": "skills/testing/testing-essentials",
+    "code_producing": "skills/elixir-core/elixir-essentials",
     "tdd_flow": [
       "skills/playbooks/tdd",
       "skills/testing/testing-essentials",
@@ -484,22 +485,27 @@
     ],
     "bug_fix_flow": [
       "skills/playbooks/bug-fix",
-      "skills/testing/testing-essentials"
+      "skills/testing/testing-essentials",
+      "skills/elixir-core/elixir-essentials"
     ],
     "review_flow": [
       "skills/playbooks/code-review",
-      "skills/quality/code-review"
+      "skills/quality/code-review",
+      "skills/elixir-core/elixir-essentials"
     ],
     "liveview_flow": [
       "skills/playbooks/liveview",
+      "skills/elixir-core/elixir-essentials",
       "skills/phoenix/phoenix-liveview-essentials"
     ],
     "background_job_flow": [
       "skills/playbooks/background-job",
+      "skills/elixir-core/elixir-essentials",
       "skills/infrastructure/oban-essentials"
     ],
     "migration_flow": [
       "skills/playbooks/ecto-migration",
+      "skills/elixir-core/elixir-essentials",
       "skills/database/ecto-essentials"
     ],
     "language_fallback": "skills/elixir-core/elixir-essentials",
