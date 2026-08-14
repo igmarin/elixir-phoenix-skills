@@ -124,9 +124,9 @@ end
 ```elixir
 @impl true
 def handle_event("delete", %{"id" => id}, socket) do
-  case Posts.delete_post(id) do
+  case Blog.delete_post(socket.assigns.current_scope, id) do
     {:ok, _post} ->
-      {:noreply, assign(socket, :posts, Posts.list_posts())}
+      {:noreply, assign(socket, :posts, Blog.list_posts(socket.assigns.current_scope))}
 
     {:error, _reason} ->
       {:noreply, put_flash(socket, :error, "Could not delete post")}
@@ -158,13 +158,11 @@ Called in BOTH render phases on URL changes. Place URL-dependent assigns here so
 ```elixir
 @impl true
 def handle_params(%{"id" => id}, _uri, socket) do
-  # Posts.get_post/1 is expected to return the post or nil.
-  # If your context returns {:ok, post} / {:error, :not_found}, match that shape instead.
-  case Posts.get_post(id) do
-    nil ->
+  case Blog.fetch_post(socket.assigns.current_scope, id) do
+    {:error, :not_found} ->
       {:noreply, push_navigate(socket, to: ~p"/posts")}
 
-    post ->
+    {:ok, post} ->
       old_id = socket.assigns[:post_id]
 
       socket =
@@ -270,15 +268,14 @@ end
 ```elixir
 @impl true
 def mount(_params, _session, socket) do
-  changeset = Post.changeset(%Post{}, %{})
-  {:ok, assign(socket, form: to_form(changeset))}
+  {:ok, assign(socket, form: to_form(Blog.change_post(%Post{})))}
 end
 
 @impl true
 def handle_event("validate", %{"post" => params}, socket) do
   changeset =
     %Post{}
-    |> Post.changeset(params)
+    |> Blog.change_post(params)
     |> Map.put(:action, :validate)
 
   {:noreply, assign(socket, form: to_form(changeset))}
@@ -291,7 +288,7 @@ end
 ```elixir
 @impl true
 def handle_event("save", %{"post" => post_params}, socket) do
-  case Posts.create_post(post_params) do
+  case Blog.create_post(socket.assigns.current_scope, post_params) do
     {:ok, post} ->
       socket =
         socket
@@ -301,12 +298,7 @@ def handle_event("save", %{"post" => post_params}, socket) do
       {:noreply, socket}
 
     {:error, %Ecto.Changeset{} = changeset} ->
-      socket =
-        socket
-        |> put_flash(:error, "Please correct the errors")
-        |> assign(:changeset, changeset)
-
-      {:noreply, socket}
+      {:noreply, assign(socket, form: to_form(changeset))}
 
     {:error, reason} ->
       {:noreply, put_flash(socket, :error, "An error occurred: #{reason}")}

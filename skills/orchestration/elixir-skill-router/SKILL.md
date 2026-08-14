@@ -50,13 +50,14 @@ Non-negotiable: no implementation code until a test exists, runs, and fails for 
 
 1. **Playbook** when the request is multi-step (TDD, bug fix, quality, setup, LiveView feature, Oban job, migration, PR review).
 2. **Atomic skill** when the request is a single domain (Ecto query, channel auth, Credo config).
-3. **Fallbacks:** language → `elixir-essentials`; web ambiguity → `phoenix-liveview-essentials`.
+3. **Code-producing work:** if the next step writes `.ex` or `.exs`, load `elixir-essentials` **together with** the domain skill. It is not only a language-ambiguity fallback.
+4. **Fallbacks:** language-only ambiguity → `elixir-essentials`; web ambiguity → `phoenix-liveview-essentials` (still pair with `elixir-essentials` when writing code).
 
 See `assets/skill-map.json` (`mappings`, `defaults`, `disambiguation`).
 
 ## Core Process
 
-Prefer **playbooks** for multi-step flows (`tdd`, `bug-fix`, `quality`, `code-review-playbook`, `setup`, `liveview`, `background-job`, `ecto-migration`). Use atomics for single-domain implementation.
+Prefer **playbooks** for multi-step flows (`tdd`, `bug-fix`, `quality`, `code-review-playbook`, `setup`, `liveview`, `background-job`, `ecto-migration`). Use atomics for single-domain implementation. When implementation writes Elixir, the chain includes `elixir-essentials` so FCIS (pure core, thin edges) is loaded — not only the framework skill.
 
 
 Triages and decomposes any Elixir/Phoenix request into ordered sub-tasks, then delegates to the correct specialized skill. Identify the matching skill from the catalog below and route to it using the format defined in **Output Style**.
@@ -99,7 +100,7 @@ Next skill: skills/testing/testing-essentials
 
 This spans jobs, email, data, and LiveView. Starting with failing tests for the job completion callback.
 
-Priority: TDD → oban-essentials → elixir-essentials → ecto-essentials → phoenix-liveview-essentials → code-quality.
+Priority: TDD → elixir-essentials → oban-essentials → ecto-essentials → phoenix-liveview-essentials → code-quality.
 ```
 
 **Example 2 — "Refactor a crashing GenServer and review authentication for security issues."**
@@ -116,11 +117,11 @@ Priority: security-essentials → testing-essentials → otp-essentials → code
 
 | Scenario | Skill chain |
 |----------|--------------|
-| **TDD Feature Loop** *(primary)* | testing-essentials → RED → elixir-essentials → credo-config → typespec-dialyzer → PR |
-| **Bug fix** | testing-essentials → **[GATE: reproduction test fails]** → elixir-essentials → verify passes |
-| **Multi-concern review** | security-essentials *(if input/secrets touched)* → code-quality |
-| **New Phoenix feature** | phoenix-liveview-essentials → ecto-essentials → testing-essentials → code-quality |
-| **Background job** | oban-essentials → testing-essentials → code-quality |
+| **TDD Feature Loop** *(primary)* | testing-essentials → RED → elixir-essentials + domain skill → credo-config → typespec-dialyzer → PR |
+| **Bug fix** | testing-essentials → **[GATE: reproduction test fails]** → elixir-essentials + domain skill → verify passes |
+| **Multi-concern review** | security-essentials *(if input/secrets touched)* → code-review (FCIS) → code-quality |
+| **New Phoenix feature** | elixir-essentials → phoenix-liveview-essentials → ecto-essentials → testing-essentials → code-quality |
+| **Background job** | elixir-essentials → oban-essentials → testing-essentials → code-quality |
 
 ## Output Style
 

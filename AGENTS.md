@@ -14,6 +14,7 @@ Let it crash
 Pipes for transformations
 `with` for fallible operations
 Functional Core, Imperative Shell (FCIS)
+Context module = shell; MyApp.<Context>.<Concept> = pure core
 ```
 
 ## Repository layout

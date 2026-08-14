@@ -20,7 +20,7 @@ Idiomatic Elixir always wins.
 
 ### 1. Functional Core, Imperative Shell
 
-**Rule:** Keep core logic (business rules, calculations, transformations) in pure functions on plain modules/structs. Push side effects to boundaries (controllers, LiveViews, workers, plugs).
+**Rule:** Keep core logic (business rules, calculations, transformations) in pure functions on plain modules/structs (`MyApp.Orders.Pricing`, `MyApp.Blog.Publishing`). The context module is the shell. Push I/O to boundaries (controllers, LiveViews, workers, plugs).
 
 **Asset impact:** Good examples separate pure data work from `Repo` / HTTP / process calls so unit tests stay fast and side-effect free.
 
@@ -74,9 +74,9 @@ end
 
 ### 4. Pipe linearity (`|>`) and composition
 
-**Rule:** Pipes read as one-direction transforms. The first argument is always the subject. Prefer named single-purpose functions.
+**Rule:** Pipes read as one-direction transforms. The first argument is always the subject. Prefer named single-purpose functions. `then/2` is fine for a one-off; never `|> case do`.
 
-**Asset impact:** Discourage `|> case do` and pipes into anonymous functions.
+**Asset impact:** Discourage `|> case do`. Allow `then/2` / `tap/2`; extract a named function when the step is a domain concept.
 
 ```elixir
 # ❌
@@ -99,12 +99,8 @@ params
 
 ```elixir
 def create(params) when is_map(params) do
-  params
-  |> Registration.changeset()
-  |> apply_action(:insert)
-  |> case do
-    {:ok, data} -> register(data)   # pure-ish core with known shape
-    {:error, cs} -> {:error, cs}
+  with {:ok, data} <- apply_action(Registration.changeset(params), :insert) do
+    register(data) # core sees a known shape, not a raw map
   end
 end
 ```

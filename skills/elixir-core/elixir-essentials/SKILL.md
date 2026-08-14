@@ -26,7 +26,7 @@ Canonical standard: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engine
 
 | Concern | Do this |
 |---------|---------|
-| Business rules | Pure modules — no `Repo` / HTTP / process sends |
+| Business rules | `MyApp.<Context>.<Concept>` — no `Repo` / HTTP / process sends |
 | Fallible flows | `{:ok, _} \| {:error, _}` + `with` |
 | Control flow | Multi-clause + guards, not nested `if` |
 | Transforms | Linear pipes; named steps |
@@ -40,15 +40,16 @@ Canonical standard: [`docs/fcis-engineering-rules.md`](../../../docs/fcis-engine
 **1.** **Functional Core, Imperative Shell** — pure functions for rules/transforms; DB/HTTP/process/IO only at edges
 **2.** **Pattern match and guards** over nested `if` / `unless` / deep `case`
 **3.** **Tagged tuples** — fallible ops return `{:ok, result} | {:error, reason}`; chain with `with`
-**4.** **Linear pipes** — subject first; named steps; no `|> case do` or pipes into anonymous fns
+**4.** **Linear pipes** — subject first; named steps; no `|> case do`. `then/2` is fine for a one-off; extract a named function when the step is reused or is a domain concept
 **5.** **Parse at the boundary** — coerce maps into structs/changesets before pure core
-**6.** **`@impl true`** on every behaviour callback
-**7.** **Immutability** — never mutate data in place
-**8.** **Predicates end with `?`**, bang (`!`) only for dangerous/raising ops
-**9.** **No `String.to_atom/1` on user input** — prefer strings; allowlist before any atom conversion
-**10.** **No monads / category-theory libs** — idiomatic Elixir only
-**11.** **`@doc` / `@moduledoc`** on public APIs
-**12.** **Prefer `for`** over chaining 3+ `Enum` passes when one pass is clearer
+**6.** **Context is the shell** — `MyApp.Blog` fetches and persists; `MyApp.Blog.Publishing` / `MyApp.Orders.Pricing` hold rules
+**7.** **`@impl true`** on every behaviour callback
+**8.** **Immutability** — never mutate data in place
+**9.** **Predicates end with `?`**, bang (`!`) only for dangerous/raising ops
+**10.** **No `String.to_atom/1` on user input** — prefer strings; allowlist before any atom conversion
+**11.** **No monads / category-theory libs** — idiomatic Elixir only (`with`, tagged tuples, structs)
+**12.** **`@doc` / `@moduledoc`** on public APIs
+**13.** **Prefer `for`** over chaining 3+ `Enum` passes when one pass is clearer
 
 ## 1. Functional Core, Imperative Shell
 
@@ -172,7 +173,7 @@ params
 |> Users.get()
 ```
 
-Pipes should read as **one subject transformed**. Extract named functions instead of long anonymous steps.
+Pipes should read as **one subject transformed**. `then/2` (and `tap/2` for debug/side-log) is idiomatic for a one-off. Extract a named function when the step is reused or names a domain concept. Never `|> case do`.
 
 ## 5. Explicit shapes at the boundary
 
@@ -204,6 +205,34 @@ end
 | Functions / vars | `snake_case` | `create_user/1` |
 | Predicates | end with `?` | `valid?/1` |
 | Raising | end with `!` | `get_user!/1` — avoid in app logic |
+
+### Context vs core
+
+The context module is the **imperative shell**. Business rules live in a sibling core module — not in the LiveView, worker, or the context's `Repo` function.
+
+```text
+lib/my_app/blog.ex              # shell: fetch, persist, enqueue
+lib/my_app/blog/post.ex         # schema
+lib/my_app/blog/publishing.ex   # pure core: can_publish?/1, apply/1
+lib/my_app/orders.ex            # shell
+lib/my_app/orders/pricing.ex    # pure core: total/1, with_discount/2
+```
+
+```elixir
+# ✅ Shell
+def publish_post(%Scope{} = scope, post) do
+  with :ok <- Publishing.ensure_publishable(post),
+       {:ok, post} <- persist_published(scope, post) do
+    {:ok, post}
+  end
+end
+
+# ✅ Core — no Repo
+defmodule MyApp.Blog.Publishing do
+  def ensure_publishable(%{status: :draft, title: title}) when byte_size(title) > 0, do: :ok
+  def ensure_publishable(_post), do: {:error, :not_publishable}
+end
+```
 
 ## List work
 
@@ -241,7 +270,7 @@ Do not write defensive code for impossible states after you have validated at th
 
 | ❌ Don't | ✅ Do |
 |----------|-------|
-| Business math mixed with `Repo` | Pure module + thin context shell |
+| Business math mixed with `Repo` | `MyApp.Orders.Pricing` + thin `MyApp.Orders` shell |
 | Nested `if` / `case` for sequential fallible steps | `with` + tagged tuples |
 | `|> case do` | Named step or multi-clause function |
 | Mutate maps/lists in place | Return new values |

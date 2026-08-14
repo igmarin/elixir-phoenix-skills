@@ -73,7 +73,7 @@ def apply_discount(order_id, pct) do
 end
 ```
 
-Use realistic names: `Post.changeset/2`, not placeholders like `change_post/1`.
+Schema: `Post.changeset/2`. Context shell: `Blog.change_post/2` (wraps the schema changeset). LiveViews call the context, not `Post.changeset/2`.
 
 ## Review Workflow
 
@@ -246,16 +246,17 @@ from(u in User, where: u.status == ^status and u.name == ^name)
 
 ### Dynamic Filtering
 
-✅ **Good — Enum.reduce for dynamic where clauses:**
+✅ **Good — `*_query/1` returns the query; the shell executes:**
 ```elixir
-def list_users(filters) do
+def users_query(filters) do
   Enum.reduce(filters, User, fn
     {:status, status}, q -> where(q, [u], u.status == ^status)
     {:search, term}, q -> where(q, [u], ilike(u.name, ^"%#{term}%"))
     _, q -> q
   end)
-  |> Repo.all()
 end
+
+def list_users(filters), do: Repo.all(users_query(filters))
 ```
 
 
