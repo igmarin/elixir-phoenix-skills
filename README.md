@@ -66,24 +66,24 @@ For AI agents working in this repo, see [`AGENTS.md`](AGENTS.md) — the single 
 
 ## Skill Catalog
 
-The library contains **47 skills total** — 38 atomic skills, 8 playbooks, and 1 orchestrator — organized by category.
+The library contains **47 skills total** — 38 atomic skills, 8 playbooks, and 1 orchestrator. Each skill is `skills/<name>/SKILL.md`. Display groups: [`skills.sh.json`](skills.sh.json).
 
 ### Atomic Skills
 
-| Category | Skills | Path |
-|----------|--------|------|
-| **Elixir Core** | `elixir-essentials`, `otp-essentials`, `typespec-dialyzer` | `skills/elixir-core/` |
-| **Phoenix** | `phoenix-liveview-essentials`, `liveview-streams`, `phoenix-channels-essentials`, `phoenix-json-api`, `phoenix-pubsub-patterns`, `phoenix-uploads`, `apply-phoenix-liveview-conventions`, `apply-phoenix-controller-conventions` | `skills/phoenix/` |
-| **Database** | `ecto-essentials`, `ecto-changeset-patterns`, `ecto-nested-associations`, `apply-ecto-conventions` | `skills/database/` |
-| **Testing** | `testing-essentials`, `property-based-testing` | `skills/testing/` |
-| **Performance** | `benchee-profiling`, `telemetry-essentials` | `skills/performance/` |
-| **Auth** | `phoenix-liveview-auth`, `phoenix-auth-customization`, `phoenix-authorization-patterns`, `phoenix-scopes` | `skills/auth/` |
-| **Infrastructure** | `oban-essentials`, `broadway-data-pipelines`, `deployment-gotchas`, `cachex-caching` | `skills/infrastructure/` |
-| **Quality** | `code-quality`, `credo-config`, `code-review`, `refactor-code`, `respond-to-review` | `skills/quality/` |
-| **Security** | `security-essentials` | `skills/security/` |
-| **Integrations** | `req-http-client`, `swoosh-emails`, `gettext-i18n` | `skills/integrations/` |
-| **Tooling** | `mix-tasks-generators` | `skills/tooling/` |
-| **Frameworks** | `ash-framework` | `skills/frameworks/` |
+| Category | Skills |
+|----------|--------|
+| **Elixir Core** | `elixir-essentials`, `otp-essentials`, `typespec-dialyzer` |
+| **Phoenix** | `phoenix-liveview-essentials`, `liveview-streams`, `phoenix-channels-essentials`, `phoenix-json-api`, `phoenix-pubsub-patterns`, `phoenix-uploads`, `apply-phoenix-liveview-conventions`, `apply-phoenix-controller-conventions` |
+| **Database** | `ecto-essentials`, `ecto-changeset-patterns`, `ecto-nested-associations`, `apply-ecto-conventions` |
+| **Testing** | `testing-essentials`, `property-based-testing` |
+| **Performance** | `benchee-profiling`, `telemetry-essentials` |
+| **Auth** | `phoenix-liveview-auth`, `phoenix-auth-customization`, `phoenix-authorization-patterns`, `phoenix-scopes` |
+| **Infrastructure** | `oban-essentials`, `broadway-data-pipelines`, `deployment-gotchas`, `cachex-caching` |
+| **Quality** | `code-quality`, `credo-config`, `code-review`, `refactor-code`, `respond-to-review` |
+| **Security** | `security-essentials` |
+| **Integrations** | `req-http-client`, `swoosh-emails`, `gettext-i18n` |
+| **Tooling** | `mix-tasks-generators` |
+| **Frameworks** | `ash-framework` |
 
 ### Playbooks (Workflow Orchestration)
 
@@ -102,19 +102,19 @@ flowchart TB
 
 | Playbook | Path | Purpose |
 |----------|------|---------|
-| **tdd** | `skills/playbooks/tdd/` | RED → HITL approve → GREEN → quality gate |
-| **bug-fix** | `skills/playbooks/bug-fix/` | Triage → repro test → HITL fix → verify |
-| **quality** | `skills/playbooks/quality/` | Format/Credo/Dialyzer → optional refactor → docs |
-| **code-review-playbook** | `skills/playbooks/code-review/` | Diff review workflow (atomic rules at `quality/code-review`) |
-| **setup** | `skills/playbooks/setup/` | Toolchain → DB → tests → CI |
-| **liveview** | `skills/playbooks/liveview/` | Contract → failing LV test → thin-edge impl |
-| **background-job** | `skills/playbooks/background-job/` | Oban design → TDD worker → failure paths |
-| **ecto-migration** | `skills/playbooks/ecto-migration/` | Plan → migrate/rollback cycle → verify |
+| **tdd** | `skills/tdd/` | RED → HITL approve → GREEN → quality gate |
+| **bug-fix** | `skills/bug-fix/` | Triage → repro test → HITL fix → verify |
+| **quality** | `skills/quality/` | Format/Credo/Dialyzer → optional refactor → docs |
+| **code-review-playbook** | `skills/code-review-playbook/` | Diff review workflow (atomic rules at `skills/code-review`) |
+| **setup** | `skills/setup/` | Toolchain → DB → tests → CI |
+| **liveview** | `skills/liveview/` | Contract → failing LV test → thin-edge impl |
+| **background-job** | `skills/background-job/` | Oban design → TDD worker → failure paths |
+| **ecto-migration** | `skills/ecto-migration/` | Plan → migrate/rollback cycle → verify |
 
 #### Example: run the TDD playbook
 
 ```text
-Next skill: skills/playbooks/tdd
+Next skill: skills/tdd
 Feature: implement Blog.publish_post/1 with FCIS (pure core + context shell)
 ```
 
@@ -122,7 +122,7 @@ Feature: implement Blog.publish_post/1 with FCIS (pure core + context shell)
 2. Propose minimal implementation → **wait for your approval**  
 3. Implement → green → quality gate  
 
-Entry routing lives under **orchestration** (`skills/orchestration/elixir-skill-router/`), not under playbooks.
+Entry routing is `skills/elixir-skill-router/`. Playbooks are also flat (`skills/tdd/`, `skills/code-review-playbook/`, …).
 
 ### Assets
 
@@ -201,9 +201,17 @@ Contributor and agent standards for this library:
 
 ## Installation
 
+There is **no** root `SKILL.md`. Each folder under `skills/` is its own skill, so the CLI can prompt for **all** or **one**.
+
 ```bash
-# Install all skills
+# picker: all skills, or a subset
 npx skills add igmarin/elixir-phoenix-skills
+
+# all skills, skip prompts
+npx skills add igmarin/elixir-phoenix-skills --skill '*'
+
+# one skill
+npx skills add igmarin/elixir-phoenix-skills --skill elixir-essentials
 
 # Or via GitHub CLI (v2.90.0+)
 gh skill install igmarin/elixir-phoenix-skills

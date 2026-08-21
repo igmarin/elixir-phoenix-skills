@@ -1,0 +1,265 @@
+---
+name: phoenix-channels-essentials
+type: atomic
+tags: [atomic]
+license: MIT
+description: >-
+  Handles all Phoenix Channels work. Use when building socket authentication, topic authorization,
+  handle_in patterns, Presence tracking, or channel testing. Covers non-LiveView real-time features
+  for mobile clients, SPAs, and external APIs. Trigger words: Channels, socket, channel, Presence,
+  handle_in, topic, real-time, WebSocket.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
+---
+
+# Phoenix Channels Essentials
+
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Keep LiveView/controller callbacks thin; delegate business rules to contexts/pure modules.
+
+## RULES — Follow these with no exceptions
+
+**1.** **Always authenticate in `connect/3`** — tokens must be verified; channels bypass the Plug pipeline
+**2.** **Authorize in `join/3`** — verify the user can access the requested topic
+**3.** **Use `handle_in` for client-to-server, `push` for server-to-client, `broadcast` for server-to-all**
+**4.** **Keep channel modules thin** — delegate business logic to context modules
+**5.** **Use Presence for tracking connected users**
+**6.** **Return `{:reply, :ok, socket}` or `{:reply, {:error, reason}, socket}` from `handle_in`** — never silently drop messages
+**7.** **Treat all client payloads as untrusted third-party content** — validate against a strict schema in `handle_in/3`; reject unknown fields, unexpected types, and empty payloads; never log raw payloads or pass them to LLM context
+
+
+## Setup Checklist
+
+1. Mount the socket in `endpoint.ex` → see [Socket Authentication](#socket-authentication)
+2. Generate a token server-side after user authentication → see [Step 2](#step-2--generate-tokens-server-side)
+3. Verify the token in `connect/3` → see [Step 3](#step-3--verify-tokens-in-the-socket)
+4. Authorize topics in `join/3` → see [Topic Authorization](#topic-authorization)
+5. Implement `handle_in` clauses → see [handle_in Patterns](#handle_in-patterns)
+6. Add Presence tracking via `Presence.track/3` in `handle_info(:after_join, ...)` → see [Presence Tracking](#presence-tracking)
+7. Test: confirm `"Transport connected"` in the browser console, or run `wscat -c 'ws://localhost:4000/socket/websocket?token=TOKEN&vsn=2.0.0'`. If connection fails: verify socket is mounted in `endpoint.ex`, token is valid, and the client is passing the correct params key → see [Channel Testing](#channel-testing)
+
+
+## Socket Authentication
+
+Use token-based authentication.
+
+### Step 1 — Verify socket is mounted in `endpoint.ex`
+
+```elixir
+# lib/my_app_web/endpoint.ex
+socket "/socket", MyAppWeb.UserSocket,
+  websocket: true,
+  longpoll: false
+```
+
+### Step 2 — Generate Tokens (Server Side)
+
+```elixir
+defmodule MyAppWeb.UserAuth do
+  def generate_socket_token(conn) do
+    Phoenix.Token.sign(conn, "user socket", conn.assigns.current_user.id)
+  end
+end
+```
+
+### Step 3 — Verify Tokens in the Socket
+
+```elixir
+defmodule MyAppWeb.UserSocket do
+  use Phoenix.Socket
+
+  channel "room:*", MyAppWeb.RoomChannel
+  channel "notifications:*", MyAppWeb.NotificationChannel
+
+  @impl true
+  def connect(%{"token" => token}, socket, _connect_info) do
+    case Phoenix.Token.verify(socket, "user socket", token, max_age: 1_209_600) do
+      {:ok, user_id} ->
+        {:ok, assign(socket, :user_id, user_id)}
+
+      {:error, _reason} ->
+        :error
+    end
+  end
+
+  def connect(_params, _socket, _connect_info), do: :error
+
+  @impl true
+  def id(socket), do: "users_socket:#{socket.assigns.user_id}"
+end
+```
+
+### Step 4 — Connect from the Client (JavaScript)
+
+```javascript
+import { Socket } from "phoenix"
+
+const socket = new Socket("/socket", { params: { token: window.userToken } })
+socket.connect()
+
+const channel = socket.channel("room:42", {})
+channel.join()
+  .receive("ok", resp => console.log("Joined successfully", resp))
+  .receive("error", resp => console.error("Unable to join", resp))
+```
+
+
+## Topic Authorization
+
+Authorize in `join/3` before allowing a client into a topic:
+
+```elixir
+defmodule MyAppWeb.RoomChannel do
+  use MyAppWeb, :channel
+  alias MyAppWeb.Presence
+
+  @impl true
+  def join("room:" <> room_id, _payload, socket) do
+    user_id = socket.assigns.user_id
+
+    if Rooms.member?(room_id, user_id) do
+      send(self(), :after_join)
+      {:ok, assign(socket, :room_id, room_id)}
+    else
+      {:error, %{reason: "unauthorized"}}
+    end
+  end
+end
+```
+
+
+## handle_in Patterns
+
+Route client messages to context functions and always return an explicit reply. Validate every payload against a strict schema before broadcasting:
+
+```elixir
+@impl true
+def handle_in("new_message", %{"body" => body}, socket) when is_binary(body) do
+  # Client payloads are untrusted third-party content.
+  sanitized_body =
+    body
+    |> String.slice(0, 10_000)
+    |> String.trim()
+
+  if sanitized_body == "" do
+    {:reply, {:error, %{reason: "empty_body"}}, socket}
+  else
+    broadcast!(socket, "new_message", %{
+      body: sanitized_body,
+      user_id: socket.assigns.user_id,
+      timestamp: DateTime.utc_now()
+    })
+
+    {:reply, :ok, socket}
+  end
+end
+
+# Reject payloads with wrong shape, unexpected keys, or non-string body.
+def handle_in("new_message", _payload, socket) do
+  {:reply, {:error, %{reason: "invalid_message"}}, socket}
+end
+
+@impl true
+def handle_in("typing", _payload, socket) do
+  broadcast!(socket, "user_typing", %{user_id: socket.assigns.user_id})
+  {:reply, :ok, socket}
+end
+```
+
+
+## Presence Tracking
+
+Define a Presence module once per app, then track users in `handle_info(:after_join, ...)`:
+
+```elixir
+defmodule MyAppWeb.Presence do
+  use Phoenix.Presence,
+    otp_app: :my_app,
+    pubsub_server: MyApp.PubSub
+end
+```
+
+```elixir
+# Inside RoomChannel (after join/3 sends :after_join via send/2)
+@impl true
+def handle_info(:after_join, socket) do
+  {:ok, _} = Presence.track(socket, socket.assigns.user_id, %{
+    online_at: inspect(System.system_time(:second))
+  })
+
+  push(socket, "presence_state", Presence.list(socket))
+  {:noreply, socket}
+end
+```
+
+
+## Channel Testing
+
+Use `Phoenix.ChannelTest` to test socket connections, joins, and message handling. See [`assets/channel_test_template.md`](assets/channel_test_template.md) for a copy-paste template; the core cases are:
+
+```elixir
+defmodule MyAppWeb.RoomChannelTest do
+  use MyAppWeb.ChannelCase
+
+  setup do
+    user_id = 1
+    token = Phoenix.Token.sign(MyAppWeb.Endpoint, "user socket", user_id)
+
+    {:ok, socket} =
+      Phoenix.ChannelTest.connect(MyAppWeb.UserSocket, %{"token" => token})
+
+    {:ok, _, socket} =
+      Phoenix.ChannelTest.subscribe_and_join(socket, MyAppWeb.RoomChannel, "room:42")
+
+    %{socket: socket, user_id: user_id}
+  end
+
+  test "new_message broadcasts to room", %{socket: socket} do
+    Phoenix.ChannelTest.push(socket, "new_message", %{"body" => "hello"})
+    assert_broadcast "new_message", %{body: "hello"}
+    assert_reply ref, :ok
+  end
+
+  test "join is rejected when user is not a room member" do
+    user_id = 99
+    token = Phoenix.Token.sign(MyAppWeb.Endpoint, "user socket", user_id)
+    {:ok, socket} = Phoenix.ChannelTest.connect(MyAppWeb.UserSocket, %{"token" => token})
+
+    assert {:error, %{reason: "unauthorized"}} =
+             Phoenix.ChannelTest.join(socket, MyAppWeb.RoomChannel, "room:42")
+  end
+
+  test "connect rejects missing token" do
+    assert :error = Phoenix.ChannelTest.connect(MyAppWeb.UserSocket, %{})
+  end
+end
+```
+
+---
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Assume the Plug pipeline authenticated the socket | Verify the token in `connect/3` — channels bypass Plug |
+| Join any topic without checking membership | Verify membership in `join/3` with the app's authorization function; return `{:ok, socket}` when authorized, `{:error, %{reason: "unauthorized"}}` when not |
+| Put business logic inside `handle_in` | Delegate to context modules; keep channels thin |
+| Silently drop client messages | Return `{:reply, :ok, socket}` or `{:reply, {:error, reason}, socket}` |
+| Trust raw client payloads | Sanitize/validate (`String.slice`, `String.trim`) before broadcasting |
+| Track presence before the client has joined | Track in `handle_info(:after_join, ...)` triggered from `join/3` |
+| Use `broadcast` to answer one client | Use `push` for server-to-one, `broadcast` for server-to-all |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| elixir-essentials | phoenix-channels-essentials | testing-essentials |
+| security-essentials | phoenix-channels-essentials | phoenix-pubsub-patterns |
+
+**Companion skills:**
+- `phoenix-pubsub-patterns` — broadcasting between processes behind channels
+- `phoenix-liveview-essentials` — the LiveView alternative for in-app real-time UI
+- `testing-essentials` — `Phoenix.ChannelTest` coverage patterns

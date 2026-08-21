@@ -20,26 +20,13 @@ Context module = shell; MyApp.<Context>.<Concept> = pure core
 ## Repository layout
 
 ```text
-skills/
-├── elixir-core/      # Language, OTP, typespecs, Dialyzer
-├── phoenix/          # LiveView, controllers, channels, conventions
-├── database/         # Ecto, migrations, changesets, Multi
-├── auth/             # Scopes, phx.gen.auth, policies
-├── security/         # Cross-cutting hardening
-├── infrastructure/   # Oban, Broadway, Cachex, deployment-gotchas
-├── integrations/     # Req, Swoosh, Gettext
-├── frameworks/       # Ash and niche frameworks
-├── testing/          # ExUnit, property-based tests
-├── performance/      # Benchee + Telemetry
-├── quality/          # Credo, code-quality, refactor, review rules
-├── tooling/          # Mix tasks and generators
-├── playbooks/        # Multi-step HITL orchestrations
-└── orchestration/    # `elixir-skill-router` only
-docs/                 # Cross-cutting design docs
-agents/               # Long-form companion guides (not skills)
-assets/               # Per-skill templates and checklists
-scripts/              # Validation scripts
+skills/<name>/SKILL.md   # Flat layout. Groups in skills.sh.json
+docs/                    # Cross-cutting design docs
+agents/                  # Long-form companion guides (not skills)
+scripts/                 # Validation scripts
 ```
+
+Kinds (`type` in frontmatter): atomic, playbook, orchestrator. Display groups: `skills.sh.json`.
 
 ## Skill conventions
 

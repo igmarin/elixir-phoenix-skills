@@ -19,164 +19,148 @@
       "tdd"
     ]
   },
-  "summary": "Curated library of 38 atomic skills, 8 playbooks, and 1 orchestrator for Elixir and Phoenix development. Organized by category: elixir-core, phoenix, database, testing, auth, infrastructure, performance, quality, security, integrations, tooling, frameworks, playbooks, and orchestration. Covers core Elixir patterns, Phoenix LiveView, Ecto, OTP, Oban, testing, security, deployment, real-time, and modern tooling (Req, Swoosh, Cachex, Broadway, Ash).",
+  "summary": "Curated library of 38 atomic skills, 8 playbooks, and 1 orchestrator for Elixir and Phoenix development. Covers core Elixir patterns, Phoenix LiveView, Ecto, OTP, Oban, testing, security, deployment, real-time, and modern tooling (Req, Swoosh, Cachex, Broadway, Ash). Physical layout is flat: skills/<name>/SKILL.md.",
   "skills": {
     "elixir-essentials": {
-      "path": "skills/elixir-core/elixir-essentials/SKILL.md"
+      "path": "skills/elixir-essentials/SKILL.md"
     },
     "otp-essentials": {
-      "path": "skills/elixir-core/otp-essentials/SKILL.md"
+      "path": "skills/otp-essentials/SKILL.md"
     },
     "typespec-dialyzer": {
-      "path": "skills/elixir-core/typespec-dialyzer/SKILL.md"
+      "path": "skills/typespec-dialyzer/SKILL.md"
     },
     "phoenix-liveview-essentials": {
-      "path": "skills/phoenix/phoenix-liveview-essentials/SKILL.md"
+      "path": "skills/phoenix-liveview-essentials/SKILL.md"
     },
     "phoenix-scopes": {
-      "path": "skills/auth/phoenix-scopes/SKILL.md"
+      "path": "skills/phoenix-scopes/SKILL.md"
     },
     "liveview-streams": {
-      "path": "skills/phoenix/liveview-streams/SKILL.md"
+      "path": "skills/liveview-streams/SKILL.md"
     },
     "phoenix-channels-essentials": {
-      "path": "skills/phoenix/phoenix-channels-essentials/SKILL.md"
+      "path": "skills/phoenix-channels-essentials/SKILL.md"
     },
     "phoenix-json-api": {
-      "path": "skills/phoenix/phoenix-json-api/SKILL.md"
+      "path": "skills/phoenix-json-api/SKILL.md"
     },
     "phoenix-pubsub-patterns": {
-      "path": "skills/phoenix/phoenix-pubsub-patterns/SKILL.md"
+      "path": "skills/phoenix-pubsub-patterns/SKILL.md"
     },
     "phoenix-uploads": {
-      "path": "skills/phoenix/phoenix-uploads/SKILL.md"
+      "path": "skills/phoenix-uploads/SKILL.md"
     },
     "ecto-essentials": {
-      "path": "skills/database/ecto-essentials/SKILL.md"
+      "path": "skills/ecto-essentials/SKILL.md"
     },
     "ecto-changeset-patterns": {
-      "path": "skills/database/ecto-changeset-patterns/SKILL.md"
+      "path": "skills/ecto-changeset-patterns/SKILL.md"
     },
     "ecto-nested-associations": {
-      "path": "skills/database/ecto-nested-associations/SKILL.md"
+      "path": "skills/ecto-nested-associations/SKILL.md"
     },
     "testing-essentials": {
-      "path": "skills/testing/testing-essentials/SKILL.md"
+      "path": "skills/testing-essentials/SKILL.md"
     },
     "property-based-testing": {
-      "path": "skills/testing/property-based-testing/SKILL.md"
+      "path": "skills/property-based-testing/SKILL.md"
     },
     "benchee-profiling": {
-      "path": "skills/performance/benchee-profiling/SKILL.md"
+      "path": "skills/benchee-profiling/SKILL.md"
     },
     "phoenix-liveview-auth": {
-      "path": "skills/auth/phoenix-liveview-auth/SKILL.md"
+      "path": "skills/phoenix-liveview-auth/SKILL.md"
     },
     "phoenix-auth-customization": {
-      "path": "skills/auth/phoenix-auth-customization/SKILL.md"
+      "path": "skills/phoenix-auth-customization/SKILL.md"
     },
     "phoenix-authorization-patterns": {
-      "path": "skills/auth/phoenix-authorization-patterns/SKILL.md"
+      "path": "skills/phoenix-authorization-patterns/SKILL.md"
     },
     "oban-essentials": {
-      "path": "skills/infrastructure/oban-essentials/SKILL.md"
+      "path": "skills/oban-essentials/SKILL.md"
     },
     "broadway-data-pipelines": {
-      "path": "skills/infrastructure/broadway-data-pipelines/SKILL.md"
+      "path": "skills/broadway-data-pipelines/SKILL.md"
     },
     "deployment-gotchas": {
-      "path": "skills/infrastructure/deployment-gotchas/SKILL.md"
+      "path": "skills/deployment-gotchas/SKILL.md"
     },
     "telemetry-essentials": {
-      "path": "skills/performance/telemetry-essentials/SKILL.md"
+      "path": "skills/telemetry-essentials/SKILL.md"
     },
     "cachex-caching": {
-      "path": "skills/infrastructure/cachex-caching/SKILL.md"
+      "path": "skills/cachex-caching/SKILL.md"
     },
     "code-quality": {
-      "path": "skills/quality/code-quality/SKILL.md"
+      "path": "skills/code-quality/SKILL.md"
     },
     "credo-config": {
-      "path": "skills/quality/credo-config/SKILL.md"
+      "path": "skills/credo-config/SKILL.md"
     },
     "apply-phoenix-liveview-conventions": {
-      "path": "skills/phoenix/apply-phoenix-liveview-conventions/SKILL.md"
+      "path": "skills/apply-phoenix-liveview-conventions/SKILL.md"
     },
     "apply-phoenix-controller-conventions": {
-      "path": "skills/phoenix/apply-phoenix-controller-conventions/SKILL.md"
+      "path": "skills/apply-phoenix-controller-conventions/SKILL.md"
     },
     "code-review": {
-      "path": "skills/quality/code-review/SKILL.md"
+      "path": "skills/code-review/SKILL.md"
     },
     "refactor-code": {
-      "path": "skills/quality/refactor-code/SKILL.md"
+      "path": "skills/refactor-code/SKILL.md"
     },
     "respond-to-review": {
-      "path": "skills/quality/respond-to-review/SKILL.md"
+      "path": "skills/respond-to-review/SKILL.md"
     },
     "apply-ecto-conventions": {
-      "path": "skills/database/apply-ecto-conventions/SKILL.md"
+      "path": "skills/apply-ecto-conventions/SKILL.md"
     },
     "security-essentials": {
-      "path": "skills/security/security-essentials/SKILL.md"
+      "path": "skills/security-essentials/SKILL.md"
     },
     "req-http-client": {
-      "path": "skills/integrations/req-http-client/SKILL.md"
+      "path": "skills/req-http-client/SKILL.md"
     },
     "swoosh-emails": {
-      "path": "skills/integrations/swoosh-emails/SKILL.md"
+      "path": "skills/swoosh-emails/SKILL.md"
     },
     "gettext-i18n": {
-      "path": "skills/integrations/gettext-i18n/SKILL.md"
+      "path": "skills/gettext-i18n/SKILL.md"
     },
     "mix-tasks-generators": {
-      "path": "skills/tooling/mix-tasks-generators/SKILL.md"
+      "path": "skills/mix-tasks-generators/SKILL.md"
     },
     "ash-framework": {
-      "path": "skills/frameworks/ash-framework/SKILL.md"
+      "path": "skills/ash-framework/SKILL.md"
     },
     "elixir-skill-router": {
-      "path": "skills/orchestration/elixir-skill-router/SKILL.md"
+      "path": "skills/elixir-skill-router/SKILL.md"
     },
     "tdd": {
-      "path": "skills/playbooks/tdd/SKILL.md"
+      "path": "skills/tdd/SKILL.md"
     },
     "quality": {
-      "path": "skills/playbooks/quality/SKILL.md"
+      "path": "skills/quality/SKILL.md"
     },
     "setup": {
-      "path": "skills/playbooks/setup/SKILL.md"
+      "path": "skills/setup/SKILL.md"
     },
     "bug-fix": {
-      "path": "skills/playbooks/bug-fix/SKILL.md"
+      "path": "skills/bug-fix/SKILL.md"
     },
     "background-job": {
-      "path": "skills/playbooks/background-job/SKILL.md"
+      "path": "skills/background-job/SKILL.md"
     },
     "liveview": {
-      "path": "skills/playbooks/liveview/SKILL.md"
+      "path": "skills/liveview/SKILL.md"
     },
     "ecto-migration": {
-      "path": "skills/playbooks/ecto-migration/SKILL.md"
+      "path": "skills/ecto-migration/SKILL.md"
     },
     "code-review-playbook": {
-      "path": "skills/playbooks/code-review/SKILL.md"
+      "path": "skills/code-review-playbook/SKILL.md"
     }
-  },
-  "categories": {
-    "elixir-core": "skills/elixir-core/",
-    "phoenix": "skills/phoenix/",
-    "database": "skills/database/",
-    "testing": "skills/testing/",
-    "auth": "skills/auth/",
-    "infrastructure": "skills/infrastructure/",
-    "quality": "skills/quality/",
-    "security": "skills/security/",
-    "integrations": "skills/integrations/",
-    "tooling": "skills/tooling/",
-    "frameworks": "skills/frameworks/",
-    "playbooks": "skills/playbooks/",
-    "orchestration": "skills/orchestration/",
-    "performance": "skills/performance/"
   }
 }

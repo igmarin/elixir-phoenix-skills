@@ -114,7 +114,7 @@ Every skill directory must contain a `SKILL.md` file with valid YAML frontmatter
 
 **Blocking:**
 
-- `elixir-skill-router` `description` must contain `First response line MUST be "Next skill: skills/[category]/[name]"` — this is the orchestrator's contract
+- `elixir-skill-router` `description` must contain `First response line MUST be "Next skill: skills/<name>"` — this is the orchestrator's contract
 - When multiple skills apply, the orchestrator must emit `Priority:` and `Chain:` directives
 - The orchestrator's description must state the routing priority order
 - The orchestrator's `dependencies.skills` must list all directly referenced skills

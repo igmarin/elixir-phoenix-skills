@@ -35,7 +35,7 @@ def main() -> int:
         return 1
 
     dj = json.loads(dj_path.read_text())
-    sm_path = ROOT / "skills/orchestration/elixir-skill-router/assets/skill-map.json"
+    sm_path = ROOT / "skills/elixir-skill-router/assets/skill-map.json"
     sm = load_json(sm_path)
     if sm is None:
         err(f"skill-map missing: {sm_path.relative_to(ROOT)}")
@@ -87,30 +87,26 @@ def main() -> int:
         if skill and skill not in dj_names:
             err(f"skill-map skill not in directory.json: {skill}")
 
+    def frontmatter_type(path: Path) -> str:
+        text = path.read_text()
+        m = re.search(r"^type:\s*(\S+)", text, re.M)
+        return m.group(1) if m else "atomic"
+
+    disk_types: dict[str, str] = {}
+    for p in skills:
+        disk_types[p.parent.name] = frontmatter_type(p)
+
     # playbooks should be mapped
-    folder_to_name: dict[str, str] = {}
-    for p in (ROOT / "skills/playbooks").glob("*/SKILL.md"):
-        fm = p.read_text().split("---", 2)[1]
-        nm = re.search(r"^name:\s*(\S+)", fm, re.M)
-        if nm:
-            folder_to_name[p.parent.name] = nm.group(1)
     mapped = {m.get("skill") for m in sm.get("mappings", [])}
-    for folder, name in folder_to_name.items():
-        if name not in mapped:
-            err(f"playbook not in skill-map mappings: {name} ({folder})")
+    for name, kind in disk_types.items():
+        if kind == "playbook" and name not in mapped:
+            err(f"playbook not in skill-map mappings: {name}")
 
-
-    # Inventory counts: prefer structured inventory; also check summary prose
-    pb_disk = len(list((ROOT / "skills/playbooks").glob("*/SKILL.md")))
+    # Inventory counts from frontmatter type (layout is flat: skills/<name>/)
+    pb_disk = sum(1 for kind in disk_types.values() if kind == "playbook")
+    orch_disk = sum(1 for kind in disk_types.values() if kind == "orchestrator")
     atomics_disk = sum(
-        1
-        for p in (ROOT / "skills").rglob("SKILL.md")
-        if "playbooks" not in p.parts and "orchestration" not in p.parts
-    )
-    orch_disk = sum(
-        1
-        for p in (ROOT / "skills").rglob("SKILL.md")
-        if "orchestration" in p.parts
+        1 for kind in disk_types.values() if kind not in {"playbook", "orchestrator"}
     )
     inv = dj.get("inventory") or {}
     if inv:
@@ -126,11 +122,7 @@ def main() -> int:
                 f"{len(dj.get('skills', {}))}"
             )
         pb_ids = set(inv.get("playbook_ids") or [])
-        pb_dir = {
-            name
-            for name, meta in dj.get("skills", {}).items()
-            if "/playbooks/" in meta.get("path", "")
-        }
+        pb_dir = {name for name, kind in disk_types.items() if kind == "playbook"}
         if pb_ids != pb_dir:
             err(f"inventory.playbook_ids mismatch: {sorted(pb_ids ^ pb_dir)}")
     summary = dj.get("summary") or ""
@@ -166,7 +158,12 @@ def main() -> int:
             continue
         text = path.read_text(errors="ignore")
         rel = str(path.relative_to(ROOT))
-        for needle in ("skills/personas/", "skills/fundamentals/"):
+        for needle in (
+            "skills/personas/",
+            "skills/fundamentals/",
+            "skills/playbooks/",
+            "skills/orchestration/",
+        ):
             if needle in text:
                 if rel == "docs/taxonomy.md" and "Migration matrix" in text:
                     continue

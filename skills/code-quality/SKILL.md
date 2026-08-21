@@ -1,0 +1,161 @@
+---
+name: code-quality
+type: atomic
+tags: [atomic]
+license: MIT
+description: >
+  MANDATORY for all code quality and refactoring work for Elixir. Use when analyzing or refactoring
+  Elixir code. Covers duplication detection, ABC complexity, unused private functions, template
+  duplication, and Credo integration. Provides thresholds and fix patterns for each quality issue.
+  Trigger words: code quality, duplication, complexity, unused functions, Credo, refactoring, analysis,
+
+  mix credo, abc complexity, function length, module length, refactor, extract function, shared code,
+  code smell, technical debt, clean code.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
+---
+
+# Code Quality
+
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Enforce FCIS in reviews/refactors: fat LiveViews and mixed Repo+math are defects.
+
+## RULES — Follow these with no exceptions
+
+**1.** **Duplicated functions must be extracted** — when 2+ modules share >70% similar implementations, create a shared module
+**2.** **Functions must stay below ABC complexity 30** — break complex functions into smaller helpers
+**3.** **Remove unused private functions after refactoring**
+**4.** **Duplicated templates must become components** — when 2+ HEEx files share >40% identical markup, extract to a function component
+**5.** **Address duplication before complexity** — extracting shared code first reduces overall complexity
+**6.** **Run `mix credo --strict` before any PR**
+**7.** **Run `mix sobelow` for security** — check after quality checks
+
+
+## End-to-End Workflow
+
+1. **Run analysis** — `mix credo --strict` to identify all issues
+2. **Fix by priority** — address duplication first (Rule 5), then complexity, then unused functions
+3. **Verify fixes** — re-run `mix credo --strict` to confirm all issues are resolved
+4. **Security check** — run `mix sobelow` before committing
+5. **Commit** — only after both Credo and Sobelow pass cleanly
+
+See [`assets/refactoring_checklist.md`](assets/refactoring_checklist.md) for copy-paste complexity thresholds and a before/during/after refactoring checklist.
+
+
+## What Gets Detected
+
+### Code Duplication
+
+**How to fix:**
+```elixir
+# Create: lib/app_web/live/helpers.ex
+defmodule AppWeb.Live.Helpers do
+  def format_time(%Decimal{} = seconds) do
+    seconds |> Decimal.to_float() |> format_time()
+  end
+
+  def format_time(seconds) when is_number(seconds) do
+    # shared formatting logic
+  end
+end
+
+# In each LiveView:
+import AppWeb.Live.Helpers, only: [format_time: 1]
+```
+
+### ABC Complexity
+
+**How to fix:**
+```elixir
+# Before: one large function (complexity 41)
+def calculate_trend_line(data) do
+  # 50 lines of assignments, branches, conditions
+end
+
+# After: composed smaller functions (complexity <20 each)
+def calculate_trend_line(data) do
+  sums = calculate_regression_sums(data)
+  slope = calculate_slope(sums)
+  intercept = calculate_intercept(sums, slope)
+  build_trend_points(data, slope, intercept)
+end
+```
+
+### Unused Private Functions
+
+Remove any private functions no longer referenced after refactoring.
+
+### Template Duplication
+
+**How to fix:**
+```elixir
+# Create a function component for the shared markup
+defmodule AppWeb.Live.Components do
+  use Phoenix.Component
+
+  def metric_filters(assigns) do
+    ~H"""
+    <div class="filters">
+      <!-- shared filter markup -->
+    </div>
+    """
+  end
+end
+```
+
+
+## Running Analysis
+
+### Credo (Static Analysis)
+
+```bash
+# Run with strict mode (recommended)
+mix credo --strict
+
+# Focus on a specific file
+mix credo lib/my_app/accounts.ex
+```
+
+### Sobelow (Security)
+
+```bash
+# Run security analysis
+mix sobelow
+
+# With configuration
+mix sobelow --config
+```
+
+### Dependency Auditing
+
+```bash
+# All three in sequence
+mix deps.audit && mix hex.audit && mix sobelow
+```
+
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Copy-paste similar logic across modules | Extract a shared module when 2+ share >70% implementation |
+| Let a function grow past ABC complexity 30 | Break it into named private helper functions |
+| Leave unused private functions after refactoring | Remove dead private functions |
+| Duplicate HEEx markup across templates | Extract a function component when 2+ files share >40% markup |
+| Reduce complexity before removing duplication | Extract shared code first, then reduce complexity |
+| Open a PR without a security pass | Run `mix credo --strict` and `mix sobelow` before committing |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| code-review | code-quality | refactor-code |
+| refactor-code | code-quality | testing-essentials |
+
+**Companion skills:**
+- `credo-config` — configure Credo checks and CI integration
+- `refactor-code` — safe structural changes backed by characterization tests
+- `code-review` — PR review that surfaces the quality issues fixed here

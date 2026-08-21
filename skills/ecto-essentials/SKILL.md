@@ -1,0 +1,312 @@
+---
+name: ecto-essentials
+type: atomic
+tags: [atomic]
+license: MIT
+description: >
+  MANDATORY for ALL Elixir database work. Invoke before modifying schemas, queries, or migrations.
+  Covers schema definition, changesets, query composition, preloading, transactions,
+  associations, migrations, upserts, dynamic queries, and the context pattern.
+  Trigger words: Ecto, schema, changeset, migration, Repo, query, preload, association, belongs_to, has_many, Elixir database.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
+---
+
+# Ecto Essentials
+
+Use this skill before modifying ANY schema, query, or migration.
+
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Build changesets/Multi in pure-ish functions; run `Repo` once at the context edge.
+
+## RULES — Follow these with no exceptions
+
+**1.** **Add database constraints** (unique_index, foreign_key, check_constraint) AND changeset validations — both layers are required
+**2.** **Add indexes** on foreign keys and frequently queried fields — never omit indexes on foreign keys
+**3.** **Parameterize all user input in queries** — never interpolate values into SQL fragments, always use `^`
+**4.** **Never combine schema changes and data backfill** in the same migration
+
+
+## FCIS at this boundary
+
+Ecto is the persistence edge. Prefer pure functions that **build** changesets/queries/Multi; execute with `Repo` once in the context shell.
+
+❌ **Bad:** mix calculation with inserts
+
+```elixir
+def apply_discount(order_id, pct) do
+  order = Repo.get!(Order, order_id)
+  total = Enum.reduce(order.lines, 0, &(&1.amount + &2))
+  order
+  |> Ecto.Changeset.change(total: div(total * (100 - pct), 100))
+  |> Repo.update!()
+end
+```
+
+✅ **Good:** pure pricing + thin context
+
+```elixir
+defmodule MyApp.Orders.Pricing do
+  def total(%{lines: lines}), do: Enum.reduce(lines, 0, &(&1.amount + &2))
+  def with_discount(total, pct) when pct in 0..100, do: div(total * (100 - pct), 100)
+end
+
+def apply_discount(order_id, pct) do
+  with {:ok, order} <- fetch_order(order_id) do  # context helper: Repo.get → tagged tuple
+    total = order |> Pricing.total() |> Pricing.with_discount(pct)
+
+    order
+    |> Order.changeset(%{total: total})
+    |> Repo.update()
+  end
+end
+```
+
+Schema: `Post.changeset/2`. Context shell: `Blog.change_post/2` (wraps the schema changeset). LiveViews call the context, not `Post.changeset/2`.
+
+## Schema Definition
+
+```elixir
+defmodule MyApp.Media.Image do
+  use Ecto.Schema
+  import Ecto.Changeset
+
+  schema "images" do
+    field :title, :string
+    field :filename, :string
+    field :content_type, :string
+
+    belongs_to :folder, MyApp.Media.Folder  # parent uses has_many :images, MyApp.Media.Image
+
+    timestamps()
+  end
+
+  def changeset(image, attrs) do
+    image
+    |> cast(attrs, [:title, :filename, :content_type, :folder_id])
+    |> validate_required([:title, :filename, :content_type])
+    |> validate_length(:title, min: 1, max: 255)
+    |> validate_inclusion(:content_type, ["image/jpeg", "image/png", "image/gif"])
+    |> foreign_key_constraint(:folder_id)
+  end
+end
+```
+
+See [`assets/changeset_snippets.ex`](assets/changeset_snippets.ex) for copy-paste changeset templates (validations, associations, and error formatting).
+
+## Query Composition
+
+Queries are data. Build them in `*_query/1` functions; execute once in the context shell.
+
+```elixir
+import Ecto.Query
+
+def images_by_folder_query(folder_id) do
+  Image
+  |> where([i], i.folder_id == ^folder_id)
+  |> order_by([i], desc: i.inserted_at)
+end
+
+def list_images_by_folder(folder_id) do
+  folder_id
+  |> images_by_folder_query()
+  |> Repo.all()
+end
+
+def search_images_query(query_string) do
+  search = "%#{query_string}%"
+  where(Image, [i], ilike(i.title, ^search))
+end
+
+def search_images(query_string) do
+  query_string
+  |> search_images_query()
+  |> Repo.all()
+end
+```
+
+## Preloading Associations
+
+❌ **N+1 — avoid:**
+```elixir
+images = Repo.all(Image)
+Enum.each(images, fn image -> image.folder.name end)
+```
+
+✅ **Single query with preload:**
+```elixir
+images =
+  Image
+  |> preload(:folder)
+  |> Repo.all()
+
+Enum.each(images, fn image -> image.folder.name end)
+```
+
+## Transactions
+
+```elixir
+def transfer_images(image_ids, from_folder_id, to_folder_id) do
+  Repo.transaction(fn ->
+    with {:ok, from_folder} <- get_folder(from_folder_id),
+         {:ok, to_folder} <- get_folder(to_folder_id),
+         {count, nil} <- update_images(image_ids, to_folder_id) do
+      {:ok, count}
+    else
+      {:error, reason} -> Repo.rollback(reason)
+      _ -> Repo.rollback(:unknown_error)
+    end
+  end)
+end
+```
+
+### Ecto.Multi for Complex Operations
+
+```elixir
+def create_user_with_profile(user_attrs, profile_attrs) do
+  Ecto.Multi.new()
+  |> Ecto.Multi.insert(:user, User.changeset(%User{}, user_attrs))
+  |> Ecto.Multi.insert(:profile, fn %{user: user} ->
+    Profile.changeset(%Profile{}, Map.put(profile_attrs, :user_id, user.id))
+  end)
+  |> Repo.transaction()
+end
+```
+
+On failure, the error tuple identifies the named step: `{:error, :user, changeset, _changes}` or `{:error, :profile, changeset, _changes}`.
+
+## Building Associations
+
+```elixir
+def add_image_to_folder(folder, image_attrs) do
+  folder
+  |> Ecto.build_assoc(:images)
+  |> Image.changeset(image_attrs)
+  |> Repo.insert()
+end
+```
+
+## Upsert Operations
+
+```elixir
+def create_or_update_folder(attrs) do
+  %Folder{}
+  |> Folder.changeset(attrs)
+  |> Repo.insert(
+    on_conflict: {:replace, [:name, :updated_at]},
+    conflict_target: :name
+  )
+end
+```
+
+## Dynamic Queries
+
+```elixir
+def images_query(filters) do
+  Enum.reduce(filters, Image, fn
+    {:folder_id, id}, q -> where(q, [i], i.folder_id == ^id)
+    {:search, term}, q -> where(q, [i], ilike(i.title, ^"%#{term}%"))
+    {:content_type, ct}, q -> where(q, [i], i.content_type == ^ct)
+    _, q -> q
+  end)
+end
+
+def list_images(filters), do: Repo.all(images_query(filters))
+```
+
+## Migrations
+
+```elixir
+defmodule MyApp.Repo.Migrations.CreateImages do
+  use Ecto.Migration
+
+  def change do
+    create table(:images) do
+      add :title, :string, null: false
+      add :filename, :string, null: false
+      add :content_type, :string, null: false
+      add :folder_id, references(:folders, on_delete: :nilify_all)
+
+      timestamps()
+    end
+
+    create index(:images, [:folder_id])
+    create index(:images, [:inserted_at])
+  end
+end
+```
+
+**Migration validation workflow:**
+1. Run `mix ecto.migrate` — confirm it applies without errors
+2. Run `mix ecto.rollback` — confirm it reverses cleanly
+3. Run `mix ecto.migrate` again — confirm re-applying succeeds
+
+See [`assets/migration_checklist.md`](assets/migration_checklist.md) for the full safe-migration and expand-contract checklist.
+
+### Unique Constraints
+
+Add unique constraints in migration AND schema changeset.
+
+```elixir
+# Migration
+create unique_index(:folders, [:name])
+```
+
+## Context Pattern
+
+**Never call Repo from the web layer** (LiveViews, controllers) — all database operations belong in context modules.
+
+```elixir
+defmodule MyApp.Media do
+  alias MyApp.Media.{Image, Folder}
+  alias MyApp.Repo
+
+  def create_image(attrs) do
+    %Image{}
+    |> Image.changeset(attrs)
+    |> Repo.insert()
+  end
+end
+```
+
+All standard CRUD functions (`list_*`, `get_*!`, `update_*`, `delete_*`) follow the same pattern.
+
+
+## Related Skills
+
+- **Prerequisite:** [elixir-essentials](../elixir-essentials/SKILL.md) — core Elixir patterns before working with Ecto
+- **Next — changeset deep-dive:** [ecto-changeset-patterns](../ecto-changeset-patterns/SKILL.md) — advanced validations, custom constraints, and error formatting
+- **Next — testing:** [testing-essentials](../testing-essentials/SKILL.md) — testing Ecto contexts and migrations
+
+
+## When Not to Use
+
+- Simple read-only schema inspection — use `mix ecto.schema` directly
+- Raw SQL queries that bypass Ecto entirely — write these in a dedicated repo method, not inline in contexts
+- Advanced nested association patterns — use `ecto-changeset-patterns` instead
+- Migration orchestration planning — use `ecto-migration` playbook instead
+
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Interpolate user input into a query fragment | Bind values with `^` so Ecto parameterizes them |
+| Add a changeset validation but skip the DB constraint | Pair `validate_*` / `unique_constraint` with `unique_index` / `references` |
+| Leave foreign keys unindexed | `create index(:images, [:folder_id])` in the migration |
+| Access `image.folder` inside `Enum.each` (N+1) | `preload(:folder)` before `Repo.all/1` |
+| Call `Repo` directly from a LiveView or controller | Route all queries through a context module |
+| Mix query construction and `Repo.all` with no `*_query/1` | Return `Ecto.Query.t()` from `*_query/1`; execute in the shell |
+| Combine schema changes and data backfill in one migration | Split into separate migrations (expand → backfill → contract) |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| elixir-essentials | ecto-essentials | ecto-changeset-patterns |
+| elixir-essentials | ecto-essentials | testing-essentials |
+
+**Companion skills:** `ecto-changeset-patterns`, `ecto-nested-associations`, `ecto-migration`, `testing-essentials`

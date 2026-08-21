@@ -1,0 +1,276 @@
+---
+name: ecto-changeset-patterns
+type: atomic
+tags: [atomic]
+license: MIT
+description: >
+  MANDATORY for ALL changeset work beyond basic CRUD. Invoke before writing multiple changesets,
+  cast_assoc, or conditional validation. Covers separate changesets per operation, cast_assoc pitfalls,
+  composition, conditional validation with opts, field transformations, and uniqueness validation.
+  Trigger words: changeset, cast_assoc, validation, separate changesets, conditional validation, update_change.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
+---
+
+# Ecto Changeset Patterns
+
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Build changesets/Multi in pure-ish functions; run `Repo` once at the context edge.
+
+## RULES — Follow these with no exceptions
+
+**1.** **Define separate named changesets per operation** — `registration_changeset`, `email_changeset`, `password_changeset`, etc.
+**2.** **Never require foreign key fields in `cast_assoc` child changesets** — `cast_assoc` sets them automatically
+**3.** **Compose changesets with pipes** — each validation step is a separate, reusable function
+**4.** **Always pair `unsafe_validate_unique` with `unique_constraint`** — fast UI feedback plus race-safe enforcement
+**5.** **Use `update_change/3` for field transformations** — trim, downcase, and slugify inside the changeset
+**6.** **Accept `opts \\ []` for conditional validation** — toggle hashing or uniqueness checks per call site
+**7.** **Validate at the changeset level, not in context functions** — keep validation next to the schema
+
+
+## FCIS at this boundary
+
+Changeset functions should be pure data transformers (attrs in → changeset out). Persist with `Repo` in the context, not inside the schema module beyond optional helpers.
+
+❌ **Bad:** schema function performs inserts
+
+```elixir
+def create(attrs) do
+  %Post{}
+  |> changeset(attrs)
+  |> Repo.insert()
+end
+```
+
+✅ **Good:** schema builds; context persists
+
+```elixir
+# schema
+def changeset(post, attrs) do
+  post
+  |> cast(attrs, [:title, :body])
+  |> validate_required([:title, :body])
+end
+
+# context shell
+def create_post(attrs) do
+  %Post{}
+  |> Post.changeset(attrs)
+  |> Repo.insert()
+end
+```
+
+## Workflow: Building a New Schema
+
+When adding changesets to a new schema, apply patterns in this order:
+
+1. **Define separate named changesets** for each operation (registration, update, password change, etc.)
+2. **Compose validations** into small, reusable private functions piped together
+3. **Add uniqueness validation** — pair `unsafe_validate_unique` with `unique_constraint`
+4. **Apply field transformations** via `update_change/3` in the changeset, not in controllers
+5. **Verify** by testing in `iex -S mix` or running your changeset tests. A quick iex smoke test:
+
+```elixir
+# In iex -S mix
+MyApp.Accounts.User.registration_changeset(%MyApp.Accounts.User{}, %{email: "bad", username: ""})
+# => Inspect .valid? and .errors to confirm validations fire as expected
+
+# Or a minimal ExUnit test
+test "registration_changeset requires email and username" do
+  changeset = User.registration_changeset(%User{}, %{})
+  assert %{email: ["can't be blank"], username: ["can't be blank"]} = errors_on(changeset)
+end
+```
+
+
+## Separate Changesets Per Operation
+
+```elixir
+defmodule MyApp.Accounts.User do
+  use Ecto.Schema
+  import Ecto.Changeset
+
+  schema "users" do
+    field :email, :string
+    field :username, :string
+    field :password, :string, virtual: true, redact: true
+    field :hashed_password, :string, redact: true
+    field :bio, :string
+
+    timestamps()
+  end
+
+  # Registration — all fields, password hashing
+  def registration_changeset(user, attrs, opts \\ []) do
+    user
+    |> cast(attrs, [:email, :username, :password])
+    |> validate_email(opts)
+    |> validate_username()
+    |> validate_password(opts)
+  end
+
+  # Email change — only email
+  def email_changeset(user, attrs, opts \\ []) do
+    user
+    |> cast(attrs, [:email])
+    |> validate_email(opts)
+  end
+
+  # Password change — only password
+  def password_changeset(user, attrs, opts \\ []) do
+    user
+    |> cast(attrs, [:password])
+    |> validate_password(opts)
+    |> put_password_hash()
+  end
+
+  # Profile update — non-sensitive fields only
+  def profile_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:username, :bio])
+    |> validate_username()
+  end
+end
+```
+
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Require `:post_id` in a `cast_assoc` child changeset | Cast only user fields; `cast_assoc` sets the FK |
+| Reuse one changeset for every operation | Define separate named changesets per operation |
+| Use `unsafe_validate_unique` alone | Pair it with `unique_constraint` for race safety |
+| Trim/downcase fields in the controller | Transform in the changeset with `update_change/3` |
+| Hardcode hashing/uniqueness behavior | Accept `opts \\ []` for conditional validation |
+| Validate inside context functions | Validate at the changeset level, next to the schema |
+| Cast the virtual `:password` and forget to hash | Hash via `put_password_hash/1` in the password changeset |
+
+### cast_assoc — Critical Pitfall
+
+❌ **Bad — `:post_id` is required but set automatically by cast_assoc:**
+```elixir
+def changeset(ingredient, attrs) do
+  ingredient
+  |> cast(attrs, [:name, :quantity, :post_id])
+  |> validate_required([:name, :post_id])  # Fails!
+end
+```
+
+✅ **Good — only require user-provided fields:**
+```elixir
+def changeset(ingredient, attrs) do
+  ingredient
+  |> cast(attrs, [:name, :quantity])
+  |> validate_required([:name])
+end
+```
+
+
+## Changeset Composition
+
+```elixir
+defp validate_email(changeset, opts) do
+  changeset
+  |> validate_required([:email])
+  |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/, message: "must have the @ sign and no spaces")
+  |> validate_length(:email, max: 160)
+  |> maybe_validate_unique_email(opts)
+end
+
+defp validate_username(changeset) do
+  changeset
+  |> validate_required([:username])
+  |> validate_format(:username, ~r/^[a-zA-Z0-9_]+$/, message: "only letters, numbers, and underscores")
+  |> validate_length(:username, min: 3, max: 30)
+  |> unsafe_validate_unique(:username, MyApp.Repo)
+  |> unique_constraint(:username)
+end
+```
+
+
+## Conditional Validation with opts
+
+```elixir
+# Normal registration
+def register_user(attrs) do
+  %User{}
+  |> User.registration_changeset(attrs)
+  |> Repo.insert()
+end
+
+# In tests — skip hashing for speed
+def register_user_for_test(attrs) do
+  %User{}
+  |> User.registration_changeset(attrs, hash_password: false, validate_email: false)
+  |> Repo.insert()
+end
+```
+
+
+## Field Transformations with update_change
+
+```elixir
+def changeset(user, attrs) do
+  user
+  |> cast(attrs, [:email, :username])
+  |> update_change(:email, &String.downcase/1)
+  |> update_change(:username, &String.trim/1)
+  |> update_change(:username, &String.downcase/1)
+end
+
+# For slugs
+defp generate_slug(changeset) do
+  case get_change(changeset, :title) do
+    nil -> changeset
+    title ->
+      slug = title |> String.downcase() |> String.replace(~r/[^a-z0-9]+/, "-") |> String.trim("-")
+      put_change(changeset, :slug, slug)
+  end
+end
+```
+
+
+## Uniqueness Validation
+
+Always pair `unsafe_validate_unique` with `unique_constraint`:
+
+```elixir
+def changeset(user, attrs) do
+  user
+  |> cast(attrs, [:email, :username])
+  # Fast check — queries DB, gives immediate UI feedback
+  |> unsafe_validate_unique(:email, MyApp.Repo)
+  |> unsafe_validate_unique(:username, MyApp.Repo)
+  # Constraint check — catches race conditions at insert time
+  |> unique_constraint(:email)
+  |> unique_constraint(:username)
+end
+```
+
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| ecto-essentials | ecto-changeset-patterns | ecto-nested-associations |
+| ecto-essentials | ecto-changeset-patterns | testing-essentials |
+
+**Companion skills:**
+- `ecto-essentials` — schema, query, and migration foundations
+- `ecto-nested-associations` — `cast_assoc` for deeply nested data structures
+- `testing-essentials` — changeset tests with `errors_on/1` helpers
+- `apply-ecto-conventions` — enforce changeset conventions on existing code
+
+---
+
+## Related Skills
+
+| Skill | When to Use |
+|-------|-------------|
+| `ecto-essentials` | Start here for schema definitions and migration patterns before writing changesets |
+| `ecto-nested-associations` | Use when `cast_assoc` involves deeply nested data structures |
+| `testing-essentials` | Use after this skill to write changeset tests with `errors_on/1` helpers |
+
+Each skill can be used independently if companion files are not present.

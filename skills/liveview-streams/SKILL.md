@@ -1,0 +1,315 @@
+---
+name: liveview-streams
+type: atomic
+tags: [atomic]
+license: MIT
+description: >
+  MANDATORY for handling large collections in LiveView. Invoke before rendering lists with 100+ items.
+  Covers Phoenix.LiveView.stream/4, stream_insert, stream_delete, DOM patching efficiency,
+  and pagination with streams. Available in LiveView 0.19+.
+  Trigger words: stream, LiveView stream, large list, pagination, DOM patching, stream_insert,
+
+  stream_delete, phx-update="stream", stream_configure, stream_many, infinite scroll,
+  virtualized list, DOM ID, dom_id.
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
+---
+
+# LiveView Streams
+
+
+Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Keep LiveView/controller callbacks thin; delegate business rules to contexts/pure modules.
+
+## RULES — Follow these with no exceptions
+
+**1.** **Use streams for collections with 100+ items; combine with pagination or infinite scroll** — smaller lists use regular assigns; never stream unlimited items
+**2.** **Use `stream_insert/3` and `stream_delete/3` for incremental updates** — never replace the entire stream assign
+**3.** **Use `phx-update="stream"` in templates** — required for stream DOM patching; missing this causes full re-renders
+**4.** **Use `reset: true` for filtering and sorting** — clears existing items before inserting the new result set
+**5.** **Call `stream_configure/3` before `stream/3`** — configuring a custom `dom_id` after the stream is initialized has no effect
+**6.** **Re-fetch from the database when sorting or filtering** — streams do not keep items in assigns, so you cannot reorder them in memory
+
+
+## End-to-End Workflow
+
+Follow this sequence when implementing LiveView streams:
+
+1. **Identify collection size** — see Rule 1 above for the threshold
+2. **Define DOM ID strategy** — decide on `id` attribute format (e.g., `post-#{post.id}`)
+3. **Add `stream_configure/3`** in `mount/3` to set custom DOM ID generator
+4. **Initialize stream** — call `stream(socket, :name, collection)` in `mount/3`
+5. **Update template** — add `phx-update="stream"` container and `id={dom_id}` on items
+6. **Handle events** — use `stream_insert`/`stream_delete` for all mutations
+7. **Add handle_info** — handle Phoenix.PubSub broadcasts with stream updates
+8. **Verify WS frames** — confirm targeted DOM patches in browser DevTools
+
+
+## Basic Stream Pattern
+
+```elixir
+defmodule MyAppWeb.PostLive.Index do
+  use MyAppWeb, :live_view
+
+  @impl true
+  def mount(_params, _session, socket) do
+    {:ok,
+     socket
+     |> stream_configure(:posts, dom_id: &"post-#{&1.id}")
+     |> stream(:posts, Blog.list_posts())}
+  end
+
+  @impl true
+  def handle_event("create", %{"post" => params}, socket) do
+    case Blog.create_post(params) do
+      {:ok, post} ->
+        {:noreply, stream_insert(socket, :posts, post, at: 0)}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply, assign(socket, :form, to_form(changeset))}
+    end
+  end
+
+  @impl true
+  def handle_event("delete", %{"id" => id}, socket) do
+    with {:ok, post} <- Blog.fetch_post(id),
+         {:ok, _} <- Blog.delete_post(post) do
+      {:noreply, stream_delete(socket, :posts, post)}
+    else
+      {:error, :not_found} ->
+        {:noreply, put_flash(socket, :error, "Post not found")}
+
+      {:error, %Ecto.Changeset{}} ->
+        {:noreply, put_flash(socket, :error, "Could not delete post")}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Could not delete post")}
+    end
+  end
+
+  @impl true
+  def handle_info({:post_created, post}, socket) do
+    {:noreply, stream_insert(socket, :posts, post, at: 0)}
+  end
+end
+```
+
+
+## Template with Streams
+
+```heex
+<div id="posts" phx-update="stream">
+  <div :for={{dom_id, post} <- @streams.posts} id={dom_id} class="post">
+    <h3><%= post.title %></h3>
+    <p><%= post.body %></p>
+
+    <button phx-click="delete" phx-value-id={post.id}>
+      Delete
+    </button>
+  </div>
+</div>
+```
+
+
+## Infinite Scroll with Streams
+
+```elixir
+@per_page 20
+
+@impl true
+def mount(_params, _session, socket) do
+  {:ok,
+   socket
+   |> assign(:page, 1)
+   |> assign(:loading, false)
+   |> stream_configure(:posts, dom_id: &"post-#{&1.id}")
+   |> stream(:posts, Blog.list_posts(page: 1, per_page: @per_page))}
+end
+
+@impl true
+def handle_event("load_more", _params, socket) do
+  page = socket.assigns.page + 1
+  new_posts = Blog.list_posts(page: page, per_page: @per_page)
+
+  {:noreply,
+   socket
+   |> assign(:page, page)
+   |> then(fn s -> Enum.reduce(new_posts, s, &stream_insert(&2, :posts, &1)) end)}
+end
+```
+
+```heex
+<div id="posts" phx-update="stream">
+  <div :for={{dom_id, post} <- @streams.posts} id={dom_id}>
+    <%= post.title %>
+  </div>
+</div>
+
+<div phx-hook="InfiniteScroll" data-page={@page}>
+  <button phx-click="load_more" disabled={@loading}>Load More</button>
+</div>
+```
+
+
+## PubSub Integration with Streams
+
+```elixir
+@impl true
+def mount(_params, _session, socket) do
+  if connected?(socket) do
+    Phoenix.PubSub.subscribe(MyApp.PubSub, "posts")
+  end
+
+  {:ok,
+   socket
+   |> stream_configure(:posts, dom_id: &"post-#{&1.id}")
+   |> assign(:editing_id, nil)
+   |> assign(:form, nil)
+   |> stream(:posts, Blog.list_posts())}
+end
+
+@impl true
+def handle_info({:post_created, post}, socket) do
+  {:noreply, stream_insert(socket, :posts, post, at: 0)}
+end
+```
+
+Broadcast from your context:
+
+```elixir
+def create_post(attrs) do
+  {:ok, post} = Repo.insert(Post.changeset(%Post{}, attrs))
+  Phoenix.PubSub.broadcast(MyApp.PubSub, "posts", {:post_created, post})
+  {:ok, post}
+end
+```
+
+
+## Resetting and Replacing Streams
+
+Use `reset: true` to clear existing items before inserting new ones — required for filtering and sorting:
+
+```elixir
+# Filtering
+def handle_event("filter", %{"status" => status}, socket) do
+  {:noreply, stream(socket, :posts, Blog.list_posts_by_status(status), reset: true)}
+end
+
+# Sorting — re-fetch from the database because streams do not store items in assigns
+def handle_event("sort", %{"column" => col, "direction" => dir}, socket) do
+  direction = String.to_existing_atom(dir)
+  sorted = Blog.list_posts(order_by: [{direction, String.to_existing_atom(col)}])
+
+  {:noreply,
+   socket
+   |> assign(:sort_direction, direction)
+   |> stream(:posts, sorted, reset: true)}
+end
+```
+
+
+## Edit-in-Place Pattern
+
+```elixir
+@impl true
+def handle_event("start_edit", %{"id" => id}, socket) do
+  case Blog.fetch_post(id) do
+    {:ok, post} ->
+      {:noreply,
+       socket
+       |> assign(:editing_id, id)
+       |> assign(:form, to_form(Blog.change_post(post)))}
+
+    {:error, :not_found} ->
+      {:noreply, put_flash(socket, :error, "Post not found")}
+  end
+end
+
+@impl true
+def handle_event("save_edit", %{"id" => id, "post" => params}, socket) do
+  with {:ok, post} <- Blog.fetch_post(id),
+       {:ok, updated_post} <- Blog.update_post(post, params) do
+    {:noreply,
+     socket
+     |> assign(:editing_id, nil)
+     |> assign(:form, nil)
+     |> stream_insert(:posts, updated_post)}
+  else
+    {:error, :not_found} ->
+      {:noreply, put_flash(socket, :error, "Post not found")}
+
+    {:error, %Ecto.Changeset{} = changeset} ->
+      {:noreply,
+       socket
+       |> assign(:editing_id, id)
+       |> assign(:form, to_form(changeset))}
+  end
+end
+
+@impl true
+def handle_event("cancel_edit", _params, socket) do
+  {:noreply,
+   socket
+   |> assign(:editing_id, nil)
+   |> assign(:form, nil)}
+end
+```
+
+```heex
+<div id="posts" phx-update="stream">
+  <div :for={{dom_id, post} <- @streams.posts} id={dom_id}>
+    <%= if @editing_id == post.id do %>
+      <.form for={@form} phx-submit="save_edit">
+        <input type="hidden" name="id" value={post.id} />
+        <.input field={@form[:title]} type="text" label="Title" />
+        <button type="submit">Save</button>
+        <button type="button" phx-click="cancel_edit">Cancel</button>
+      </.form>
+    <% else %>
+      <h3><%= post.title %></h3>
+      <button phx-click="start_edit" phx-value-id={post.id}>Edit</button>
+    <% end %>
+  </div>
+</div>
+```
+
+
+## Debugging Checklist
+
+If stream patching is not working as expected, check for:
+
+- Missing `phx-update="stream"` on the container `<div>`
+- Missing `id={dom_id}` on each item element
+- Accidentally replacing the entire stream assign instead of using `stream_insert`/`stream_delete`
+- DOM ID collisions caused by non-unique item IDs (especially across pages in infinite scroll)
+- Using `stream_insert` without proper `dom_id` configuration
+- Forgetting to call `stream_configure` before `stream` when using custom IDs
+
+**Manual verification step:** Open your browser's DevTools panel → Network tab → WS
+frames. Confirm incoming frames contain targeted patch operations for individual items,
+not full list replacements. If you see full re-renders, the first two checklist items
+above are the most common cause.
+
+
+## Common Pitfalls
+
+| ❌ Don't | ✅ Do |
+|----------|-------|
+| Replace the whole stream assign to update it | Use `stream_insert/3` and `stream_delete/3` for incremental changes |
+| Omit `phx-update="stream"` on the container | Add `phx-update="stream"` so LiveView patches items instead of re-rendering |
+| Forget `id={dom_id}` on each item element | Set `id={dom_id}` so DOM patching can target individual rows |
+| Reuse non-unique IDs across pages in infinite scroll | Configure a stable `dom_id` (e.g. `&"post-#{&1.id}"`) so IDs never collide |
+| Sort or filter from items held in assigns | Re-fetch from the database and apply `stream(..., reset: true)` |
+| Stream tiny collections (a handful of rows) | Use regular assigns; reserve streams for 100+ item lists |
+| Call `stream_configure/3` after `stream/3` | Configure the custom `dom_id` before the stream is initialized |
+
+---
+
+## Integration
+
+| Predecessor | This Skill | Successor |
+|-------------|------------|-----------|
+| phoenix-liveview-essentials | liveview-streams | phoenix-pubsub-patterns |
+| ecto-essentials | liveview-streams | testing-essentials |
+
+**Companion skills:** `phoenix-liveview-essentials`, `phoenix-pubsub-patterns`, `testing-essentials`.

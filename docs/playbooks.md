@@ -6,9 +6,9 @@ Playbooks are **sequenced, multi-step workflows** with hard gates and human-in-t
 
 ```mermaid
 flowchart TB
-  Router["orchestration/elixir-skill-router<br/>routes only"]
-  PB["playbooks/*<br/>phases + gates + HITL"]
-  Atomic["atomic skills by domain<br/>rules + assets"]
+  Router["elixir-skill-router<br/>routes only"]
+  PB["playbooks (type: playbook)<br/>phases + gates + HITL"]
+  Atomic["atomic skills<br/>rules + assets"]
   FCIS["docs/fcis-engineering-rules.md"]
 
   Router --> PB
@@ -30,13 +30,13 @@ flowchart TB
 | `tdd` | Red → HITL approve → green → refactor → quality gate | `testing-essentials`, `elixir-essentials` |
 | `bug-fix` | Triage → failing repro → HITL fix → verify | `testing-essentials`, domain atomics |
 | `quality` | Format / Credo / Dialyzer → refactor → docs | `code-quality`, `credo-config`, `refactor-code` |
-| `code-review-playbook` | Structured review flow (HITL on Critical) | `skills/quality/code-review` atomic |
+| `code-review-playbook` | Structured review flow (HITL on Critical) | `skills/code-review` atomic |
 | `setup` | Env → deps → DB → CI → validate | tooling / project atomics |
 | `liveview` | Contract → failing LV test → thin edge impl | `phoenix-liveview-essentials`, `testing-essentials` |
 | `background-job` | Design → TDD Oban worker → failure paths | `oban-essentials` |
 | `ecto-migration` | Plan → migrate/rollback cycle → deploy notes | `ecto-essentials` |
 
-Paths: `skills/playbooks/<name>/SKILL.md`.
+Paths: `skills/<name>/SKILL.md`.
 
 ## Required template
 
@@ -114,7 +114,7 @@ flowchart TD
 
 | Anti-pattern | Do instead |
 |--------------|------------|
-| Re-teach Ecto inside a playbook | Link `skills/database/ecto-essentials` |
+| Re-teach Ecto inside a playbook | Link `skills/ecto-essentials` |
 | Skip HITL “to go faster” | Stop and ask; playbooks assume human approval |
 | Soft gates (“should run tests”) | Hard gate with command + expected outcome |
 | Mixing router logic into playbooks | Keep routing in `orchestration/` |
@@ -131,7 +131,7 @@ flowchart TD
 ### Agent: run TDD for a context function
 
 ```text
-Use playbook skills/playbooks/tdd/SKILL.md
+Use playbook skills/tdd/SKILL.md
 Feature: Blog.list_published_posts/0
 ```
 
@@ -140,7 +140,7 @@ Expected: failing test → HITL approval → minimal impl → quality gate.
 ### Agent: review a PR
 
 ```text
-Use playbook skills/playbooks/code-review/SKILL.md
+Use playbook skills/code-review-playbook/SKILL.md
 Diff: current branch vs main
 ```
 

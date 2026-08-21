@@ -1,0 +1,533 @@
+{
+  "fcis_note": "Routing metadata only. Domain pure-core rules live in atomic skills + docs/fcis-engineering-rules.md. Consumers should ignore unknown top-level keys.",
+  "mappings": [
+    {
+      "intent": "PR or diff code review workflow",
+      "skill": "code-review-playbook",
+      "path": "skills/code-review-playbook/SKILL.md",
+      "examples": [
+        "Review my PR",
+        "Self-review before merge",
+        "Code review this diff",
+        "Walk the review order on my branch"
+      ]
+    },
+    {
+      "intent": "TDD feature cycle with hard gates",
+      "skill": "tdd",
+      "path": "skills/tdd/SKILL.md",
+      "examples": [
+        "TDD this feature",
+        "write the test first",
+        "red green refactor",
+        "failing test then implement"
+      ]
+    },
+    {
+      "intent": "bug fix with reproduction test",
+      "skill": "bug-fix",
+      "path": "skills/bug-fix/SKILL.md",
+      "examples": [
+        "fix this bug",
+        "production issue",
+        "regression",
+        "write a failing repro test"
+      ]
+    },
+    {
+      "intent": "pre-PR quality sweep",
+      "skill": "quality",
+      "path": "skills/quality/SKILL.md",
+      "examples": [
+        "before PR quality check",
+        "run credo dialyzer format",
+        "production readiness pass"
+      ]
+    },
+    {
+      "intent": "project setup and bootstrap",
+      "skill": "setup",
+      "path": "skills/setup/SKILL.md",
+      "examples": [
+        "setup the project",
+        "mix deps and ecto",
+        "onboard new machine",
+        "configure CI"
+      ]
+    },
+    {
+      "intent": "LiveView feature workflow",
+      "skill": "liveview",
+      "path": "skills/liveview/SKILL.md",
+      "examples": [
+        "build a LiveView page",
+        "new LiveView feature",
+        "handle_event feature end to end"
+      ]
+    },
+    {
+      "intent": "Oban background job workflow",
+      "skill": "background-job",
+      "path": "skills/background-job/SKILL.md",
+      "examples": [
+        "add an Oban worker",
+        "background job",
+        "enqueue job with tests"
+      ]
+    },
+    {
+      "intent": "safe Ecto migration workflow",
+      "skill": "ecto-migration",
+      "path": "skills/ecto-migration/SKILL.md",
+      "examples": [
+        "write a migration",
+        "add column safely",
+        "expand contract migration"
+      ]
+    },
+    {
+      "intent": "core Elixir patterns",
+      "skill": "elixir-essentials",
+      "path": "skills/elixir-essentials/SKILL.md",
+      "examples": [
+        "Write a function",
+        "Pattern match on struct",
+        "Use with statement"
+      ]
+    },
+    {
+      "intent": "OTP processes",
+      "skill": "otp-essentials",
+      "path": "skills/otp-essentials/SKILL.md",
+      "examples": [
+        "Create a GenServer",
+        "Set up supervision tree",
+        "Use Task module"
+      ]
+    },
+    {
+      "intent": "type safety",
+      "skill": "typespec-dialyzer",
+      "path": "skills/typespec-dialyzer/SKILL.md",
+      "examples": [
+        "Add @spec to function",
+        "Configure dialyzer",
+        "Define custom types"
+      ]
+    },
+    {
+      "intent": "write LiveView",
+      "skill": "phoenix-liveview-essentials",
+      "path": "skills/phoenix-liveview-essentials/SKILL.md",
+      "examples": [
+        "Create a LiveView",
+        "Handle events in LiveView",
+        "Use assigns"
+      ]
+    },
+    {
+      "intent": "Phoenix 1.8+ auth",
+      "skill": "phoenix-scopes",
+      "path": "skills/phoenix-scopes/SKILL.md",
+      "examples": [
+        "Use Scope struct",
+        "Migrate from current_user",
+        "Scope-based authorization"
+      ]
+    },
+    {
+      "intent": "large collections",
+      "skill": "liveview-streams",
+      "path": "skills/liveview-streams/SKILL.md",
+      "examples": [
+        "Render large list",
+        "Use streams in LiveView",
+        "Optimize collection rendering"
+      ]
+    },
+    {
+      "intent": "WebSocket channels",
+      "skill": "phoenix-channels-essentials",
+      "path": "skills/phoenix-channels-essentials/SKILL.md",
+      "examples": [
+        "Create a channel",
+        "Handle channel events",
+        "Broadcast messages"
+      ]
+    },
+    {
+      "intent": "JSON REST API",
+      "skill": "phoenix-json-api",
+      "path": "skills/phoenix-json-api/SKILL.md",
+      "examples": [
+        "Build JSON endpoint",
+        "Render JSON response",
+        "API versioning"
+      ]
+    },
+    {
+      "intent": "real-time updates",
+      "skill": "phoenix-pubsub-patterns",
+      "path": "skills/phoenix-pubsub-patterns/SKILL.md",
+      "examples": [
+        "Broadcast from context",
+        "Subscribe to topic",
+        "Real-time UI updates"
+      ]
+    },
+    {
+      "intent": "file uploads",
+      "skill": "phoenix-uploads",
+      "path": "skills/phoenix-uploads/SKILL.md",
+      "examples": [
+        "Handle file upload",
+        "Validate upload",
+        "Store attachment"
+      ]
+    },
+    {
+      "intent": "database operations",
+      "skill": "ecto-essentials",
+      "path": "skills/ecto-essentials/SKILL.md",
+      "examples": [
+        "Query database",
+        "Insert records",
+        "Write migration"
+      ]
+    },
+    {
+      "intent": "changesets",
+      "skill": "ecto-changeset-patterns",
+      "path": "skills/ecto-changeset-patterns/SKILL.md",
+      "examples": [
+        "Validate input",
+        "Cast params",
+        "Custom changesets"
+      ]
+    },
+    {
+      "intent": "nested associations",
+      "skill": "ecto-nested-associations",
+      "path": "skills/ecto-nested-associations/SKILL.md",
+      "examples": [
+        "cast_assoc",
+        "Ecto.Multi",
+        "Nested forms"
+      ]
+    },
+    {
+      "intent": "testing",
+      "skill": "testing-essentials",
+      "path": "skills/testing-essentials/SKILL.md",
+      "examples": [
+        "Write ExUnit test",
+        "Setup test fixtures",
+        "Mock dependencies"
+      ]
+    },
+    {
+      "intent": "property testing",
+      "skill": "property-based-testing",
+      "path": "skills/property-based-testing/SKILL.md",
+      "examples": [
+        "Write property test",
+        "Generate test data",
+        "StreamData usage"
+      ]
+    },
+    {
+      "intent": "benchmarking",
+      "skill": "benchee-profiling",
+      "path": "skills/benchee-profiling/SKILL.md",
+      "examples": [
+        "Benchmark function",
+        "Compare implementations",
+        "Memory profiling"
+      ]
+    },
+    {
+      "intent": "authentication",
+      "skill": "phoenix-liveview-auth",
+      "path": "skills/phoenix-liveview-auth/SKILL.md",
+      "examples": [
+        "Add login page",
+        "on_mount auth",
+        "Session management"
+      ]
+    },
+    {
+      "intent": "auth customization",
+      "skill": "phoenix-auth-customization",
+      "path": "skills/phoenix-auth-customization/SKILL.md",
+      "examples": [
+        "Custom auth flow",
+        "Extend phx.gen.auth",
+        "OAuth integration"
+      ]
+    },
+    {
+      "intent": "authorization",
+      "skill": "phoenix-authorization-patterns",
+      "path": "skills/phoenix-authorization-patterns/SKILL.md",
+      "examples": [
+        "Role-based access",
+        "Policy checks",
+        "Authorization middleware"
+      ]
+    },
+    {
+      "intent": "background jobs",
+      "skill": "oban-essentials",
+      "path": "skills/oban-essentials/SKILL.md",
+      "examples": [
+        "Create Oban job",
+        "Schedule job",
+        "Retry configuration"
+      ]
+    },
+    {
+      "intent": "data pipelines",
+      "skill": "broadway-data-pipelines",
+      "path": "skills/broadway-data-pipelines/SKILL.md",
+      "examples": [
+        "Stream processing",
+        "ETL pipeline",
+        "Batch processing"
+      ]
+    },
+    {
+      "intent": "deployment",
+      "skill": "deployment-gotchas",
+      "path": "skills/deployment-gotchas/SKILL.md",
+      "examples": [
+        "Configure releases",
+        "Environment setup",
+        "Production deploy"
+      ]
+    },
+    {
+      "intent": "observability",
+      "skill": "telemetry-essentials",
+      "path": "skills/telemetry-essentials/SKILL.md",
+      "examples": [
+        "Add telemetry",
+        "Custom metrics",
+        "Instrumentation"
+      ]
+    },
+    {
+      "intent": "caching",
+      "skill": "cachex-caching",
+      "path": "skills/cachex-caching/SKILL.md",
+      "examples": [
+        "Implement cache",
+        "TTL configuration",
+        "Cache invalidation"
+      ]
+    },
+    {
+      "intent": "code quality",
+      "skill": "code-quality",
+      "path": "skills/code-quality/SKILL.md",
+      "examples": [
+        "Refactor code",
+        "Detect duplication",
+        "Complexity analysis"
+      ]
+    },
+    {
+      "intent": "Credo setup",
+      "skill": "credo-config",
+      "path": "skills/credo-config/SKILL.md",
+      "examples": [
+        "Configure Credo",
+        "Custom rules",
+        "CI integration"
+      ]
+    },
+    {
+      "intent": "security review",
+      "skill": "security-essentials",
+      "path": "skills/security-essentials/SKILL.md",
+      "examples": [
+        "Security audit",
+        "Input validation",
+        "XSS prevention"
+      ]
+    },
+    {
+      "intent": "HTTP client",
+      "skill": "req-http-client",
+      "path": "skills/req-http-client/SKILL.md",
+      "examples": [
+        "Call external API",
+        "Handle response",
+        "Authentication headers"
+      ]
+    },
+    {
+      "intent": "email sending",
+      "skill": "swoosh-emails",
+      "path": "skills/swoosh-emails/SKILL.md",
+      "examples": [
+        "Send email",
+        "Email template",
+        "Swoosh adapter"
+      ]
+    },
+    {
+      "intent": "internationalization",
+      "skill": "gettext-i18n",
+      "path": "skills/gettext-i18n/SKILL.md",
+      "examples": [
+        "Add translations",
+        "Pluralize strings",
+        "Locale switching"
+      ]
+    },
+    {
+      "intent": "custom mix tasks",
+      "skill": "mix-tasks-generators",
+      "path": "skills/mix-tasks-generators/SKILL.md",
+      "examples": [
+        "Create Mix task",
+        "Custom generator",
+        "Dev automation"
+      ]
+    },
+    {
+      "intent": "Ash Framework",
+      "skill": "ash-framework",
+      "path": "skills/ash-framework/SKILL.md",
+      "examples": [
+        "Ash resource definition",
+        "Ash domain",
+        "Ash policies"
+      ]
+    },
+    {
+      "intent": "atomic review rules checklist",
+      "skill": "code-review",
+      "path": "skills/code-review/SKILL.md",
+      "examples": [
+        "Always Critical checklist",
+        "Review severity labels only"
+      ]
+    },
+    {
+      "intent": "Ecto conventions and Repo patterns",
+      "skill": "apply-ecto-conventions",
+      "path": "skills/apply-ecto-conventions/SKILL.md",
+      "examples": [
+        "ecto conventions",
+        "repo pattern",
+        "context query boundaries"
+      ]
+    },
+    {
+      "intent": "LiveView coding conventions",
+      "skill": "apply-phoenix-liveview-conventions",
+      "path": "skills/apply-phoenix-liveview-conventions/SKILL.md",
+      "examples": [
+        "liveview conventions",
+        "assigns patterns",
+        "thin handle_event"
+      ]
+    },
+    {
+      "intent": "Phoenix controller conventions",
+      "skill": "apply-phoenix-controller-conventions",
+      "path": "skills/apply-phoenix-controller-conventions/SKILL.md",
+      "examples": [
+        "controller conventions",
+        "plug pipeline",
+        "fallback controller"
+      ]
+    },
+    {
+      "intent": "safe refactoring with characterization tests",
+      "skill": "refactor-code",
+      "path": "skills/refactor-code/SKILL.md",
+      "examples": [
+        "refactor this module",
+        "extract function safely",
+        "characterization test"
+      ]
+    },
+    {
+      "intent": "respond to PR review feedback",
+      "skill": "respond-to-review",
+      "path": "skills/respond-to-review/SKILL.md",
+      "examples": [
+        "address review comments",
+        "respond to PR feedback",
+        "push back on review"
+      ]
+    }
+  ],
+  "defaults": {
+    "test_gate": "skills/testing-essentials",
+    "code_producing": "skills/elixir-essentials",
+    "tdd_flow": [
+      "skills/tdd",
+      "skills/testing-essentials",
+      "skills/elixir-essentials"
+    ],
+    "quality_flow": [
+      "skills/quality",
+      "skills/code-quality",
+      "skills/credo-config"
+    ],
+    "setup_flow": [
+      "skills/setup",
+      "skills/elixir-essentials",
+      "skills/ecto-essentials"
+    ],
+    "bug_fix_flow": [
+      "skills/bug-fix",
+      "skills/testing-essentials",
+      "skills/elixir-essentials"
+    ],
+    "review_flow": [
+      "skills/code-review-playbook",
+      "skills/code-review",
+      "skills/elixir-essentials"
+    ],
+    "liveview_flow": [
+      "skills/liveview",
+      "skills/elixir-essentials",
+      "skills/phoenix-liveview-essentials"
+    ],
+    "background_job_flow": [
+      "skills/background-job",
+      "skills/elixir-essentials",
+      "skills/oban-essentials"
+    ],
+    "migration_flow": [
+      "skills/ecto-migration",
+      "skills/elixir-essentials",
+      "skills/ecto-essentials"
+    ],
+    "language_fallback": "skills/elixir-essentials",
+    "web_fallback": "skills/phoenix-liveview-essentials"
+  },
+  "disambiguation": {
+    "auth_vs_scopes": "Use phoenix-liveview-auth for Phoenix 1.7 current_user-based auth; use phoenix-scopes for Phoenix 1.8+ Scope-based auth.",
+    "testing_vs_property": "Use testing-essentials for example-based ExUnit tests; use property-based-testing when you need to verify invariants across random inputs.",
+    "channels_vs_pubsub": "Use phoenix-channels-essentials for WebSocket channel logic; use phoenix-pubsub-patterns for broadcast/subscribe patterns within the server.",
+    "ecto_vs_changesets": "Use ecto-essentials for basic CRUD and queries; use ecto-changeset-patterns when building complex validation pipelines.",
+    "oban_vs_broadway": "Use oban-essentials for discrete background jobs; use broadway-data-pipelines for continuous data stream processing.",
+    "playbook_vs_atomic_review": {
+      "prefer": "code-review-playbook",
+      "when": "full PR/diff workflow with gates and handoff",
+      "alternate": "code-review",
+      "alternate_when": "only need severity rules / Always Critical checklist"
+    },
+    "playbook_vs_atomic_tdd": {
+      "prefer": "tdd",
+      "when": "end-to-end red-green-refactor with HITL",
+      "alternate": "testing-essentials",
+      "alternate_when": "only need ExUnit patterns, not the full playbook"
+    }
+  }
+}

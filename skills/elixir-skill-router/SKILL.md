@@ -1,0 +1,170 @@
+---
+name: elixir-skill-router
+type: orchestrator
+tags: [orchestration]
+license: MIT
+metadata:
+  version: "1.0.0"
+  user-invocable: "true"
+  dependencies:
+    source: self
+    skills:
+      - tdd
+      - bug-fix
+      - quality
+      - code-review-playbook
+      - setup
+      - liveview
+      - background-job
+      - ecto-migration
+      - elixir-essentials
+      - phoenix-liveview-essentials
+      - testing-essentials
+      - ecto-essentials
+      - code-review
+      - code-quality
+      - credo-config
+      - oban-essentials
+description: >
+  Entry-point orchestrator that triages and decomposes complex Elixir/Phoenix requests into ordered
+  sub-tasks, then delegates to the correct specialised skill — never implements directly.
+  Enforces TDD discipline across all code-producing work. Priority order:
+  TDD → Planning → Implementation → Quality → Review. First response line MUST be "Next skill: skills/<name>". Prefer playbooks for multi-step work (e.g. skills/tdd, skills/code-review-playbook). Falls back to `elixir-essentials`
+  for language ambiguity or `phoenix-liveview-essentials` for web ambiguity. Use when scope is
+  unclear, best approach uncertain, or request spans multiple concerns.
+  Trigger words: where do I start, help me plan, break this down, best approach, not sure how,
+  multi-step, complex task, complex Phoenix, what should I do first, orchestrate, triage,
+  route to skill, skill routing, entry point, skill router.
+---
+
+# Elixir Skill Router
+
+## HARD-GATE
+
+```text
+Non-negotiable: no implementation code until a test exists, runs, and fails for the right reason (feature missing, not config/syntax).
+```
+
+
+## Routing priority
+
+1. **Playbook** when the request is multi-step (TDD, bug fix, quality, setup, LiveView feature, Oban job, migration, PR review).
+2. **Atomic skill** when the request is a single domain (Ecto query, channel auth, Credo config).
+3. **Code-producing work:** if the next step writes `.ex` or `.exs`, load `elixir-essentials` **together with** the domain skill. It is not only a language-ambiguity fallback.
+4. **Fallbacks:** language-only ambiguity → `elixir-essentials`; web ambiguity → `phoenix-liveview-essentials` (still pair with `elixir-essentials` when writing code).
+
+See `assets/skill-map.json` (`mappings`, `defaults`, `disambiguation`).
+
+## Core Process
+
+Prefer **playbooks** for multi-step flows (`tdd`, `bug-fix`, `quality`, `code-review-playbook`, `setup`, `liveview`, `background-job`, `ecto-migration`). Use atomics for single-domain implementation. When implementation writes Elixir, the chain includes `elixir-essentials` so FCIS (pure core, thin edges) is loaded — not only the framework skill.
+
+
+Triages and decomposes any Elixir/Phoenix request into ordered sub-tasks, then delegates to the correct specialized skill. Identify the matching skill from the catalog below and route to it using the format defined in **Output Style**.
+
+### Core Skills Catalog
+
+The eight most-used skills are listed here. For the full catalog, see `directory.json` at the repository root. If unavailable, fall back to the catalog below and use `elixir-essentials` or `phoenix-liveview-essentials` for any skill not listed.
+
+See [`assets/skill-map.json`](assets/skill-map.json) for the full machine-readable trigger→skill routing map used by this orchestrator.
+
+| Skill | Use when... | Notes |
+| ----- | ----------- | ----- |
+| **elixir-essentials** | Writing any `.ex` or `.exs` file | Default fallback for Elixir language questions |
+| **phoenix-liveview-essentials** | Building LiveView pages, handling events, managing assigns | Default fallback for web ambiguity |
+| **ecto-essentials** | Database operations, queries, migrations | Default fallback for data layer questions |
+| **testing-essentials** | Writing ExUnit tests, setting up fixtures | Entry point for TDD |
+| **otp-essentials** | GenServer, Supervisor, Task modules | Concurrency and process patterns |
+| **oban-essentials** | Background job processing, job queues | Async work |
+| **code-quality** | Refactoring, duplication detection, complexity | Quality gate before PR |
+| **security-essentials** | Security review, input validation, XSS/CSRF | Security audit |
+
+### Skill Priority
+
+**Canonical priority rule** — apply this whenever multiple skills could apply:
+
+```text
+Priority: TDD → Planning → Implementation → Quality → Review.
+```
+
+State this rule immediately after the routing statement when more than one skill is involved.
+
+**Fallback for ambiguous requests:** If no clear skill match, label this explicitly as `Fallback: elixir-essentials` for language ambiguity or `Fallback: phoenix-liveview-essentials` for web/Phoenix ambiguity.
+
+### Decomposition Examples
+
+**Example 1 — "Add user notifications: email on job completion + live dashboard counter."**
+
+```text
+Next skill: skills/testing-essentials
+
+This spans jobs, email, data, and LiveView. Starting with failing tests for the job completion callback.
+
+Priority: TDD → elixir-essentials → oban-essentials → ecto-essentials → phoenix-liveview-essentials → code-quality.
+```
+
+**Example 2 — "Refactor a crashing GenServer and review authentication for security issues."**
+
+```text
+Next skill: skills/security-essentials
+
+Authentication touches security boundaries; audit that first before addressing the GenServer crash.
+
+Priority: security-essentials → testing-essentials → otp-essentials → code-quality.
+```
+
+### Common Skill Chains
+
+| Scenario | Skill chain |
+|----------|--------------|
+| **TDD Feature Loop** *(primary)* | testing-essentials → RED → elixir-essentials + domain skill → credo-config → typespec-dialyzer → PR |
+| **Bug fix** | testing-essentials → **[GATE: reproduction test fails]** → elixir-essentials + domain skill → verify passes |
+| **Multi-concern review** | security-essentials *(if input/secrets touched)* → code-review (FCIS) → code-quality |
+| **New Phoenix feature** | elixir-essentials → phoenix-liveview-essentials → ecto-essentials → testing-essentials → code-quality |
+| **Background job** | elixir-essentials → oban-essentials → testing-essentials → code-quality |
+
+## Output Style
+
+The routing statement MUST be the first substantive line of every response, before any analysis or implementation.
+
+For a single skill:
+
+```text
+Next skill: skills/testing-essentials
+
+This is a feature request. I will start by writing a failing test.
+```
+
+When multiple skills apply, immediately follow the routing line with one concise priority/chain statement:
+
+```text
+Next skill: skills/security-essentials
+
+This pull request contains custom input validation, so we will perform a security review first.
+
+Priority: security-essentials > code-quality; Chain: security-essentials then code-quality.
+```
+
+**Language**: Generated artifacts and output MUST be in English unless explicitly requested otherwise.
+
+
+## When Not to Use
+
+- Simple, single-concern requests that clearly map to one skill (e.g., "write a test for this function" → use `testing-essentials` directly)
+- Direct questions about Elixir syntax or Phoenix patterns — route to the specific skill instead
+- Cases where the user explicitly names a target skill (e.g., "use the oban-essentials skill")
+
+
+## Error Recovery
+
+**No skill clearly matches the request:**
+- Route to `elixir-essentials` (language ambiguity) or `phoenix-liveview-essentials` (web/Phoenix ambiguity) and label it `Fallback: <skill>`.
+
+**Request spans multiple concerns:**
+- Decompose into ordered sub-tasks and state the priority chain (TDD → Planning → Implementation → Quality → Review) immediately after the routing line.
+
+**A named skill is missing from the catalog:**
+- Consult `directory.json`; if still unresolved, fall back to `elixir-essentials` and note the gap in the routing rationale.
+
+**User asks the router to implement directly:**
+- Do not write code — restate the `Next skill:` routing line and delegate, since this orchestrator never implements.

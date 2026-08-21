@@ -6,48 +6,27 @@ Domain-first organization for `elixir-phoenix-skills`. Place skills by **what th
 
 | Benefit | Effect for agents and humans |
 |---------|------------------------------|
-| **Context precision** | Loading `database/` brings Ecto rules without unrelated workflow prose |
-| **Clearer routing** | Router maps intent → one domain folder; fewer competing retrievals |
-| **Scalable maintenance** | New LiveView guidance lives under `phoenix/` only |
+| **Context precision** | Loading `ecto-essentials` brings Ecto rules without unrelated workflow prose |
+| **Clearer routing** | Router maps intent → one skill; fewer competing retrievals |
+| **Scalable maintenance** | New LiveView guidance lives in Phoenix skills only |
 
 ## Tree
 
+Physical layout is flat so `npx skills add` can pick **all** or **one**:
+
 ```text
-skills/
-├── elixir-core/       # Pure FP, OTP, typespecs, Dialyzer
-├── phoenix/           # LiveView, controllers, channels, Phoenix conventions
-├── database/          # Ecto, migrations, changesets, Multi, Ecto conventions
-├── auth/              # Scopes, phx.gen.auth, policies
-├── security/          # Cross-cutting hardening (OWASP, secrets)
-├── infrastructure/    # Oban, Broadway, Cachex, deployment-gotchas
-├── integrations/      # Req, Swoosh, Gettext
-├── frameworks/        # Ash and niche frameworks
-├── testing/           # ExUnit, property-based tests
-├── performance/       # Benchee + Telemetry
-├── quality/           # Credo, code-quality, refactor, atomic review rules
-├── tooling/           # Mix tasks and generators
-├── playbooks/         # Multi-step HITL orchestrations
-└── orchestration/     # elixir-skill-router only (meta-routing)
+skills/<name>/SKILL.md
 ```
 
-## Folder responsibilities
+Display groups (Elixir Core, Phoenix, Database, Playbooks, Orchestration, …) live in `skills.sh.json`. Skill kind is `type` in frontmatter (`atomic`, `playbook`, `orchestrator`).
 
-| Folder | Owns | Does not own |
-|--------|------|--------------|
-| `elixir-core/` | Language, OTP, types | Framework APIs |
-| `phoenix/` | HTTP/LiveView/channels conventions | Auth scopes (→ `auth/`) |
-| `database/` | Ecto schemas, queries, Multi | Job workers (→ `infrastructure/`) |
-| `auth/` | AuthN/AuthZ, Scopes | Generic OWASP (→ `security/`) |
-| `security/` | Risk-focused hardening | Credo style (→ `quality/`) |
-| `infrastructure/` | Runtime engines & deploy | Profiling metrics (→ `performance/`) |
-| `integrations/` | Boundary adapters (HTTP, mail, i18n) | Domain business rules |
-| `frameworks/` | Ash (or similar) as a stack | Phoenix/Ecto defaults |
-| `testing/` | Pass/fail test patterns | Benchmarks (→ `performance/`) |
-| `performance/` | Measure & observe runtime | Job pipeline design |
-| `quality/` | Static analysis, refactor, **atomic** review rules | Full review **workflow** (→ `playbooks/`) |
-| `tooling/` | Mix CLI / generators | App business logic |
-| `playbooks/` | Sequenced phases, hard gates, HITL | Deep domain teaching (link atomics) |
-| `orchestration/` | Which skill/playbook to load | Implementing features |
+## Kind responsibilities
+
+| Kind | Owns | Does not own |
+|------|------|--------------|
+| Atomic | One domain: rules, examples, assets | Multi-step HITL workflow |
+| Playbook | Sequenced phases, hard gates, HITL | Deep domain teaching (load atomics) |
+| Orchestrator | Which skill/playbook to load next | Implementing features |
 
 ## Skill kinds
 
@@ -74,17 +53,17 @@ skills/
 
 When adding a skill:
 
-1. What domain does a developer search for first? → that folder.
-2. Is it a multi-step process with approvals? → `playbooks/`.
-3. Is it only “which skill next?” → `orchestration/`.
-4. Is it style/static analysis without owning a domain? → `quality/`.
+1. What domain does a developer search for first? → that skill id at `skills/<name>/`.
+2. Is it a multi-step process with approvals? → `type: playbook`.
+3. Is it only “which skill next?” → `type: orchestrator`.
+4. Add a `skills.sh.json` grouping entry for marketplace display.
 5. Prefer **one** home; link from others via Integration tables.
 
 ## Catalog sources of truth
 
 - Paths: `directory.json`
 - Install groupings: `skills.sh.json`
-- Router map: `skills/orchestration/elixir-skill-router/assets/skill-map.json`
+- Router map: `skills/elixir-skill-router/assets/skill-map.json`
 
 ## Skill frontmatter schema
 
@@ -105,7 +84,7 @@ Playbooks may also define `metadata.entry_point`, `metadata.phases`, `metadata.h
 
 ## Router skill-map
 
-`skills/orchestration/elixir-skill-router/assets/skill-map.json` maps intents → skills.
+`skills/elixir-skill-router/assets/skill-map.json` maps intents → skills.
 
 - Prefer **playbook** mappings for multi-step work (`tdd`, `bug-fix`, `quality`, …).
 - Prefer **atomic** mappings for single-domain implementation.
