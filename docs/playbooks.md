@@ -1,14 +1,14 @@
 # Playbooks
 
-Playbooks are **sequenced, multi-step workflows** with executable hard gates and scope checks. They orchestrate atomic skills; they do not re-teach domain rules.
+Playbooks are **sequenced, multi-step workflows** with hard gates and human-in-the-loop (HITL) checkpoints. They orchestrate atomic skills; they do not re-teach domain rules.
 
 ## Playbooks vs orchestration vs atomics
 
 ```mermaid
 flowchart TB
-  Router["orchestration/elixir-skill-router<br/>routes only"]
-  PB["playbooks/*<br/>phases + gates + scope check"]
-  Atomic["atomic skills by domain<br/>rules + assets"]
+  Router["elixir-skill-router<br/>routes only"]
+  PB["playbooks (type: playbook)<br/>phases + gates + HITL"]
+  Atomic["atomic skills<br/>rules + assets"]
   FCIS["docs/fcis-engineering-rules.md"]
 
   Router --> PB
@@ -27,16 +27,16 @@ flowchart TB
 
 | Playbook | Purpose | Loads (examples) |
 |----------|---------|------------------|
-| `tdd` | Red → scope check → green → refactor → quality gate | `testing-essentials`, `elixir-essentials` |
-| `bug-fix` | Triage → failing repro → scope check fix → verify | `testing-essentials`, domain atomics |
+| `tdd` | Red → HITL approve → green → refactor → quality gate | `testing-essentials`, `elixir-essentials` |
+| `bug-fix` | Triage → failing repro → HITL fix → verify | `testing-essentials`, domain atomics |
 | `quality` | Format / Credo / Dialyzer → refactor → docs | `code-quality`, `credo-config`, `refactor-code` |
-| `code-review-playbook` | Structured review flow (scope check on Critical) | `skills/quality/code-review` atomic |
+| `code-review-playbook` | Structured review flow (HITL on Critical) | `skills/code-review` atomic |
 | `setup` | Env → deps → DB → CI → validate | tooling / project atomics |
 | `liveview` | Contract → failing LV test → thin edge impl | `phoenix-liveview-essentials`, `testing-essentials` |
 | `background-job` | Design → TDD Oban worker → failure paths | `oban-essentials` |
 | `ecto-migration` | Plan → migrate/rollback cycle → deploy notes | `ecto-essentials` |
 
-Paths: `skills/playbooks/<name>/SKILL.md`.
+Paths: `skills/<name>/SKILL.md`.
 
 ## Required template
 
@@ -47,7 +47,7 @@ Every playbook `SKILL.md` must include:
 3. **Atomic skills this playbook loads** — concrete paths under the current taxonomy
 4. **Phases** — numbered steps, commands, expected outputs
 5. **HARD GATES** — stop conditions; no silent skip
-6. **HUMAN-IN-THE-LOOP** — continue implementation within the authorized task; require authorization for destructive or external actions
+6. **HUMAN-IN-THE-LOOP** — wait for explicit approval before implementation or destructive steps
 7. **Verification checklist** — tickable, runnable
 8. **Mermaid flowchart** — phases and gates
 9. **Error recovery** — wrong-reason fail, red suite, gate fail
@@ -62,13 +62,13 @@ type: playbook
 tags: [playbooks]
 license: MIT
 description: >
-  Orchestrates the Elixir TDD cycle with hard gates and authorized scope for
+  Orchestrates the Elixir TDD cycle with hard gates and human approval before
   implementation. Trigger words: tdd, red-green-refactor, test first, failing test.
 metadata:
   version: "1.0.0"
   user-invocable: "true"
   entry_point: true
-  phases: [context, red, scope-check, green, refactor, quality-gate]
+  phases: [context, red, hitl-approve, green, refactor, quality-gate]
   hard_gates: [test-fails-right-reason, suite-green]
   dependencies:
     source: self
@@ -78,13 +78,13 @@ metadata:
 ---
 ```
 
-### scope check checkpoint wording
+### HITL checkpoint wording
 
 Use explicit stops, for example:
 
 ```text
 HUMAN-IN-THE-LOOP — Implementation Proposal
-Present the minimal change and implement when it fits the authorized task. Ask only for material unresolved scope or an unauthorized external action.
+Present the minimal change. Wait for explicit user approval before writing production code.
 ```
 
 ### Hard gate wording
@@ -102,7 +102,7 @@ If gate fails: fix the test, do not implement yet.
 flowchart TD
   A[Design minimal test] --> B{Fails for right reason?}
   B -->|No| A
-  B -->|Yes| C[scope check: approve minimal impl]
+  B -->|Yes| C[HITL: approve minimal impl]
   C --> D[Implement]
   D --> E{Target test green?}
   E -->|No| D
@@ -114,8 +114,8 @@ flowchart TD
 
 | Anti-pattern | Do instead |
 |--------------|------------|
-| Re-teach Ecto inside a playbook | Link `skills/database/ecto-essentials` |
-| Skip scope check “to go faster” | Keep executable gates; ask only when scope or authorization is unresolved |
+| Re-teach Ecto inside a playbook | Link `skills/ecto-essentials` |
+| Skip HITL “to go faster” | Stop and ask; playbooks assume human approval |
 | Soft gates (“should run tests”) | Hard gate with command + expected outcome |
 | Mixing router logic into playbooks | Keep routing in `orchestration/` |
 
@@ -131,16 +131,16 @@ flowchart TD
 ### Agent: run TDD for a context function
 
 ```text
-Use playbook skills/playbooks/tdd/SKILL.md
+Use playbook skills/tdd/SKILL.md
 Feature: Blog.list_published_posts/0
 ```
 
-Expected: failing test → scope check → minimal impl → quality gate.
+Expected: failing test → HITL approval → minimal impl → quality gate.
 
 ### Agent: review a PR
 
 ```text
-Use playbook skills/playbooks/code-review-playbook/SKILL.md
+Use playbook skills/code-review-playbook/SKILL.md
 Diff: current branch vs main
 ```
 

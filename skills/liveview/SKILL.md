@@ -124,7 +124,7 @@ Write `live/2` or `live_isolated` test; run until fail is â€œmissing behaviourâ€
 
 - [ ] Contract written
 - [ ] Failing test first
-- [ ] Approval before impl
+- [ ] Implementation matches authorized scope
 - [ ] No Repo/business soup in LiveView
 - [ ] Tests green
 

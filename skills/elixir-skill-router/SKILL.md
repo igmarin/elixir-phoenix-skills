@@ -92,7 +92,7 @@ State this rule immediately after the routing statement when more than one skill
 **Example 1 — "Add user notifications: email on job completion + live dashboard counter."**
 
 ```text
-Next skill: skills/playbooks/tdd
+Next skill: skills/tdd
 
 This spans jobs, email, data, and LiveView. Confirm the existing notification contract, then load testing-essentials for a failing job-completion test.
 
@@ -102,7 +102,7 @@ Priority: Context and scope → RED → elixir-essentials → oban-essentials �
 **Example 2 — "Refactor a crashing GenServer and review authentication for security issues."**
 
 ```text
-Next skill: skills/security/security-essentials
+Next skill: skills/security-essentials
 
 Authentication touches security boundaries; audit that first before addressing the GenServer crash.
 
@@ -126,7 +126,7 @@ The routing statement MUST be the first substantive line of every response, befo
 For a single skill:
 
 ```text
-Next skill: skills/testing/testing-essentials
+Next skill: skills/testing-essentials
 
 This is a feature request. I will start by writing a failing test.
 ```
@@ -134,7 +134,7 @@ This is a feature request. I will start by writing a failing test.
 When multiple skills apply, immediately follow the routing line with one concise priority/chain statement:
 
 ```text
-Next skill: skills/security/security-essentials
+Next skill: skills/security-essentials
 
 This pull request contains custom input validation, so we will perform a security review first.
 
