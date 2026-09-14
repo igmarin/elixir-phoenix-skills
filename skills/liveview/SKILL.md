@@ -4,22 +4,22 @@ type: playbook
 tags: [playbooks]
 license: MIT
 description: >
-  LiveView feature playbook with hard gates and HITL: define mount/assigns contract → failing
+  LiveView feature playbook with hard gates and scope checks: define mount/assigns contract → failing
   LiveView test → thin-edge implementation (FCIS) → lifecycle verify → quality gate.
   Trigger: new LiveView, LiveView feature, handle_event, live_isolated, HEEx page.
 metadata:
   version: "1.0.0"
   user-invocable: "true"
   entry_point: true
-  phases: "Phase 1: Contract, Phase 2: RED test, Phase 3: HITL impl, Phase 4: Verify, Phase 5: Quality"
-  hard_gates: "LiveView contract, Test fails for right reason, Thin handle_event and handle_info, Lifecycle green, User approval and green suite"
+  phases: "Phase 1: Contract, Phase 2: RED test, Phase 3: Implementation, Phase 4: Verify, Phase 5: Quality"
+  hard_gates: "LiveView contract, Test fails for right reason, Thin handle_event and handle_info, Lifecycle green, Authorized scope and green suite"
   dependencies:
-    source: self
-    skills:
-      - phoenix-liveview-essentials
-      - testing-essentials
-      - elixir-essentials
-      - apply-phoenix-liveview-conventions
+    - source: self
+      skills:
+        - phoenix-liveview-essentials
+        - testing-essentials
+        - elixir-essentials
+        - apply-phoenix-liveview-conventions
 ---
 
 # LiveView Playbook
@@ -29,7 +29,7 @@ metadata:
 - A LiveView contract and failing `live/2` or `live_isolated` test must exist before implementation.
 - The test must fail because behaviour is missing, not due to config/syntax.
 - `handle_event/3` and `handle_info/2` remain thin; no `Repo` calls inside LiveViews.
-- Implementation requires explicit user approval; full suite and Credo/format must pass.
+- Implementation must fit authorized scope; full suite and Credo/format must pass.
 
 ## When to use
 
@@ -52,7 +52,7 @@ flowchart TD
   A[Define mount assigns contract] --> B[Write failing LV test]
   B --> C{Fail right reason?}
   C -->|No| B
-  C -->|Yes| D[HITL: approve thin-edge design]
+  C -->|Yes| D[Check thin-edge design]
   D --> E[Implement LV + context]
   E --> F[Lifecycle verify]
   F --> G[Quality gate]
@@ -82,18 +82,18 @@ Write `live/2` or `live_isolated` test; run until fail is “missing behaviour�
 
 **If gate fails:** Fix the test setup or expectations; do not write implementation to make a wrongly-failing test pass.
 
-### Phase 3 — HITL impl
+### Phase 3 — Implementation
 
 1. Propose thin `handle_event` → context design (no Repo in LiveView).
-2. **HUMAN-IN-THE-LOOP:** wait for approval.
+2. Verify that the design fits the authorized task, then implement. Ask only for a material scope decision or unauthorized external action.
 3. Implement; keep callbacks thin (FCIS).
 
 **HARD GATE — Thin handle_event and handle_info:**
 
 - [ ] `handle_event/3` and `handle_info/2` call context functions; no `Repo` or heavy business logic in LiveView.
-- [ ] User approves the implementation design before code is written.
+- [ ] Implementation design matches the authorized task.
 
-**If gate fails:** Extract logic into context or pure functions; re-HITL the design.
+**If gate fails:** Extract logic into context or pure functions; verify the revised design stays within scope.
 
 ### Phase 4 — Verify
 
@@ -112,9 +112,9 @@ Write `live/2` or `live_isolated` test; run until fail is “missing behaviour�
 
 `mix test`, format, credo; no assigns bloat.
 
-**HARD GATE — User approval and green suite:**
+**HARD GATE — Authorized scope and green suite:**
 
-- [ ] Implementation matches the approved design.
+- [ ] Implementation matches the authorized acceptance criteria.
 - [ ] `mix test`, `mix format --check-formatted`, and `mix credo --strict` pass.
 - [ ] No unnecessary assigns bloat.
 
@@ -143,7 +143,7 @@ Fat LiveView after impl → extract pure/context module; re-test.
 - LiveView contract: PASS / FAIL
 - Test fails for right reason: PASS / FAIL
 - Thin handle_event and handle_info: PASS / FAIL
-- User approval and green suite: PASS / FAIL
+- Authorized scope and green suite: PASS / FAIL
 **Lifecycle notes:** <mount/render/event/update path, connected? side effects, streams>
 **Verdict:** APPROVE / REQUEST_CHANGES
 ```

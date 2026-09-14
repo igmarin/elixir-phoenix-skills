@@ -22,7 +22,7 @@ Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../docs/fcis-engineering
 
 ## RULES — Follow these with no exceptions
 
-**1.** **Use `runtime.exs` for all secrets and URLs; never hardcode secrets — use `System.get_env!/1`** — see §1 & §5
+**1.** **Use `runtime.exs` for all secrets and URLs; never hardcode secrets — use `System.fetch_env!/1`** — see §1 & §5
 **2.** **Run migrations via release commands (`bin/migrate`)** — see §2
 **3.** **Set `PHX_HOST` and `PHX_SERVER=true`** — see §3
 **4.** **Run `mix assets.deploy` before building the release** — see §4
@@ -56,7 +56,7 @@ config :my_app, MyApp.Repo,
 ```elixir
 # config/runtime.exs
 if config_env() == :prod do
-  database_url = System.get_env!("DATABASE_URL")
+  database_url = System.fetch_env!("DATABASE_URL")
 
   config :my_app, MyApp.Repo,
     url: database_url,
@@ -106,7 +106,7 @@ bin/my_app eval "MyApp.Release.migrate()"
 ```elixir
 # config/runtime.exs
 if config_env() == :prod do
-  host = System.get_env!("PHX_HOST")
+  host = System.fetch_env!("PHX_HOST")
   port = String.to_integer(System.get_env("PORT") || "4000")
 
   config :my_app, MyAppWeb.Endpoint,
@@ -148,13 +148,13 @@ CMD ["bin/my_app", "start"]
 
 ## 5. Never Hardcode Secrets
 
-Always use `System.get_env!/1` in `runtime.exs` so the app crashes on startup if a required secret is missing rather than silently misconfiguring.
+Always use `System.fetch_env!/1` in `runtime.exs` so the app crashes on startup if a required secret is missing rather than silently misconfiguring.
 
 ✅ **Good — read from environment, crash on startup if missing:**
 ```elixir
 # config/runtime.exs
 if config_env() == :prod do
-  secret_key_base = System.get_env!("SECRET_KEY_BASE")
+  secret_key_base = System.fetch_env!("SECRET_KEY_BASE")
 
   config :my_app, MyAppWeb.Endpoint,
     secret_key_base: secret_key_base
@@ -221,7 +221,7 @@ end
 | ❌ Don't | ✅ Do |
 |----------|-------|
 | Read env vars in `config/prod.exs` (compiled) | Read them in `config/runtime.exs` (evaluated at boot) |
-| `System.get_env("SECRET")` that returns `nil` silently | `System.get_env!("SECRET")` so the release crashes on startup |
+| `System.get_env("SECRET")` that returns `nil` silently | `System.fetch_env!("SECRET")` so the release crashes on startup |
 | Run `mix ecto.migrate` against a release | Run `bin/my_app eval "MyApp.Release.migrate()"` |
 | Forget `PHX_SERVER=true` and get no HTTP server | Set `server: true` / `PHX_SERVER=true` in runtime config |
 | Build the release before `mix assets.deploy` | Run `mix assets.deploy` first, then `mix release` |

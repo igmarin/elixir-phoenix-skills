@@ -82,7 +82,7 @@ When reviewing existing Ecto code, follow these steps in order:
 1. **Check Repo calls outside contexts** — search `lib/` for `Repo.` in LiveViews, controllers, or non-context modules
 2. **Search for bang functions** — flag every `!` function in application `lib/` as a potential bug
 3. **Check preloads in loops** — look for association access inside `for`, `Enum.map`, etc. without prior preloading
-4. **Verify Multi usage** — any 2+ sequential `Repo` calls without `Ecto.Multi` is a missing transaction
+4. **Verify Multi usage** — use a transaction for writes that must succeed or fail together; use `Ecto.Multi` for named dependent operations. Independent reads or writes do not require a shared transaction
 5. **Inspect migrations** — confirm reversibility, presence of indexes, and absence of mixed schema/data changes
 
 

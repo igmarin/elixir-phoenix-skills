@@ -21,6 +21,22 @@ def load_json(path: Path) -> dict | list | None:
     return json.loads(path.read_text())
 
 
+def check_resources(path: Path) -> None:
+    """Check concrete local Markdown links and inline bundled-resource pointers."""
+    text = path.read_text()
+    for target in re.findall(r"\]\(([^)]+)\)", text):
+        target = target.split("#", 1)[0]
+        if not target or ":" in target or target.startswith("/") or "<" in target:
+            continue
+        if not (path.parent / target).exists():
+            err(f"{path.relative_to(ROOT)} broken local link: {target}")
+    for target in re.findall(r"`((?:assets|references)/[^`\n]+)`", text):
+        if any(char in target for char in "*<> "):
+            continue
+        if not (path.parent / target).exists():
+            err(f"{path.relative_to(ROOT)} missing bundled resource: {target}")
+
+
 def main() -> int:
     skills = sorted((ROOT / "skills").rglob("SKILL.md"))
     if not skills:
@@ -48,6 +64,9 @@ def main() -> int:
 
     dj_names = set(dj.get("skills", {}))
 
+    for document in (ROOT / "skills").rglob("*.md"):
+        check_resources(document)
+
     # directory paths exist; names match frontmatter
     for name, meta in dj.get("skills", {}).items():
         path = ROOT / meta["path"]
@@ -56,6 +75,10 @@ def main() -> int:
             continue
         text = path.read_text()
         m = re.search(r"^name:\s*(\S+)", text, re.M)
+        if not m:
+            err(f"missing frontmatter name: {meta['path']}")
+        if path.parent.name != name:
+            err(f"directory key {name!r} != folder {path.parent.name!r}")
         if m and m.group(1) != name:
             err(
                 f"directory key {name!r} != frontmatter name {m.group(1)!r} ({meta['path']})"
