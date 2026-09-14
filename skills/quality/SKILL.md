@@ -5,21 +5,21 @@ tags: [playbooks]
 license: MIT
 description: >
   Pre-PR quality loop with hard gates: mix format, credo, dialyzer, hex.audit, full tests →
-  optional FCIS-safe refactor with characterization tests and HITL → docs/specs on public APIs.
+  optional FCIS-safe refactor with characterization tests and scope checks → docs/specs on public APIs.
   Trigger: before PR, quality sweep, production readiness, credo, dialyzer, refactor for PR.
 metadata:
   version: "1.0.0"
   user-invocable: "true"
   entry_point: true
   phases: "Phase 1: Conventions, Phase 2: Refactor optional, Phase 3: Docs"
-  hard_gates: "Quality commands exit 0, Refactor green tests and user approval, No simulated green gates"
+  hard_gates: "Quality commands exit 0, Refactor green tests and authorized scope, No simulated green gates"
   dependencies:
-    source: self
-    skills:
-      - code-quality
-      - credo-config
-      - refactor-code
-      - typespec-dialyzer
+    - source: self
+      skills:
+        - code-quality
+        - credo-config
+        - refactor-code
+        - typespec-dialyzer
 ---
 
 # Quality Playbook
@@ -27,7 +27,7 @@ metadata:
 ## HARD-GATE
 
 - All quality commands (`mix format --check-formatted`, `mix credo --strict`, `mix dialyzer`, `mix hex.audit`, `mix test`) must exit 0 before a PR is opened.
-- Any refactor requires green characterization tests and explicit user approval.
+- Refactors require green characterization tests and must stay within the authorized task.
 - No gate may be skipped or declared green from simulated output.
 
 ## When to use
@@ -52,7 +52,7 @@ flowchart TD
   C --> A
   B -->|Yes| D{Complexity over threshold?}
   D -->|No| F[Docs and specs]
-  D -->|Yes| E[HITL refactor plan + characterize]
+  D -->|Yes| E[Scoped refactor plan + characterize]
   E --> F
   F --> G[PR ready]
 ```
@@ -94,14 +94,14 @@ mix test
 Only if thresholds exceeded.
 
 1. Characterization test (must be green on current code).
-2. **HUMAN-IN-THE-LOOP:** propose one extraction at a time; wait for approval.
+2. Apply one characterized extraction at a time within the authorized task; request a decision only when behavior or scope must change.
 3. Apply one change; re-run tests.
 4. Prefer FCIS extractions (pure modules out of LiveViews/controllers/workers).
 
-**HARD GATE — Refactor green tests and user approval:**
+**HARD GATE — Refactor green tests and authorized scope:**
 
 - [ ] A characterization test exists and passes on the current code.
-- [ ] User approves each extraction before it is applied.
+- [ ] Each extraction stays within the authorized task.
 - [ ] Tests remain green after each change.
 
 **If gate fails:** Revert the last change and take a smaller extraction step.
@@ -121,7 +121,7 @@ Only if thresholds exceeded.
 ## Verification checklist
 
 - [ ] Format / Credo / Dialyzer / audit / test green
-- [ ] Refactors (if any) HITL-approved and characterized
+- [ ] Refactors (if any) authorized and characterized
 - [ ] Public APIs documented
 - [ ] No FCIS violations introduced (fat edges)
 
@@ -146,7 +146,7 @@ Fix failing tool first; never open PR with a red gate.
 
 **HARD-GATE results:**
 - Quality commands exit 0: PASS / FAIL
-- Refactor green tests and user approval: PASS / FAIL (N/A if no refactor)
+- Refactor green tests and authorized scope: PASS / FAIL (N/A if no refactor)
 - No simulated green gates: PASS / FAIL
 
 **Refactors applied:** <list with file:line>

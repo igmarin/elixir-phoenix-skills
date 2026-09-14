@@ -56,11 +56,13 @@ flowchart TD
   B --> C[Walk Review Order on real diff]
   C --> D[Emit findings with file:line]
   D --> E{Critical findings?}
-  E -->|Yes| F[HITL: fix or explicit defer]
-  F --> G[Re-review Critical areas]
-  E -->|No| H[Handoff task list]
-  G --> H
-  H --> I[Done]
+  E -->|Yes| F{Authorized fix?}
+  F -->|Yes| G[Implement fix and re-review]
+  F -->|No| H[HITL: fix or explicit defer]
+  G --> I[Handoff task list]
+  H --> I
+  E -->|No| I[Handoff task list]
+  I --> J[Done]
 ```
 
 ## Agent Phases
@@ -139,7 +141,7 @@ Re-run review on changed hunks; auth/query/migration/OTP changes always re-revie
 
 - [ ] Real diff reviewed
 - [ ] Findings grounded in `file:line`
-- [ ] Always Critical patterns checked
+- [ ] Always Critical risk patterns checked
 - [ ] FCIS / security considered
 - [ ] Task-list handoff line present
 - [ ] Re-review after Critical fixes

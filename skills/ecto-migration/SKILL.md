@@ -15,10 +15,10 @@ metadata:
   phases: "Phase 1: Plan, Phase 2: Implement, Phase 3: Migrate cycle, Phase 4: Verify"
   hard_gates: "Plan and rollback documented, No combined schema and data migrations, Migrate-rollback-migrate cycle green, Format Credo and full suite green"
   dependencies:
-    source: self
-    skills:
-      - ecto-essentials
-      - apply-ecto-conventions
+    - source: self
+      skills:
+        - ecto-essentials
+        - apply-ecto-conventions
 ---
 
 # Ecto Migration Playbook
@@ -60,7 +60,7 @@ flowchart TD
 
 Assess: lock risk, expand-contract need, rollback strategy, index concurrency.
 
-**HUMAN-IN-THE-LOOP:** for production-impacting locks or multi-step expand-contract, present plan and wait for approval.
+**Production authorization:** prepare and test the migration and rollback locally within the authorized task. Before executing production-impacting locks or a production expand-contract rollout, confirm authorization for that concrete operation; preserve authorization already given.
 
 **HARD GATE — Plan and rollback documented:**
 
@@ -68,7 +68,7 @@ Assess: lock risk, expand-contract need, rollback strategy, index concurrency.
 - [ ] Rollback strategy is documented.
 - [ ] For production-impacting locks, HITL approval is obtained.
 
-**If gate fails:** Re-document the plan and rollback; do not write the migration until the plan is approved.
+**If gate fails:** Resolve the plan or rollback defect locally; block production execution until the operation is authorized.
 
 ### Phase 2 — Implement
 

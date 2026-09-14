@@ -14,11 +14,11 @@ metadata:
   phases: "Phase 1: Toolchain, Phase 2: App boot, Phase 3: CI, Phase 4: Validate"
   hard_gates: "Versions match tool files, Local setup succeeds, No secrets committed, CI defined"
   dependencies:
-    source: self
-    skills:
-      - mix-tasks-generators
-      - deployment-gotchas
-      - testing-essentials
+    - source: self
+      skills:
+        - mix-tasks-generators
+        - deployment-gotchas
+        - testing-essentials
 ---
 
 # Setup Playbook

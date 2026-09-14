@@ -4,22 +4,22 @@ type: playbook
 tags: [playbooks]
 license: MIT
 description: >
-  Orchestrates the full Elixir TDD cycle with hard gates and human-in-the-loop approval:
+  Orchestrates the full Elixir TDD cycle with hard gates and scope checks:
   write a failing test → confirm fail for the right reason → propose minimal impl → wait for
-  approval → green → refactor → quality gate. Trigger: tdd, red-green-refactor, test first,
+  scope check → green → refactor → quality gate. Trigger: tdd, red-green-refactor, test first,
   failing test, write tests before code.
 metadata:
   version: "1.0.0"
   user-invocable: "true"
   entry_point: true
-  phases: "Phase 1: Context and RED, Phase 2: HITL approve and GREEN, Phase 3: Refactor, Phase 4: Quality gate"
-  hard_gates: "Test fails for right reason, User approval, Refactor target tests green, Quality gate green"
+  phases: "Phase 1: Context and RED, Phase 2: Authorized implementation and GREEN, Phase 3: Refactor, Phase 4: Quality gate"
+  hard_gates: "Test fails for right reason, Authorized scope, Refactor target tests green, Quality gate green"
   dependencies:
-    source: self
-    skills:
-      - testing-essentials
-      - elixir-essentials
-      - typespec-dialyzer
+    - source: self
+      skills:
+        - testing-essentials
+        - elixir-essentials
+        - typespec-dialyzer
 ---
 
 # TDD Playbook
@@ -27,7 +27,7 @@ metadata:
 ## HARD-GATE
 
 - No implementation code is written until a test exists, is run, and fails for the right reason (missing behaviour, not syntax/config).
-- Implementation requires explicit user approval.
+- Implement within the user-authorized scope; ask only when a material scope decision or an unauthorized external action is required.
 - Refactoring preserves behaviour and keeps target tests green.
 - The quality gate (`mix format --check-formatted`, `mix credo --strict`, `mix dialyzer`, `mix test`) must pass before opening a PR.
 
@@ -51,7 +51,7 @@ Do **not** re-teach LiveView/Ecto here — load domain atomics when the feature 
 flowchart TD
   A[Design minimal test] --> B{Fails for right reason?}
   B -->|No| A
-  B -->|Yes| C[HITL: approve minimal impl]
+  B -->|Yes| C[Confirm scope; implement]
   C --> D[Implement]
   D --> E{Target test green?}
   E -->|No| D
@@ -75,19 +75,19 @@ flowchart TD
 
 **If gate fails:** Fix the test setup until the failure reason is correct. Do not implement yet.
 
-### Phase 2 — HITL approve and GREEN
+### Phase 2 — Authorized implementation and GREEN
 
 1. Propose the **minimal** implementation (no extra features).
-2. **HUMAN-IN-THE-LOOP — Implementation Proposal:** wait for **explicit user approval** before writing production files.
-3. Implement only what was approved.
+2. Verify that the minimal implementation fits the authorized task. Continue without repeating approval; ask only for unresolved scope or an unauthorized external action.
+3. Implement the smallest change satisfying the authorized acceptance criteria.
 4. Run: `mix test path/to/file_test.exs` — must pass.
 
-**HARD GATE — User approval:**
+**HARD GATE — Authorized scope:**
 
-- [ ] Explicit user approval is recorded before implementation.
+- [ ] The request or prior decision authorizing this scope is recorded.
 - [ ] Target test is green and no new failures were introduced.
 
-**If gate fails:** Re-propose the implementation; do not write unapproved code.
+**If gate fails:** Resolve the material scope question; continue independent authorized work.
 
 ### Phase 3 — Refactor
 
@@ -122,7 +122,7 @@ Add `@doc` / `@spec` on new public APIs. Self-review the branch diff (or run `co
 ## Verification checklist
 
 - [ ] Failing test observed for the right reason before impl
-- [ ] User approved minimal implementation
+- [ ] Minimal implementation matches authorized scope
 - [ ] Target tests green after impl and after each refactor
 - [ ] Quality commands green
 - [ ] Public APIs documented
@@ -132,7 +132,7 @@ Add `@doc` / `@spec` on new public APIs. Self-review the branch diff (or run `co
 | Problem | Action |
 |---------|--------|
 | Wrong-reason fail | Fix test/config; stay in Phase 1 |
-| Impl still red | Diagnose; re-propose if approach changes (HITL again) |
+| Impl still red | Diagnose; re-propose if approach changes (ask only if scope changes) |
 | Refactor turns red | Revert last step; smaller extraction |
 | Quality red | Fix before PR; do not skip gates |
 
@@ -145,7 +145,7 @@ Add `@doc` / `@spec` on new public APIs. Self-review the branch diff (or run `co
 **Test file:** `path/to/file_test.exs`
 **HARD-GATE results:**
 - Test fails for right reason: PASS / FAIL
-- User approval: PASS / FAIL
+- Authorized scope: PASS / FAIL
 - Quality gate green: PASS / FAIL
 
 **Commands run:**

@@ -9,7 +9,7 @@ Detailed per-area review criteria. Use with `skills/code-review/SKILL.md`.
 ## Configuration
 
 - [ ] Secrets in `runtime.exs` (never hardcoded in `config.exs`)
-- [ ] Verified env vars — `System.get_env!/1` with descriptive errors
+- [ ] Verified env vars — `System.fetch_env!/1` with descriptive errors
 - [ ] No adapter config in test env (e.g. Oban in `:inline` mode)
 - [ ] Credo `--strict` configured for CI
 
@@ -23,7 +23,7 @@ Detailed per-area review criteria. Use with `skills/code-review/SKILL.md`.
 ## Controllers
 
 - [ ] Thin — delegates to context modules (no `Repo` calls)
-- [ ] `before_action` scoped with `when action not in [...]`
+- [ ] controller `plug` scoped with `when action not in [...]`
 - [ ] Strong params via `changeset` or context `cast/4`
 - [ ] `action_fallback` used for JSON API error handling
 - [ ] Auth checks in every action touching protected resources

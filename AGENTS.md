@@ -20,13 +20,26 @@ Context module = shell; MyApp.<Context>.<Concept> = pure core
 ## Repository layout
 
 ```text
-skills/<name>/SKILL.md   # Flat layout. Groups in skills.sh.json
-docs/                    # Cross-cutting design docs
-agents/                  # Long-form companion guides (not skills)
-scripts/                 # Validation scripts
+skills/
+├── elixir-core/      # Language, OTP, typespecs, Dialyzer
+├── phoenix/          # LiveView, controllers, channels, conventions
+├── database/         # Ecto, migrations, changesets, Multi
+├── auth/             # Scopes, phx.gen.auth, policies
+├── security/         # Cross-cutting hardening
+├── infrastructure/   # Oban, Broadway, Cachex, deployment-gotchas
+├── integrations/     # Req, Swoosh, Gettext
+├── frameworks/       # Ash and niche frameworks
+├── testing/          # ExUnit, property-based tests
+├── performance/      # Benchee + Telemetry
+├── quality/          # Credo, code-quality, refactor, review rules
+├── tooling/          # Mix tasks and generators
+├── playbooks/        # Multi-step workflows with executable gates
+└── orchestration/    # `elixir-skill-router` only
+docs/                 # Cross-cutting design docs
+agents/               # Long-form companion guides (not skills)
+assets/               # Per-skill templates and checklists
+scripts/              # Validation scripts
 ```
-
-Kinds (`type` in frontmatter): atomic, playbook, orchestrator. Display groups: `skills.sh.json`.
 
 ## Skill conventions
 
@@ -56,10 +69,12 @@ Kinds (`type` in frontmatter): atomic, playbook, orchestrator. Display groups: `
 
 ## Precedence when guidance conflicts
 
-1. `SKILL.md` files in `skills/`
-2. `AGENTS.md` (this file)
-3. `docs/fcis-engineering-rules.md` and other `docs/`
-4. `agents/` companion guides
+1. Host instructions and the user-authorized task
+2. Target-project conventions and verified framework/version behavior
+3. Selected `SKILL.md` procedures and this contributor guide
+4. `docs/` references, then `agents/` companion guides
+
+These are contributor instructions, not an installed developer role. Installed roles inherit host permissions and model settings. Keep test gates as evidence requirements; continue authorized local implementation without requesting approval at every phase. Ask only for material unresolved scope or actions outside authorization. A small bug goes directly to `bug-fix`, without a PRD.
 
 ## Validation
 
@@ -68,6 +83,7 @@ A developer should run these before every commit and before opening a PR:
 ```bash
 # 1. Catalog consistency
 python3 scripts/validate-catalog.py
+python3 -m unittest discover -s scripts -p 'test_*.py'
 
 # 2. External review of staged changes (dry-run)
 git diff --cached --unified=5 > /tmp/staged.diff
