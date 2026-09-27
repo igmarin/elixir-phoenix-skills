@@ -16,7 +16,6 @@ metadata:
 
 Examples use `base_url` / `url` variables or `https://api.example.com` as placeholders only — never commit real host secrets.
 
-Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. HTTP/email/i18n adapters are edges; keep request building and response mapping pure where possible.
 
 **Sections:** [RULES](#rules--follow-these-with-no-exceptions) · [End-to-End Workflow](#end-to-end-workflow) · [Quick-Reference: Request Types](#quick-reference-request-types) · [Retries](#retries) · [Streaming Responses](#streaming-responses) · [Common Pitfalls](#common-pitfalls) · [Integration](#integration)
 

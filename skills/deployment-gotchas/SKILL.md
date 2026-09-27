@@ -18,7 +18,6 @@ metadata:
 Use this skill before modifying ANY deployment or release configuration.
 
 
-Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Workers and pipelines are edges: fetch IDs, call pure core, return tagged tuples.
 
 ## RULES — Follow these with no exceptions
 

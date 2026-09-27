@@ -16,7 +16,6 @@ metadata:
 # Property-Based Testing
 
 
-Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Prefer testing pure core without Repo; use DataCase only for true persistence boundaries.
 
 ## RULES — Follow these with no exceptions
 

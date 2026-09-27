@@ -19,7 +19,6 @@ metadata:
 Use this skill before writing ANY security-sensitive code.
 
 
-Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Parse/allowlist at the boundary; never trust raw maps deep in core.
 
 ## RULES — Follow these with no exceptions
 

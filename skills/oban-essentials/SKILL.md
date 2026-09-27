@@ -18,7 +18,6 @@ metadata:
 Use this skill before writing ANY Oban worker or enqueuing jobs.
 
 
-Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Workers and pipelines are edges: fetch IDs, call pure core, return tagged tuples.
 ## End-to-End Workflow
 
 When setting up a new Oban worker, follow these steps in order:

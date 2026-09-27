@@ -24,7 +24,6 @@ Use this skill when the task is to change structure without changing intended be
 **Core principle:** Small, reversible steps over large rewrites. Separate design improvement from behavior change.
 
 
-Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Enforce FCIS in reviews/refactors: fat LiveViews and mixed Repo+math are defects.
 ## Quick Reference
 
 | Step | Action | Verification |

@@ -24,7 +24,6 @@ Use this skill when writing new Phoenix controller modules or modifying existing
 **Precondition:** Invoke `phoenix-liveview-essentials` before this skill if the feature uses LiveView; for traditional request/response, use this skill directly.
 
 
-Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Keep LiveView/controller callbacks thin; delegate business rules to contexts/pure modules.
 ## Quick Reference
 
 | Pattern | Convention |

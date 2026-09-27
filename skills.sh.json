@@ -3,8 +3,8 @@
   "notGrouped": "bottom",
   "groupings": [
     {
-      "title": "Elixir Core",
-      "description": "Core Elixir and OTP skills for language essentials, process patterns, and type safety with Dialyzer.",
+      "title": "Elixir",
+      "description": "Language, OTP, and typespec foundations.",
       "skills": [
         "elixir-essentials",
         "otp-essentials",
@@ -13,7 +13,7 @@
     },
     {
       "title": "Phoenix",
-      "description": "Phoenix framework skills for LiveView, controllers, JSON APIs, channels, pub/sub, uploads, and conventions.",
+      "description": "LiveView, channels, APIs, uploads, authentication, and authorization.",
       "skills": [
         "phoenix-liveview-essentials",
         "liveview-streams",
@@ -21,116 +21,55 @@
         "phoenix-json-api",
         "phoenix-pubsub-patterns",
         "phoenix-uploads",
-        "apply-phoenix-liveview-conventions",
-        "apply-phoenix-controller-conventions"
+        "apply-phoenix-controller-conventions",
+        "phoenix-authentication",
+        "phoenix-authorization-patterns"
       ]
     },
     {
-      "title": "Database",
-      "description": "Ecto skills for queries, changesets, associations, nested structures, and conventions.",
+      "title": "Data",
+      "description": "Ecto persistence, changesets, associations, and migrations.",
       "skills": [
         "ecto-essentials",
         "ecto-changeset-patterns",
         "ecto-nested-associations",
-        "apply-ecto-conventions"
+        "ecto-migration"
       ]
     },
     {
-      "title": "Auth",
-      "description": "Authentication, authorization, and Phoenix Scope skills.",
-      "skills": [
-        "phoenix-liveview-auth",
-        "phoenix-auth-customization",
-        "phoenix-authorization-patterns",
-        "phoenix-scopes"
-      ]
-    },
-    {
-      "title": "Security",
-      "description": "Security skills for Elixir and Phoenix applications.",
-      "skills": [
-        "security-essentials"
-      ]
-    },
-    {
-      "title": "Infrastructure",
-      "description": "Background jobs, data pipelines, deployment, and caching skills.",
+      "title": "Operations",
+      "description": "Jobs, pipelines, deployment, caching, integrations, and performance.",
       "skills": [
         "oban-essentials",
         "broadway-data-pipelines",
         "deployment-gotchas",
-        "cachex-caching"
-      ]
-    },
-    {
-      "title": "Integrations",
-      "description": "External integrations: HTTP, email, and i18n.",
-      "skills": [
+        "cachex-caching",
         "req-http-client",
         "swoosh-emails",
-        "gettext-i18n"
-      ]
-    },
-    {
-      "title": "Frameworks",
-      "description": "Domain frameworks such as Ash.",
-      "skills": [
-        "ash-framework"
-      ]
-    },
-    {
-      "title": "Testing",
-      "description": "ExUnit essentials and property-based testing.",
-      "skills": [
-        "testing-essentials",
-        "property-based-testing"
-      ]
-    },
-    {
-      "title": "Performance",
-      "description": "Benchmarking with Benchee and runtime observability with Telemetry.",
-      "skills": [
+        "gettext-i18n",
         "benchee-profiling",
         "telemetry-essentials"
       ]
     },
     {
       "title": "Quality",
-      "description": "Static analysis, refactoring, atomic review rules, and review response.",
+      "description": "Testing, security, review, and code quality.",
       "skills": [
+        "testing-essentials",
+        "property-based-testing",
+        "security-essentials",
         "code-quality",
-        "credo-config",
         "code-review",
         "refactor-code",
         "respond-to-review"
       ]
     },
     {
-      "title": "Tooling",
-      "description": "Mix tasks and generators.",
+      "title": "Extensions",
+      "description": "Ash and Mix tooling.",
       "skills": [
+        "ash-framework",
         "mix-tasks-generators"
-      ]
-    },
-    {
-      "title": "Playbooks",
-      "description": "Multi-step human-in-the-loop orchestrations with hard gates (TDD, review, setup, domain flows).",
-      "skills": [
-        "tdd",
-        "bug-fix",
-        "quality",
-        "code-review-playbook",
-        "setup",
-        "liveview",
-        "background-job",
-        "ecto-migration"
-      ]
-    },
-    {
-      "title": "Orchestration",
-      "description": "Entry-point skill router for AI agents.",
-      "skills": [
-        "elixir-skill-router"
       ]
     }
   ]

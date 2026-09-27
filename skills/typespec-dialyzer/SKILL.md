@@ -17,7 +17,6 @@ metadata:
 
 Types make **data shapes and railway returns** explicit — especially at module boundaries — so pure core and shell stay honest.
 
-Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../docs/fcis-engineering-rules.md).
 
 ## Quick Reference
 

@@ -19,7 +19,6 @@ metadata:
 # LiveView Streams
 
 
-Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Keep LiveView/controller callbacks thin; delegate business rules to contexts/pure modules.
 
 ## RULES — Follow these with no exceptions
 
