@@ -12,7 +12,7 @@ Follow the generated authentication code and Phoenix version in the project. Kee
 
 ## Version path
 
-- Phoenix 1.7 projects commonly pass `current_user` through the session and LiveView assigns. Preserve that contract unless the task migrates it.
+- Phoenix 1.7 projects commonly store `user_token` in the session and derive `current_user` for request and LiveView assigns. Preserve this token-to-assign flow unless the task migrates it.
 - Phoenix 1.8 projects may use a `Scope` struct. Follow the project's generated `current_scope` plumbing; do not mix both models in one request path without a migration plan.
 - Confirm generator output and APIs against `mix.lock` and the checked-out source.
 

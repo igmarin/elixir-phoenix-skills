@@ -9,8 +9,11 @@ ROOT = Path(__file__).resolve().parents[1]
 errors: list[str] = []
 
 def check_resources(path: Path) -> None:
-    text = path.read_text(errors="ignore")
+    text = path.read_text(encoding="utf-8", errors="strict")
     for target in re.findall(r"\]\(([^)]+)\)", text):
+        target = target.strip()
+        if target.startswith("<") and target.endswith(">"):
+            target = target[1:-1]
         target = target.split("#", 1)[0].split("?", 1)[0]
         if not target or ":" in target or target.startswith("/"):
             continue
@@ -28,7 +31,7 @@ def main() -> int:
         errors.append("directory.json missing")
         data = {"skills": {}}
     else:
-        data = json.loads(registry_path.read_text())
+        data = json.loads(registry_path.read_text(encoding="utf-8", errors="strict"))
     entries = data.get("skills", {})
     disk = sorted((ROOT / "skills").rglob("SKILL.md"))
     disk_paths = {str(path.relative_to(ROOT)) for path in disk}
@@ -39,7 +42,7 @@ def main() -> int:
         if not path.is_file():
             errors.append(f"directory.json missing file for {name}: {entry['path']}")
             continue
-        text = path.read_text()
+        text = path.read_text(encoding="utf-8", errors="strict")
         frontmatter = re.match(r"\A---\s*\n(.*?)\n---", text, re.S)
         body = frontmatter.group(1) if frontmatter else ""
         found = re.search(r"^name:\s*(\S+)", body, re.M)
@@ -54,7 +57,7 @@ def main() -> int:
         errors.append(f"registered path is not a skill: {path}")
 
     group_file = ROOT / "skills.sh.json"
-    groups = json.loads(group_file.read_text()).get("groupings", []) if group_file.exists() else []
+    groups = json.loads(group_file.read_text(encoding="utf-8", errors="strict")).get("groupings", []) if group_file.exists() else []
     listed = [name for group in groups for name in group.get("skills", [])]
     if len(listed) != len(set(listed)):
         errors.append("skills.sh.json contains duplicate entries")

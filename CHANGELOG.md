@@ -1,10 +1,12 @@
 # Changelog
+
+## Unreleased
+
 ## [4.0.0] - 2026-09-26
 
 Breaking skill-profile release. See README.md for the migration map.
 
-
-## Unreleased
+## [3.0.0] - 2026-09-14
 
 - Preserve all 47 catalog identities and supporting resources. Normalize playbook/router dependency metadata to a list of source-and-skills groups without changing the catalog schema.
 - Route small bugs directly to the reproduction workflow. Inspect actual Phoenix routes/auth conventions before choosing LiveView or scopes. Resolve scope before RED; load and execute the chosen workflow in the current agent when delegation is unavailable.
