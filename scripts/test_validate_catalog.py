@@ -28,3 +28,24 @@ class ResourceValidationTest(unittest.TestCase):
             self.assertEqual(2, len(catalog.errors))
             self.assertIn("broken local link", catalog.errors[0])
             self.assertIn("missing bundled resource", catalog.errors[1])
+
+    def test_angle_bracket_destination_resolves_after_query_and_fragment_removal(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            old_root = catalog.ROOT
+            self.addCleanup(setattr, catalog, "ROOT", old_root)
+            catalog.ROOT = root
+            (root / "docs").mkdir()
+            (root / "docs/guide.md").write_text("# Guide\n", encoding="utf-8")
+            document = root / "SKILL.md"
+            document.write_text("[guide](<docs/guide.md?mode=full#intro>)\n", encoding="utf-8")
+            catalog.errors.clear()
+            catalog.check_resources(document)
+            self.assertEqual([], catalog.errors)
+
+    def test_malformed_utf8_markdown_is_not_silently_ignored(self):
+        with tempfile.TemporaryDirectory() as directory:
+            document = Path(directory) / "SKILL.md"
+            document.write_bytes(b"[guide](docs/guide.md)\xff\n")
+            with self.assertRaises(UnicodeDecodeError):
+                catalog.check_resources(document)

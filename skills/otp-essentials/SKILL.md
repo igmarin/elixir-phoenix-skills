@@ -20,7 +20,6 @@ Use before any GenServer, Supervisor, Task, Agent, Registry, or ETS work.
 
 Processes **isolate and schedule work**. Modules organize code. Put business logic in pure modules; call them from thin callbacks.
 
-Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../docs/fcis-engineering-rules.md).
 
 ## Quick Reference
 

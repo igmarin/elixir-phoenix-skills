@@ -16,7 +16,6 @@ metadata:
 # Gettext Internationalization
 
 
-Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. HTTP/email/i18n adapters are edges; keep request building and response mapping pure where possible.
 ## End-to-End Workflow
 
 1. **Add Gettext calls** — wrap strings with `gettext/1`, `dgettext/2`, or `ngettext/3` in templates, LiveView, and controllers

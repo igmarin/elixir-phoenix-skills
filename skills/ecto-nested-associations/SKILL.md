@@ -19,7 +19,6 @@ metadata:
 # Ecto Nested Associations
 
 
-Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Build changesets/Multi in pure-ish functions; run `Repo` once at the context edge.
 
 ## RULES — Follow these with no exceptions
 

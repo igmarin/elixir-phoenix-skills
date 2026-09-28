@@ -17,7 +17,6 @@ metadata:
 # Phoenix Authorization Patterns
 
 
-Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. Authorization decisions should be pure checks on scope/user data; persist only at the edge.
 
 ## RULES — Follow these with no exceptions
 

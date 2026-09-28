@@ -15,7 +15,6 @@ metadata:
 # Swoosh Emails
 
 
-Canonical FP bar: [`docs/fcis-engineering-rules.md`](../../docs/fcis-engineering-rules.md) — **Functional Core, Imperative Shell**: pure domain modules; side effects at edges. HTTP/email/i18n adapters are edges; keep request building and response mapping pure where possible.
 
 ## RULES — Follow these with no exceptions
 
