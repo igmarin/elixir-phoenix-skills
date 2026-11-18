@@ -33,6 +33,8 @@ metadata:
 **3.** **Use `ngettext/3` for anything countable** — never build plurals by hand; plural rules vary by locale
 **4.** **Pass interpolations as bindings** — `gettext("Hello %{name}", name: name)`, never `gettext("Hello #{name}")`, which breaks extraction
 **5.** **Re-run `mix gettext.extract --merge` after adding calls** — keep `.pot`/`.po` files in sync before committing
+**6.** **Never hand-edit `.pot`/`.po` entries** — hand-added blocks get wrong `#:` paths and a missing `msgstr ""` (invalid PO). Regenerate with `mix gettext.extract --merge`, then check that every new `msgid` appears in `default.pot` and in every locale's `.po`
+**7.** **Translate changeset errors** — `translate_error/1` uses the `"errors"` domain; confirm `priv/gettext/errors.pot` exists, or users see English validation messages in a non-English UI
 **6.** **Set the locale per request** — call `Gettext.put_locale/2` from a plug (and on LiveView `mount`); never rely on the default
 **7.** **Validate locale input against an allowlist** — only `put_locale` supported locales; reject arbitrary values from params
 
@@ -181,6 +183,9 @@ end
 | Add `gettext` calls but skip extraction | Run `mix gettext.extract --merge` so `.pot`/`.po` files stay in sync |
 | `put_locale` any value from params | Validate against a supported-locale allowlist first |
 | Dump every string into the default domain | Split with `dgettext` domains (e.g. `"errors"`) |
+| `gettext("%{count} vencidos", count: n)` → "1 vencidos" | `ngettext("%{count} vencido", "%{count} vencidos", n, count: n)` |
+| Persist a translatable label (`@unnamed "Sin nombre"`) in the DB | Store a code/nil and translate at render time |
+| Add a hand-written `.pot` entry without `msgstr ""` | Run `mix gettext.extract --merge` and commit the generated diff |
 
 ---
 

@@ -26,6 +26,9 @@ metadata:
 **5.** **Use `update_change/3` for field transformations** — trim, downcase, and slugify inside the changeset
 **6.** **Accept `opts \\ []` for conditional validation** — toggle hashing or uniqueness checks per call site
 **7.** **Validate at the changeset level, not in context functions** — keep validation next to the schema
+**8.** **Map every DB constraint** — each `CHECK`, unique index and FK in the migration needs a matching `check_constraint/3`, `unique_constraint/3` or `foreign_key_constraint/3` with `name:`. Otherwise a write that bypasses the validation raises `Ecto.ConstraintError` instead of returning `{:error, changeset}`
+**9.** **Normalize defensively** — handle `nil` inside arrays (`cast` of `{:array, :string}` lets `[nil]` through), blank strings, and non-ASCII (`String.upcase("ß")` is `"SS"`; use ASCII-only normalization before validating identifiers like IBANs)
+**10.** **Match constraint errors by metadata, not exact tuples** — Ecto returns `{msg, [constraint: :unique, constraint_name: "..."]}`; compare `constraint_name`, never `{"has already been taken", []}`
 
 
 ## FCIS at this boundary
@@ -144,6 +147,8 @@ end
 | Trim/downcase fields in the controller | Transform in the changeset with `update_change/3` |
 | Hardcode hashing/uniqueness behavior | Accept `opts \\ []` for conditional validation |
 | Validate inside context functions | Validate at the changeset level, next to the schema |
+| Add a CHECK/unique index in a migration and skip the changeset | Add the matching `check_constraint`/`unique_constraint` with `name:` |
+| Treat any `unique_constraint` error as "already exists" | Anchor on `constraint_name:` so a new constraint is not silently skipped |
 | Cast the virtual `:password` and forget to hash | Hash via `put_password_hash/1` in the password changeset |
 
 ### cast_assoc — Critical Pitfall
